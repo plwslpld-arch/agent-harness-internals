@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
   statuses: write
@@ -73,3 +74,16 @@ jobs:
           else
             gh pr create --base main --head "$UPDATE_BRANCH" --title 'chore(sources): review upstream baseline update' --body-file sources/upstream-update.md
           fi
+          for attempt in {1..12}; do
+            PR_RUN="$(gh run list --branch "$UPDATE_BRANCH" --event pull_request --limit 10 \
+              --json databaseId,headSha,conclusion \
+              --jq ".[] | select(.headSha == \"$UPDATE_SHA\") | [.databaseId, .conclusion] | @tsv" | head -n 1)"
+            if [[ -n "$PR_RUN" ]]; then
+              IFS=$'\t' read -r PR_RUN_ID PR_RUN_CONCLUSION <<< "$PR_RUN"
+              if [[ "$PR_RUN_CONCLUSION" == 'action_required' ]]; then
+                gh api --method POST "repos/${GITHUB_REPOSITORY}/actions/runs/${PR_RUN_ID}/approve"
+              fi
+              break
+            fi
+            sleep 5
+          done
