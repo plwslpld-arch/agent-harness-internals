@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
@@ -66,3 +67,4 @@ jobs:
           else
             gh pr create --base main --head "$UPDATE_BRANCH" --title 'chore(sources): review upstream baseline update' --body-file sources/upstream-update.md
           fi
+          gh workflow run verify.yml --ref "$UPDATE_BRANCH"
