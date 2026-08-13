@@ -1,0 +1,65 @@
+[submodule "sources/checkouts/deepseek-v4-flash-0731"]
+	path = sources/checkouts/deepseek-v4-flash-0731
+	url = https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731
+	shallow = true
+[submodule "sources/checkouts/deepseek-harness"]
+	path = sources/checkouts/deepseek-harness
+	url = https://github.com/deepseek-ai/deepseek-harness.git
+	shallow = true
+[submodule "sources/checkouts/cordis-paper"]
+	path = sources/checkouts/cordis-paper
+	url = https://github.com/cordiverse/paper.git
+	shallow = true
+[submodule "sources/checkouts/cordis"]
+	path = sources/checkouts/cordis
+	url = https://github.com/cordiverse/cordis.git
+	shallow = true
+[submodule "sources/checkouts/acp-typescript-sdk"]
+	path = sources/checkouts/acp-typescript-sdk
+	url = https://github.com/agentclientprotocol/typescript-sdk.git
+	shallow = true
+[submodule "sources/checkouts/e2b"]
+	path = sources/checkouts/e2b
+	url = https://github.com/e2b-dev/e2b.git
+	shallow = true
+[submodule "sources/checkouts/mcp-typescript-sdk"]
+	path = sources/checkouts/mcp-typescript-sdk
+	url = https://github.com/modelcontextprotocol/typescript-sdk.git
+	shallow = true
+[submodule "sources/checkouts/claude-agent-sdk-typescript"]
+	path = sources/checkouts/claude-agent-sdk-typescript
+	url = https://github.com/anthropics/claude-agent-sdk-typescript.git
+	shallow = true
+[submodule "sources/checkouts/codex"]
+	path = sources/checkouts/codex
+	url = https://github.com/openai/codex.git
+	shallow = true
+[submodule "sources/checkouts/pi"]
+	path = sources/checkouts/pi
+	url = https://github.com/earendil-works/pi.git
+	shallow = true
+[submodule "sources/checkouts/opencode"]
+	path = sources/checkouts/opencode
+	url = https://github.com/anomalyco/opencode.git
+	shallow = true
+	branch = dev
+[submodule "sources/checkouts/qwen-code"]
+	path = sources/checkouts/qwen-code
+	url = https://github.com/QwenLM/qwen-code.git
+	shallow = true
+	branch = main
+[submodule "sources/checkouts/mini-swe-agent"]
+	path = sources/checkouts/mini-swe-agent
+	url = https://github.com/SWE-agent/mini-swe-agent.git
+	shallow = true
+	branch = main
+[submodule "sources/checkouts/swe-bench"]
+	path = sources/checkouts/swe-bench
+	url = https://github.com/SWE-bench/SWE-bench.git
+	shallow = true
+	branch = main
+[submodule "sources/checkouts/terminal-bench"]
+	path = sources/checkouts/terminal-bench
+	url = https://github.com/harbor-framework/terminal-bench.git
+	shallow = true
+	branch = main

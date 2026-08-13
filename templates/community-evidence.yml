@@ -1,0 +1,20 @@
+schema_version: 1
+id: source-platform-date-slug
+source:
+  url: https://example.com/item
+  platform: example
+  author: unknown
+  author_type: official|maintainer|contributor|user|unknown
+  published_at: ""
+  captured_at: ""
+  snapshot_hash: ""
+classification:
+  evidence: community
+  sentiment: positive|negative|mixed|neutral
+  topic: ""
+claims_supported: []
+claims_not_supported: []
+copyright:
+  copied_content: false
+  quotation_word_count: 0
+notes: ""

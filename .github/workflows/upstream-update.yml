@@ -1,0 +1,68 @@
+name: Check upstream sources
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: upstream-source-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GIT_LFS_SKIP_SMUDGE: '1'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          submodules: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+      - name: Bootstrap current fixed sources
+        run: npm run bootstrap
+      - name: Resolve upstream heads and build impact report
+        run: npm run sources:update
+      - name: Detect updates
+        id: changes
+        shell: bash
+        run: |
+          if git diff --quiet -- sources/sources.lock.yml; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Refresh updated checkouts, licenses, and catalogs
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          npm run bootstrap
+          node scripts/verify-licenses.mjs --update-lock
+          npm run catalogs:generate
+          npm run sources:verify
+          npm run check
+      - name: Create or update review-only pull request
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPDATE_BRANCH: automation/upstream-sources
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -C "$UPDATE_BRANCH"
+          git add sources/checkouts sources/sources.lock.yml sources/upstream-update.json sources/upstream-update.md sources/stale-documents.md docs
+          git commit -m 'chore(sources): propose upstream baseline update'
+          git push --force-with-lease origin "$UPDATE_BRANCH"
+          if gh pr view "$UPDATE_BRANCH" >/dev/null 2>&1; then
+            gh pr edit "$UPDATE_BRANCH" --title 'chore(sources): review upstream baseline update' --body-file sources/upstream-update.md
+          else
+            gh pr create --base main --head "$UPDATE_BRANCH" --title 'chore(sources): review upstream baseline update' --body-file sources/upstream-update.md
+          fi

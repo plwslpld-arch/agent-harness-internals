@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "project": "DeepSeek Harness Atlas",
+  "sources": [
+    {
+      "id": "deepseek-v4-flash-0731",
+      "name": "DeepSeek V4 Flash 0731",
+      "category": "official",
+      "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "largeFiles": "skip-lfs",
+      "license": { "spdx": "MIT", "file": "LICENSE" },
+      "redistribution": { "policy": "metadata-and-analysis-only", "notes": "Never fetch or redistribute model weights." }
+    },
+    {
+      "id": "deepseek-harness",
+      "name": "DeepSeek Harness",
+      "category": "official",
+      "url": "https://github.com/deepseek-ai/deepseek-harness.git",
+      "defaultBranch": "master",
+      "fetchPolicy": "automatic",
+      "license": { "spdx": "MIT", "file": "LICENSE" },
+      "redistribution": { "policy": "metadata-and-analysis-only", "notes": "Checkout locally; do not vendor upstream source." }
+    },
+    {
+      "id": "cordis-paper",
+      "name": "A Programming Paradigm for Spatiotemporal Composability",
+      "category": "plugin-framework",
+      "url": "https://github.com/cordiverse/paper.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "restricted",
+      "license": { "spdx": "NOASSERTION", "file": null },
+      "redistribution": { "policy": "citation-only", "notes": "No repository license was found; fetch only with explicit opt-in." }
+    },
+    {
+      "id": "cordis",
+      "name": "Cordis",
+      "category": "plugin-framework",
+      "url": "https://github.com/cordiverse/cordis.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "license": { "spdx": "MIT", "file": "LICENSE" },
+      "redistribution": { "policy": "metadata-and-analysis-only", "notes": "Checkout locally; do not vendor upstream source." }
+    },
+    {
+      "id": "acp-typescript-sdk",
+      "name": "Agent Client Protocol TypeScript SDK",
+      "category": "protocols-and-runtimes",
+      "url": "https://github.com/agentclientprotocol/typescript-sdk.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "license": { "spdx": "Apache-2.0", "file": "LICENSE" },
+      "redistribution": { "policy": "metadata-and-analysis-only", "notes": "Checkout locally; preserve attribution when quoting." }
+    },
+    {
+      "id": "e2b",
+      "name": "E2B",
+      "category": "protocols-and-runtimes",
+      "url": "https://github.com/e2b-dev/e2b.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "license": { "spdx": "Apache-2.0", "file": "LICENSE" },
+      "redistribution": { "policy": "metadata-and-analysis-only", "notes": "Checkout locally; preserve NOTICE and attribution when required." }
+    },
+    {
+      "id": "mcp-typescript-sdk",
+      "name": "Model Context Protocol TypeScript SDK",
+      "category": "protocols-and-runtimes",
+      "url": "https://github.com/modelcontextprotocol/typescript-sdk.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "license": { "spdx": "LicenseRef-MCP-Transition", "file": "LICENSE" },
+      "redistribution": { "policy": "file-scoped-review", "notes": "Code and specifications are transitioning between MIT and Apache-2.0; documentation may be CC-BY-4.0." }
+    },
+    {
+      "id": "claude-agent-sdk-typescript",
+      "name": "Claude Agent SDK for TypeScript",
+      "category": "reference-agents",
+      "url": "https://github.com/anthropics/claude-agent-sdk-typescript.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "restricted",
+      "license": { "spdx": "LicenseRef-Anthropic-Commercial-Terms", "file": "LICENSE.md" },
+      "redistribution": { "policy": "no-redistribution", "notes": "All rights reserved; fetch only with explicit opt-in and do not vendor content." }
+    },
+    {
+      "id": "codex",
+      "name": "OpenAI Codex",
+      "category": "reference-agents",
+      "url": "https://github.com/openai/codex.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "license": { "spdx": "Apache-2.0", "file": "LICENSE" },
+      "redistribution": { "policy": "metadata-and-analysis-only", "notes": "Checkout locally; preserve NOTICE and attribution when required." }
+    },
+    {
+      "id": "pi",
+      "name": "Pi",
+      "category": "reference-agents",
+      "url": "https://github.com/earendil-works/pi.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "license": { "spdx": "MIT", "file": "LICENSE" },
+      "redistribution": { "policy": "metadata-and-analysis-only", "notes": "Checkout locally; do not vendor upstream source." }
+    },
+    {
+      "id": "opencode",
+      "name": "OpenCode",
+      "category": "comparison-agents",
+      "url": "https://github.com/anomalyco/opencode.git",
+      "defaultBranch": "dev",
+      "fetchPolicy": "automatic",
+      "license": { "spdx": "MIT", "file": "LICENSE" },
+      "redistribution": { "policy": "metadata-and-analysis-only", "notes": "Production-oriented open-source coding-agent comparison; not a Harness dependency." }
+    },
+    {
+      "id": "qwen-code",
+      "name": "Qwen Code",
+      "category": "comparison-agents",
+      "url": "https://github.com/QwenLM/qwen-code.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "license": { "spdx": "Apache-2.0", "file": "LICENSE" },
+      "redistribution": { "policy": "metadata-and-analysis-only", "notes": "Terminal-agent product comparison; not a Harness dependency." }
+    },
+    {
+      "id": "mini-swe-agent",
+      "name": "mini-swe-agent",
+      "category": "comparison-agents",
+      "url": "https://github.com/SWE-agent/mini-swe-agent.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "license": { "spdx": "MIT", "file": "LICENSE.md" },
+      "redistribution": { "policy": "metadata-and-analysis-only", "notes": "Minimal agent-loop baseline; not a Harness dependency." }
+    },
+    {
+      "id": "swe-bench",
+      "name": "SWE-bench",
+      "category": "evaluation",
+      "url": "https://github.com/SWE-bench/SWE-bench.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "license": { "spdx": "MIT", "file": "LICENSE" },
+      "redistribution": { "policy": "metadata-and-analysis-only", "notes": "Evaluation framework and dataset tooling; keep agent Harness behavior separate from benchmark behavior." }
+    },
+    {
+      "id": "terminal-bench",
+      "name": "Terminal-Bench",
+      "category": "evaluation",
+      "url": "https://github.com/harbor-framework/terminal-bench.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "license": { "spdx": "Apache-2.0", "file": "LICENSE" },
+      "redistribution": { "policy": "metadata-and-analysis-only", "notes": "Terminal task and execution-harness comparison; benchmark results describe the complete configuration." }
+    }
+  ]
+}

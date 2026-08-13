@@ -1,0 +1,15 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+build/
+coverage/
+*.log
+
+# Generated temporary files and local experiment output.
+.tmp/
+research/working-notes/private/
+research/benchmarks/runs/
+research/runtime-evidence/private/

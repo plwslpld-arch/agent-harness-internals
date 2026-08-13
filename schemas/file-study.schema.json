@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/plwslpld-arch/deepseek-harness-atlas/schemas/file-study.schema.json",
+  "title": "DeepSeek Harness Atlas file study frontmatter",
+  "type": "object",
+  "required": ["source_repo", "source_path", "source_commit", "last_verified", "status", "depth", "evidence"],
+  "properties": {
+    "source_repo": { "type": "string", "minLength": 1 },
+    "source_path": { "type": "string", "minLength": 1 },
+    "source_commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "last_verified": { "type": "string", "format": "date" },
+    "status": { "enum": ["draft", "reviewed", "verified", "stale"] },
+    "depth": { "enum": ["L0", "L1", "L2", "L3"] },
+    "audience": {
+      "type": "array",
+      "items": { "enum": ["product", "engineering", "maintainer", "research"] },
+      "uniqueItems": true
+    },
+    "evidence": {
+      "type": "array",
+      "items": { "enum": ["code", "test", "runtime", "official-doc", "community", "inference"] },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": true
+}

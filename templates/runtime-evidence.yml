@@ -1,0 +1,30 @@
+schema_version: 1
+id: YYYYMMDD-short-name
+source:
+  repository: deepseek-harness
+  commit: full-commit-sha
+environment:
+  os: unknown
+  architecture: unknown
+  runtime: node
+  runtime_version: unknown
+  dependency_lock_hash: unknown
+credentials:
+  required: false
+  names: []
+  values_recorded: false
+execution:
+  command: ""
+  started_at: ""
+  finished_at: ""
+  exit_code: null
+result:
+  status: not-run
+  passed: 0
+  failed: 0
+  skipped: 0
+  claims_supported: []
+artifacts:
+  - path: ""
+    sha256: ""
+known_gaps: []

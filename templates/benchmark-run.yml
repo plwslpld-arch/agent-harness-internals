@@ -1,0 +1,45 @@
+schema_version: 1
+id: YYYYMMDD-suite-model-harness
+task_suite:
+  name: ""
+  version: ""
+  selection_hash: ""
+model:
+  provider: deepseek
+  name: ""
+  api_revision: ""
+  reasoning_effort: ""
+  temperature: null
+  top_p: null
+harness:
+  repository: deepseek-harness
+  commit: ""
+  profile: ""
+  prompt_hash: ""
+  tools: []
+  permissions: ""
+  sandbox: ""
+  timeout_seconds: 0
+  max_steps: 0
+  max_cost_usd: 0
+environment:
+  os: ""
+  architecture: ""
+  runtime_versions: {}
+metrics:
+  tasks: 0
+  successes: 0
+  cost_usd: 0
+  input_tokens: 0
+  output_tokens: 0
+  reasoning_tokens: 0
+  cache_hit_ratio: null
+  time_to_first_token_ms_p50: null
+  total_latency_ms_p50: null
+  tool_failures: 0
+  retries: 0
+  human_interventions: 0
+  unsafe_action_attempts: 0
+artifacts: []
+failure_taxonomy: {}
+known_gaps: []

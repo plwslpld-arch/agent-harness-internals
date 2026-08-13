@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-13T18:17:50.405Z",
+  "sources": [
+    {
+      "id": "deepseek-v4-flash-0731",
+      "commit": "7872f01b1d1fe23eabc4c98b48bffcef5a386062",
+      "licenseSha256": "f2c6c602815669d292889e5be8c802f2ed950653b77999b1584e8e6aed25d040"
+    },
+    {
+      "id": "deepseek-harness",
+      "commit": "47f943859bef60e4160492346772ded9b24f765a",
+      "licenseSha256": "ebb4f09972aee8608be255debaf78451a68e95c290f55c240dec2ecfa16ea6be"
+    },
+    {
+      "id": "cordis-paper",
+      "commit": "948a07b369c62adb3b12e102458be5c18dfb69b9",
+      "licenseSha256": null
+    },
+    {
+      "id": "cordis",
+      "commit": "8cc9e33fab69e2d0476d126baaf2acb24e6a6ab4",
+      "licenseSha256": "034fb52b1d57360ecbae6cb1632a88f86fd7c3d3f5631a5f082710203dda0be7"
+    },
+    {
+      "id": "acp-typescript-sdk",
+      "commit": "e1054d0122e844cca9f1016a598a1da06f78ccef",
+      "licenseSha256": "6ed4f049cce59e05197d585bdf8a39980b45d546d6ea718ee344555f3a867c3a"
+    },
+    {
+      "id": "e2b",
+      "commit": "f5d702a520de52ac0e5d4dda3ca0d5fca01d7993",
+      "licenseSha256": "b4ef1bf811cb4095229fb86b574199e467c78f0ac4078cf8be62189e1fbd0818"
+    },
+    {
+      "id": "mcp-typescript-sdk",
+      "commit": "cc4b41617ce3601b1290d67216ea0b194a3cd9ac",
+      "licenseSha256": "0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a"
+    },
+    {
+      "id": "claude-agent-sdk-typescript",
+      "commit": "b5321a4b65ec1b034fea19f684e2d8db728875da",
+      "licenseSha256": "728158fd1037143fad6907e8fa34804177e598b7326519503fe83cafdef849e6"
+    },
+    {
+      "id": "codex",
+      "commit": "42bb50d5027fbad3431bdd56667bbee30700aad5",
+      "licenseSha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc"
+    },
+    {
+      "id": "pi",
+      "commit": "6f707eb36064e82af9c1320a7634f4dfad21049b",
+      "licenseSha256": "0457f5bcec3b3b211605dfb5d1a49042fd638f3686a410fe099c24a25af13c48"
+    },
+    {
+      "id": "opencode",
+      "commit": "d0c2b41adf90c5300fa2c754c1c66c211a36af20",
+      "licenseSha256": "625f0f619133f89bbbb2abe37369613dfa1885eba1e50d02170deb62bb42cb6b"
+    },
+    {
+      "id": "qwen-code",
+      "commit": "8e0033d64de83c7c212f9806ea9d39e7aea2cd51",
+      "licenseSha256": "55367b61ccd2a016a0159ad886bd66a3ee6cb5e873d0c75c803c897dd245b075"
+    },
+    {
+      "id": "mini-swe-agent",
+      "commit": "a83fcae82d2a08f0ee0c688f9d137b3566c097f8",
+      "licenseSha256": "0f796e58f91d1c07bb2c1b1d0f8bf3a83017c3a5dec1bdc6fae733b2cd2e875b"
+    },
+    {
+      "id": "swe-bench",
+      "commit": "c7fd5abffe0b2086a8bb9389d23c47d930ef571f",
+      "licenseSha256": "2bd2e08df7147f67a69b42c10efae09bd4bf119df397371036187d5dd1b02f57"
+    },
+    {
+      "id": "terminal-bench",
+      "commit": "d435a67e30ecb41f916716607c30c4646f208ee6",
+      "licenseSha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    }
+  ]
+}

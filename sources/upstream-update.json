@@ -1,0 +1,57 @@
+{
+  "generatedAt": "2026-08-13T18:17:50.405Z",
+  "sources": [
+    {
+      "id": "codex",
+      "from": "d167a3604c404e4ee4bc5b5d0b7923e24e0f54f8",
+      "to": "42bb50d5027fbad3431bdd56667bbee30700aad5",
+      "impact": [
+        "implementation"
+      ],
+      "files": [
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/thread_manager.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/thread_manager_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/thread-store/src/in_memory.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/thread-store/src/live_thread.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/thread-store/src/local/mod.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/thread-store/src/local/update_thread_metadata.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/thread-store/src/store.rs"
+          ]
+        }
+      ]
+    }
+  ]
+}
