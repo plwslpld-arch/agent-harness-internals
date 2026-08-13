@@ -1,3 +1,11 @@
+---
+sources: [{"repo":"deepseek-harness","path":".","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
+last_verified: 2026-08-13
+status: reviewed
+depth: L2
+evidence: [code, official-doc, inference]
+---
+
 # 09｜编排：子 Agent、Goal、Job、Schedule 与 Workflow
 
 Harness 把“多步任务”拆成多种不同语义的原语，而不是用一个万能任务队列覆盖所有场景。`evidence: code`

@@ -1,3 +1,11 @@
+---
+sources: [{"repo":"deepseek-harness","path":".","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
+last_verified: 2026-08-13
+status: reviewed
+depth: L2
+evidence: [code, official-doc, inference]
+---
+
 # 04｜启动与配置：仓库能力如何变成实际产品
 
 同一份源码可以启动成不同产品表面，因为 CLI 先选择 profile，再按顺序叠加 bundle 与 patch，最终由 Cordis 装载插件树。`evidence: official-doc`

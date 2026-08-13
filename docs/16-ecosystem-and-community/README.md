@@ -1,3 +1,11 @@
+---
+sources: [{"repo":"deepseek-harness","path":".","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
+last_verified: 2026-08-13
+status: reviewed
+depth: L2
+evidence: [code, official-doc, inference]
+---
+
 # 16｜生态、社区与采用证据入口
 
 本章观察 DeepSeek Harness 的外部采用、争议和生态增长，但不会把热度当成产品成熟度。

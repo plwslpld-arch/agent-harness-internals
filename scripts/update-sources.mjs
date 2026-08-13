@@ -55,26 +55,29 @@ if (changes.length) {
     generatedAt: lock.generatedAt,
     sources: changes,
   });
-  const staleDocuments = [];
   for (const file of analysisFiles()) {
     const before = file.content;
     let after = before;
     for (const change of changes) after = markContentStale(after, change.id);
     if (after === before) continue;
     writeFileSync(file.path, after);
-    const { metadata } = parseFrontmatter(after);
-    staleDocuments.push({ path: file.relativePath, source: metadata.source_repo, commit: metadata.source_commit });
   }
+  const staleDocuments = analysisFiles().flatMap((file) => {
+    const { metadata } = parseFrontmatter(file.content);
+    if (metadata?.status !== 'stale') return [];
+    const affected = metadata.sources.filter(({ repo, commit }) => locks.get(repo)?.commit !== commit);
+    return affected.length ? [{ path: file.relativePath, sources: affected }] : [];
+  });
   const staleReport = staleDocuments.length
     ? [
         '# Stale human analysis',
         '',
         '> These documents remain bound to their previously reviewed commit. Update the analysis,',
-        '> replace `source_commit`, and restore `status: reviewed` only after human review.',
+        '> update the affected binding `commit`, and restore `status: reviewed` only after human review.',
         '',
-        '| Document | Source | Last reviewed commit |',
-        '| --- | --- | --- |',
-        ...staleDocuments.map((item) => `| \`${item.path}\` | \`${item.source}\` | \`${item.commit}\` |`),
+        '| Document | Affected source bindings |',
+        '| --- | --- |',
+        ...staleDocuments.map((item) => `| \`${item.path}\` | ${item.sources.map(({ repo, commit }) => `\`${repo}@${commit}\``).join('<br>')} |`),
         '',
       ].join('\n')
     : '# Stale human analysis\n\nNo source-bound human analysis was affected by this update.\n';

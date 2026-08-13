@@ -1,3 +1,11 @@
+---
+sources: [{"repo":"deepseek-harness","path":"vendor/cordis","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"cordis","path":".","commit":"8cc9e33fab69e2d0476d126baaf2acb24e6a6ab4"}]
+last_verified: 2026-08-13
+status: reviewed
+depth: L2
+evidence: [code, official-doc, inference]
+---
+
 # 插件系统全景：从理论到生态治理
 
 插件系统是理解 Harness 的第一主线。它不是“支持安装几个扩展”的附加功能，而是产品组装、运行时替换、Web 扩展与策略治理共同使用的基础机制。`evidence: official-doc`

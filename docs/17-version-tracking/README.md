@@ -1,3 +1,11 @@
+---
+sources: [{"repo":"deepseek-harness","path":".","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
+last_verified: 2026-08-13
+status: reviewed
+depth: L2
+evidence: [code, official-doc, inference]
+---
+
 # 17｜版本追踪入口
 
 DeepSeek Harness 处于预览期，版本维护必须同时追踪**源码提交、发布包、协议 SDK、模型/API 和 vendored 上游**。只写“最新版”不可复现。

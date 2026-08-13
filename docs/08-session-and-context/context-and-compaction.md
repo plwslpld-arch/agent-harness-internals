@@ -1,3 +1,11 @@
+---
+sources: [{"repo":"deepseek-harness","path":".","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
+last_verified: 2026-08-13
+status: reviewed
+depth: L2
+evidence: [code, official-doc, inference]
+---
+
 # 上下文派生与压缩：日志不是直接塞进模型
 
 模型历史由事件日志经过派生，而不是把所有事件原样发送。工具调用、工具结果、assistant block 与模型可见用户消息按稳定规则重建。`evidence: official-doc`

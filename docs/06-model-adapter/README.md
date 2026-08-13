@@ -1,3 +1,11 @@
+---
+sources: [{"repo":"deepseek-harness","path":"packages/llm/llm-deepseek","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-v4-flash-0731","path":".","commit":"7872f01b1d1fe23eabc4c98b48bffcef5a386062"}]
+last_verified: 2026-08-13
+status: reviewed
+depth: L2
+evidence: [code, official-doc, inference]
+---
+
 # 06｜模型适配：统一语义与 DeepSeek 协议
 
 Harness 的 LLM seam 把内部 message、block、usage、finish 与 error 词汇映射到不同 provider。DeepSeek 官方适配器使用 `fetch + SSE`，把 Chat Completions wire format 转为统一 `StreamChunk`。`evidence: code`

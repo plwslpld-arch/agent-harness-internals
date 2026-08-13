@@ -1,3 +1,11 @@
+---
+sources: [{"repo":"deepseek-harness","path":"vendor/cordis","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"cordis","path":".","commit":"8cc9e33fab69e2d0476d126baaf2acb24e6a6ab4"}]
+last_verified: 2026-08-13
+status: reviewed
+depth: L2
+evidence: [code, official-doc, inference]
+---
+
 # 03｜Cordis 底座：可组合、可替换、可撤销
 
 Cordis 提供共享 Context、Service、事件分发、Fiber 生命周期和可逆 Effect。Harness 的模型适配器、工具注册表、会话日志乃至 agent loop 都以插件参与组合。`evidence: official-doc`

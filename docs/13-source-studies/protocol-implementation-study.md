@@ -1,11 +1,9 @@
 ---
-source_repo: deepseek-harness
-source_path: packages
-source_commit: 47f943859bef60e4160492346772ded9b24f765a
+sources: [{"repo":"deepseek-harness","path":"packages","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-v4-flash-0731","path":".","commit":"7872f01b1d1fe23eabc4c98b48bffcef5a386062"},{"repo":"acp-typescript-sdk","path":".","commit":"e1054d0122e844cca9f1016a598a1da06f78ccef"},{"repo":"mcp-typescript-sdk","path":".","commit":"cc4b41617ce3601b1290d67216ea0b194a3cd9ac"}]
 last_verified: 2026-08-13
 status: reviewed
-depth: L3
-evidence: [code, test, official-doc, inference]
+depth: L2
+evidence: [code, official-doc, inference]
 ---
 
 # 协议实现对照研究

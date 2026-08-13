@@ -1,3 +1,11 @@
+---
+sources: [{"repo":"deepseek-harness","path":".","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
+last_verified: 2026-08-13
+status: reviewed
+depth: L2
+evidence: [code, official-doc, inference]
+---
+
 # 18｜维护者指南入口
 
 Atlas 是独立研究仓库，不是 DeepSeek Harness 的源码镜像或下游发行版。维护者的首要责任是保持“结论—来源—版本—验证”可追溯，并守住版权、凭据和发布边界。

@@ -1,12 +1,26 @@
 #!/usr/bin/env node
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { checkoutsDir, fail, git, parseGitlink, readManifest, root } from './lib.mjs';
+import { checkoutsDir, fail, git, parseGitlink, parseGitmodules, readManifest, root } from './lib.mjs';
 
 const requireRestricted = process.argv.includes('--include-restricted');
 const { manifest, lock, locks } = readManifest();
 const errors = [];
 const ids = new Set();
+const lockIds = new Set();
+const moduleEntries = parseGitmodules(readFileSync(join(root, '.gitmodules'), 'utf8'));
+const moduleNames = new Set();
+
+for (const entry of lock.sources) {
+  if (lockIds.has(entry.id)) errors.push(`Duplicate lock source id: ${entry.id}`);
+  lockIds.add(entry.id);
+}
+for (const entry of moduleEntries) {
+  if (moduleNames.has(entry.name)) errors.push(`Duplicate .gitmodules stanza: ${entry.name}`);
+  moduleNames.add(entry.name);
+  if (entry.paths.length !== 1) errors.push(`${entry.name}: .gitmodules must declare exactly one path`);
+  if (entry.urls.length !== 1) errors.push(`${entry.name}: .gitmodules must declare exactly one URL`);
+}
 
 if (manifest.schemaVersion !== 1 || lock.schemaVersion !== 1) errors.push('Unsupported source schema version');
 if (!Array.isArray(manifest.sources) || manifest.sources.length === 0) errors.push('sources.yml must contain at least one source');
@@ -24,7 +38,13 @@ for (const source of manifest.sources) {
   if (!/^[0-9a-f]{40}$/.test(locked.commit)) errors.push(`${source.id}: lock commit must be a full SHA`);
   const relativeCheckout = `sources/checkouts/${source.id}`;
   try {
-    const moduleUrl = git(root, ['config', '-f', '.gitmodules', '--get', `submodule.${relativeCheckout}.url`]);
+    const entries = moduleEntries.filter(({ name }) => name === relativeCheckout);
+    if (entries.length !== 1) throw new Error(`expected exactly one .gitmodules stanza named ${relativeCheckout}`);
+    const [module] = entries;
+    if (module.paths.length !== 1 || module.paths[0] !== relativeCheckout) {
+      errors.push(`${source.id}: .gitmodules path ${module.paths.join(', ') || '(missing)'} != ${relativeCheckout}`);
+    }
+    const moduleUrl = module.urls[0] ?? '';
     if (moduleUrl.replace(/\.git$/u, '') !== source.url.replace(/\.git$/u, '')) {
       errors.push(`${source.id}: .gitmodules URL ${moduleUrl} != manifest ${source.url}`);
     }
@@ -50,5 +70,8 @@ for (const source of manifest.sources) {
   }
 }
 for (const entry of lock.sources) if (!ids.has(entry.id)) errors.push(`${entry.id}: lock entry has no manifest source`);
+for (const entry of moduleEntries) {
+  if (!manifest.sources.some(({ id }) => entry.name === `sources/checkouts/${id}`)) errors.push(`${entry.name}: .gitmodules stanza has no manifest source`);
+}
 
 if (!fail(errors)) console.log(`verified ${manifest.sources.length} source definitions and available fixed checkouts`);

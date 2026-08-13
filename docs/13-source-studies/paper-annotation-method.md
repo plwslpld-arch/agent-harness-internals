@@ -1,11 +1,9 @@
 ---
-source_repo: cordis-paper
-source_path: .
-source_commit: 948a07b369c62adb3b12e102458be5c18dfb69b9
+sources: [{"repo":"cordis-paper","path":".","commit":"948a07b369c62adb3b12e102458be5c18dfb69b9"},{"repo":"deepseek-harness","path":"vendor/cordis","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-v4-flash-0731","path":".","commit":"7872f01b1d1fe23eabc4c98b48bffcef5a386062"},{"repo":"claude-agent-sdk-typescript","path":".","commit":"b5321a4b65ec1b034fea19f684e2d8db728875da"}]
 last_verified: 2026-08-13
 status: reviewed
 depth: L2
-evidence: [official-doc, inference]
+evidence: [code, official-doc, inference]
 ---
 
 # 论文注释方法

@@ -1,7 +1,5 @@
 ---
-source_repo: deepseek-harness
-source_path: .agents/notes
-source_commit: 47f943859bef60e4160492346772ded9b24f765a
+sources: [{"repo":"deepseek-harness","path":".","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
 last_verified: 2026-08-13
 status: reviewed
 depth: L2

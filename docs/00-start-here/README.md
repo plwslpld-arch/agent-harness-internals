@@ -1,3 +1,11 @@
+---
+sources: [{"repo":"deepseek-harness","path":".","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
+last_verified: 2026-08-13
+status: reviewed
+depth: L2
+evidence: [code, official-doc, inference]
+---
+
 # 00｜从这里开始
 
 DeepSeek Harness 不是模型本身，也不只是聊天界面。它是包在模型外面的执行系统：组装上下文、暴露工具、控制权限、推进循环、记录轨迹，并把同一套能力呈现在 Web、headless 与 SDK 表面。官方把它定义为开源 agent harness，同时明确标注为 developer preview。`evidence: official-doc`

@@ -1,3 +1,11 @@
+---
+sources: [{"repo":"deepseek-harness","path":".","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
+last_verified: 2026-08-13
+status: reviewed
+depth: L2
+evidence: [code, official-doc, inference]
+---
+
 # 05｜Agent Runtime：turn、step、工具与完成
 
 一个 **step** 是一次模型请求及其工具调用；一个 **turn** 可以包含多个 step，直到工具不再欠下模型工作、没有下一步输入，或被错误/取消终止。`evidence: official-doc`

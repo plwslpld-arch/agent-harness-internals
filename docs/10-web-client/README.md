@@ -1,3 +1,11 @@
+---
+sources: [{"repo":"deepseek-harness","path":".","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
+last_verified: 2026-08-13
+status: reviewed
+depth: L2
+evidence: [code, official-doc, inference]
+---
+
 # 10｜Web Client：把执行事实变成可操作体验
 
 Web 不是另一套 Agent 内核。`web-app` bundle 在 base 能力上叠加服务端桥接与插件化 React client；浏览器通过连接层消费会话、Agent 状态、设置与交互。`evidence: code`

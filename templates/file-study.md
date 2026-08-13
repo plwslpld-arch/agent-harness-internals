@@ -1,7 +1,5 @@
 ---
-source_repo: deepseek-harness
-source_path: path/to/source.ts
-source_commit: full-commit-sha
+sources: [{"repo":"deepseek-harness","path":"path/to/source.ts","commit":"full-commit-sha"}]
 last_verified: YYYY-MM-DD
 status: draft
 depth: L1

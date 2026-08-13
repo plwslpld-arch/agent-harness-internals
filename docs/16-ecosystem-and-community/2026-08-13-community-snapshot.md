@@ -1,3 +1,11 @@
+---
+sources: [{"repo":"deepseek-harness","path":".","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
+last_verified: 2026-08-13
+status: reviewed
+depth: L2
+evidence: [code, official-doc, inference]
+---
+
 # 2026-08-13 社区与社交媒体快照
 
 > 捕获时间：2026-08-13。社交帖子会删除、编辑或改变排序；本页只保存链接、

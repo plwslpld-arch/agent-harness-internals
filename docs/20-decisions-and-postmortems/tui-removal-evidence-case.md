@@ -1,11 +1,9 @@
 ---
-source_repo: deepseek-harness
-source_path: .agents/notes/2026-08-04-remove-tui-package.md
-source_commit: 47f943859bef60e4160492346772ded9b24f765a
+sources: [{"repo":"deepseek-harness","path":".agents/notes/implemented/simplification/2026-08-04-remove-tui-package.md","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
 last_verified: 2026-08-13
 status: reviewed
-depth: L3
-evidence: [code, test, official-doc, inference]
+depth: L2
+evidence: [code, official-doc, inference]
 ---
 
 # TUI 删除：当前事实、历史记录与陈旧文档案例

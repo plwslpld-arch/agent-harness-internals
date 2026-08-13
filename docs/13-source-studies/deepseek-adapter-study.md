@@ -1,11 +1,9 @@
 ---
-source_repo: deepseek-harness
-source_path: packages/core/models
-source_commit: 47f943859bef60e4160492346772ded9b24f765a
+sources: [{"repo":"deepseek-harness","path":"packages/llm/llm-deepseek","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-v4-flash-0731","path":".","commit":"7872f01b1d1fe23eabc4c98b48bffcef5a386062"}]
 last_verified: 2026-08-13
 status: reviewed
-depth: L3
-evidence: [code, test, official-doc, inference]
+depth: L2
+evidence: [code, official-doc, inference]
 ---
 
 # DeepSeek 原生 Adapter 源码研究

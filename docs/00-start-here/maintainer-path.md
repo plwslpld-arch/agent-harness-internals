@@ -1,3 +1,11 @@
+---
+sources: [{"repo":"deepseek-harness","path":".","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
+last_verified: 2026-08-13
+status: reviewed
+depth: L2
+evidence: [code, official-doc, inference]
+---
+
 # 维护者路线：让知识随上游变化而更新
 
 维护者的对象不是一批静态 Markdown，而是一条证据供应链：来源定义 → 固定 Commit → 自动目录 → 人工语义分析 → 运行验证 → 版本与过期提示。

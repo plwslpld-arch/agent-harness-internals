@@ -1,3 +1,11 @@
+---
+sources: [{"repo":"deepseek-harness","path":".","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
+last_verified: 2026-08-13
+status: reviewed
+depth: L2
+evidence: [code, official-doc, inference]
+---
+
 # 14｜自动文件参考入口
 
 本目录回答“有什么、在哪里、与什么连接”，不负责解释“为什么、运行时怎样、产品意义是什么”。

@@ -54,6 +54,25 @@ export function parseGitlink(indexEntry) {
   return /^160000 ([0-9a-f]{40}) 0\t/u.exec(indexEntry)?.[1];
 }
 
+export function parseGitmodules(content) {
+  const entries = [];
+  let current;
+  for (const rawLine of content.split('\n')) {
+    const stanza = /^\s*\[submodule "([^"]+)"\]\s*$/u.exec(rawLine);
+    if (stanza) {
+      current = { name: stanza[1], paths: [], urls: [] };
+      entries.push(current);
+      continue;
+    }
+    if (!current) continue;
+    const setting = /^\s*(path|url)\s*=\s*(.*?)\s*$/u.exec(rawLine);
+    if (!setting) continue;
+    if (setting[1] === 'path') current.paths.push(setting[2]);
+    else current.urls.push(setting[2]);
+  }
+  return entries;
+}
+
 export function listProjectFiles({ includeGenerated = true } = {}) {
   const ignoredDirectories = new Set(['.git', 'node_modules', 'checkouts', '.tmp', 'dist', 'build', 'coverage']);
   const files = [];

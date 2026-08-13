@@ -1,3 +1,11 @@
+---
+sources: [{"repo":"deepseek-harness","path":".","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
+last_verified: 2026-08-13
+status: reviewed
+depth: L2
+evidence: [code, official-doc, inference]
+---
+
 # 08｜Session 与上下文：事实源、投影和恢复
 
 Session 的仅追加事件日志是会话事实源。模型历史、Web 回放、fork、transcript、遥测和持久化都从同一事件流派生。`evidence: official-doc`

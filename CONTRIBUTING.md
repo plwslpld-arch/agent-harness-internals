@@ -19,13 +19,11 @@ HTTP 200、编译成功或 benchmark 分数当作完整业务 E2E。
 
 ## 文档元数据
 
-`docs/13-source-studies/` 与 `docs/20-decisions-and-postmortems/` 的人工分析必须使用：
+`docs/` 下除自动生成目录外的人工分析必须使用；一篇依赖多个仓库时逐项列出：
 
 ```yaml
 ---
-source_repo: deepseek-harness
-source_path: packages/core/agent-loop/src/agent.ts
-source_commit: <full-sha>
+sources: [{"repo":"deepseek-harness","path":"packages/core/agent-loop/src/agent.ts","commit":"<full-sha>"}]
 last_verified: YYYY-MM-DD
 status: draft # draft | reviewed | verified | stale
 depth: L2 # L0 | L1 | L2 | L3

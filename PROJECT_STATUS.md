@@ -9,8 +9,9 @@
 
 ## Completion is measured, not implied
 
-Each human source study carries a source SHA and review status. Generated catalogs list
-their complete source baselines and are checked for deterministic reproduction. A
+Each of the 63 human documents under `docs/` carries one or more repository/path/SHA
+bindings and a review status. CI verifies that every non-root path exists at its bound
+commit. Generated catalogs list their complete source baselines and are checked for deterministic reproduction. A
 directory existing does not make that subject complete. The maintained coverage report lists:
 
 - files inventoried and files with semantic cards;

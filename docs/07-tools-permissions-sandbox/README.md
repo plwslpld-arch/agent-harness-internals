@@ -1,3 +1,11 @@
+---
+sources: [{"repo":"deepseek-harness","path":".","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
+last_verified: 2026-08-13
+status: reviewed
+depth: L2
+evidence: [code, official-doc, inference]
+---
+
 # 07｜工具、权限与沙箱：从模型意图到真实副作用
 
 模型只能提出 tool call；是否执行、在哪里执行、结果能否返回模型，由 Harness 的工具流水线决定。把策略集中在注册表和事件管道，而不是散落在每个工具里，是这一层的核心设计。`evidence: official-doc`

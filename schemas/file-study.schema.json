@@ -3,11 +3,22 @@
   "$id": "https://github.com/plwslpld-arch/deepseek-harness-atlas/schemas/file-study.schema.json",
   "title": "DeepSeek Harness Atlas file study frontmatter",
   "type": "object",
-  "required": ["source_repo", "source_path", "source_commit", "last_verified", "status", "depth", "evidence"],
+  "required": ["sources", "last_verified", "status", "depth", "evidence"],
   "properties": {
-    "source_repo": { "type": "string", "minLength": 1 },
-    "source_path": { "type": "string", "minLength": 1 },
-    "source_commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["repo", "path", "commit"],
+        "properties": {
+          "repo": { "type": "string", "minLength": 1 },
+          "path": { "type": "string", "minLength": 1 },
+          "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+        },
+        "additionalProperties": false
+      }
+    },
     "last_verified": { "type": "string", "format": "date" },
     "status": { "enum": ["draft", "reviewed", "verified", "stale"] },
     "depth": { "enum": ["L0", "L1", "L2", "L3"] },
