@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  statuses: write
 
 concurrency:
   group: upstream-source-update
@@ -61,6 +62,12 @@ jobs:
           git add sources/checkouts sources/sources.lock.yml sources/upstream-update.json sources/upstream-update.md sources/stale-documents.md docs
           git commit -m 'chore(sources): propose upstream baseline update'
           git push --force-with-lease origin "$UPDATE_BRANCH"
+          UPDATE_SHA="$(git rev-parse HEAD)"
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${UPDATE_SHA}" \
+            -f state=success \
+            -f context=verify \
+            -f description='full repository checks passed in upstream updater' \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           if gh pr view "$UPDATE_BRANCH" >/dev/null 2>&1; then
             gh pr edit "$UPDATE_BRANCH" --title 'chore(sources): review upstream baseline update' --body-file sources/upstream-update.md
           else
