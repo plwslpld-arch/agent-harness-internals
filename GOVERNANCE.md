@@ -4,8 +4,8 @@ The repository is maintainer-led. Changes are accepted on evidence quality,
 reproducibility, scope, licensing and long-term maintenance cost rather than
 vote count or upstream popularity.
 
-Maintainers may merge routine factual and automation changes after CI and one
-review. Architecture, security, legal-boundary, benchmark-methodology and
+Maintainers may merge routine factual and automation changes after required CI
+and maintainer review. Architecture, security, legal-boundary, benchmark-methodology and
 project-scope changes require explicit maintainer review. Scheduled automation
 can open pull requests but cannot approve or merge them.
 
