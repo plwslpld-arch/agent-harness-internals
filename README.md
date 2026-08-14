@@ -1,11 +1,53 @@
-# DeepSeek Harness Atlas
+<p align="center">
+  <img src="assets/deepseek-harness-atlas.svg" width="152" alt="DeepSeek Harness Atlas Logo">
+</p>
 
-面向产品经理、工程师和开源维护者的 DeepSeek Harness 中文深度研究库。
-它不复制一堆仓库后给出文件列表，而是把产品问题、系统架构、运行链路、
-源码文件、测试证据、设计决策和生态变化连接成一套可持续更新的学习系统。
+<h1 align="center">DeepSeek Harness Atlas</h1>
 
-> 当前状态：建设中。所有分析固定到 `sources/sources.lock.yml` 中的上游
-> Commit；“存在源码”不等于“默认启用”，“测试通过”也不等于真实业务闭环。
+<p align="center">
+  面向产品经理、工程师和开源维护者的 DeepSeek Harness 中文深度研究与学习库
+</p>
+
+<p align="center">
+  <a href="https://github.com/plwslpld-arch/deepseek-harness-atlas/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/plwslpld-arch/deepseek-harness-atlas?display_name=tag&sort=semver"></a>
+  <a href="https://github.com/plwslpld-arch/deepseek-harness-atlas/actions/workflows/verify.yml"><img alt="Verify" src="https://github.com/plwslpld-arch/deepseek-harness-atlas/actions/workflows/verify.yml/badge.svg?branch=main"></a>
+  <a href="https://github.com/plwslpld-arch/deepseek-harness-atlas/actions/workflows/upstream-update.yml"><img alt="Upstream update" src="https://img.shields.io/badge/upstream_check-every_6h-4D6BFE"></a>
+  <a href="LICENSE-CODE"><img alt="Code license MIT" src="https://img.shields.io/badge/code-MIT-2F855A"></a>
+  <a href="LICENSE-DOCS"><img alt="Docs license CC BY 4.0" src="https://img.shields.io/badge/docs-CC_BY_4.0-D97706"></a>
+</p>
+
+<p align="center">
+  <img alt="DeepSeek Harness" src="https://img.shields.io/badge/DeepSeek-Harness-4D6BFE">
+  <img alt="Cordis" src="https://img.shields.io/badge/runtime-Cordis-6366F1">
+  <img alt="Plugin system" src="https://img.shields.io/badge/focus-plugin_system-0891B2">
+  <img alt="Chinese documentation" src="https://img.shields.io/badge/language-中文-EA580C">
+</p>
+
+DeepSeek Harness Atlas 以固定版本的真实源码和可复现实验证据为基础，沿着
+“产品定位 → 系统架构 → 运行链路 → 关键源码 → 测试证据 → 设计决策 → 生态演进”
+组织内容。产品经理可以理解能力与成熟度，工程师可以追到具体文件和测试，维护者
+可以在上游变化后定位需要重新审核的结论。
+
+> 当前状态：`v0.1.0` 首个可用基线，持续维护中。所有分析固定到
+> [`sources/sources.lock.yml`](sources/sources.lock.yml) 中的上游 Commit；
+> “存在源码”不等于“默认启用”，“测试通过”也不等于真实业务闭环。
+
+## 当前进度与更新信息
+
+| 项目 | 当前状态 |
+| --- | --- |
+| Atlas 版本 | [`v0.1.0`](https://github.com/plwslpld-arch/deepseek-harness-atlas/releases/tag/v0.1.0)，发布于 2026-08-13 |
+| 人工研究文档 | 63 篇，均绑定一个或多个仓库、路径与 Commit |
+| 固定源码生态 | 15 个上游仓库，以 Git submodule 和锁文件共同固定 |
+| Harness 文件导航 | 7,412 张文件职责卡片，含符号、依赖与测试关系 |
+| 主分支质量门 | [`Verify`](https://github.com/plwslpld-arch/deepseek-harness-atlas/actions/workflows/verify.yml) 必须通过 |
+| 上游变化检查 | 每 6 小时运行；[查看最近扫描](https://github.com/plwslpld-arch/deepseek-harness-atlas/actions/workflows/upstream-update.yml) |
+| 待审核更新 | 自动化只创建 PR；[查看当前候选更新](https://github.com/plwslpld-arch/deepseek-harness-atlas/pulls?q=is%3Apr+is%3Aopen+head%3Aautomation%2Fupstream-sources) |
+| 版本记录 | [`CHANGELOG.md`](CHANGELOG.md) 与 [GitHub Releases](https://github.com/plwslpld-arch/deepseek-harness-atlas/releases) |
+
+桌面主目录与 GitHub 仓库一一对应：
+`DeepSeek-Harness-Ecosystem/DeepSeek-Harness-Atlas/`。其余同级编号目录是早期采集
+布局，不是维护入口；正式源码基线统一位于本仓库的 `sources/checkouts/`。
 
 ## 你能在这里学到什么
 
@@ -119,6 +161,8 @@ export DEEPSEEK_API_KEY="your-own-key"
 - Claude Agent SDK：受 Anthropic 商业条款约束，不随本仓库再分发。
 - Cordis 论文：上游仓库未提供明确再发布许可证，只做引用、释义和阅读笔记。
 - MCP SDK 等混合许可项目按文件和文档范围记录，不使用一个总许可证覆盖。
+- 项目 Logo 使用 DeepSeek Harness 上游 MIT 源码中的鱼形图标并加入 Atlas 罗盘
+  子标；仅用于说明研究对象，不表示 DeepSeek 官方认可或维护本项目。
 
 详见 [`THIRD_PARTY.md`](THIRD_PARTY.md)。
 
