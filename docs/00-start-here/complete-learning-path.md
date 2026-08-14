@@ -16,11 +16,15 @@ evidence: [code, test, runtime, official-doc, community, inference]
 
 | 范围 | 当前覆盖 | 入口 |
 | --- | --- | --- |
+| 非研发理解 | 用产品和组织类比解释 Harness、插件系统、证据边界和成熟度 | [`non-engineer-guide.md`](non-engineer-guide.md) |
+| 阶段学习清单 | 每个阶段读什么、做什么、验收标准是什么 | [`learning-workbook.md`](learning-workbook.md) |
 | 产品与成熟度 | 用户问题、能力边界、developer preview 风险、采用判断 | [`../01-product/`](../01-product/README.md) |
 | 系统架构 | Cordis、profile、agent loop、模型、工具、权限、session、Web、编排 | [`../02-system-architecture/`](../02-system-architecture/README.md) |
 | 插件系统 | Cordis 理论、fork 差异、插件生命周期、host/client、供应链 | [`../03-cordis-foundation/`](../03-cordis-foundation/README.md) |
 | 人工源码研究 | 7 条核心源码研究线，解释“为什么这样实现” | [`../13-source-studies/`](../13-source-studies/README.md) |
 | 逐文件源码入口 | 7,412 个 Harness 文件职责卡片；符号、依赖、测试、Agent notes 索引；附阅读方法 | [`../14-file-reference/source-reading-guide.md`](../14-file-reference/source-reading-guide.md) |
+| 代码块级解析 | 关键函数按“责任、正常路径、失败路径、边界”解释 | [`../14-file-reference/key-function-walkthroughs.md`](../14-file-reference/key-function-walkthroughs.md) |
+| 本地实验闭环 | 从个人 API key 到 headless 正向/负向实验和证据记录 | [`../15-labs-and-tutorials/local-first-run.md`](../15-labs-and-tutorials/local-first-run.md) |
 | 核心 runtime 修改能力 | 从定位改动点、读关键代码块、本地实验到安全修改 runtime 的训练路线 | [`core-runtime-contributor-path.md`](core-runtime-contributor-path.md) |
 | 协议与生态 | DSML、MCP、ACP、SDK JSON-RPC、E2B、参考 Agent、评测层 | [`../11-protocols-and-integrations/`](../11-protocols-and-integrations/README.md) |
 | 实验与评测 | 实验设计、benchmark 变量、失败分类、证据要求 | [`../19-benchmarks-and-evaluation/`](../19-benchmarks-and-evaluation/README.md) |
@@ -54,8 +58,10 @@ evidence: [code, test, runtime, official-doc, community, inference]
 ### 第 0 阶段：建立判断框架
 
 1. [`README.md`](../../README.md)：看项目定位、证据等级、当前结论。
-2. [`README.md`](README.md)：理解 Agent Harness、Evaluation Harness、模型和产品表面的区别。
-3. [`product-path.md`](product-path.md) 或 [`engineering-path.md`](engineering-path.md)：按你的角色选路线。
+2. [`non-engineer-guide.md`](non-engineer-guide.md)：先用非研发语言理解 Harness。
+3. [`learning-workbook.md`](learning-workbook.md)：确定每个阶段读什么、做什么。
+4. [`README.md`](README.md)：理解 Agent Harness、Evaluation Harness、模型和产品表面的区别。
+5. [`product-path.md`](product-path.md) 或 [`engineering-path.md`](engineering-path.md)：按你的角色选路线。
 
 目标：不要把源码存在、默认启用、产品可用、实验通过混成一个结论。
 
@@ -97,6 +103,7 @@ evidence: [code, test, runtime, official-doc, community, inference]
 5. [`../13-source-studies/security-and-orchestration-study.md`](../13-source-studies/security-and-orchestration-study.md)
 6. [`../13-source-studies/web-bridge-and-product-surface-study.md`](../13-source-studies/web-bridge-and-product-surface-study.md)
 7. [`../14-file-reference/generated/harness-file-cards.md`](../14-file-reference/generated/harness-file-cards.md)
+8. [`../14-file-reference/key-function-walkthroughs.md`](../14-file-reference/key-function-walkthroughs.md)
 
 目标：先理解关键子系统，再用文件卡片追到具体文件和测试。不要从 7,412 个文件卡片第一页开始硬读。
 
@@ -113,9 +120,10 @@ evidence: [code, test, runtime, official-doc, community, inference]
 ### 第 6 阶段：实验与维护
 
 1. [`../15-labs-and-tutorials/minimal-plugin-lab.md`](../15-labs-and-tutorials/minimal-plugin-lab.md)
-2. [`../15-labs-and-tutorials/experiment-protocol.md`](../15-labs-and-tutorials/experiment-protocol.md)
-3. [`../19-benchmarks-and-evaluation/benchmark-design.md`](../19-benchmarks-and-evaluation/benchmark-design.md)
-4. [`../18-maintainer-guide/upstream-and-license.md`](../18-maintainer-guide/upstream-and-license.md)
+2. [`../15-labs-and-tutorials/local-first-run.md`](../15-labs-and-tutorials/local-first-run.md)
+3. [`../15-labs-and-tutorials/experiment-protocol.md`](../15-labs-and-tutorials/experiment-protocol.md)
+4. [`../19-benchmarks-and-evaluation/benchmark-design.md`](../19-benchmarks-and-evaluation/benchmark-design.md)
+5. [`../18-maintainer-guide/upstream-and-license.md`](../18-maintainer-guide/upstream-and-license.md)
 
 目标：能自己新增一个插件/实验/版本更新，并知道需要哪些证据才能把结论写入 docs。
 

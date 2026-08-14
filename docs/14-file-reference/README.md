@@ -15,6 +15,7 @@ evidence: [code, official-doc, inference]
 - [`generated/harness-file-cards.md`](generated/harness-file-cards.md) 为 7,412 个 Harness 文件提供分类、职责、符号、依赖和测试摘要。
 - [`source-reading-guide.md`](source-reading-guide.md) 说明如何把文件卡片当作逐文件源码解析入口使用。
 - [`key-file-deep-dives.md`](key-file-deep-dives.md) 人工精读第一批 12 个核心文件，覆盖启动、插件、Agent Loop、模型、工具和 Session 主链路。
+- [`key-function-walkthroughs.md`](key-function-walkthroughs.md) 用代码块级解释讲清关键函数的责任、正常路径、失败路径和边界。
 - [`generated/coverage-report.md`](generated/coverage-report.md) 公开自动覆盖、直接测试映射和人工研究边界。
 - 人工源码分析属于 [`../13-source-studies/`](../13-source-studies/README.md)；生成任务绝不能覆盖它。
 - 索引命中只证明文本/符号存在，不证明默认挂载、运行成功、受支持产品面或当前有效决策。
