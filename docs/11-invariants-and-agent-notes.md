@@ -11,7 +11,7 @@ evidence: [code, official-doc]
 
 > 本文基线 `47f9438`。所有行号对应该 Commit。
 >
-> 这一篇讲的不是 agent 技术，是**这个仓库怎么让你相信它没坏**。据我所知，这套制度在同类开源项目里没有对手。
+> 这篇讲的不是 agent 技术，是 dsh 用什么办法保证自己没坏：每个包一个运行时不变量，每个非平凡改动一篇设计记录。
 
 ## 一、产品现象
 
@@ -24,7 +24,7 @@ evidence: [code, official-doc]
 | 一个包「没有不变量」也要写明理由 | 219 个 `invariant.ts`，一个不落 |
 | 同一类 bug 没有再犯 | 4 篇 postmortem 各自留下了守卫 |
 
-对贡献者来说更直接：**你没法悄悄改坏一件事，也没法悄悄不解释。**
+对贡献者来说更直接：你没法悄悄改坏一件事，也没法悄悄不解释。
 
 ## 二、源码路径
 
@@ -63,11 +63,11 @@ docs/postmortem/  4 篇（每篇 .md + .zh.md + .i18n.yaml）
 
 > **Every package owns `./invariant`.** Register the manifest name; check an event/data relation or give empty installers package-specific `No runtime invariant:` reasons. **Generated companions, unexplained empties, and ignored reporters fail `verify-package-invariants`.**
 
-**219 个包，219 个 `invariant.ts`，1:1 完全吻合。** 这个数字在文章 01 里核过。
+219 个包，219 个 `invariant.ts`，1:1 完全吻合。 这个数字在文章 01 里核过。
 
 ### 但 184 个是「带理由的空实现」
 
-这才是设计的精妙处。219 个里有 **184 个**包含 `No runtime invariant:`。 `evidence: code`
+注意这个比例：219 个里有 **184 个**包含 `No runtime invariant:`。 `evidence: code`
 
 只有约 35 个包有真正的运行时不变量。举个空实现的完整样子（`llm-deepseek/src/invariant.ts`，30 行）：
 
@@ -86,7 +86,7 @@ export const apply = (ctx: Context): Promise<() => void> =>
   Promise.resolve(ctx.invariants.register(PACKAGE_NAME, install))
 ```
 
-**空实现也要注册、也要写理由。** 这样「这个包没有不变量」是一个**被审查过的判断**，而不是「没人想过这件事」。
+空实现也要注册、也要写理由。 这样「这个包没有不变量」是一个**被审查过的判断**，而不是「没人想过这件事」。
 
 和文章 06 里 KV-cache 豁免包必须留审计理由、文章 05 里 `ignorable` 默认拒绝，是同一个思路的第三次出现：**缺失必须与遗忘可区分。**
 
@@ -102,7 +102,7 @@ export const apply = (ctx: Context): Promise<() => void> =>
 | 可变数据的关系 | 插件元数据或 effect |
 | — | 固定的纯函数样例 |
 
-这条界限解释了为什么 184 个是空的：**大多数包只是实现一个契约，不拥有跨事件的关系。** 拥有关系的那 35 个才需要在运行时断言。
+这条界限解释了为什么 184 个是空的：大多数包只是实现一个契约，不拥有跨事件的关系。 拥有关系的那 35 个才需要在运行时断言。
 
 ### 断言代码可以比实现还大
 
@@ -121,11 +121,11 @@ export const apply = (ctx: Context): Promise<() => void> =>
 | 112 | `llm/llm` |
 | 111 | `interaction/user-approval` |
 
-**`compaction/compaction` 的不变量 306 行，而它的服务实现 `index.ts` 只有 172 行。** 证明自己没坏的代码，比功能代码多了 78%。
+`compaction/compaction` 的不变量 306 行，而它的服务实现 `index.ts` 只有 172 行。 证明自己没坏的代码，比功能代码多了 78%。
 
 这不是浪费。回看文章 07：压缩要维护「锁配对」「被影节点全部举证」「surface 位置可能 start > end」「工具配对边界」四类关系——这些关系没法靠类型系统表达，只能在运行时断言。
 
-而 `invariants` 服务本身只有 **200 行**。**制度的成本在各个包里，不在框架里。**
+而 `invariants` 服务本身只有 **200 行**。制度的成本在各个包里，不在框架里。
 
 ### Agent Note：路径即状态
 
@@ -152,15 +152,15 @@ export const apply = (ctx: Context): Promise<() => void> =>
 
 > (`refactor` is deliberately absent — it overlaps `simplification`, whose discriminator, "does observable behavior change?", already covers it.)
 
-**`refactor` 被故意排除**，因为「可观察行为是否改变」这个判别标准已经能覆盖它。分类学上少一个含糊的桶，等于少一堆归类争论。
+`refactor` 被故意排除，因为「可观察行为是否改变」这个判别标准已经能覆盖它。分类学上少一个含糊的桶，等于少一堆归类争论。
 
-`architecture` 与 `process` 的分界也写明了：**architecture 关于我们发货的源码；process 关于围绕代码的工具与工作流。**
+`architecture` 与 `process` 的分界也写明了：architecture 关于我们发货的源码；process 关于围绕代码的工具与工作流。
 
 ### 没有中心索引，这是一个决策
 
 > Do not add a centralized `INDEX.md`; the no-index Agent Note (`.agents/notes/implemented/process/2026-07-19-remove-generated-agent-note-index.md`) owns the rationale.
 
-**「不要加索引」本身是一篇 Agent Note。** 活的 lifecycle 树就是工作清单，浏览文件夹或全仓搜索即可。
+「不要加索引」本身是一篇 Agent Note。 活的 lifecycle 树就是工作清单，浏览文件夹或全仓搜索即可。
 
 交叉引用有硬规定：
 
@@ -186,7 +186,7 @@ export const apply = (ctx: Context): Promise<() => void> =>
 >
 > Update factual realization in place. **A reversal of the decision or its rationale requires a new Agent Note and cross-link.**
 
-**事实可以就地改，决策不可以。** 改了主意就写新的 note 并交叉链接——历史决策的完整性被保护起来。
+事实可以就地改，决策不可以。 改了主意就写新的 note 并交叉链接——历史决策的完整性被保护起来。
 
 这也是为什么 `archived/` 是冻结的：「Archived notes are frozen: never edit or treat them as current authority.」
 
@@ -203,9 +203,9 @@ export const apply = (ctx: Context): Promise<() => void> =>
 
 1. **subtle** —— 机制不明显，一个细心的工程师会重新艰难推导一遍
 2. **systemic** —— 逃逸原因是测试/工具/约定的缺口，不是一次性笔误
-3. **costly to rediscover** —— 花过真实的调试时间，而且还会再花一次
+3. costly to rediscover —— 花过真实的调试时间，而且还会再花一次
 
-每篇必须以 **Executive summary** 开头：
+每篇必须以 Executive summary 开头：
 
 > one short paragraph a busy reader can absorb in **thirty seconds** — what broke, the root cause in plain terms, why it escaped, and the durable lesson
 
@@ -218,14 +218,14 @@ export const apply = (ctx: Context): Promise<() => void> =>
 | 0003 | Web agent 验证了一个替代 server，而不是承载其 session 的 GUI |
 | 0004 | Landlock 部分强制的 notice **误分类了子命令失败** |
 
-四篇的共同规律：**都是「看起来成功了」的失败。**
+四篇的共同规律：都是「看起来成功了」的失败。
 
 - 0001：插件加载了，但 namespace 被丢弃
 - 0002：配置解析通过了，但表达式没求值，工具静默消失
 - 0003：HTTP 200 拿到了，但不是用户那个 origin
 - 0004：sandbox 报告了 warning，但真实的子命令失败被合并掉了
 
-这也是为什么本仓库反复强调「四层证据阶梯」（文章 01）和「四种 ready」（文章 10）——**这四篇复盘就是那些区分被写进规矩的原因。**
+这也是为什么本仓库反复强调「四层证据阶梯」（文章 01）和「四种 ready」（文章 10）——这四篇复盘就是那些区分被写进规矩的原因。
 
 ## 四、约束与失效条件
 
@@ -240,7 +240,7 @@ export const apply = (ctx: Context): Promise<() => void> =>
 
 ### 空实现的理由必须是包特定的
 
-`verify-package-invariants` 会拒绝：**生成的伴生文件**、**没有解释的空实现**、**被忽略的 reporter**。
+`verify-package-invariants` 会拒绝：**生成的伴生文件**、**没有解释的空实现**、被忽略的 reporter。
 
 复制粘贴一句通用理由是过不了的——理由要说清**这个包**为什么没有拥有的关系。
 
@@ -255,7 +255,7 @@ export const apply = (ctx: Context): Promise<() => void> =>
 
 ### archived 不是当前权威
 
-「Archived notes are frozen: never edit or **treat them as current authority**.」
+「Archived notes are frozen: never edit or treat them as current authority.」
 
 引用一篇 archived note 来论证当前行为，是一个方法论错误——TUI 移除那个案例（文章 10）就是典型：archived note 描述了曾经的 TUI 能力，但当前能力以现行代码、bundle 和测试为准。
 
@@ -267,7 +267,7 @@ export const apply = (ctx: Context): Promise<() => void> =>
 - 每个非平凡改动多写一篇 note（上游 `AGENTS.md`：「Non-trivial changes MUST include an Agent Note in the same PR」）
 - 双语维护（每篇 note 有 `.md` + `.zh.md` + `.i18n.yaml` 三件套）
 
-**这是一个只有在项目预期长期演进、且贡献者会轮换时才划算的投资。** 一个三个月的原型项目上这套制度就是自残。
+这套投入只有在项目要长期演进、贡献者会换人的前提下才划算。一个三个月的原型项目照搬，多半只会拖慢自己。
 
 ## 五、可复核实验
 
@@ -290,7 +290,7 @@ find packages -path "*/src/invariant.ts" | xargs wc -l | sort -rn | sed -n '2,11
 wc -l packages/compaction/compaction/src/{invariant.ts,index.ts}
 ```
 
-**该得出**：断言代码 306 行 > 实现 172 行。回答：**为什么压缩这个能力需要这么多运行时断言？**（提示：回看文章 07 的四类关系。）
+**该得出**：断言代码 306 行 > 实现 172 行。回答：为什么压缩这个能力需要这么多运行时断言？（提示：回看文章 07 的四类关系。）
 
 ### 实验 2：读一个空实现和一个满实现（无需凭据）
 
@@ -300,7 +300,7 @@ cat packages/llm/llm-deepseek/src/invariant.ts       # 30 行,空实现
 head -60 packages/compaction/compaction/src/invariant.ts   # 306 行,满实现
 ```
 
-回答：**为什么 adapter 这种关键组件反而没有运行时不变量？**（提示：读根 `AGENTS.md` 关于「owned relationships」的那一段。）
+回答：为什么 adapter 这种关键组件反而没有运行时不变量？（提示：读根 `AGENTS.md` 关于「owned relationships」的那一段。）
 
 ### 实验 3：遍历 Agent Note 的分类分布（无需凭据）
 
@@ -316,7 +316,7 @@ for c in feature bug-fix simplification architecture process testing; do
 done
 ```
 
-然后挑一篇 `bug-fix` 类的读完（推荐文章 07 用的那篇），观察固定结构：**Problem / Decision / Alternatives considered / Consequences / Testing**。
+然后挑一篇 `bug-fix` 类的读完（推荐文章 07 用的那篇），观察固定结构：Problem / Decision / Alternatives considered / Consequences / Testing。
 
 ### 实验 4：读四篇复盘的 Executive summary（无需凭据）
 

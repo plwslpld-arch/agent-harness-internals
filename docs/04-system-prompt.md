@@ -13,9 +13,9 @@ evidence: [code, official-doc]
 
 ## 一、产品现象
 
-**「我想改一下它的语气／身份，去哪改？」**
+「我想改一下它的语气／身份，去哪改？」
 
-这个问题在 dsh 里没有单一答案，因为**不存在一个 `prompts.ts`**。模型每一步看到的内容是运行时组装出来的产物，由多个插件共同贡献。
+这个问题在 dsh 里没有单一答案，因为不存在一个 `prompts.ts`。模型每一步看到的内容是运行时组装出来的产物，由多个插件共同贡献。
 
 用户能观察到的对应现象：
 
@@ -73,7 +73,7 @@ packages/core/agent-loop/src/runtime-context.ts  76  运行时上下文
 
 每个方法都返回 disposer——这就是文章 02 说的「注册即 effect」。
 
-注意 `suppressRuntimeContext()` 的语义：**它关闭的是注入，不是删除提供上下文的服务**。`assemble()` 里的判断（`:469-470`）：
+注意 `suppressRuntimeContext()` 的语义：它关闭的是注入，不是删除提供上下文的服务。`assemble()` 里的判断（`:469-470`）：
 
 ```ts
 const runtimeContextSuppressed = !this.layers.global.runtimeContextSuppressors.isEmpty()
@@ -91,7 +91,7 @@ const runtimeContextSuppressed = !this.layers.global.runtimeContextSuppressors.i
 | **system 字符串** | `renderPrompt(assembly)`（`:212`） | 身份、persona、工具指导 |
 | **user-role runtime snapshot** | `renderContextSections` + `joinContextSections`（`:251`、`:236`） | 当前工作区、权限、环境、动态上下文 |
 
-**动态上下文走 user 角色而不是 system**，这一点很关键：它让「稳定的部分」和「每步都在变的部分」在请求里天然分开。这条设计和文章 06 的缓存纪律直接相关——system 槽是 provider 缓存的第一个 token 区域，把易变内容放进去会毁掉整个前缀。
+动态上下文走 user 角色而不是 system，这一点很关键：它让「稳定的部分」和「每步都在变的部分」在请求里天然分开。这条设计和文章 06 的缓存纪律直接相关——system 槽是 provider 缓存的第一个 token 区域，把易变内容放进去会毁掉整个前缀。
 
 ### persona 是一个可被同名遮蔽的 section
 
@@ -107,7 +107,7 @@ export const PERSONA_ORDER = 0
 
 > both sides naming the same section is what makes the replacement work rather than duplicate
 
-部署级 persona 通过 `Config.persona` 提供；某个作用域想换掉它，就注册一个**同名**的 `deployment:persona` section。**同名是「替换」而非「追加」的实现方式。** 名字不一致就会变成两段 persona 同时出现在 prompt 里。
+部署级 persona 通过 `Config.persona` 提供；某个作用域想换掉它，就注册一个**同名**的 `deployment:persona` section。同名是「替换」而非「追加」的实现方式。 名字不一致就会变成两段 persona 同时出现在 prompt 里。
 
 ### 严格插值：三条会让你意外的规则
 
@@ -115,9 +115,9 @@ export const PERSONA_ORDER = 0
 
 > Malformed, unknown, or undefined references throw; a lone `{{` without any later `}}` is literal prose, and **substituted values are not scanned again**.
 
-1. **格式错误、未知、值为 undefined 的引用一律抛错**，不是静默留下原文。写错一个变量名，启动就失败——比模型收到一段 `{{workspace_dir}}` 字面量好得多。
+1. 格式错误、未知、值为 undefined 的引用一律抛错，不是静默留下原文。写错一个变量名，启动就失败——比模型收到一段 `{{workspace_dir}}` 字面量好得多。
 2. 孤立的 `{{` 后面没有 `}}`，当作普通文本。
-3. **替换进去的值不会被二次扫描。**
+3. 替换进去的值不会被二次扫描。
 
 第 3 条是安全边界：如果一个变量的值来自工作区文件、环境变量或模型输出，而它里面恰好含 `{{...}}`，**不会**被再次展开。这挡住了一条通过变量值做 prompt 注入的路径。
 
@@ -135,7 +135,7 @@ export const PERSONA_ORDER = 0
 // Scope-chain variables, farthest first, so the nearest scope wins a name.
 ```
 
-产品含义：**agent preset 可以覆盖全局 persona，一个只影响某个子 Agent 的插件也能只改那个 Agent 的 prompt**，不会污染主会话。
+产品含义：agent preset 可以覆盖全局 persona，一个只影响某个子 Agent 的插件也能只改那个 Agent 的 prompt，不会污染主会话。
 
 ### assemble 是 waterfall，但有一个不可篡改的例外
 
@@ -150,7 +150,7 @@ export const PERSONA_ORDER = 0
 
 **这是一条权限边界。** 一个部署如果要求「这个 Agent 的 system prompt 就是这段，谁也别动」，用 complete section 表达；中间任何插件的 waterfall 改写都会被覆盖回去。
 
-另外这个 waterfall 是 **scope 过滤分发**的（`@deepseek-ai/dsh-scope`）：作用域监听器只收到该作用域的 assembly。还有一条：传入的 signal **只控制这一次显式组装请求，不得留存用于控制后续轮次**。
+另外这个 waterfall 是 **scope 过滤分发**的（`@deepseek-ai/dsh-scope`）：作用域监听器只收到该作用域的 assembly。还有一条：传入的 signal 只控制这一次显式组装请求，不得留存用于控制后续轮次。
 
 ### 工具顺序
 
@@ -177,7 +177,7 @@ export const PERSONA_ORDER = 0
 
 所以 `turn/start`、`step/start`、`assistant/chunk`、`request/header`、`request/context` 会留在账本里，**但不进模型消息列表**。
 
-**它们是证据，不是 transcript。** 这条区分是文章 05 的主题。
+它们是证据，不是 transcript。 这条区分是文章 05 的主题。
 
 ### 最后落成请求
 
@@ -190,7 +190,7 @@ session.append('request/context', { provider, model, contextWindow })
 request = { ...header.config, messages, system, tools, sessionId, signal }
 ```
 
-`request/header` 记 provider/model/system/tools/config，`request/context` 记 contextWindow。**任何一次请求都能从日志重建**——这是文章 01 那条不变量的落地点，也是文章 06 判断缓存命中的前提。
+`request/header` 记 provider/model/system/tools/config，`request/context` 记 contextWindow。任何一次请求都能从日志重建——这是文章 01 那条不变量的落地点，也是文章 06 判断缓存命中的前提。
 
 ## 四、约束与失效条件
 
@@ -209,15 +209,15 @@ request = { ...header.config, messages, system, tools, sessionId, signal }
 
 ### 三个易错点
 
-**Session event log 不是直接塞进模型的消息数组。** 想让模型看见新东西，必须先设计成 surface 事件，不能只往内存里塞。
+Session event log 不是直接塞进模型的消息数组。 想让模型看见新东西，必须先设计成 surface 事件，不能只往内存里塞。
 
-**历史 reasoning 不一定全部回传。** 不同 adapter 有不同协议要求，这条在文章 09 展开。
+历史 reasoning 不一定全部回传。 不同 adapter 有不同协议要求，这条在文章 09 展开。
 
-**prompt 变化会影响 benchmark 结果。** 比较两次评测时，只对齐模型名是不够的——prompt、工具集、工具顺序都是变量。
+prompt 变化会影响 benchmark 结果。 比较两次评测时，只对齐模型名是不够的——prompt、工具集、工具顺序都是变量。
 
 ### complete section 是覆盖，不是合并
 
-如果一个作用域注册了 complete section，**该作用域的所有其它 section 都不会出现**。想在 complete prompt 上追加内容，只能改那段 complete 文本本身，或者改用普通 section 组合。
+如果一个作用域注册了 complete section，该作用域的所有其它 section 都不会出现。想在 complete prompt 上追加内容，只能改那段 complete 文本本身，或者改用普通 section 组合。
 
 ### 变量抛错是特性，不是缺陷
 
@@ -234,7 +234,7 @@ sed -n '203,212p' packages/core/system-prompt/src/index.ts   # renderPrompt 的�
 sed -n '18,32p'   packages/core/system-prompt/src/index.ts   # assemble waterfall 契约
 ```
 
-回答：**为什么「替换进去的值不会被二次扫描」是一条安全规则？** 假设某个变量的值来自工作区里的一个文件。
+回答：为什么「替换进去的值不会被二次扫描」是一条安全规则？ 假设某个变量的值来自工作区里的一个文件。
 
 ### 实验 2：跑 system-prompt 的单元测试（无需凭据）
 

@@ -44,7 +44,7 @@ evidence: [code, official-doc, community]
 | **Agent Note** | 记录一个设计决策与被否决的替代方案；路径即状态（文章 11） |
 | **Postmortem** | 回溯一次失败：什么坏了、为什么每层防护都没拦住、加了什么守卫 |
 
-### ⚠️ 一处术语更正
+### 一处更正
 
 早期资料把 **Enforcement** 描述为「full / partial / unavailable 三态」。**这是不准确的。**
 
@@ -54,7 +54,7 @@ evidence: [code, official-doc, community]
 
 ## 二、证据分级
 
-本仓库每个结论至少标注一种证据。**已停用 `inference` 标签**——它曾出现在每一篇文档里，零区分度；属于推断的句子直接在正文写明。
+本仓库每个结论至少标注一种证据。已停用 `inference` 标签——它曾出现在每一篇文档里，零区分度；属于推断的句子直接在正文写明。
 
 | 标签 | 能支持 | **不能**单独支持 |
 | --- | --- | --- |
@@ -71,8 +71,8 @@ evidence: [code, official-doc, community]
 ### 三条边界
 
 1. **源码存在 ≠ 默认启用**
-2. **测试通过 ≠ 真实业务闭环**
-3. **UI 可见 ≠ 副作用已隔离**
+2. 测试通过 ≠ 真实业务闭环
+3. UI 可见 ≠ 副作用已隔离
 
 ## 三、Benchmark 设计
 
@@ -93,7 +93,7 @@ evidence: [code, official-doc, community]
 
 代码任务要同时覆盖：小修、跨文件、调试、长上下文、工具失败、**需要拒绝的危险指令**。
 
-对 Terminal-Bench、SWE-bench 这类公共集，**记录具体版本、容器/镜像、patch 和排除项**——不要只写集合名字。
+对 Terminal-Bench、SWE-bench 这类公共集，记录具体版本、容器/镜像、patch 和排除项——不要只写集合名字。
 
 ### 实验矩阵：每个 cell 固定 13 项
 
@@ -111,7 +111,7 @@ model + endpoint + adapter + Harness SHA/package + profile + prompt
 
 - task success / pass@1；多采样时写明 pass@k 与总预算
 - 正确性子分：测试、静态规则、diff 约束、人工盲审
-- **unsafe success：通过了任务但违反权限/数据/副作用约束，必须判失败**
+- unsafe success：通过了任务但违反权限/数据/副作用约束，必须判失败
 
 **效率**
 
@@ -125,7 +125,7 @@ model + endpoint + adapter + Harness SHA/package + profile + prompt
 
 - provider 429/5xx/timeout、重试与最终恢复
 - MCP/ACP/SDK protocol failure、工具/runner/scorer failure
-- **基础设施失败只做附加分类，不能把样本从分母里静默移除**
+- 基础设施失败只做附加分类，不能把样本从分母里静默移除
 - 取消延迟、孤儿进程/会话、持久化恢复
 - 危险动作召回率、误拒率、越权成功率、secret exfiltration
 - sandbox enforcement 的 full / partial 分布
@@ -134,7 +134,7 @@ model + endpoint + adapter + Harness SHA/package + profile + prompt
 
 超时、取消、基础设施失败、scorer failure **都必须留在总表**，按预注册规则进入不同分母。
 
-每任务多次 run 报 bootstrap 或合适的置信区间，**公开 task-level 分布**——平均值会掩盖长尾。
+每任务多次 run 报 bootstrap 或合适的置信区间，公开 task-level 分布——平均值会掩盖长尾。
 
 成本与成功率画 **Pareto**，不要只选最高分。
 
@@ -142,13 +142,13 @@ model + endpoint + adapter + Harness SHA/package + profile + prompt
 
 随机抽样成功和失败的轨迹，检查五件事：任务是否被真正完成、工具结果是否**伪成功**、是否借助未声明状态、是否有危险副作用、评分器是否漏判。
 
-**模型最终自述不作为成功证据。**
+模型最终自述不作为成功证据。
 
 ### 公布结果的十项必含
 
 日期、全部版本、运行次数、预算、排除项、失败 taxonomy、置信区间、成本、已知局限、可下载的脱敏 manifest 与 score。
 
-标题写「**模型 X + Harness 配置 Y 在任务集 Z**」，不要缩写成「模型 X 得分」。
+标题写「模型 X + Harness 配置 Y 在任务集 Z」，不要缩写成「模型 X 得分」。
 
 ### 最小评测门禁（七条）
 
@@ -177,16 +177,16 @@ deepseek-harness  47f943859bef60e4160492346772ded9b24f765a
 1. 每 6 小时的 CI 解析上游 HEAD，生成差异报告
 2. `sources.lock.yml` 变化时，刷新 checkout 与许可证
 3. 重新生成源码索引（发布到 `gh-pages`）
-4. **把受影响文档的 frontmatter `status` 改为 `stale`**，并写入 `sources/stale-documents.md`
+4. 把受影响文档的 frontmatter `status` 改为 `stale`，并写入 `sources/stale-documents.md`
 5. 创建**只读审查用**的候选 PR
 6. **人工复核语义变化**——机器人不改架构结论
 7. 合并后基线前移，`stale` 文档逐篇重新审核
 
-**原则：上游变更只能先生成差异和「待复核」提示，不能自动改写结论。**
+原则：上游变更只能先生成差异和「待复核」提示，不能自动改写结论。
 
 ### Cordis fork 的特殊维护
 
-不能直接复制上游目录。先读上游 `vendor/README.md` 的 Local modifications 清单，**逐项决定重放、改写、退役还是拒绝**，然后重跑 `pnpm run test && pnpm run build`（文章 02 的 18 类差异）。
+不能直接复制上游目录。先读上游 `vendor/README.md` 的 Local modifications 清单，逐项决定重放、改写、退役还是拒绝，然后重跑 `pnpm run test && pnpm run build`（文章 02 的 18 类差异）。
 
 ### 本仓库自身的门禁
 
@@ -239,7 +239,7 @@ confidence: <高 / 中 / 低>
 notes: <备注>
 ```
 
-**「未找到对应实现」是一个合法结论**，要写成「在 SHA X 下未找到对应实现」，而不是「论文说的是假的」。
+「未找到对应实现」是一个合法结论，要写成「在 SHA X 下未找到对应实现」，而不是「论文说的是假的」。
 
 对照步骤：
 
@@ -260,4 +260,4 @@ notes: <备注>
 | 新增包的规范 | 上游 `docs/cookbook/adding-a-package.md` |
 | 全量文件/符号索引 | 本仓库 `gh-pages` 分支 |
 
-**时间敏感来源（社区讨论、社交媒体、可用性状态）必须附 capture time。** 例如「turtle-ui 地址返回 repository not found」这个结论，捕获时间是 2026-08-13——它证明当时不可用，不证明永远不可用。
+时间敏感来源（社区讨论、社交媒体、可用性状态）必须附 capture time。 例如「turtle-ui 地址返回 repository not found」这个结论，捕获时间是 2026-08-13——它证明当时不可用，不证明永远不可用。

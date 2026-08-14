@@ -13,7 +13,7 @@ evidence: [code, test, official-doc]
 
 ## 一、产品现象
 
-**「兼容 OpenAI 格式」不等于行为相同。**
+「兼容 OpenAI 格式」不等于行为相同。
 
 | 现象 | 背后是什么 |
 | --- | --- |
@@ -22,7 +22,7 @@ evidence: [code, test, official-doc]
 | 网络抖动后模型给了个「看起来完整」的回答 | 流被截断但没有 `[DONE]` —— 这次调用不可信 |
 | 成本统计比账单高 | reasoning token 被重复计入了 |
 
-这一层的价值不在「能请求一个 OpenAI 兼容端点」，而在**正确保留 thinking / tool / cache / error 四类语义**。
+这一层的价值不在「能请求一个 OpenAI 兼容端点」，而在正确保留 thinking / tool / cache / error 四类语义。
 
 ## 二、源码路径
 
@@ -66,21 +66,21 @@ tests/  serialize / sse / translate / adapter / dynamic-config /
 const PROVIDER = 'deepseek-official'
 ```
 
-**它与 pi-ai catalog 里的 `deepseek` 是两条不同的 route。** 换句话说，同一个模型可以经由两条路径访问，而它们的协议保真度不同。做 A/B 对照时如果没固定 route，比较的就不是同一件事。
+它与 pi-ai catalog 里的 `deepseek` 是两条不同的 route。 换句话说，同一个模型可以经由两条路径访问，而它们的协议保真度不同。做 A/B 对照时如果没固定 route，比较的就不是同一件事。
 
-凭据默认从 `DEEPSEEK_API_KEY` 读（`:45`），走 credentials seam；**错误信息只点出入口名，不回显值**（`:242` 的报错文本是「no API key for provider route ... store `<ref>` through the credentials」）。
+凭据默认从 `DEEPSEEK_API_KEY` 读（`:45`），走 credentials seam；错误信息只点出入口名，不回显值（`:242` 的报错文本是「no API key for provider route ... store `<ref>` through the credentials」）。
 
 每次请求**重新解析** endpoint / settings / credential，但进行中的 stream 固定使用启动时的快照——改配置不会把一个跑到一半的流切到别的端点。
 
 ### 序列化：两处与 OpenAI 形状的实质差异
 
-**差异一：tool result 的位置。**
+差异一：tool result 的位置。
 
 Harness 内部把工具结果放在 user 消息里的 `tool-result` block；DeepSeek wire 要求转成独立的 `{ role: 'tool' }` 消息（`serialize.ts:106-133`）。 `evidence: code`
 
-这不是格式细节。它意味着**内部表示和 wire 表示是两套结构**，任何「直接把内部历史 JSON 透传给兼容端点」的做法都会错。
+这不是格式细节。它意味着内部表示和 wire 表示是两套结构，任何「直接把内部历史 JSON 透传给兼容端点」的做法都会错。
 
-**差异二：`reasoning_content` 的回传规则。**
+差异二：`reasoning_content` 的回传规则。
 
 `serialize.ts:96-99`，注释直接引了官方指南： `evidence: code`
 
@@ -89,7 +89,7 @@ Harness 内部把工具结果放在 user 消息里的 `tool-result` block；Deep
 ...toolCalls.length > 0 && reasoning.length > 0 ? { reasoning_content: reasoning } : {},
 ```
 
-**只有带 tool call 的历史 assistant turn 才回传它的 `reasoning_content`；没有 tool call 的旧 reasoning 一律省略。**
+只有带 tool call 的历史 assistant turn 才回传它的 `reasoning_content`；没有 tool call 的旧 reasoning 一律省略。
 
 两个作用：满足工具往返的协议要求；避免无效历史膨胀——而历史膨胀直接影响文章 06 的缓存与成本。
 
@@ -98,21 +98,21 @@ Harness 内部把工具结果放在 user 消息里的 `tool-result` block；Deep
 - 空 content 是 `""` 而不是 `null`
 - 并行 tool delta 按 **wire index** 组装
 - wire 用 `max_tokens`（`:184`）
-- **没有映射 `tool_choice`** —— 这个字段在共享核心词汇里不存在
+- 没有映射 `tool_choice` —— 这个字段在共享核心词汇里不存在
 
 ### SSE：严格到「未终止的尾巴是截断」
 
-`sse.ts` 全文只有 40 行，但模块注释信息密度很高： `evidence: code`
+`sse.ts` 全文只有 40 行，模块注释里写了三条契约： `evidence: code`
 
 > Framing is **spec-strict**: an event dispatches only on its blank-line terminator, so **an unterminated tail at EOF is truncation, not a flushable payload**.
 
 三条契约：
 
-1. **`[DONE]` 被原样 yield 出来**，由调用方负责最终 flush——协议边界不藏在解析器里
-2. **EOF 前没有 `[DONE]` → 抛 `LlmError('STREAM_CLOSED')`**，注释写明理由：*truncated response — the model call cannot be trusted*
-3. **SSE comment 只走 transport-activity 回调**，永远不进入 payload 流
+1. `[DONE]` 被原样 yield 出来，由调用方负责最终 flush——协议边界不藏在解析器里
+2. EOF 前没有 `[DONE]` → 抛 `LlmError('STREAM_CLOSED')`，注释写明理由：*truncated response — the model call cannot be trusted*
+3. SSE comment 只走 transport-activity 回调，永远不进入 payload 流
 
-第 2 条是这一层最重要的安全性质：**网络中断产生的半截回答不会被当成一个短回答接受。** 很多客户端在这里会静默返回已收到的部分。
+第 2 条是这一层最重要的安全性质：网络中断产生的半截回答不会被当成一个短回答接受。 很多客户端在这里会静默返回已收到的部分。
 
 第 3 条对应文章 04 提到的空闲超时：comment 算传输活动（说明连接还活着），但不算模型产出。
 
@@ -130,7 +130,7 @@ Harness 内部把工具结果放在 user 消息里的 `tool-result` block；Deep
 | finish 与 usage 都延迟到 `[DONE]` | usage 可能挂在 finish chunk 上，也可能是尾随的 usage-only chunk，两种形状都要兼容 |
 | 保证 `finish` 之后没有任何 chunk | 下游 `BlockAssembler` 可以把 finish 当作终止信号 |
 
-还有一个降级处理（`:110-115`）：**`stop` 结束但一个 block 都没开过**，映射成 `EMPTY_RESPONSE` 错误 finish，而不是一个成功的空消息。
+还有一个降级处理（`:110-115`）：`stop` 结束但一个 block 都没开过，映射成 `EMPTY_RESPONSE` 错误 finish，而不是一个成功的空消息。
 
 ### usage：重叠计数换成不相交计数
 
@@ -143,7 +143,7 @@ inputTokens: usage.prompt_tokens - (cacheRead ?? 0)
 - DeepSeek 的 `prompt_tokens` **包含** cache hit
 - 内部 `TokenUsage` 约定是**不相交**计数
 - 优先读 `prompt_tokens_details.cached_tokens`，回退 `prompt_cache_hit_tokens`
-- **`reasoningTokens` 已含在 `outputTokens` 里，汇总不能重复相加**
+- `reasoningTokens` 已含在 `outputTokens` 里，汇总不能重复相加
 
 ### 错误分类
 
@@ -157,13 +157,13 @@ inputTokens: usage.prompt_tokens - (cacheRead ?? 0)
 | 400（其它） | `INVALID_REQUEST` |
 | ≥ 500 | `SERVER` |
 
-400 那一行的双层判断值得注意：**上下文溢出在 HTTP 层和普通参数错误长得一样**，必须看响应内容才能区分。归一成稳定错误码之后，上层（压缩、重试）就不用去解析 provider 的文案了——这是文章 07 里「溢出触发更激进压缩」的前提。
+400 那一行的双层判断值得注意：上下文溢出在 HTTP 层和普通参数错误长得一样，必须看响应内容才能区分。归一成稳定错误码之后，上层（压缩、重试）就不用去解析 provider 的文案了——这是文章 07 里「溢出触发更激进压缩」的前提。
 
 完整的错误语义还包括：quota、transport、abort、idle timeout、malformed、缺 `[DONE]`、empty response、unknown finish，各自不同。
 
 ### 重试不在传输层
 
-**adapter 一次 `stream()` 只发一个 provider 请求。** retry policy 由独立的 `llm-retry` 插件在**持久 agent-step 边界**执行。
+adapter 一次 `stream()` 只发一个 provider 请求。 retry policy 由独立的 `llm-retry` 插件在持久 agent-step 边界执行。
 
 这条边界的意义：重试不会隐蔽地发生在传输层。每一次重试都是日志里可见的一个新 step，可以被计费、被审计、被观察。代价是每次 retry 是否重复计费和产生副作用，需要按运行轨迹验证。
 
@@ -191,7 +191,7 @@ V4 模型仓库里的 `encoding_dsv4.py` 是**本地模型**的 prompt / parse �
 
 比较两个 adapter 或两个模型时，必须固定：工具集、system prompt、历史、retry 策略、预算。
 
-并且**单独报告 adapter 协议失败**，不能算进模型能力——`STREAM_CLOSED` 是网络问题，不是模型不会做。
+并且单独报告 adapter 协议失败，不能算进模型能力——`STREAM_CLOSED` 是网络问题，不是模型不会做。
 
 ### 通用 OpenAI 兼容 ≠ 语义等价
 
@@ -210,7 +210,7 @@ sed -n '104,140p' packages/llm/llm-deepseek/src/serialize.ts  # tool result → 
 cat packages/llm/llm-deepseek/src/sse.ts                       # 全文 40 行
 ```
 
-回答：**为什么「EOF 前没有 `[DONE]`」必须抛错，而不是把已收到的内容当作一个短回答返回？**
+回答：为什么「EOF 前没有 `[DONE]`」必须抛错，而不是把已收到的内容当作一个短回答返回？
 
 ### 实验 2：跑 adapter 的无凭据测试（无需凭据）
 

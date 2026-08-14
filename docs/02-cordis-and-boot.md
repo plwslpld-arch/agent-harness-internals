@@ -81,7 +81,7 @@ vendor/logger-console/  日志
 const self = new Proxy<this>(this, ReflectService.handler)
 ```
 
-**普通属性读取会被转发到服务解析器。** 所以插件写 `ctx.tools`、`ctx.llm`、`ctx.sessions` 时，并不是在读一个字段，而是在向当前作用域查询一个服务。这就是为什么插件之间**靠标识符发现能力，不靠 import**。
+普通属性读取会被转发到服务解析器。 所以插件写 `ctx.tools`、`ctx.llm`、`ctx.sessions` 时，并不是在读一个字段，而是在向当前作用域查询一个服务。这就是为什么插件之间靠标识符发现能力，不靠 import。
 
 三个派生方法都返回子上下文，且**都不修改父级**：
 
@@ -136,7 +136,7 @@ stateDiagram-v2
 
 初始状态在 `:194`：`public state = FiberState.PENDING`。状态迁移会发出 `internal/status` 事件。
 
-**注意 `LOADING` 和 `FAILED` 这两态。** 一个插件「装了但没生效」，可能停在 `PENDING`（依赖没满足），也可能是 `FAILED`（起来时抛了）。这两种情况的排查方向完全不同，而在 `dump-config` 的输出里它们看起来一模一样。
+注意 `LOADING` 和 `FAILED` 这两态。 一个插件「装了但没生效」，可能停在 `PENDING`（依赖没满足），也可能是 `FAILED`（起来时抛了）。这两种情况的排查方向完全不同，而在 `dump-config` 的输出里它们看起来一模一样。
 
 `fiber.ts:172` 还有一条约束：`'cannot create effect on inactive context'`——非活跃上下文上不能创建 effect。
 
@@ -150,13 +150,13 @@ effect(execute: () => Effect, label?: string): AsyncDisposable<Promise<void>>
 effect(execute: () => Effect, label = 'anonymous'): any
 ```
 
-同步和异步两种签名，都返回 disposable。`label` 默认 `'anonymous'`——**给 effect 起名字，排查残留时会省很多事**。
+同步和异步两种签名，都返回 disposable。`label` 默认 `'anonymous'`——给 effect 起名字，排查残留时会省很多事。
 
 上游 `AGENTS.md` 把这条写成硬约定：
 
 > **Registrations are effects**: every contribution goes through `ctx.effect()` / `ctx.on()`; a registry's `register()` returns the disposer.
 
-这就是「一切皆插件」能成立的原因：热插拔不靠约定，靠**每个副作用都携带它的逆操作**。
+这就是「一切皆插件」能成立的原因：热插拔不靠约定，靠每个副作用都携带它的逆操作。
 
 ### 事件分发有五种模式，不是四种
 
@@ -176,7 +176,7 @@ export type DispatchMode = 'emit' | 'parallel' | 'serial' | 'bail' | 'waterfall'
 | `bail` | 短路式分发 |
 | `waterfall` | 环绕中间件，签名 `(...args, next)` |
 
-**`waterfall` 是 dsh 所有拦截点的统一形状。** 上游规定：waterfall 监听器**必须调 `next()`** 才能委托下游，不调就是短路整条链。`agent/pre-step`、`agent/request`、`llm/stream`、`tools/*` 全是 waterfall。
+`waterfall` 是 dsh 所有拦截点的统一形状。 上游规定：waterfall 监听器**必须调 `next()`** 才能委托下游，不调就是短路整条链。`agent/pre-step`、`agent/request`、`llm/stream`、`tools/*` 全是 waterfall。
 
 ### 启动：根配置是一个空列表
 
@@ -189,7 +189,7 @@ export type DispatchMode = 'emit' | 'parallel' | 'serial' | 'bail' | 'waterfall'
 []
 ```
 
-**每个 profile 的根配置是 `[]`。** 整棵插件树完全由补丁叠加而成，顺序是：
+每个 profile 的根配置是 `[]`。 整棵插件树完全由补丁叠加而成，顺序是：
 
 ```
 package.json 的 dsh.profile.bundles 里每个 bundle 的 patch
@@ -200,13 +200,13 @@ package.json 的 dsh.profile.bundles 里每个 bundle 的 patch
 
 这解释了文章 01 里那个 9 行的 `bundle/base/src/index.ts`：装配层没有代码，因为装配就是往空列表上打补丁。
 
-也解释了一个常见误判：**「YAML 里排在前面所以先启动」是错的**。YAML 顺序只决定补丁应用顺序，激活顺序由依赖满足关系决定。
+也解释了一个常见误判：「YAML 里排在前面所以先启动」是错的。YAML 顺序只决定补丁应用顺序，激活顺序由依赖满足关系决定。
 
 ### 环境变量分层，以及被拒绝的那一类
 
 `loadLayeredEnv()` 在 `app-boot/src/index.ts:177`，语义在 `:168-175` 的文档注释里： `evidence: code`
 
-- 三层：**inherited 进程环境** > **project `.env`**（调用目录）> **user `.env`**（`$DSH_HOME`）
+- 三层：inherited 进程环境 > project `.env`（调用目录）> **user `.env`**（`$DSH_HOME`）
 - **两个文件都先解析完再应用**——「一个被拒绝时不能留下另一个已应用」
 - 已接受的值**不覆盖**继承来的值
 - 快照记录每个值来自哪一层
@@ -223,13 +223,13 @@ package.json 的 dsh.profile.bundles 里每个 bundle 的 patch
 前缀:                DSH_  XDG_  DYLD_  BASH_FUNC_
 ```
 
-**这回答了「`DEEPSEEK_API_KEY` 和 `DEEPSEEK_BASE_URL` 风险为什么不同」**：两者都不在 bootstrap-only 名单里，都可以来自 `.env`。但 `DEEPSEEK_BASE_URL` 改变请求的去向——它决定你的 prompt 发给谁。名单拦住的是能改变**进程启动方式**的变量（`LD_PRELOAD` 能注入动态库、`GIT_SSH_COMMAND` 能换掉 git 的传输命令），一个仓库里的 `.env` 不该有这种权力。
+这回答了「`DEEPSEEK_API_KEY` 和 `DEEPSEEK_BASE_URL` 风险为什么不同」：两者都不在 bootstrap-only 名单里，都可以来自 `.env`。但 `DEEPSEEK_BASE_URL` 改变请求的去向——它决定你的 prompt 发给谁。名单拦住的是能改变**进程启动方式**的变量（`LD_PRELOAD` 能注入动态库、`GIT_SSH_COMMAND` 能换掉 git 的传输命令），一个仓库里的 `.env` 不该有这种权力。
 
 ### Loader：从配置到实例
 
 `vendor/loader/src/index.ts:65`：`export class Loader extends EntryTree`。Loader 把 entry tree 变成真实插件实例：读 entry → import 插件模块 → 为 entry 建 fiber → 应用插件 → 跟踪 entry 状态 → 配置变化时卸载或重载。
 
-所以**「功能存在」和「功能已挂载」是两件事**，这正是文章 01 那个四层证据阶梯的第 1 层和第 2 层。
+所以「功能存在」和「功能已挂载」是两件事，这正是文章 01 那个四层证据阶梯的第 1 层和第 2 层。
 
 ### 论文层：时空可组合性
 
@@ -248,7 +248,7 @@ Cordis 的设计写在《A Programming Paradigm for Spatiotemporal Composability
 
 ### dispose 是正确性问题，不是清洁度问题
 
-如果 dispose 只发出停止请求而不等资源停稳，**新旧实例会同时持有端口、文件 watcher 或后台任务**。上游防御模式要求 dispose 达到完全停稳。 `evidence: official-doc`
+如果 dispose 只发出停止请求而不等资源停稳，新旧实例会同时持有端口、文件 watcher 或后台任务。上游防御模式要求 dispose 达到完全停稳。 `evidence: official-doc`
 
 检查一个插件时固定问四句：
 
@@ -263,7 +263,7 @@ Cordis 的设计写在《A Programming Paradigm for Spatiotemporal Composability
 
 - HMR 移除对 YAML runtime hook 的依赖
 - fiber 的 reentrant disposal / 生命周期加固
-- Loader/Include 的**事务式配置 reconciliation 与 rollback**
+- Loader/Include 的事务式配置 reconciliation 与 rollback
 - 精确的 config HMR watcher、序列化刷新与失败事件
 - Include 子节点变更的串行化与 HMR 初次扫描抑制（避免交错与死锁）
 - 配置写入队列、Windows rename 重试、teardown drain
@@ -271,9 +271,9 @@ Cordis 的设计写在《A Programming Paradigm for Spatiotemporal Composability
 - entry `disabled` 的唯一 metadata interpolation 规则
 - 全部包 rescope 到 `@deepseek-ai`
 
-**这是一份升级清单，不是一次性背景。** 同步上游时必须逐项重放、改写、退役或证明不再需要，不能覆盖目录后只跑一遍编译。
+这是一份升级清单，不是一次性背景。 同步上游时必须逐项重放、改写、退役或证明不再需要，不能覆盖目录后只跑一遍编译。
 
-这也直接影响第三方插件：只要插件 `import` 了上游的 `cordis`、依赖未 rescope 的名称、假定上游的 interpolation 规则，或绕过 dsh 的 tools/session seam，**即使 TypeScript 编译通过，运行时也可能不兼容**。
+这也直接影响第三方插件：只要插件 `import` 了上游的 `cordis`、依赖未 rescope 的名称、假定上游的 interpolation 规则，或绕过 dsh 的 tools/session seam，即使 TypeScript 编译通过，运行时也可能不兼容。
 
 ### 三个典型误判
 
@@ -304,7 +304,7 @@ wc -l vendor/cordis/src/*.ts | tail -1     # 期望 2693
 sed -n '/## Local modifications/,/^## /p' vendor/README.md
 ```
 
-读完本地修改清单，回答：**如果上游 cordis 发了新版本，这 18 类里哪些必须重放？**
+读完本地修改清单，回答：如果上游 cordis 发了新版本，这 18 类里哪些必须重放？
 
 ### 实验 2：证明根配置是空列表（无需凭据）
 

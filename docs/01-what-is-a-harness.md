@@ -15,7 +15,7 @@ evidence: [code, test, official-doc, community]
 
 同一个模型，接在不同的 agent 工具上，完成任务的能力差距很大。这个差距不来自模型权重，来自模型外面那一层：谁给它拼上下文、谁决定它能调什么工具、谁在它想删文件时拦一下、谁记住上一轮发生过什么。
 
-这一层就是 **agent harness**。
+这一层就是 agent harness。
 
 具体到用户能观察到的现象：
 
@@ -29,7 +29,7 @@ evidence: [code, test, official-doc, community]
 
 DeepSeek Harness（下称 dsh）是 DeepSeek 在 2026-08-13 以 MIT 协议开源的 agent harness，首个版本 v0.1，官方明确标注为 developer preview。 `evidence: official-doc`
 
-它的差异点不是「又包了一层模型 API」，而是**连 agent loop 本身都是可替换插件**。
+它的差异点不是「又包了一层模型 API」，而是连 agent loop 本身都是可替换插件。
 
 ## 二、源码路径
 
@@ -48,9 +48,9 @@ docs/                上游自带文档（54,584 行，中英双语）
 .agents/notes/       设计决策记录（implemented 507 篇）
 ```
 
-**219 这个数字要说清楚。** 它是 `pnpm-workspace.yaml` 里 `packages/*/*` 这一条 glob 匹配到的包数。 `evidence: code` 全仓 `package.json` 共 248 个，把 `apps/`、`vendor/`、`native/`、`website`、`examples` 都算进去；`packages/` 目录下则是 226 个，多出的 7 个嵌在更深层级。
+219 这个数字要说清楚。 它是 `pnpm-workspace.yaml` 里 `packages/*/*` 这一条 glob 匹配到的包数。 `evidence: code` 全仓 `package.json` 共 248 个，把 `apps/`、`vendor/`、`native/`、`website`、`examples` 都算进去；`packages/` 目录下则是 226 个，多出的 7 个嵌在更深层级。
 
-引用这个数字时要小心：**219 是官方 monorepo 的内部模块单元，不是 219 个社区插件。** `evidence: code` 内部模块化程度和外部生态成熟度是两件事。
+引用这个数字时要小心：219 是官方 monorepo 的内部模块单元，不是 219 个社区插件。 `evidence: code` 内部模块化程度和外部生态成熟度是两件事。
 
 ### 关键行号锚点
 
@@ -83,7 +83,7 @@ docs/                上游自带文档（54,584 行，中英双语）
 export {}
 ```
 
-没有运行时代码。**整个 dsh 的核心装配是一份 YAML 补丁**，`export {}` 只是为了让它成为一个合法的 ES 模块。
+没有运行时代码。整个 dsh 的核心装配是一份 YAML 补丁，`export {}` 只是为了让它成为一个合法的 ES 模块。
 
 这不是偷懒，是「一切皆插件」的直接后果：装配层不该有逻辑，它只该声明装什么。三个标准 bundle 的体量对比也说明问题——`base` 9 行、`headless` 150 行、`web-app` 185 行。 `evidence: code` 后两者之所以有代码，是因为它们各自还要驱动一个真实的产品表面（一次性跑完退出 / 起 HTTP 服务），而不是因为装配复杂。
 
@@ -149,7 +149,7 @@ sequenceDiagram
 const lastTurn = session.events.findLast(event => event.type === 'turn/start')?.data.turn ?? 0
 ```
 
-**turn 计数不存在内存里，是从事件日志倒着找出来的。** `evidence: code` 这正是下一条不变量的具体体现。
+turn 计数不存在内存里，是从事件日志倒着找出来的。 `evidence: code` 这正是下一条不变量的具体体现。
 
 ### 不变量：模型可见 ⟺ 已记录
 
@@ -157,7 +157,7 @@ const lastTurn = session.events.findLast(event => event.type === 'turn/start')?.
 
 > anything that reaches a model request must be reconstructable from the session log; a new model-visible input requires a session event.
 
-`docs/architecture.md:96` 补充了执行方式：这条不变量由运行时 invariant 断言，所以**新增一种模型可见的输入，必须同时扩展 `SessionEventMap` 并从日志渲染**，不能只塞进内存变量。 `evidence: official-doc`
+`docs/architecture.md:96` 补充了执行方式：这条不变量由运行时 invariant 断言，所以新增一种模型可见的输入，必须同时扩展 `SessionEventMap` 并从日志渲染，不能只塞进内存变量。 `evidence: official-doc`
 
 这条约束的价值在恢复和复现：任何时刻都能从日志重建出模型当时看到的完整输入。代价是每一个想让模型看见的东西都得先设计成事件。
 
@@ -165,15 +165,15 @@ const lastTurn = session.events.findLast(event => event.type === 'turn/start')?.
 
 dsh 把可替换能力组织成 **seam**，一个完整 seam 含三个角色： `evidence: official-doc`
 
-- **Service Definition** —— 接口
-- **Service Provider** —— 实现
+- Service Definition —— 接口
+- Service Provider —— 实现
 - **Consumer** —— 使用者，通常是面向模型的工具
 
 文件系统抽象只有配上具体 provider 和面向模型的工具，才形成可用能力。
 
 这个结构的实际收益：把 filesystem 和 process 两个 provider 同时指向远程沙箱，Bash、PTY、LSP 会**一起**搬过去，不需要为每个工具单独开分叉。 `evidence: official-doc`
 
-反过来的风险：**工具名称相同不代表信任边界相同**。同一个 `bash` 工具，provider 是本地还是 E2B 沙箱，副作用落在完全不同的地方。分析任何一次工具调用，都必须同时记录 provider 和部署配置。
+反过来的风险：工具名称相同不代表信任边界相同。同一个 `bash` 工具，provider 是本地还是 E2B 沙箱，副作用落在完全不同的地方。分析任何一次工具调用，都必须同时记录 provider 和部署配置。
 
 ### 三类事件域
 
@@ -200,7 +200,7 @@ SDK 使用者要拿可复现的 transcript，消费 `session/event`；要做实�
 | 3. 运行激活 | 服务真的 ready | 运行时状态，不是配置条目 |
 | 4. 产品闭环 | 用户任务从输入到结果可复核完成 | 完整 E2E，含失败与恢复 |
 
-**大量错误判断来自把这四层混成一层。** 「仓库里有 sandbox 包」不等于「你的部署是隔离的」；「dump-config 里有这个插件」不等于「它启动成功了」。
+大量错误判断来自把这四层混成一层。 「仓库里有 sandbox 包」不等于「你的部署是隔离的」；「dump-config 里有这个插件」不等于「它启动成功了」。
 
 ### 五个常见误解
 
@@ -220,7 +220,7 @@ SDK 使用者要拿可复现的 transcript，消费 `session/event`；要做实�
 for (const removed of [['tui'], ['--config', 'x.yml'], ['-p', 'task'], ['run', 'task']]) {
 ```
 
-terminal、命令适配、通用 client primitives 这些底层零件仍在仓库里、仍可复用，但**不能据此说官方当前交付了完整 TUI**。历史 Agent Note 解释的是决策沿革，当前能力以现行代码、bundle 和测试为准。
+terminal、命令适配、通用 client primitives 这些底层零件仍在仓库里、仍可复用，但不能据此说官方当前交付了完整 TUI。历史 Agent Note 解释的是决策沿革，当前能力以现行代码、bundle 和测试为准。
 
 ### 五维成熟度
 

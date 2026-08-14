@@ -11,15 +11,15 @@ evidence: [code, test, official-doc]
 
 > 本文基线 `47f9438`。所有行号对应该 Commit。
 >
-> 这是本仓库最值得读的一篇。dsh 在缓存这件事上的做法，据我所知在开源 agent harness 里没有第二家。
+> dsh 把「不要打断请求前缀」写成了一条全仓强制的工程约定。这篇讲这条约定长什么样、怎么被检查、以及它换来了什么。
 
 ## 一、产品现象
 
-**「同样长度的对话，dsh 跑起来比别的工具便宜得多。」**
+「同样长度的对话，dsh 跑起来比别的工具便宜得多。」
 
 具体表现：一个跑了几十轮的编码会话，第二轮开始每次请求的计费 input token 远小于实际发出的 token 数。DeepSeek 返回的 `prompt_cache_hit_tokens` 常年很高。
 
-反例更能说明问题：很多聊天客户端每轮重新拼装全量上下文，**前缀每次都不一样，DeepSeek 的缓存基本打不中**，于是长会话越跑越贵。
+反例更能说明问题：很多聊天客户端每轮重新拼装全量上下文，前缀每次都不一样，DeepSeek 的缓存基本打不中，于是长会话越跑越贵。
 
 这个差距不是调参调出来的。它来自一条**仓库级的强制工程约定**——每个包在设计时就必须回答「我会不会打断请求前缀」。
 
@@ -57,7 +57,7 @@ evidence: [code, test, official-doc]
 
 ### 先说 provider 侧：DeepSeek 是自动前缀缓存
 
-DeepSeek 的上下文缓存是**服务端自动**的，按请求的前导 token 序列命中，**不需要客户端打 breakpoint**（这一点和 Anthropic 的 `cache_control` 不同）。
+DeepSeek 的上下文缓存是**服务端自动**的，按请求的前导 token 序列命中，不需要客户端打 breakpoint（这一点和 Anthropic 的 `cache_control` 不同）。
 
 wire 上返回两个字段，关系是：
 
@@ -65,7 +65,7 @@ wire 上返回两个字段，关系是：
 prompt_tokens = prompt_cache_hit_tokens + prompt_cache_miss_tokens
 ```
 
-**客户端唯一能做的事就是：让前缀保持稳定。** 所以 dsh 的缓存工作全在「不要无谓地改动请求前部」这件事上。
+客户端唯一能做的事就是：让前缀保持稳定。 所以 dsh 的缓存工作全在「不要无谓地改动请求前部」这件事上。
 
 ### 适配层：把重叠计数拆成不相交计数
 
@@ -94,7 +94,7 @@ export function mapUsage(usage: WireUsage): TokenUsage {
 
 1. **内部约定是不相交计数**，所以要把 cacheRead 从 inputTokens 里减掉。`llm/src/types.ts:131` 的注释说明了口径：`billed input = inputTokens + cacheReadTokens + cacheWriteTokens`。
 2. 优先读 `prompt_tokens_details.cached_tokens`，回退 `prompt_cache_hit_tokens`——兼容两种 wire 形状。
-3. `reasoningTokens` **已包含在 outputTokens 里**，汇总时不能重复相加。这是统计成本时最容易犯的错。
+3. `reasoningTokens` 已包含在 outputTokens 里，汇总时不能重复相加。这是统计成本时最容易犯的错。
 
 ### 契约层：强制的 Model Experience 格式
 
@@ -112,7 +112,7 @@ export function mapUsage(usage: WireUsage): TokenUsage {
 ## Known Limitations and Deferred Work
 ```
 
-**`KV Cache effect` 有受控词汇表**，必须归入四类之一，并点名本包哪些改动会让复用失效：
+`KV Cache effect` 有受控词汇表，必须归入四类之一，并点名本包哪些改动会让复用失效：
 
 | 分类 | 语义 | 实际使用数 |
 | --- | --- | --- |
@@ -125,7 +125,7 @@ export function mapUsage(usage: WireUsage): TokenUsage {
 
 > "Does not invalidate" means the package **preserves an already-reusable prefix**; provider cache availability and eviction remain **outside the package contract**.
 
-这句话很重要：包只负责「不主动破坏」，**provider 端的缓存可用性和驱逐不在任何包的承诺范围内**。所以没有任何一个包可以宣称「我保证命中」。
+这句话很重要：包只负责「不主动破坏」，provider 端的缓存可用性和驱逐不在任何包的承诺范围内。所以没有任何一个包可以宣称「我保证命中」。
 
 ### 真实样例
 
@@ -133,7 +133,7 @@ export function mapUsage(usage: WireUsage): TokenUsage {
 
 > Prefix-stable while visible definitions and **their order** are unchanged. Registration, disposal, or scoped restriction may invalidate reuse from the first changed schema token.
 
-**「and their order」** —— 工具的**顺序**是缓存契约的一部分。这解释了文章 04 里 `Config.toolOrder` 为什么要存在、为什么不填时要用确定的字典序而不是注册顺序：注册顺序会随插件加载时序抖动，字典序不会。
+「and their order」 —— 工具的**顺序**是缓存契约的一部分。这解释了文章 04 里 `Config.toolOrder` 为什么要存在、为什么不填时要用确定的字典序而不是注册顺序：注册顺序会随插件加载时序抖动，字典序不会。
 
 `packages/guard/repeat-tool-reminder/README.md`：
 
@@ -159,17 +159,17 @@ const TOKEN_EFFECT_HEADING = '#### Token effect'
 const KV_CACHE_EFFECT_HEADING = '#### KV Cache effect'
 ```
 
-**2. 短式也必须有 KV-cache 段落**（`:361-366`）。某些包的模型体验很简单，可以用一句话的短式（`None, as ...` 或 `Indirectly, through ...`），但校验器要求：
+2. 短式也必须有 KV-cache 段落（`:361-366`）。某些包的模型体验很简单，可以用一句话的短式（`None, as ...` 或 `Indirectly, through ...`），但校验器要求：
 
 > short Model Experience form requires exact `#### KV Cache effect` and **one non-empty paragraph**
 
-**没有任何一条路径可以跳过 KV-cache 说明**，除非整个包被判为模型无关。
+没有任何一条路径可以跳过 KV-cache 说明，除非整个包被判为模型无关。
 
 **3. 连空行位置都检查**（`:368-373`）：
 
 > short Model Experience sentence, KV-cache H4, and paragraph require **one blank line between each element**
 
-**4. 豁免必须留下审计理由**（`:28-38`）。四个豁免包及其原文理由：
+4. 豁免必须留下审计理由（`:28-38`）。四个豁免包及其原文理由：
 
 | 包 | 理由 |
 | --- | --- |
@@ -182,7 +182,7 @@ const KV_CACHE_EFFECT_HEADING = '#### KV Cache effect'
 
 > the reason stays here as reviewable audit evidence so **an absent section cannot be mistaken for forgotten documentation**.
 
-**「缺失」和「遗忘」必须能区分开。** 这和文章 05 里 `ignorable` 的默认拒绝是同一种思路。
+「缺失」和「遗忘」必须能区分开。 这和文章 05 里 `ignorable` 的默认拒绝是同一种思路。
 
 ### 结构层：为什么这套约定能生效
 
@@ -196,7 +196,7 @@ const KV_CACHE_EFFECT_HEADING = '#### KV Cache effect'
 | `headerEquals()` 判等 | `request-header.ts:44` | header 没变就不重新记录，也就没有无谓变更 |
 | `toolOrder` 规范排序 | 文章 04 | 工具顺序不随加载时序抖动 |
 
-**换句话说：缓存友好不是一个优化项，是这套架构的副产品——而 Model Experience 契约保证没有哪个包会不小心把它破坏掉。**
+换句话说：缓存友好不是一个优化项，是这套架构的副产品——而 Model Experience 契约保证没有哪个包会不小心把它破坏掉。
 
 ## 四、约束与失效条件
 
@@ -204,7 +204,7 @@ const KV_CACHE_EFFECT_HEADING = '#### KV Cache effect'
 
 再强调一次那条定义：包只承诺**保住一个已经可复用的前缀**。provider 端的缓存可用性和驱逐**不在包契约内**。
 
-实际含义：命中率会受你的调用间隔、DeepSeek 侧的缓存单元是否已落盘、模型是否切换等因素影响。**只能实测 `prompt_cache_hit_tokens`，不能推算。**
+实际含义：命中率会受你的调用间隔、DeepSeek 侧的缓存单元是否已落盘、模型是否切换等因素影响。只能实测 `prompt_cache_hit_tokens`，不能推算。
 
 ### 会打断前缀的四类改动
 
@@ -215,17 +215,17 @@ const KV_CACHE_EFFECT_HEADING = '#### KV Cache effect'
 | 压缩（`Replacing`） | 第一个被替换的历史 token |
 | 插件注册 / 卸载 / 作用域限制 | 受影响的第一个 token |
 
-第一行最狠：**system 槽是 provider 缓存的第一个 token 区域，改它等于全丢。** 文章 07 讲的那个压缩 bug 就栽在这里。
+第一行最狠：system 槽是 provider 缓存的第一个 token 区域，改它等于全丢。 文章 07 讲的那个压缩 bug 就栽在这里。
 
 ### 跨 provider 时 replay state 不转移
 
-适配层的规则：cached prompt state 记在 adapter replay data 里。跨 provider 时只传递 provider-neutral 的内容和元数据；**private replay state 只在同一个 adapter 实例同时持有历史 provider 和目标 provider 时才转移**。
+适配层的规则：cached prompt state 记在 adapter replay data 里。跨 provider 时只传递 provider-neutral 的内容和元数据；private replay state 只在同一个 adapter 实例同时持有历史 provider 和目标 provider 时才转移。
 
 所以「配一个不同的 summarization provider」会放弃缓存复用——这是部署的显式取舍，不是缺陷。
 
 ### `reasoningTokens` 不能重复计入
 
-`translate.ts` 的返回结构里，`reasoningTokens` 是从 `completion_tokens_details.reasoning_tokens` 读的，而它**已经包含在 `outputTokens` 里**。做成本汇总时把两者相加会高估输出成本。
+`translate.ts` 的返回结构里，`reasoningTokens` 是从 `completion_tokens_details.reasoning_tokens` 读的，而它已经包含在 `outputTokens` 里。做成本汇总时把两者相加会高估输出成本。
 
 ### 这套纪律的代价
 
@@ -235,7 +235,7 @@ const KV_CACHE_EFFECT_HEADING = '#### KV Cache effect'
 - 有些自然的写法（在 system prompt 里插入动态时间戳、按注册顺序排工具）被禁掉了
 - 压缩这类必然打断前缀的能力，设计复杂度显著上升（文章 07）
 
-**这是一个明确的取舍：用工程约束的成本，换长会话的成本。** 对一个以长时间编码会话为主要场景的 harness，这笔账算得过来；对一次性短问答的产品，这套约束就是纯负担。
+这是一个明确的取舍：用工程约束的成本，换长会话的成本。 对一个以长时间编码会话为主要场景的 harness，这笔账算得过来；对一次性短问答的产品，这套约束就是纯负担。
 
 ## 五、可复核实验
 
@@ -308,7 +308,7 @@ pnpm dsh --profile headless "依次读 packages/core 下每个包的 README，�
 | 是否有塌陷 | 中途突然回到 0 的那一步，去看它前面发生了什么 |
 
 **该记录**：模型、profile、step 数、每步的 `inputTokens` / `cacheReadTokens`。
-**该得出**：命中率随 step 上升是正常形态。**如果中途塌陷，最可能的原因是触发了压缩**——那正好是文章 07 的入口。
+**该得出**：命中率随 step 上升是正常形态。如果中途塌陷，最可能的原因是触发了压缩——那正好是文章 07 的入口。
 
 ## 本篇尚未覆盖的源文件
 

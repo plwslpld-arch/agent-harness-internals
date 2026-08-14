@@ -1,6 +1,6 @@
 # Repository instructions
 
-DeepSeek Harness Internals 是一个独立的、以证据为基础的中文深度解析仓库。**受众只有一类**：有工程背景、想搞懂现代 agent harness 如何构建的人。
+DeepSeek Harness Internals 是一个独立的中文源码分析仓库，写给想搞懂 agent harness 内部构造的工程读者。所有结论都要能追到证据。
 
 ## 内容规则
 
