@@ -40,7 +40,7 @@ evidence: [code, test, runtime, official-doc, community, inference]
 - `docs/14-file-reference/` 顶层只有 README，但真正的逐文件导航在 `generated/` 下；这是为了明确区分“人工解释”和“机器生成索引”。
 - `docs/*/README.md` 作为每章入口是正常的；有些章节只需要入口 + 一篇专题文档，有些章节需要多篇。
 
-当前真正缺口不是“目录为空”，而是尚未沉淀新的真实运行证据：例如使用 `DEEPSEEK_API_KEY` 的真实 API E2E、公开 benchmark 复现实验、长期社区采样和第三方插件安装实测。这些必须有命令、环境、结果、脱敏日志和 artifact hash 后才能进入 `research/`。
+当前证据边界不是“目录为空”，而是哪些内容已经有真实运行记录：例如使用 `DEEPSEEK_API_KEY` 的真实 API E2E、公开 benchmark 复现实验、长期社区采样和第三方插件安装实测，都必须有命令、环境、结果、脱敏日志和 artifact hash 后才能进入 `research/`。
 
 ## 逐文件源码解析在哪里
 

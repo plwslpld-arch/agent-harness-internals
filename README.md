@@ -37,7 +37,7 @@ DeepSeek Harness Atlas 以固定版本的真实源码和可复现实验证据为
 | 项目 | 当前状态 |
 | --- | --- |
 | Atlas 版本 | [`v0.1.0`](https://github.com/plwslpld-arch/deepseek-harness-atlas/releases/tag/v0.1.0) |
-| 人工研究文档 | 63 篇，均绑定一个或多个仓库、路径与 Commit |
+| 人工研究文档 | 全部人工文档均绑定一个或多个仓库、路径与 Commit，并由 CI 校验 |
 | 固定源码生态 | 15 个上游仓库，以 Git submodule 和锁文件共同固定 |
 | Harness 文件导航 | 7,412 张文件职责卡片，含符号、依赖与测试关系 |
 | 主分支质量门 | [`Verify`](https://github.com/plwslpld-arch/deepseek-harness-atlas/actions/workflows/verify.yml) 必须通过 |
@@ -54,14 +54,16 @@ DeepSeek Harness Atlas 以固定版本的真实源码和可复现实验证据为
 - 生态：MCP、ACP、E2B、Pi、Codex、Claude Agent SDK、OpenCode、Qwen Code、mini-swe-agent 与评测层的可比/不可比边界。
 - 维护：每 6 小时检查上游；发现变化后生成差异和过期提示，通过 PR 审核更新。
 
-## 三条学习路线
+## 学习路线
 
 | 读者 | 从哪里开始 | 最终获得什么 |
 | --- | --- | --- |
+| 非研发同学 | `docs/00-start-here/non-engineer-guide.md` | 用产品和组织类比理解 Harness、插件系统、证据边界和成熟度 |
 | 产品经理 | `docs/00-start-here/product-path.md` | 用户、能力、旅程、风险、平台策略和选型框架 |
 | 工程师 | `docs/00-start-here/engineering-path.md` | 从启动到任务完成的端到端实现和源码证据 |
+| 核心贡献者 | `docs/00-start-here/core-runtime-contributor-path.md` | 修改核心 runtime 时的不变量、测试矩阵和证据要求 |
 | 维护者 | `docs/00-start-here/maintainer-path.md` | 来源、许可证、更新、评审、验证和发布流程 |
-| 所有人 | `docs/00-start-here/complete-learning-path.md` | 完整学习顺序、逐文件解析入口和当前覆盖边界 |
+| 所有人 | `docs/00-start-here/learning-workbook.md` | 每个阶段读什么、做什么、做到什么程度算过关 |
 
 完整导航见 [`docs/README.md`](docs/README.md)。
 
@@ -81,7 +83,7 @@ DeepSeek Harness Atlas 以固定版本的真实源码和可复现实验证据为
 
 ## 证据等级
 
-`docs/` 下 63 篇人工文档都声明一个或多个仓库、路径、Commit 与审核状态；任一
+`docs/` 下所有人工文档都声明一个或多个仓库、路径、Commit 与审核状态；任一
 绑定来源更新都会将该文档标记为 `stale`。文中的结论还使用以下证据标签：
 
 | 标签 | 含义 |

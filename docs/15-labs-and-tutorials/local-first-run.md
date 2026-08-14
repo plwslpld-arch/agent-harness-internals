@@ -102,7 +102,7 @@ export DEEPSEEK_API_KEY="你的个人 key"
 实际命令以 Harness 当前 README/package scripts 为准。原则是使用 headless profile 发起一个短任务，例如：
 
 ```bash
-dsh headless "用一句话说明你是谁"
+dsh --profile headless "用一句话说明你是谁"
 ```
 
 如果本地没有全局 `dsh`，先查看上游 README 或 package scripts，使用仓库推荐的本地启动方式。
