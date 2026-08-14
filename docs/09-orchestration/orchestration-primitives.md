@@ -28,4 +28,4 @@ Workflow 适合显式步骤和并行分支，但 worker thread 与 `node:vm` 不
 
 优先使用最小语义：需要上下文隔离才用 subagent，需要后台生命周期才用 job，需要时间触发才用 schedule，需要确定步骤图才用 workflow。每增加一层编排，都要补充取消传播、预算、错误归因、结果汇合和观测。`evidence: inference`
 
-对应实现与测试从[人工源码研究](../13-source-studies/README.md)和[自动文件参考](../14-file-reference/README.md)定位。
+对应实现与测试从[人工源码研究](../13-source-studies/README.md)和[自动文件参考](https://github.com/plwslpld-arch/deepseek-harness-internals/tree/gh-pages)定位。

@@ -91,4 +91,3 @@ flowchart LR
 
 - [../01-product/README.md](../01-product/README.md)
 - [../01-product/product-maturity.md](../01-product/product-maturity.md)
-- [../00-start-here/paths/non-engineer.md](../00-start-here/paths/non-engineer.md)

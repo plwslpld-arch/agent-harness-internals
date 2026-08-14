@@ -7,7 +7,8 @@ import { fileURLToPath } from 'node:url';
 export const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const sourcesDir = join(root, 'sources');
 export const checkoutsDir = join(sourcesDir, 'checkouts');
-export const generatedDir = join(root, 'docs', '14-file-reference', 'generated');
+// 生成目录不入库：主干只保留人工分析，索引由 CI 生成并发布到 gh-pages 分支。
+export const generatedDir = join(root, '.generated');
 
 export function readDocument(path) {
   try {
@@ -73,15 +74,14 @@ export function parseGitmodules(content) {
   return entries;
 }
 
-export function listProjectFiles({ includeGenerated = true } = {}) {
-  const ignoredDirectories = new Set(['.git', 'node_modules', 'checkouts', '.tmp', 'dist', 'build', 'coverage']);
+export function listProjectFiles() {
+  const ignoredDirectories = new Set(['.git', '.generated', 'node_modules', 'checkouts', '.tmp', 'dist', 'build', 'coverage']);
   const files = [];
   function visit(directory) {
     for (const entry of readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
       const absolute = join(directory, entry.name);
-      const rel = posixPath(relative(root, absolute));
       if (entry.isDirectory()) {
-        if (ignoredDirectories.has(entry.name) || (!includeGenerated && rel === 'sources/generated')) continue;
+        if (ignoredDirectories.has(entry.name)) continue;
         visit(absolute);
       } else if (entry.isFile()) {
         files.push(absolute);

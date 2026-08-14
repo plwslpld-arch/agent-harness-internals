@@ -14,7 +14,7 @@ evidence: [code, test, official-doc, inference]
 
 Atlas 的逐文件源码解析分为两种产物：
 
-- **全量文件卡片**：[`generated/harness-file-cards.md`](generated/harness-file-cards.md) 覆盖 DeepSeek Harness 固定基线中的每个跟踪文件。它回答“这个文件大概负责什么、导出什么、依赖谁、谁依赖它、有没有直接测试”。
+- **全量文件卡片**：[`generated/harness-file-cards.md`](https://github.com/plwslpld-arch/deepseek-harness-internals/blob/gh-pages/harness-file-cards.md) 覆盖 DeepSeek Harness 固定基线中的每个跟踪文件。它回答“这个文件大概负责什么、导出什么、依赖谁、谁依赖它、有没有直接测试”。
 - **人工源码研究**：[`../13-source-studies/`](../13-source-studies/README.md) 解释关键链路的实现原因、运行顺序、边界条件和风险。它回答“为什么这样设计、实际路径怎么走、哪些结论不能只靠静态文件名判断”。
 - **重点文件精读**：[`key-file-deep-dives.md`](key-file-deep-dives.md) 先覆盖第一批 12 个核心文件，把启动、插件、Agent Loop、模型、工具和 Session 串起来。
 - **关键函数 walkthrough**：[`key-function-walkthroughs.md`](key-function-walkthroughs.md) 不精确到行号，而是解释关键代码块的责任、输入、输出、失败路径和非研发类比。
@@ -91,10 +91,10 @@ flowchart TD
 
 假设你想读 `packages/llm/llm-deepseek`：
 
-1. 打开 [`generated/harness-file-cards.md`](generated/harness-file-cards.md)，搜索 `packages/llm/llm-deepseek`。
+1. 打开 [`generated/harness-file-cards.md`](https://github.com/plwslpld-arch/deepseek-harness-internals/blob/gh-pages/harness-file-cards.md)，搜索 `packages/llm/llm-deepseek`。
 2. 看该文件的公开符号、直接依赖、反向依赖和直接测试。
-3. 打开 [`generated/harness-source-test-map.md`](generated/harness-source-test-map.md)，找它关联的测试。
-4. 打开 [`generated/symbols.md`](generated/symbols.md)，确认关键函数或类型是否还有其他导出位置。
+3. 打开 [`generated/harness-source-test-map.md`](https://github.com/plwslpld-arch/deepseek-harness-internals/blob/gh-pages/harness-source-test-map.md)，找它关联的测试。
+4. 打开 [`generated/symbols.md`](https://github.com/plwslpld-arch/deepseek-harness-internals/blob/gh-pages/symbols.md)，确认关键函数或类型是否还有其他导出位置。
 5. 回到人工研究 [`../13-source-studies/deepseek-adapter-study.md`](../13-source-studies/deepseek-adapter-study.md)，把文件细节放回模型适配链路里理解。
 
 这个流程比“打开源码从第一行读到最后一行”更稳定，因为它同时检查实现、调用者、测试和人工解释。

@@ -30,4 +30,4 @@ evidence: [code, official-doc, inference]
 
 记录最终配置、permission preset、effective sandbox mode、approval 决策、执行 provider、OS 身份、cwd 与实际写入目标。只有真实运行且产物可核对时，才标 `evidence: runtime`。
 
-更完整的威胁分析见安全专题；源码所有权与调用链见[人工源码研究](../13-source-studies/README.md)和[自动文件参考](../14-file-reference/README.md)。
+更完整的威胁分析见安全专题；源码所有权与调用链见[人工源码研究](../13-source-studies/README.md)和[自动文件参考](https://github.com/plwslpld-arch/deepseek-harness-internals/tree/gh-pages)。

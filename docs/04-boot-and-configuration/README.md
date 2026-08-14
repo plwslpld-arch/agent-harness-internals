@@ -34,4 +34,4 @@ dsh --profile web --dump-config
 
 继续阅读：[配置组合](config-composition.md)、[插件系统全景](../03-cordis-foundation/plugin-system-mainline.md)、[Agent runtime](../05-agent-runtime/README.md)。
 
-证据入口：[人工源码研究](../13-source-studies/README.md) · [自动配置/文件参考](../14-file-reference/README.md)
+证据入口：[人工源码研究](../13-source-studies/README.md) · [自动配置/文件参考](https://github.com/plwslpld-arch/deepseek-harness-internals/tree/gh-pages)

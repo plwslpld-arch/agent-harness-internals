@@ -30,4 +30,4 @@ evidence: [code, official-doc, inference]
 
 继续阅读：[生命周期详解](turn-step-tool-loop.md)、[模型适配](../06-model-adapter/README.md)和[工具执行](../07-tools-permissions-sandbox/README.md)。
 
-证据入口：[人工源码研究](../13-source-studies/README.md) · [自动文件参考](../14-file-reference/README.md)
+证据入口：[人工源码研究](../13-source-studies/README.md) · [自动文件参考](https://github.com/plwslpld-arch/deepseek-harness-internals/tree/gh-pages)

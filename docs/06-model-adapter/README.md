@@ -27,4 +27,4 @@ Harness 的 LLM seam 把内部 message、block、usage、finish 与 error 词汇
 
 继续阅读：[DeepSeek 协议边界](deepseek-protocol.md)、[上下文与压缩](../08-session-and-context/README.md)。
 
-证据入口：[人工源码研究](../13-source-studies/README.md) · [自动文件参考](../14-file-reference/README.md)
+证据入口：[人工源码研究](../13-source-studies/README.md) · [自动文件参考](https://github.com/plwslpld-arch/deepseek-harness-internals/tree/gh-pages)

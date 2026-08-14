@@ -28,4 +28,4 @@ Subagent seam 允许 in-process child、session fork、ACP、Codex 或 Claude �
 
 继续阅读：[编排原语](orchestration-primitives.md)、[Session 恢复](../08-session-and-context/README.md)。
 
-证据入口：[人工源码研究](../13-source-studies/README.md) · [自动文件参考](../14-file-reference/README.md)
+证据入口：[人工源码研究](../13-source-studies/README.md) · [自动文件参考](https://github.com/plwslpld-arch/deepseek-harness-internals/tree/gh-pages)

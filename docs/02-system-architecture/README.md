@@ -32,4 +32,4 @@ flowchart TD
 
 继续阅读：[运行时拓扑](runtime-topology.md)、[Cordis](../03-cordis-foundation/README.md)与[启动配置](../04-boot-and-configuration/README.md)。
 
-证据入口：[人工源码研究](../13-source-studies/README.md) · [自动文件参考](../14-file-reference/README.md)
+证据入口：[人工源码研究](../13-source-studies/README.md) · [自动文件参考](https://github.com/plwslpld-arch/deepseek-harness-internals/tree/gh-pages)

@@ -22,4 +22,4 @@ Session 的仅追加事件日志是会话事实源。模型历史、Web 回放�
 
 继续阅读：[事件日志与恢复](event-log-and-recovery.md)、[上下文与压缩](context-and-compaction.md)。
 
-证据入口：[人工源码研究](../13-source-studies/README.md) · [自动事件/文件参考](../14-file-reference/README.md)
+证据入口：[人工源码研究](../13-source-studies/README.md) · [自动事件/文件参考](https://github.com/plwslpld-arch/deepseek-harness-internals/tree/gh-pages)

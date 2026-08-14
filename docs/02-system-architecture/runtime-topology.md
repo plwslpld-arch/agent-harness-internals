@@ -33,4 +33,4 @@ evidence: [code, official-doc, inference]
 
 导出最终配置，选择一次工具调用，对照 `tool/call`、策略事件、工具自有事件和 `tool/result` 的顺序。实验必须记录版本、profile、provider、权限 preset 与工作目录。`evidence: runtime`
 
-具体源码入口见[人工源码研究](../13-source-studies/README.md)，完整文件关系见[自动文件参考](../14-file-reference/README.md)。
+具体源码入口见[人工源码研究](../13-source-studies/README.md)，完整文件关系见[自动文件参考](https://github.com/plwslpld-arch/deepseek-harness-internals/tree/gh-pages)。

@@ -171,7 +171,7 @@ export function buildCatalogs() {
     ['harness-file-cards.md', `${header('DeepSeek Harness 文件卡片', '每个跟踪文件都有机器生成的 L0/L1 导航；职责为启发式摘要，核心行为以人工源码研究为准。')}## 文件卡片（${harnessFiles.length}）\n\n| 路径 | 分类 | 行数 | 文件职责 | 公开符号 | 直接依赖 | 反向依赖 | 直接测试 |\n| --- | --- | ---: | --- | --- | ---: | ---: | ---: |\n${harnessFiles.map((file) => `| ${link(file.source, file.path)} | ${file.classification} | ${file.lines || '—'} | ${escapeCell(file.purpose)} | ${file.symbols.slice(0, 5).map((item) => `\`${escapeCell(item.name)}\``).join('、') || '—'} | ${file.imports.length} | ${file.importedBy.length} | ${file.tests.length} |`).join('\n')}\n`],
     ['harness-dependencies.md', `${header('DeepSeek Harness 文件依赖边', '只解析能够静态定位的仓库内相对 import/export/require；动态解析和 Cordis 运行时注入需结合人工分析。')}## 静态依赖边（${dependencyEdges.length}）\n\n| 调用/导入方 | 被依赖文件 |\n| --- | --- |\n${dependencyEdges.map((edge) => `| ${link('deepseek-harness', edge.from)} | ${link('deepseek-harness', edge.to)} |`).join('\n')}\n`],
     ['harness-source-test-map.md', `${header('DeepSeek Harness 源码到测试映射', '直接测试来自静态 import 关系；0 不等于没有间接、组装或真实 E2E 覆盖。')}## 源码与直接测试（${sourceTestRows.length}）\n\n| 源码 | 能力域 | 直接测试数 | 直接测试 |\n| --- | --- | ---: | --- |\n${sourceTestRows.map((file) => `| ${link(file.source, file.path)} | ${escapeCell(areaFor(file.path))} | ${file.tests.length} | ${file.tests.slice(0, 8).map((path) => link(file.source, path)).join('<br>') || '—'} |`).join('\n')}\n\n未直接映射的测试资产仍可在 [tests.md](tests.md) 查询，共 ${testPaths.length} 个。\n`],
-    ['coverage-report.md', `${header('知识覆盖报告', '覆盖状态描述 Atlas 产物，不代表上游测试覆盖率或人工审核完成度。')}## Harness 基线\n\n- 固定 Commit：\`${locks.get('deepseek-harness').commit}\`\n- 跟踪文件：${harnessFiles.length}\n- 自动文件卡片：${harnessFiles.length}（L0/L1 启发式）\n- 可静态定位的仓库内依赖边：${dependencyEdges.length}\n- 源码/受 vendored 源码文件：${sourceTestRows.length}\n- 有直接静态测试映射的源码：${sourceTestRows.filter((file) => file.tests.length).length}\n- 人工核心源码研究：见 [../../13-source-studies/README.md](../../13-source-studies/README.md)\n\n## 文件分类\n\n| 分类 | 文件数 |\n| --- | ---: |\n${classCounts.map((item) => `| ${item.classification} | ${item.count} |`).join('\n')}\n\n## 解释边界\n\n自动卡片保证“每个文件可定位且有基础语义”，不声称每个文件已经人工逐行审阅。L2/L3 只授予包含 happy/error/edge path、测试和运行证据的人工研究；上游变化后由更新报告标记待复核。\n`],
+    ['coverage-report.md', `${header('知识覆盖报告', '覆盖状态描述 Atlas 产物，不代表上游测试覆盖率或人工审核完成度。')}## Harness 基线\n\n- 固定 Commit：\`${locks.get('deepseek-harness').commit}\`\n- 跟踪文件：${harnessFiles.length}\n- 自动文件卡片：${harnessFiles.length}（L0/L1 启发式）\n- 可静态定位的仓库内依赖边：${dependencyEdges.length}\n- 源码/受 vendored 源码文件：${sourceTestRows.length}\n- 有直接静态测试映射的源码：${sourceTestRows.filter((file) => file.tests.length).length}\n- 人工核心源码研究：见主干分支 docs/ 下的深度文章\n\n## 文件分类\n\n| 分类 | 文件数 |\n| --- | ---: |\n${classCounts.map((item) => `| ${item.classification} | ${item.count} |`).join('\n')}\n\n## 解释边界\n\n自动卡片保证“每个文件可定位且有基础语义”，不声称每个文件已经人工逐行审阅。L2/L3 只授予包含 happy/error/edge path、测试和运行证据的人工研究；上游变化后由更新报告标记待复核。\n`],
   ]);
 }
 
@@ -185,7 +185,7 @@ export function writeCatalogs({ check = false } = {}) {
       if (!existsSync(path) || readFileSync(path, 'utf8') !== content) mismatches.push(name);
     } else {
       writeFileSync(path, content);
-      console.log(`generated docs/14-file-reference/generated/${name}`);
+      console.log(`generated .generated/${name}`);
     }
   }
   return mismatches;

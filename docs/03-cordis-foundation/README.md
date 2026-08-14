@@ -29,4 +29,4 @@ Harness vendored 的 Cordis 包含本地维护增强，不能假设它与上游 
 
 继续阅读：[插件系统全景](plugin-system-mainline.md)、[插件生命周期](plugin-lifecycle.md)、[启动配置](../04-boot-and-configuration/README.md)。
 
-证据入口：[人工源码研究](../13-source-studies/README.md) · [自动文件参考](../14-file-reference/README.md)
+证据入口：[人工源码研究](../13-source-studies/README.md) · [自动文件参考](https://github.com/plwslpld-arch/deepseek-harness-internals/tree/gh-pages)

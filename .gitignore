@@ -8,6 +8,10 @@ build/
 coverage/
 *.log
 
+# 自动生成的源码索引：本地由 npm run catalogs:generate 产出，
+# 由 CI 发布到 gh-pages 分支，不进入主干。
+.generated/
+
 # Generated temporary files and local experiment output.
 .tmp/
 research/working-notes/private/
