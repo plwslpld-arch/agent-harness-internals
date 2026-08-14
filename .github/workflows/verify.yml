@@ -66,12 +66,30 @@ jobs:
           {
             printf '# DeepSeek Harness 源码索引\n\n'
             printf '由 `npm run catalogs:generate` 从锁定的上游 checkout 生成，对应主干 commit `%s`。\n\n' "$GITHUB_SHA"
-            printf '人工深度分析在主干分支 `docs/`，本分支只放机器索引。\n\n'
+            printf '索引范围只含分析对象 `deepseek-harness` 与它 vendored 的 `cordis`。'
+            printf '其余 13 个对照仓库的 commit 记录在主干 `sources/sources.lock.yml`，不做文件级索引。\n\n'
+            printf '人工深度分析在主干分支 [`docs/`](https://github.com/%s/tree/main/docs)，本分支只放机器索引。\n\n' "$GITHUB_REPOSITORY"
+            printf '## 文件\n\n'
+            printf '| 索引 | 体积 | 浏览器可读 |\n|---|---:|---|\n'
             for file in .pages/*.md; do
               name="$(basename "$file")"
               [ "$name" = 'index.md' ] && continue
-              printf -- '- [%s](%s)\n' "$name" "$name"
+              bytes="$(wc -c < "$file" | tr -d ' ')"
+              mb="$(awk -v b="$bytes" 'BEGIN{printf "%.2f", b/1048576}')"
+              if [ "$bytes" -gt 1048576 ]; then
+                note="否，用 [raw](https://raw.githubusercontent.com/$GITHUB_REPOSITORY/gh-pages/$name) 或 clone 后 grep"
+              else
+                note="[是]($name)"
+              fi
+              printf -- '| `%s` | %s MB | %s |\n' "$name" "$mb" "$note"
             done
+            printf '\n> GitHub 网页对超过 1MB 的文件不渲染 Markdown。'
+            printf '这些是机器索引，主要用途是 grep 与程序消费，不是逐行阅读。\n\n'
+            printf '```bash\n'
+            printf '# 全量拉下来 grep\n'
+            printf 'git clone --branch gh-pages --depth 1 https://github.com/%s.git dsh-index\n' "$GITHUB_REPOSITORY"
+            printf 'grep -n "ReactLoopAgent" dsh-index/symbols.md\n'
+            printf '```\n'
           } > .pages/index.md
           cd .pages
           git init -q -b gh-pages
