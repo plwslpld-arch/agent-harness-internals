@@ -9,7 +9,7 @@
 
 ## Completion is measured, not implied
 
-Each of the 86 human documents under `docs/` carries one or more repository/path/SHA
+Each of the 88 human documents under `docs/` carries one or more repository/path/SHA
 bindings and a review status. CI verifies that every non-root path exists at its bound
 commit. Generated catalogs list their complete source baselines and are checked for deterministic reproduction. A
 directory existing does not make that subject complete. The maintained coverage report lists:
@@ -31,7 +31,7 @@ analysis. Full semantic review of thousands of files is an ongoing, versioned pr
 - Product, engineering, plugin, protocol, security, ecosystem, evaluation and maintainer
   learning paths have an initial evidence-backed edition.
 - `docs/00-course/` provides the primary 12-part teaching path with source evidence
-  cards and minimum experiments for each lesson.
+  cards, code-block explanations, minimum experiments, FAQ and staged checklists.
 - Scheduled automation checks upstream every six hours and proposes changes by pull
   request. Human semantic review remains required.
 

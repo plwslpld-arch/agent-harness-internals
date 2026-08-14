@@ -68,6 +68,15 @@ Node 版本、系统、是否设置 DEEPSEEK_API_KEY。
 6. 跑一个本地失败实验。
 7. 写出改动前的不变量清单。
 
+如果你的目标是“能深入改 Harness 核心 runtime 并保证不破坏行为”，再多加四步：
+
+8. 先写出改动影响的事件词汇：会新增、删除、替换哪些 `session` 事件。
+9. 写出失败路径：provider error、tool denial、abort、flush failure、resume repair 分别会怎样。
+10. 找直接测试和相邻测试，不只跑你改的包；Agent Loop、tools、session、adapter 经常互相影响。
+11. 把本地实验记录到 `research/runtime-evidence/`，只记录变量名和脱敏摘要，不记录真实 key。
+
+这不是形式主义。Harness 的核心 runtime 很多 bug 不是“函数返回值错”，而是“账本还能跑，但 replay、UI、恢复或评测解释错了”。所以改核心时必须同时验证源码、测试、运行证据和用户可见行为。
+
 ## 本讲源码证据卡
 
 | 学习动作 | 证据入口 | 看什么 |
@@ -91,6 +100,22 @@ Node 版本、系统、是否设置 DEEPSEEK_API_KEY。
 过关：能把一个产品问题追到源码、测试和运行证据。
 ```
 
+本仓库提供一个本地证据草稿生成器：
+
+```bash
+npm run evidence:local -- --scenario prompt-context-smoke
+```
+
+它不会调用真实模型，也不会读取或打印 API key。它只会检查环境中是否存在 `DEEPSEEK_API_KEY`，并生成一份待填写的脱敏证据模板。真正跑 Harness 后，把命令、退出码、session 事件摘要和 known gaps 补进去。
+
+如果你已经准备好真实 DeepSeek API，再按这个顺序做：
+
+1. 无 key 运行一次，确认缺 key 是受控失败。
+2. 设置 `DEEPSEEK_API_KEY`，跑纯文本任务。
+3. 跑一个会触发工具的任务。
+4. 跑一个审批拒绝或 sandbox 拒绝场景。
+5. 把四次结果分别记录，不要合并成一句“跑通了”。
+
 ## 不要做的事
 
 - 不要把生成索引当作教程正文。
@@ -104,3 +129,4 @@ Node 版本、系统、是否设置 DEEPSEEK_API_KEY。
 - [../14-file-reference/key-file-deep-dives.md](../14-file-reference/key-file-deep-dives.md)
 - [../14-file-reference/key-function-walkthroughs.md](../14-file-reference/key-function-walkthroughs.md)
 - [../15-labs-and-tutorials/experiment-protocol.md](../15-labs-and-tutorials/experiment-protocol.md)
+- [stage-checklists.md](stage-checklists.md)

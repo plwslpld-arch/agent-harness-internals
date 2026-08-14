@@ -37,7 +37,7 @@ flowchart TD
 - `packages/session/session-persistence-jsonl/src/format.ts`
 - `packages/session/session-persistence-sqlite/src/schema.ts`
 
-理解形状：
+Session 的基本语义可以先看事件追加：
 
 ```ts
 session.append({ type: 'turn/start' })
@@ -49,13 +49,54 @@ session.append({ type: 'turn/end' })
 await sessions.flush(session.id)
 ```
 
-恢复时的核心不是“继续跑”，而是先判断账本是否完整：
+真实代码里，模型可见历史不是直接读取全部事件，而是通过 surface 投影：
 
 ```ts
-if (hasOpenToolCall) markToolOutcomeUnknownOrNotStarted()
-if (hasOpenStep) appendInterruptedStepEnd()
-if (hasOpenTurn) appendInterruptedTurnEnd()
+deriveEventMessage(event) {
+  user/message      -> message
+  assistant/message -> message, but empty assistant content is skipped
+  tool/result       -> message
+  other events      -> null
+}
 ```
+
+这解释了为什么 Session 同时能服务三件事：
+
+- 给模型提供下一次请求的历史。
+- 给 Web/审计提供完整过程。
+- 给恢复逻辑判断哪里中断了。
+
+恢复时的核心不是“继续跑”，而是先判断账本是否完整。真实函数是 `interruptedTurnClosers(events)`，它扫描 open turn、open step、pending tool calls，然后合成缺失的结尾事件：
+
+```ts
+for pending tool calls:
+  append synthetic tool/result
+if open step:
+  append step/end
+if open turn:
+  append turn/end with reason interrupted
+```
+
+它还区分两种工具状态：
+
+| 状态 | 含义 | 恢复策略 |
+| --- | --- | --- |
+| `TOOL_NOT_STARTED` | 模型要求过工具，但 Harness 还没记录工具开始 | 如果仍需要，可以重新发起 |
+| `TOOL_OUTCOME_UNKNOWN` | 工具已经记录开始，但结果没落盘 | 不能盲目重跑，先判断是否只读/幂等，或检查外部状态 |
+
+持久化协调器的写路径也不是“每 append 一次就同步写磁盘”。它监听 Session 事件，放进 write-behind，再在 flush/dispose/load 等边界保证耐久化：
+
+```ts
+ctx.on('session/event', (session, event) => live.writes.enqueue(event))
+ctx.on('session/flush', session => this.flush(session))
+
+private async flush(session) {
+  await live.init
+  await live.writes.flush()
+}
+```
+
+这就是 headless 退出前必须 flush 的原因：模型回答出现在屏幕上，不代表事件已经持久化完成。
 
 ## 不变量
 
@@ -63,6 +104,9 @@ if (hasOpenTurn) appendInterruptedTurnEnd()
 - UI 和 benchmark trajectory 都应该从同一事件词汇派生。
 - 活跃会话和冷日志 repair 的规则不同。
 - side-effectful tool 不应在恢复时盲目重试。
+- surface replacement 需要证明来源事件，不能无凭据覆盖模型历史。
+- 持久化必须检测同 id 不同 cwd 或不同 prefix 的 collision。
+- HMR/live adoption 不能把还活着的 open turn 错修成 interrupted。
 
 ## 本讲源码证据卡
 
@@ -84,6 +128,14 @@ if (hasOpenTurn) appendInterruptedTurnEnd()
 4. 人为中断一个实验时，观察 repair 是否把开放 turn/step/tool 关闭为 interrupted/unknown。
 过关：能说明为什么恢复时不能盲目重跑副作用工具。
 ```
+
+研发改这层时的最小回归：
+
+- `core/session` 的 surface、repair、json、derived-cache 测试。
+- `session-persistence` 的 coordinator contract。
+- JSONL 和 SQLite 后端各自的 load/flush/repair 测试。
+- headless “flush before exit” 测试。
+- 至少一次手工中断恢复实验，确认 open tool 不会被当成成功。
 
 ## 检查题
 

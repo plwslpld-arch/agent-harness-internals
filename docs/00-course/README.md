@@ -37,6 +37,11 @@ evidence: [code, test, runtime, official-doc, inference]
 | 11 | [源码阅读与本地实验](11-source-reading-and-labs.md) | 从问题定位源码，再用实验闭环验证 |
 | 12 | [生态、论文与维护](12-ecosystem-maintenance.md) | Cordis 论文、生态证据、上游更新和开源维护 |
 
+辅助材料：
+
+- [阶段学习检查清单](stage-checklists.md)：每个阶段学完要能做什么。
+- [常见问题](faq.md)：回答逐文件解析、插件系统、prompt、TUI、学习路径等问题。
+
 ## 学习方式
 
 每讲按同一个节奏读：

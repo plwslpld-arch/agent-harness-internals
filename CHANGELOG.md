@@ -11,10 +11,13 @@
 - Added role-route index under `docs/00-start-here/paths/`.
 - Added `docs/00-course/` as the primary 12-part course path.
 - Added source evidence cards and minimum experiment prompts to every course lesson.
+- Added stage-by-stage course checklists and FAQ for source reading, plugins, prompt/context and TUI boundaries.
+- Added a sanitized local evidence draft generator for runtime experiments.
 - Added a generated-index navigation page and initial runtime-evidence records.
 
 ### Changed
 
+- Expanded the Agent Loop, prompt/context, DeepSeek adapter, tools/approval/sandbox and Session lessons with source-shaped code-block explanations.
 - Reorganized the `00-start-here` entry structure around route, roadmap and workbook layers.
 - Simplified the root README so GitHub visitors start from the right learning path instead of reading every evidence rule on the homepage.
 - Repositioned generated catalogs and research ledgers as reference layers rather than onboarding content.
