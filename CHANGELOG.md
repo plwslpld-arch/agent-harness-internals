@@ -5,7 +5,30 @@
 
 ## [Unreleased]
 
+### Changed — 重构：从百科索引转向深度解读
+
+- **受众从 5 类收敛为 1 类**：有工程背景、想搞懂现代 agent harness 如何构建的中文读者。
+- **21 章百科重构为 12 篇深度长文 + 2 个附录**，扁平结构、ASCII slug 文件名、中文标题。
+- **每篇固定五段**：产品现象 → 源码路径（精确到文件行号，绑定锁定 commit）→ 机制 → 约束与失效条件 → 可复核实验。
+- **导航七合一**：删除 `QUICKSTART.md`、`LEARNING_PATH.md`、`docs/README.md`、`docs/00-start-here/`，`README.md` 成为唯一入口。
+- **生成索引移出主干**：`docs/14-file-reference/generated/`（137,046 行）改为本地 `.generated/`（gitignore），由 CI 发布到 `gh-pages` 孤儿分支；`catalogs:verify` 退出 `npm run check` 链。
+- **停用 `inference` 证据标签**（此前 88/88 篇都带它，零区分度）；行内证据标注统一为反引号后缀写法。
+- 仓库更名为 `deepseek-harness-internals`。
+- 清理 `research/` 下 4 个仅含 README 的空壳目录与空的 `.github/ISSUE_TEMPLATE/`。
+
 ### Added
+
+- 12 篇正文，其中 4 篇是上游与其它中文内容都不会有的独家：KV-cache 纪律、压缩的前缀复用、Invariant 与 Agent Note、横向对照。
+- 附录 A：实验手册，索引全部 39 个可复核实验（26 个无需凭据）。
+- 附录 B：28 条术语表、证据分级、benchmark 设计、上游维护、许可证边界、论文标注方法。
+
+### Fixed
+
+- 更正 `SandboxEnforcement` 的描述：实际是 `'full' | 'partial'` 两态，`'unavailable'` 属于 `EscalationOutcome`。
+- 更正 Cordis 插件状态机：实际是 `FiberState` 六态（`PENDING`/`LOADING`/`ACTIVE`/`FAILED`/`UNLOADING`/`DISPOSED`），此前图中的 `Declared`/`Waiting`/`Disposing` 是自造名称。
+- 更正事件分发模式数量：实际五种（含 `bail`），此前记为四种。
+
+### Removed（早期条目，已被上述重构取代）
 
 - Added `QUICKSTART.md` and `LEARNING_PATH.md` as clear public entry points.
 - Added role-route index under `docs/00-start-here/paths/`.
