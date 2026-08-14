@@ -49,7 +49,7 @@ evidence: [code, official-doc, inference]
 
 学习顺序：
 
-1. 先读 [03｜Cordis 插件运行时](03-cordis-plugin-runtime.md)。
+1. 先读 [03｜Cordis 插件运行时](../02-cordis-and-boot.md)。
 2. 再读 Cordis 论文导读和 fork 分析。
 3. 再做最小插件实验。
 4. 最后看能力插件如何贡献 service、event、prompt、tool 和 UI。

@@ -31,9 +31,9 @@ evidence: [code, test, official-doc, inference]
 
 读：
 
-- [03｜Cordis 插件运行时](03-cordis-plugin-runtime.md)
+- [03｜Cordis 插件运行时](../02-cordis-and-boot.md)
 - [12｜生态、论文与维护](12-ecosystem-maintenance.md) 中的 Cordis 论文部分
-- [../13-source-studies/cordis-fork-and-plugin-system.md](../13-source-studies/cordis-fork-and-plugin-system.md)
+- [../13-source-studies/cordis-fork-and-plugin-system.md](../02-cordis-and-boot.md)
 
 学完要能做到：
 
@@ -50,7 +50,7 @@ evidence: [code, test, official-doc, inference]
 
 读：
 
-- [04｜启动与配置](04-boot-and-config.md)
+- [04｜启动与配置](../02-cordis-and-boot.md)
 - [05｜Agent Loop](05-agent-loop.md)
 - [06｜Prompt 与上下文](06-prompt-and-context.md)
 - [07｜DeepSeek Adapter](07-deepseek-adapter.md)

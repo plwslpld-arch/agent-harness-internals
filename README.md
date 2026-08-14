@@ -50,7 +50,7 @@
 | # | 文章 | 状态 |
 | --- | --- | --- |
 | 01 | [Harness 是什么：模型之外的那一层](docs/01-what-is-a-harness.md) | ✅ |
-| 02 | Cordis 与启动：插件树如何装配 | 规划中 |
+| 02 | [Cordis 与启动：插件树如何装配](docs/02-cordis-and-boot.md) | ✅ |
 | 03 | Agent Loop：turn / step / 工具调度 | 规划中 |
 | 04 | System Prompt 与上下文组装 | 规划中 |
 | 05 | Session：事件溯源、surface 与恢复 | 规划中 |
