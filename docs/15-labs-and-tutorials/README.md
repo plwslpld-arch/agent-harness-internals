@@ -17,3 +17,5 @@ Harness 实验单位不是“模型跑了一次”，而是：
 每个实验保存三层产物：manifest（版本/环境/配置/预算）、trajectory（session events/tools/approval/usage/error）、result（workspace diff/tests/scorer/human review）。最后一条 assistant 文本、HTTP 200 或进程退出 0 都不是任务完成的充分证据。
 
 从零学习扩展系统时，继续做 [最小插件实验](minimal-plugin-lab.md)：先 host-only 可逆 service，再做配置/HMR，最后才加 client UI 与 tree 外安装。
+
+第一次上手不要直接做 benchmark。先做 [本地第一次跑通](local-first-run.md)：配置个人 `DEEPSEEK_API_KEY`，跑 headless 正向任务，再跑缺 key 或工具失败的负向任务，并按模板记录证据层级。

@@ -17,6 +17,7 @@ Atlas 的逐文件源码解析分为两种产物：
 - **全量文件卡片**：[`generated/harness-file-cards.md`](generated/harness-file-cards.md) 覆盖 DeepSeek Harness 固定基线中的每个跟踪文件。它回答“这个文件大概负责什么、导出什么、依赖谁、谁依赖它、有没有直接测试”。
 - **人工源码研究**：[`../13-source-studies/`](../13-source-studies/README.md) 解释关键链路的实现原因、运行顺序、边界条件和风险。它回答“为什么这样设计、实际路径怎么走、哪些结论不能只靠静态文件名判断”。
 - **重点文件精读**：[`key-file-deep-dives.md`](key-file-deep-dives.md) 先覆盖第一批 12 个核心文件，把启动、插件、Agent Loop、模型、工具和 Session 串起来。
+- **关键函数 walkthrough**：[`key-function-walkthroughs.md`](key-function-walkthroughs.md) 不精确到行号，而是解释关键代码块的责任、输入、输出、失败路径和非研发类比。
 
 没有把 7,412 个文件逐行翻译成中文注释。原因很直接：全仓逐行注释体量巨大、噪声高，并且上游一更新就会大面积过期。正确读法是先用人工研究建立模型，再用文件卡片追到具体文件和测试。
 
@@ -68,7 +69,7 @@ flowchart TD
 | 7 | Session 与恢复 | [`../08-session-and-context/event-log-and-recovery.md`](../08-session-and-context/event-log-and-recovery.md) | `packages/core/session`、`session-persistence`、`session-query` |
 | 8 | Web 与产品界面 | [`../10-web-client/web-dataflow.md`](../10-web-client/web-dataflow.md) | `packages/web/web`、`packages/client`、`packages/host/webserver` |
 
-第一批已经整理成可直接阅读的人工精读：[重点文件精读：第一批 12 个核心文件](key-file-deep-dives.md)。
+第一批已经整理成可直接阅读的人工精读：[重点文件精读：第一批 12 个核心文件](key-file-deep-dives.md)。读完文件级解释后，继续读[关键函数代码块解析](key-function-walkthroughs.md)。
 
 ## 插件系统应该怎么读
 
