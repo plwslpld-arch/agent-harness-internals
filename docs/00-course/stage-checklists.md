@@ -90,8 +90,8 @@ evidence: [code, test, official-doc, inference]
 
 读：
 
-- [11｜源码阅读与本地实验](11-source-reading-and-labs.md)
-- [../14-file-reference/source-reading-guide.md](../14-file-reference/source-reading-guide.md)
+- [11｜源码阅读与本地实验](../appendix-a-labs.md)
+- [../14-file-reference/source-reading-guide.md](../appendix-a-labs.md)
 - [../14-file-reference/key-file-deep-dives.md](../14-file-reference/key-file-deep-dives.md)
 - [../14-file-reference/key-function-walkthroughs.md](../14-file-reference/key-function-walkthroughs.md)
 
@@ -110,9 +110,9 @@ evidence: [code, test, official-doc, inference]
 
 读：
 
-- [../15-labs-and-tutorials/local-first-run.md](../15-labs-and-tutorials/local-first-run.md)
-- [../15-labs-and-tutorials/experiment-protocol.md](../15-labs-and-tutorials/experiment-protocol.md)
-- [../15-labs-and-tutorials/minimal-plugin-lab.md](../15-labs-and-tutorials/minimal-plugin-lab.md)
+- [../15-labs-and-tutorials/local-first-run.md](../appendix-a-labs.md)
+- [../15-labs-and-tutorials/experiment-protocol.md](../appendix-a-labs.md)
+- [../15-labs-and-tutorials/minimal-plugin-lab.md](../appendix-a-labs.md)
 
 学完要能做到：
 
