@@ -42,6 +42,5 @@ export function analysisFiles() {
     relativePath: posixPath(relative(root, path)),
     content: readFileSync(path, 'utf8'),
   })).filter(({ relativePath }) => relativePath.endsWith('.md')
-    && analysisPrefixes.some((prefix) => relativePath.startsWith(prefix))
-    && !relativePath.startsWith('docs/14-file-reference/generated/'));
+    && analysisPrefixes.some((prefix) => relativePath.startsWith(prefix)));
 }

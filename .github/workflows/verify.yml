@@ -29,3 +29,57 @@ jobs:
         run: npm run sources:verify
       - name: Run repository checks
         run: npm run check
+
+  publish-index:
+    # 源码索引不入主干：合并到 main 后重新生成并强推到 gh-pages 孤儿分支，
+    # 避免 16.9MB 的 symbols.md 每次刷新都在主干历史里留一个新 blob。
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    env:
+      GIT_LFS_SKIP_SMUDGE: '1'
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          submodules: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .nvmrc
+      - name: Bootstrap fixed source checkouts
+        run: npm run bootstrap
+      - name: Generate source index
+        run: npm run catalogs:generate
+      - name: Publish source index to gh-pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .pages
+          mkdir .pages
+          cp .generated/*.md .pages/
+          printf '%s\n' '*.md linguist-generated=true' > .pages/.gitattributes
+          {
+            printf '# DeepSeek Harness 源码索引\n\n'
+            printf '由 `npm run catalogs:generate` 从锁定的上游 checkout 生成，对应主干 commit `%s`。\n\n' "$GITHUB_SHA"
+            printf '人工深度分析在主干分支 `docs/`，本分支只放机器索引。\n\n'
+            for file in .pages/*.md; do
+              name="$(basename "$file")"
+              [ "$name" = 'index.md' ] && continue
+              printf -- '- [%s](%s)\n' "$name" "$name"
+            done
+          } > .pages/index.md
+          cd .pages
+          git init -q -b gh-pages
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -q -m "chore(index): publish source index for ${GITHUB_SHA}"
+          # 凭据走 header 而不是 URL：URL 内嵌凭据会被 scan-secrets 正确拦下。
+          AUTH="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')"
+          git -c http.extraheader="AUTHORIZATION: basic ${AUTH}" \
+            push -q --force "https://github.com/${GITHUB_REPOSITORY}.git" gh-pages

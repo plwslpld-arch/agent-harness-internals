@@ -41,4 +41,4 @@ flowchart LR
 
 当前快照没有内置 TUI app 或 TUI bundle，CLI 的 built binary 测试拒绝 `tui` 入口。`evidence: code` 历史 note 与残留通用 terminal/client primitives 只说明技术谱系，不能写成“当前同时提供 Web 和 TUI”。`evidence: inference`
 
-具体 client module 与服务边从[人工源码研究](../13-source-studies/README.md)进入，全量文件关系见[自动文件参考](../14-file-reference/README.md)。
+具体 client module 与服务边从[人工源码研究](../13-source-studies/README.md)进入，全量文件关系见[自动文件参考](https://github.com/plwslpld-arch/deepseek-harness-internals/tree/gh-pages)。

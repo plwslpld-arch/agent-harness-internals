@@ -79,4 +79,4 @@ Client HMR 通过重建 bundle、更新 revision 并向浏览器广播变化工�
 - [工具策略](../07-tools-permissions-sandbox/tool-policy-pipeline.md)
 - [Web 数据流](../10-web-client/web-dataflow.md)
 - [人工源码研究](../13-source-studies/README.md)
-- [自动文件参考](../14-file-reference/README.md)
+- [自动文件参考](https://github.com/plwslpld-arch/deepseek-harness-internals/tree/gh-pages)

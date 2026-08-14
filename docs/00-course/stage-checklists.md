@@ -131,7 +131,7 @@ evidence: [code, test, official-doc, inference]
 
 读：
 
-- [../00-start-here/paths/runtime-contributor.md](../00-start-here/paths/runtime-contributor.md)
+- [../13-source-studies/core-runtime-study.md](../13-source-studies/core-runtime-study.md)
 - [../13-source-studies/core-runtime-study.md](../13-source-studies/core-runtime-study.md)
 - [../13-source-studies/security-and-orchestration-study.md](../13-source-studies/security-and-orchestration-study.md)
 

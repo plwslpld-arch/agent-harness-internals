@@ -34,4 +34,4 @@ Guard 是单调的：下游不能把已有 deny 重新放开。`evidence: offici
 
 继续阅读：[工具流水线](tool-policy-pipeline.md)、[信任边界](trust-boundaries.md)。
 
-证据入口：[人工源码研究](../13-source-studies/README.md) · [自动文件参考](../14-file-reference/README.md)
+证据入口：[人工源码研究](../13-source-studies/README.md) · [自动文件参考](https://github.com/plwslpld-arch/deepseek-harness-internals/tree/gh-pages)

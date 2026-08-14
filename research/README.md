@@ -1,8 +1,7 @@
 # Research workspace
 
 This directory is an evidence ledger, not the learning entry point. Start with
-[`../QUICKSTART.md`](../QUICKSTART.md) or [`../LEARNING_PATH.md`](../LEARNING_PATH.md)
-when reading the project.
+[`../README.md`](../README.md) when reading the project.
 
 Research material is separated from finished teaching documents so that exploratory
 notes cannot silently become published conclusions. Some subdirectories intentionally

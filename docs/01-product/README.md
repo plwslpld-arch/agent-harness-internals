@@ -41,4 +41,4 @@ Harness 的差异化不只在 Agent Loop，而在从 host 到 browser、从模�
 
 继续阅读：[产品成熟度](product-maturity.md)、[系统架构](../02-system-architecture/README.md)。
 
-证据入口：[人工源码研究](../13-source-studies/README.md) · [自动文件参考](../14-file-reference/README.md)
+证据入口：[人工源码研究](../13-source-studies/README.md) · [自动文件参考](https://github.com/plwslpld-arch/deepseek-harness-internals/tree/gh-pages)

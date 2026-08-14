@@ -26,4 +26,4 @@ client modules 以注入和 slot 组合 UI；conversation node definition 与 ke
 
 继续阅读：[Web 数据流](web-dataflow.md)、[运行主链路](../05-agent-runtime/README.md)。
 
-证据入口：[人工源码研究](../13-source-studies/README.md) · [自动文件参考](../14-file-reference/README.md)
+证据入口：[人工源码研究](../13-source-studies/README.md) · [自动文件参考](https://github.com/plwslpld-arch/deepseek-harness-internals/tree/gh-pages)

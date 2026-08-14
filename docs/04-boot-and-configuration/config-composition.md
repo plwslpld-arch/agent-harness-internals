@@ -37,4 +37,4 @@ flowchart LR
 
 ## 最小实验
 
-导出 web 与 headless 两个 profile 的最终配置，只比较能力树差异，不调用模型。然后记录命令、退出码和脱敏产物。`evidence: runtime` 对应文件和配置 schema 从[自动文件参考](../14-file-reference/README.md)定位，语义解释从[人工源码研究](../13-source-studies/README.md)进入。
+导出 web 与 headless 两个 profile 的最终配置，只比较能力树差异，不调用模型。然后记录命令、退出码和脱敏产物。`evidence: runtime` 对应文件和配置 schema 从[自动文件参考](https://github.com/plwslpld-arch/deepseek-harness-internals/tree/gh-pages)定位，语义解释从[人工源码研究](../13-source-studies/README.md)进入。
