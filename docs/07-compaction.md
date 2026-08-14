@@ -11,7 +11,7 @@ evidence: [code, test, official-doc]
 
 > 本文基线 `47f9438`。所有行号对应该 Commit。
 >
-> 这篇讲一个真实的 bug 和它的修复。它是理解「缓存纪律如何落到具体设计」的最好案例。
+> 这篇讲一个真实的 bug 和它的修复，可以看到上一篇那条缓存约定具体是怎么落到设计上的。
 
 ## 一、产品现象
 
@@ -25,7 +25,7 @@ evidence: [code, test, official-doc]
 | **压缩那一刻缓存命中率塌陷** | 前缀被替换，这是不可避免的 |
 | 但压缩本身的那次请求**不该**再塌一次 | ← 本文的主题 |
 
-最后两行是关键。压缩必然打断主对话的前缀（文章 06 说的 `Replacing`），这没办法。但**压缩自己发出的那次辅助请求**，如果设计不当，会额外再付一次全量 prompt 处理费。
+最后两行是关键。压缩必然打断主对话的前缀（文章 06 说的 `Replacing`），这没办法。但压缩自己发出的那次辅助请求，如果设计不当，会额外再付一次全量 prompt 处理费。
 
 ## 二、源码路径
 
@@ -47,7 +47,7 @@ packages/compaction/                       2,880 行，4 个包
   command-compact/       /compact 命令
 ```
 
-`compaction/src/invariant.ts` **306 行，比服务实现本身（172 行）还大**。这是文章 11 的一个预告：在这个仓库里，「证明自己没坏」的代码可以比功能代码更多。
+`compaction/src/invariant.ts` 306 行，比服务实现本身（172 行）还大。这是文章 11 的一个预告：在这个仓库里，「证明自己没坏」的代码可以比功能代码更多。
 
 ### 行号锚点
 
@@ -70,16 +70,16 @@ packages/compaction/                       2,880 行，4 个包
 
 `.agents/notes/implemented/bug-fix/2026-07-21-compaction-summary-prefix-cache-reuse.md` 的 Problem 一节，原文大意： `evidence: official-doc`
 
-自动压缩在对话中途触发，**此时 provider 的 KV cache 刚被上一次 routed request 预热**（`system` + `tools` + 派生历史）。
+自动压缩在对话中途触发，此时 provider 的 KV cache 刚被上一次 routed request 预热（`system` + `tools` + 派生历史）。
 
 而原来的 summarizer 发的是一个**独立**的辅助请求：
 
 - 一个专用的 summarizer `system` prompt
-- 把旧历史**拍平成一个渲染好的 transcript 字符串**
+- 把旧历史拍平成一个渲染好的 transcript 字符串
 
 > A provider caches on the request's leading token sequence, so **a first token that differs — a different system prompt — invalidates the entire cached prefix.**
 
-结果：同一段历史付了两次全量 prompt 处理费——一次是触发压力的那个对话请求，一次是摘要请求。**而且恰好发生在对话最长的时候。**
+结果：同一段历史付了两次全量 prompt 处理费——一次是触发压力的那个对话请求，一次是摘要请求。而且恰好发生在对话最长的时候。
 
 ### 修复：把指令从请求头挪到对话尾
 
@@ -111,7 +111,7 @@ const options: GenerateOptions = {
 }
 ```
 
-三件事：**`system` 原样转发**、**`tools` 原样转发**、**指令作为最后一条 user 消息追加**。
+三件事：`system` 原样转发、**`tools` 原样转发**、指令作为最后一条 user 消息追加。
 
 ### 字节相同不是形容词
 
@@ -126,9 +126,9 @@ const header = session.requestHeader()        // :502  durable 的 system 与 to
 前缀不是「重新拼一个差不多的」，而是：
 
 - `system` 和 `tools` 来自 `session.requestHeader()`——文章 05 讲的那个可重建请求头
-- 被影区间的消息过 `session.deriveEventMessage`——**和 `deriveMessages()` 折进 routed request 的是同一个纯函数**
+- 被影区间的消息过 `session.deriveEventMessage`——和 `deriveMessages()` 折进 routed request 的是同一个纯函数
 
-Agent Note 的原话是 **byte-identical**。这就是为什么文章 05 要强调 `deriveEventMessage` 是「对外暴露的纯函数，外部重建器用同一套规则」——压缩就是那个外部重建器。
+Agent Note 的原话是 byte-identical。这就是为什么文章 05 要强调 `deriveEventMessage` 是「对外暴露的纯函数，外部重建器用同一套规则」——压缩就是那个外部重建器。
 
 ### 被否决的三个方案
 
@@ -140,7 +140,7 @@ Agent Note 的 Alternatives considered 一节比决策本身更有教学价值�
 | 只发被影区间，不带 `system`/`tools` 头 | 头不同就在第一个 token 分叉，缓存一样打不中，还丢了摘要需要的框架 |
 | **省掉 `tools`**（summarizer 根本不调工具） | **工具 schema 是缓存 token 序列的一部分**，省掉会让后面每个 token 错位 |
 
-第三条最反直觉：明明这次请求不需要工具，却必须把工具 schema 带上，**因为少了它，token 序列就对不齐了**。
+第三条最反直觉：明明这次请求不需要工具，却必须把工具 schema 带上，因为少了它，token 序列就对不齐了。
 
 ### 指令本身：一份结构化 checkpoint 模板
 
@@ -150,7 +150,7 @@ Agent Note 的 Alternatives considered 一节比决策本身更有教学价值�
 
 注意 **ABOVE** —— 因为指令在末尾，「上面」才是要压缩的内容。这是位置变更带来的措辞变更。
 
-它要求输出八个固定小节，**空的写 `(none)` 也不许省略**：
+它要求输出八个固定小节，空的写 `(none)` 也不许省略：
 
 ```
 ## Primary Request and Intent    用户原始与演进中的目标，措辞重要处逐字引用
@@ -167,7 +167,7 @@ Rules 里有四条（`:60-65`）：
 
 - 保留**精确的**文件路径、命令、错误串、标识符、数值、函数签名、语法片段
 - 忠实捕捉用户反馈和明确指令，**尤其是纠正**
-- **不要提及这次摘要请求，也不要说上下文被压缩过**
+- 不要提及这次摘要请求，也不要说上下文被压缩过
 - 只输出 checkpoint 文本，**不要调用任何工具**
 
 后两条是位置变更后新增的——原来放在 system prompt 里不需要说，挪到对话末尾后模型会把它当成一轮正常对话，所以必须显式禁止。
@@ -180,7 +180,7 @@ Rules 里有四条（`:60-65`）：
 
 > This is an automatically generated checkpoint condensing an earlier span of the conversation to free up context. Treat the captured context as **established background** and build on it without restating it. Continue the task directly from the messages that follow, **without acknowledging this checkpoint**.
 
-摘要以一条 `user/message` 落地，带 `surfaceOp: 'replace'`——**这是用户唯一能观察到的 surface 变化**，也是文章 05 里那个 `replace` 必须列出全部被影节点的使用场景。
+摘要以一条 `user/message` 落地，带 `surfaceOp: 'replace'`——这是用户唯一能观察到的 surface 变化，也是文章 05 里那个 `replace` 必须列出全部被影节点的使用场景。
 
 ### 三个事件与锁协议
 
@@ -192,7 +192,7 @@ Rules 里有四条（`:60-65`）：
 | `compaction/summary` | `:33` | 记录安全摘要投影、被影边界、seq 区间、token 估算、LLM 调用元数据 |
 | `compaction/end` | `:71` | 放锁，带 `error?: string` 记录失败尝试 |
 
-**崩溃会留下不配对的 `start`**，这是可检测的证据，而不是假装成功。`region.ts:305` 的 `assertNoActiveCompaction()` 就是在检查这个。
+崩溃会留下不配对的 `start`，这是可检测的证据，而不是假装成功。`region.ts:305` 的 `assertNoActiveCompaction()` 就是在检查这个。
 
 ### 两个触发器
 
@@ -211,7 +211,7 @@ export type CompactionTrigger = 'pressure' | 'context-overflow'
 
 `compaction-tool-result-pruner` 是独立的一个包，做**确定性文本截断**：
 
-- 按 **Unicode code point** 而不是 token 计量和切分
+- 按 Unicode code point 而不是 token 计量和切分
 - 保持块顺序
 - 在 `pressure` 场景下**先于区间选择**运行
 
@@ -221,14 +221,14 @@ export type CompactionTrigger = 'pressure' | 'context-overflow'
 
 `selectCompactableRange()`（`region.ts:98`）：
 
-- 边界**必须保持 tool call / result 配对**（`compaction/src/tool-pairing.ts` 131 行专门管这个）
+- 边界必须保持 tool call / result 配对（`compaction/src/tool-pairing.ts` 131 行专门管这个）
 - 但**不必保住整个 turn**——超大 turn 的早期 step 可以被压掉
 
 ## 四、约束与失效条件
 
 ### 缓存复用是尽力而为，正确性不是
 
-Agent Note 有一节标题就叫 **"Cache reuse is best-effort, correctness is not"**： `evidence: official-doc`
+Agent Note 有一节标题就叫 "Cache reuse is best-effort, correctness is not"： `evidence: official-doc`
 
 | 场景 | 缓存复用 | 正确性 |
 | --- | --- | --- |
@@ -236,7 +236,7 @@ Agent Note 有一节标题就叫 **"Cache reuse is best-effort, correctness is n
 | 手动 `compactRegion` 压中段 | **放弃复用**——被影区间不是请求头 | ✅ 仍然正确 |
 | 配了不同的 summarization provider/model | **放弃复用** | ✅ 「这是部署的显式取舍，不是缺陷」 |
 
-这个区分很重要：**性能优化可以有条件地失效，正确性不行。**
+这个区分很重要：性能优化可以有条件地失效，正确性不行。
 
 ### surface-boundary 是位置，不是数值区间
 
@@ -262,7 +262,7 @@ Agent Note 有一节标题就叫 **"Cache reuse is best-effort, correctness is n
 
 ### 溢出重试的边界
 
-上下文溢出被 LLM 层归一为稳定错误码（`CONTEXT_WINDOW_EXCEEDED`）。**只有剪枝或摘要真正推进了 generation，系统才开始新的 retry turn**，否则保留原始请求错误——避免在没有任何进展的情况下无限重试。
+上下文溢出被 LLM 层归一为稳定错误码（`CONTEXT_WINDOW_EXCEEDED`）。只有剪枝或摘要真正推进了 generation，系统才开始新的 retry turn，否则保留原始请求错误——避免在没有任何进展的情况下无限重试。
 
 ## 五、可复核实验
 
@@ -274,7 +274,7 @@ sed -n '/## Alternatives considered/,/## Consequences/p' \
   .agents/notes/implemented/bug-fix/2026-07-21-compaction-summary-prefix-cache-reuse.md
 ```
 
-回答：**为什么「省掉 tools」这个看起来最合理的优化是错的？**
+回答：为什么「省掉 tools」这个看起来最合理的优化是错的？
 
 ### 实验 2：核对指令确实在末尾（无需凭据）
 
@@ -316,7 +316,7 @@ pnpm dsh --profile headless "逐个读取 packages/core 与 packages/llm 下所�
 1. 是否出现 `compaction/start` → `compaction/summary` → `compaction/end` 三件套，且 `compactionId` 一致
 2. `compaction/summary` 里记录的被影 seq 区间
 3. 落地的那条 `user/message` 是否带 `surfaceOp: { op: 'replace', ... }`，且 `sourceEventSeqs` 覆盖全部被影节点
-4. **压缩前后两步请求的 `cacheReadTokens`**
+4. 压缩前后两步请求的 `cacheReadTokens`
 
 **该得出的结论**：主对话在压缩后的第一步命中率会下降（`Replacing` 的必然代价），但摘要请求自己应当有可观的 `cacheReadTokens`——它复用了预热的前缀。
 

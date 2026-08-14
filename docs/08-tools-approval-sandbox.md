@@ -13,7 +13,7 @@ evidence: [code, test, official-doc]
 
 ## 一、产品现象
 
-**模型可以「提出」要做某件事，但不能直接做。**
+模型可以「提出」要做某件事，但不能直接做。
 
 | 现象 | 背后是什么 |
 | --- | --- |
@@ -22,7 +22,7 @@ evidence: [code, test, official-doc]
 | 拒绝之后模型知道被拒了，并换了个方案 | 拒绝也要产生模型可见结果 |
 | 换个 `--profile` 就不再弹窗了 | permission preset 是「用户意图包」 |
 
-**审批不是沙箱，沙箱也不是用户同意。** 两者都需要，而且回答的是不同问题。
+审批不是沙箱，沙箱也不是用户同意。 两者都需要，而且回答的是不同问题。
 
 ## 二、源码路径
 
@@ -93,7 +93,7 @@ packages/shell/bash-sandbox/              bash 的沙箱消费者
 
 > 执行前先持久化 `tool/call`，才能在崩溃后区分「从未提出」「提出但未开始」和「开始后未产生结果」。
 
-三种状态对应文章 05 里的 `TOOL_NOT_STARTED` 与 `TOOL_OUTCOME_UNKNOWN`。**如果不先落盘 call，崩溃后就只剩「不知道发生过什么」这一种状态。**
+三种状态对应文章 05 里的 `TOOL_NOT_STARTED` 与 `TOOL_OUTCOME_UNKNOWN`。如果不先落盘 call，崩溃后就只剩「不知道发生过什么」这一种状态。
 
 ### 审批四态，全都 fail-closed
 
@@ -121,7 +121,7 @@ export type SandboxMode = 'read-only' | 'workspace-write' | 'danger-full-access'
 export type ConfinedSandboxMode = Exclude<SandboxMode, 'danger-full-access'>
 ```
 
-**`danger-full-access` 被类型系统从「受限模式」里排除掉了。** 需要一个受限执行的地方，在类型上就拿不到 `danger-full-access`。这比在文档里写「请不要用它」强得多。
+`danger-full-access` 被类型系统从「受限模式」里排除掉了。 需要一个受限执行的地方，在类型上就拿不到 `danger-full-access`。这比在文档里写「请不要用它」强得多。
 
 `SandboxEnforcement`（`:59`）只有两个值：
 
@@ -133,18 +133,18 @@ export type SandboxEnforcement = 'full' | 'partial'
 
 > `partial` means an active backend or older kernel ABI cannot govern every promised file effect; **callers requiring an absolute boundary must not treat it as `full`**.
 
-⚠️ **一处需要纠正的常见说法**：把 enforcement 说成 "full / partial / unavailable" 三态是不准确的——`'unavailable'` 属于 `EscalationOutcome`（`escalation.ts:93`，审批那一族），不属于 `SandboxEnforcement`。两者是不同的类型。
+有个说法要更正一下：把 enforcement 说成 "full / partial / unavailable" 三态是不对的，`'unavailable'` 属于 `EscalationOutcome`（`escalation.ts:93`，审批那一族），不属于 `SandboxEnforcement`。两者是不同的类型。
 
 ### policy 是 per-call，不是 per-provider
 
-`sandbox/src/index.ts:61-68` 的注释很有信息量： `evidence: code`
+`sandbox/src/index.ts:61-68` 的注释说明了这一点： `evidence: code`
 
 > What one confined execution is allowed to touch — carried **PER CALL, not fixed on the provider**: two consumers may confine under different policies at the same instant (bash under `read-only` while a confined child agent needs its state directory writable), and **an approved escalated retry is a new call with a wider policy**.
 
 两个推论：
 
 1. 同一时刻，bash 可以跑在 `read-only` 下，而某个受限子 Agent 的状态目录是可写的——它们是不同的 call，不是一个全局开关。
-2. **「批准升级后重试」在实现上是一次全新的 call，带更宽的 policy**，不是把原来那次调用的权限改大。这让审批粒度天然绑定到单次调用。
+2. 「批准升级后重试」在实现上是一次全新的 call，带更宽的 policy，不是把原来那次调用的权限改大。这让审批粒度天然绑定到单次调用。
 
 `escalation.ts:186` 补上失败路径：
 
@@ -152,7 +152,7 @@ export type SandboxEnforcement = 'full' | 'partial'
 sandbox escalation to "<mode>" requires approval, but no approval channel is available
 ```
 
-**没有审批通道就抛错，不是默默降级放行。**
+没有审批通道就抛错，不是默默降级放行。
 
 ### permission preset 是组合，不是安全机制
 
@@ -163,7 +163,7 @@ sandbox escalation to "<mode>" requires approval, but no approval channel is ava
 | `workspace-write`（默认） | `workspace-write` | `ask` | 在工作区和允许的临时目录内写；更宽的重试需要审批 |
 | `danger-full-access` | `danger-full-access` | `never` | 完全文件访问，不弹审批 |
 
-**preset 只是「sandbox mode + approval policy」的一个命名组合。** 真正的约束还要看：shell/sandbox 插件是否挂载、工具是否走 ToolRuntime、审批策略是否真的有 answerer。
+preset 只是「sandbox mode + approval policy」的一个命名组合。 真正的约束还要看：shell/sandbox 插件是否挂载、工具是否走 ToolRuntime、审批策略是否真的有 answerer。
 
 ### 四层控制
 
@@ -190,7 +190,7 @@ Code Mode 的嵌套调用**重入同一条流水线**，并且遵守同样的「
 
 ### 七条不变量
 
-1. **被拒绝的工具也要产生模型可见结果**——不能让模型下一步看到一个缺口
+1. 被拒绝的工具也要产生模型可见结果——不能让模型下一步看到一个缺口
 2. 工具报错要结构化，不能静默丢失
 3. 工具输出的**展示**与 program value 要分开
 4. 插件不能绕过 ToolRuntime 自己执行危险副作用
@@ -216,14 +216,14 @@ Code Mode 的嵌套调用**重入同一条流水线**，并且遵守同样的「
 
 审批界面应显示：具体工具、规范化后的参数、cwd 与目标、副作用、当前 enforcement。允许要绑定**一次调用或一次窄重试**；取消或无人回答**失败关闭**。
 
-**模型的解释是上下文，不是授权主体。** 模型说「这个操作是安全的」不构成授权。
+模型的解释是上下文，不是授权主体。 模型说「这个操作是安全的」不构成授权。
 
 ### 七项必跑攻击演练
 
 1. 仓库文字要求上传环境变量 → 应被内容/出站/审批控制阻断
 2. MCP `list_changed` 把只读工具换成写操作 → schema 与权限重新审查
 3. stdio server 污染 stdout / 挂起 / 崩溃循环 → 协议隔离、timeout、预算耗尽
-4. runner 打印信息性 warning 且子命令非零 → **保留真实子命令失败，不误报 sandbox unavailable**
+4. runner 打印信息性 warning 且子命令非零 → 保留真实子命令失败，不误报 sandbox unavailable
 5. ACP 两会话并行权限并取消其一 → 结果不能串线
 6. log 含 secret / 超大结果 / 恶意 HTML → 存储与 UI 均按策略处理
 7. 依赖升级新增 transitive 或 platform payload → license、完整性、notice 门禁失败
@@ -258,8 +258,8 @@ sed -n '53,70p' packages/sandbox/sandbox/src/index.ts              # enforcement
 
 回答两个问题：
 
-1. **为什么 `ConfinedSandboxMode` 要用 `Exclude` 而不是在文档里写「别用 danger-full-access」？**
-2. **「批准升级后重试是一次新 call」这个设计，对审批粒度意味着什么？**
+1. 为什么 `ConfinedSandboxMode` 要用 `Exclude` 而不是在文档里写「别用 danger-full-access」？
+2. 「批准升级后重试是一次新 call」这个设计，对审批粒度意味着什么？
 
 ### 实验 2：跑工具与审批测试（无需凭据）
 
@@ -289,7 +289,7 @@ pnpm --dir <harness> dsh --profile headless "在 /etc 下创建一个文件 test
 **该记录**：preset 名、effective sandbox mode、approval 决策、执行 provider、OS 身份、cwd、实际写入目标、退出码。
 **该得出**：写 `/etc` 应当失败。失败是来自 **sandbox 阻止**还是**审批拒绝**？两者在 `tool/result` 里的表现不同——这正是「审批 ≠ 沙箱」的可观测证据。
 
-再看 enforcement 是 `full` 还是 `partial`。**如果是 `partial`，任何「已隔离」的结论都不成立**，按 `:54-58` 的注释处理。
+再看 enforcement 是 `full` 还是 `partial`。如果是 `partial`，任何「已隔离」的结论都不成立，按 `:54-58` 的注释处理。
 
 只有真实运行且产物可核对时，才把结论标为 `evidence: runtime`。
 

@@ -13,7 +13,7 @@ evidence: [code, runtime, official-doc]
 
 ## 一、安全边界（先读这段）
 
-**不要把真实 key 写进仓库、文档、issue、PR 或截图。** 只在本机 shell 里设置：
+不要把真实 key 写进仓库、文档、issue、PR 或截图。 只在本机 shell 里设置：
 
 ```bash
 export DEEPSEEK_API_KEY="你的个人 key"
@@ -33,7 +33,7 @@ export DEEPSEEK_API_KEY="你的个人 key"
 | Session flush 成功 | 事件写入完成 | 业务结果一定对 |
 | 任务完成 | 用户目标被满足 | 所有场景都可靠 |
 
-**每次记录实验结果时，都要说清楚你证明到了第几层。**
+每次记录实验结果时，都要说清楚你证明到了第几层。
 
 ## 三、八步跑通第一次
 
@@ -105,7 +105,7 @@ flush 完成：
 退出码是否对应 turn/end 的 reason.kind === 'completed'：
 ```
 
-如果没有配置持久化 backend，**记录为「未配置持久化 backend」**，不要写成「session 已 durable」。
+如果没有配置持久化 backend，记录为「未配置持久化 backend」，不要写成「session 已 durable」。
 
 ### 步骤 7：跑一次负向工具 / 权限实验
 
@@ -122,7 +122,7 @@ sleep 6 && kill -9 %1
 
 核对 `turn/end` 的 `reason.kind === 'interrupted'`，以及中断工具的 error code 是 `TOOL_NOT_STARTED` 还是 `TOOL_OUTCOME_UNKNOWN`（文章 05）。
 
-**杀进程的时机决定你看到哪一种**——这两个状态的区别是可以复现出来的。
+杀进程的时机决定你看到哪一种——这两个状态的区别是可以复现出来的。
 
 ## 四、实验记录模板
 
@@ -165,7 +165,7 @@ known_gaps:
 - 只截图最后回答
 - 只说「跑通了」，没有命令和环境
 - 把真实 key 写进记录
-- **用 HTTP 200 代替任务完成**
+- 用 HTTP 200 代替任务完成
 - 没有负向 case
 
 ## 六、可复现实验协议（做对照实验时）
@@ -174,7 +174,7 @@ known_gaps:
 
 先写清：研究问题、**唯一自变量**、主要指标、失败 taxonomy、retry 与停止条件。
 
-**看到结果之后再改成功标准，只能记为 exploratory。**
+看到结果之后再改成功标准，只能记为 exploratory。
 
 ### Manifest
 
@@ -196,18 +196,18 @@ sampling: <documented-values>
 runtime: <os-arch-node-python>
 ```
 
-**源码 SHA 与包版本同时记录；secret 只记引用、scope 与 rotation batch，不记值。**
+源码 SHA 与包版本同时记录；secret 只记引用、scope 与 rotation batch，不记值。
 
 ### 隔离
 
 - 每个任务独立 workspace / session / storage，从相同 immutable fixture 创建并记录 tree hash
 - 禁止共享未声明的 cache、后台进程与 MCP 状态
-- **测缓存时把 cold / warm 当作变量**（文章 06）
+- 测缓存时把 cold / warm 当作变量（文章 06）
 - 先跑 keyless 的协议纯净性 smoke，再跑需要真实 API 的任务
 
 ### 七层失败分类
 
-**这是整个协议里最有价值的一张表。** 不分层就会把 Harness 的 bug 算成模型能力不足：
+失败要分层记，否则会把 Harness 自己的 bug 算成模型能力不足：
 
 | 层 | 示例 | 处理 |
 | --- | --- | --- |
@@ -223,18 +223,18 @@ runtime: <os-arch-node-python>
 
 非确定性任务做多次独立 run，报告置信区间，以及 token / cache / cost / time / tools / approval 与失败分布。
 
-pass@k 要写明 k、采样、并发和总成本。**超时与取消不能静默移出分母。**
+pass@k 要写明 k、采样、并发和总成本。超时与取消不能静默移出分母。
 
 复现包含：manifest schema、任务版本、无 secret 的配置、启动命令、scorer、脱敏 trajectory、结果摘要。
 
 ### 最小 A/B 检查清单
 
 - 唯一变量是否真的只有一个？
-- **tools schema 顺序、system prompt、时间上下文是否稳定？**（文章 04、06）
+- tools schema 顺序、system prompt、时间上下文是否稳定？（文章 04、06）
 - retry 与预算是否同等？
 - **cache 是否单列？**
 - scorer 是否预先冻结并盲评？
-- **Harness 可靠性与模型能力是否分开报告？**
+- Harness 可靠性与模型能力是否分开报告？
 
 ## 七、源码阅读方法
 
@@ -264,7 +264,7 @@ pass@k 要写明 k、采样、并发和总成本。**超时与取消不能静默
 
 ### 每篇文章末尾的「尚未覆盖」是路线图
 
-12 篇文章每篇末尾都列了「本篇尚未覆盖的源文件」。**把它们合起来就是下一轮深读的清单**，也是这个仓库承认的覆盖边界。
+12 篇文章每篇末尾都列了「本篇尚未覆盖的源文件」。把它们合起来就是下一轮深读的清单，也是这个仓库承认的覆盖边界。
 
 ### 十个类比：把机制讲给非研发听
 
@@ -283,7 +283,7 @@ pass@k 要写明 k、采样、并发和总成本。**超时与取消不能静默
 | `ToolRuntime.execute()` | **采购 / 审批 / 执行 / 报销系统**。不能绕过审批直接花钱，也不能执行完不留记录 |
 | `PersistenceCoordinator.append()` | **财务流水账**。编号必须连续不能断号，也不能把两个项目的流水写进同一本账 |
 
-最后两个尤其值得记：**「不能绕过审批直接花钱」对应文章 08 的统一工具流水线，「不能断号、不能混账本」对应文章 05 的 append-only 与 collision 检测。** 这两条是 dsh 最容易被外行误解、也最容易被内行忽略的设计约束。
+最后两个尤其值得记：「不能绕过审批直接花钱」对应文章 08 的统一工具流水线，「不能断号、不能混账本」对应文章 05 的 append-only 与 collision 检测。 这两条是 dsh 最容易被外行误解、也最容易被内行忽略的设计约束。
 
 ## 八、插件实验（Lab 1–6 递进）
 
@@ -298,7 +298,7 @@ pass@k 要写明 k、采样、并发和总成本。**超时与取消不能静默
 | 5 | 工具与安全 | 走完七段流水线，deny 路径有 `tool/result` |
 | 6 | 树外安装与发布 | 在复制的 profile 中验 PENDING / ACTIVE / FAILED / HMR / dispose |
 
-Lab 3 的五个验收项对应文章 02 的 vendored Cordis 差异清单——**那 18 类修改里有一半是为了让 Lab 3 能通过**。
+Lab 3 的五个验收项对应文章 02 的 vendored Cordis 差异清单——那 18 类修改里有一半是为了让 Lab 3 能通过。
 
 ## 九、全部实验索引
 
@@ -345,4 +345,4 @@ Lab 3 的五个验收项对应文章 02 的 vendored Cordis 差异清单——**
 | 12 | 验证「只有 dsh 强制 KV-cache 文档化」 | 否 |
 | 12 | 同一任务跑三家 | **是** |
 
-**39 个实验，其中 26 个不需要任何凭据。** 建议先把这 26 个跑完再申请 key。
+39 个实验，其中 26 个不需要任何凭据。 建议先把这 26 个跑完再申请 key。
