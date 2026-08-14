@@ -37,3 +37,5 @@ flowchart LR
 9. [Web 数据流](../10-web-client/web-dataflow.md)
 
 遇到具体符号时先用[人工源码研究](../13-source-studies/README.md)理解“为什么”，再用[自动文件参考](../14-file-reference/README.md)定位“在哪里”。
+
+如果目标是进一步参与核心 runtime 修改，而不只是理解调用链，继续读[核心 runtime 修改路线](core-runtime-contributor-path.md)。这条路线会把学习重点从“看懂主链路”推进到“不变量、测试矩阵、改动边界和回归证据”。
