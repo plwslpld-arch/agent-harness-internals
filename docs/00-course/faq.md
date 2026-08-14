@@ -33,7 +33,7 @@ evidence: [code, official-doc, inference]
 
 ## 逐文件源码解析在哪里？
 
-入口在 [../14-file-reference/source-reading-guide.md](../14-file-reference/source-reading-guide.md)。
+入口在 [../14-file-reference/source-reading-guide.md](../appendix-a-labs.md)。
 
 具体分三层：
 
