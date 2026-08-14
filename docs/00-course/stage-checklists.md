@@ -51,7 +51,7 @@ evidence: [code, test, official-doc, inference]
 读：
 
 - [04｜启动与配置](../02-cordis-and-boot.md)
-- [05｜Agent Loop](05-agent-loop.md)
+- [05｜Agent Loop](../03-agent-loop.md)
 - [06｜Prompt 与上下文](06-prompt-and-context.md)
 - [07｜DeepSeek Adapter](07-deepseek-adapter.md)
 
@@ -130,8 +130,8 @@ evidence: [code, test, official-doc, inference]
 
 读：
 
-- [../13-source-studies/core-runtime-study.md](../13-source-studies/core-runtime-study.md)
-- [../13-source-studies/core-runtime-study.md](../13-source-studies/core-runtime-study.md)
+- [../13-source-studies/core-runtime-study.md](../03-agent-loop.md)
+- [../13-source-studies/core-runtime-study.md](../03-agent-loop.md)
 - [../13-source-studies/security-and-orchestration-study.md](../13-source-studies/security-and-orchestration-study.md)
 
 改动前必须写清：

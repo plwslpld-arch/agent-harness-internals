@@ -51,7 +51,7 @@
 | --- | --- | --- |
 | 01 | [Harness 是什么：模型之外的那一层](docs/01-what-is-a-harness.md) | ✅ |
 | 02 | [Cordis 与启动：插件树如何装配](docs/02-cordis-and-boot.md) | ✅ |
-| 03 | Agent Loop：turn / step / 工具调度 | 规划中 |
+| 03 | [Agent Loop：turn、step 与工具调度](docs/03-agent-loop.md) | ✅ |
 | 04 | System Prompt 与上下文组装 | 规划中 |
 | 05 | Session：事件溯源、surface 与恢复 | 规划中 |
 | 06 | **KV-cache 纪律：把缓存写进架构约束** | 规划中 |
