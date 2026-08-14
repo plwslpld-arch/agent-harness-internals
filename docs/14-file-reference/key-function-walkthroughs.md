@@ -14,7 +14,7 @@ evidence: [code, test, inference]
 
 位置：[apps/cli/src/profile-boot.ts](https://github.com/deepseek-ai/deepseek-harness/blob/47f943859bef60e4160492346772ded9b24f765a/apps/cli/src/profile-boot.ts)
 
-它解决的问题：用户输入的是 `dsh web` 或 `dsh headless` 这类命令，但程序真正需要的是一棵 Cordis 插件树。`runProfile()` 就是把“命令参数 + 环境变量 + profile + patch”变成运行时系统。
+它解决的问题：用户输入的是 `dsh web` 或 `dsh --profile headless` 这类命令，但程序真正需要的是一棵 Cordis 插件树。`runProfile()` 就是把“命令参数 + 环境变量 + profile + patch”变成运行时系统。
 
 简化结构：
 
