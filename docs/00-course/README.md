@@ -28,7 +28,7 @@ evidence: [code, test, runtime, official-doc, inference]
 | 03 | [Cordis 插件运行时](../02-cordis-and-boot.md) | Context、Service、Event、Fiber、Effect |
 | 04 | [启动与配置](../02-cordis-and-boot.md) | CLI、profile、patch、环境变量如何合成 |
 | 05 | [Agent Loop](../03-agent-loop.md) | turn、step、model request、tool call 的主循环 |
-| 06 | [Prompt 与上下文](06-prompt-and-context.md) | system prompt、history、context window、compaction |
+| 06 | [Prompt 与上下文](../04-system-prompt.md) | system prompt、history、context window、compaction |
 | 07 | [DeepSeek Adapter](07-deepseek-adapter.md) | API key、请求序列化、SSE、thinking、usage |
 | 08 | [工具、审批与沙箱](08-tools-approval-sandbox.md) | tool policy pipeline 和副作用治理 |
 | 09 | [Session、持久化与恢复](09-session-persistence-repair.md) | append-only event log、flush、repair |
