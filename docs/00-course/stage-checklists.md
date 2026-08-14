@@ -71,7 +71,7 @@ evidence: [code, test, official-doc, inference]
 
 读：
 
-- [08｜工具、审批与沙箱](08-tools-approval-sandbox.md)
+- [08｜工具、审批与沙箱](../08-tools-approval-sandbox.md)
 - [09｜Session、持久化与恢复](../05-session.md)
 
 学完要能做到：
@@ -132,7 +132,7 @@ evidence: [code, test, official-doc, inference]
 
 - [../13-source-studies/core-runtime-study.md](../03-agent-loop.md)
 - [../13-source-studies/core-runtime-study.md](../03-agent-loop.md)
-- [../13-source-studies/security-and-orchestration-study.md](../13-source-studies/security-and-orchestration-study.md)
+- [../13-source-studies/security-and-orchestration-study.md](../08-tools-approval-sandbox.md)
 
 改动前必须写清：
 
