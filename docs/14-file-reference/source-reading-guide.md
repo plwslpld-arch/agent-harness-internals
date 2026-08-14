@@ -63,7 +63,7 @@ flowchart TD
 | 1 | CLI 与启动 | [`../04-boot-and-configuration/README.md`](../02-cordis-and-boot.md) | `apps/cli/src/bin.ts`、`profile-boot.ts`、`app-boot` |
 | 2 | Profile 与插件装配 | [`../03-cordis-foundation/plugin-lifecycle.md`](../02-cordis-and-boot.md) | `packages/bundle/headless`、`packages/bundle/web-app`、`vendor/loader` |
 | 3 | Cordis 底座 | [`../03-cordis-foundation/plugin-system-mainline.md`](../02-cordis-and-boot.md) | `vendor/cordis/src/context.ts`、`service.ts`、`index.ts` |
-| 4 | Agent Loop | [`../05-agent-runtime/turn-step-tool-loop.md`](../05-agent-runtime/turn-step-tool-loop.md) | `packages/core/agent-loop`、`packages/core/agent` |
+| 4 | Agent Loop | [`../05-agent-runtime/turn-step-tool-loop.md`](../03-agent-loop.md) | `packages/core/agent-loop`、`packages/core/agent` |
 | 5 | 模型适配 | [`../06-model-adapter/deepseek-protocol.md`](../06-model-adapter/deepseek-protocol.md) | `packages/llm/llm-deepseek`、`packages/llm/llm`、`llm-retry` |
 | 6 | 工具与权限 | [`../07-tools-permissions-sandbox/tool-policy-pipeline.md`](../07-tools-permissions-sandbox/tool-policy-pipeline.md) | `packages/core/tools`、`packages/shell/tool-bash`、`packages/sandbox` |
 | 7 | Session 与恢复 | [`../08-session-and-context/event-log-and-recovery.md`](../08-session-and-context/event-log-and-recovery.md) | `packages/core/session`、`session-persistence`、`session-query` |

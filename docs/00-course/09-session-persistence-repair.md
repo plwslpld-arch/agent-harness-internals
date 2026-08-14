@@ -147,4 +147,4 @@ private async flush(session) {
 
 - [../08-session-and-context/event-log-and-recovery.md](../08-session-and-context/event-log-and-recovery.md)
 - [../08-session-and-context/context-and-compaction.md](../08-session-and-context/context-and-compaction.md)
-- [../13-source-studies/core-runtime-study.md](../13-source-studies/core-runtime-study.md)
+- [../13-source-studies/core-runtime-study.md](../03-agent-loop.md)

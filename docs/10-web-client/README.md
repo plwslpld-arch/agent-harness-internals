@@ -24,6 +24,6 @@ Web 要把 streaming、pending tool call、审批、权限 preset、任务状态
 
 client modules 以注入和 slot 组合 UI；conversation node definition 与 keyed renderer 允许插件扩展消息树。`evidence: official-doc` Session 投影提供持久事实，`agent/*` 则补充正在运行的队列和状态。`evidence: code`
 
-继续阅读：[Web 数据流](web-dataflow.md)、[运行主链路](../05-agent-runtime/README.md)。
+继续阅读：[Web 数据流](web-dataflow.md)、[运行主链路](../03-agent-loop.md)。
 
 证据入口：[人工源码研究](../13-source-studies/README.md) · [自动文件参考](https://github.com/plwslpld-arch/deepseek-harness-internals/tree/gh-pages)
