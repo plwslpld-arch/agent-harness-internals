@@ -14,8 +14,7 @@ evidence: [code, test, official-doc, inference]
 
 读：
 
-- [01｜项目定位](01-product-positioning.md)
-- [02｜系统架构](02-system-architecture.md)
+- [01｜Harness 是什么](../01-what-is-a-harness.md)
 
 学完要能做到：
 

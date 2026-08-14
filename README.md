@@ -49,7 +49,7 @@
 
 | # | 文章 | 状态 |
 | --- | --- | --- |
-| 01 | Harness 是什么：定位、四平面架构与成熟度 | 编写中 |
+| 01 | [Harness 是什么：模型之外的那一层](docs/01-what-is-a-harness.md) | ✅ |
 | 02 | Cordis 与启动：插件树如何装配 | 规划中 |
 | 03 | Agent Loop：turn / step / 工具调度 | 规划中 |
 | 04 | System Prompt 与上下文组装 | 规划中 |
