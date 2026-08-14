@@ -64,6 +64,27 @@ if (hasOpenTurn) appendInterruptedTurnEnd()
 - 活跃会话和冷日志 repair 的规则不同。
 - side-effectful tool 不应在恢复时盲目重试。
 
+## 本讲源码证据卡
+
+| Session 问题 | 证据入口 | 看什么 |
+| --- | --- | --- |
+| 事件类型在哪里定义 | `packages/core/session/src/known-event-types.ts`、`types.ts` | turn/step/request/tool/assistant 等事件词汇 |
+| 模型可见历史如何派生 | `packages/core/session/src/surface.ts` | event log 到 messages 的投影 |
+| 不完整会话如何修复 | `packages/core/session/src/repair.ts` | interrupted closure、unknown tool outcome |
+| 持久化如何落盘 | `packages/session/session-persistence*/` | coordinator、JSONL、SQLite 后端边界 |
+
+## 最小实验
+
+```text
+任务：验证一次任务结束前 Session flush。
+步骤：
+1. 跑一次 headless 任务。
+2. 找到本次 session id 或 persistence 位置。
+3. 检查是否出现 turn/start、request/header、assistant/message、turn/end。
+4. 人为中断一个实验时，观察 repair 是否把开放 turn/step/tool 关闭为 interrupted/unknown。
+过关：能说明为什么恢复时不能盲目重跑副作用工具。
+```
+
 ## 检查题
 
 - Session event 和 UI state 有什么区别？

@@ -66,6 +66,27 @@ flowchart TD
 - 机器索引可以再生成，人工结论必须审核。
 - 上游更新后，旧结论不能默认继续有效。
 
+## 本讲源码证据卡
+
+| 维护问题 | 证据入口 | 看什么 |
+| --- | --- | --- |
+| 跟踪哪些仓库 | `sources/sources.yml` | id、url、fetchPolicy、license |
+| 当前固定版本 | `sources/sources.lock.yml` | 每个 source 的 commit 和 license hash |
+| 文档如何绑定源码 | 每篇 `docs/**/*.md` frontmatter | `sources`、`last_verified`、`status`、`depth`、`evidence` |
+| 上游更新如何处理 | `scripts/update-sources.mjs`、`.github/workflows/upstream-update.yml` | 更新检测、stale 标记、PR 流程 |
+
+## 最小实验
+
+```text
+任务：模拟一次维护者复核。
+步骤：
+1. 查看 sources/upstream-update.md。
+2. 查看 sources/stale-documents.md。
+3. 任选一篇 source-bound 文档，确认它绑定的 repo/path/commit 存在。
+4. 判断这篇文档是 reviewed、verified 还是 stale。
+过关：能说明为什么自动更新只能提出候选 PR，不能替代人工语义审核。
+```
+
 ## 检查题
 
 - 为什么 219 个 workspace packages 不等于 219 个社区插件？

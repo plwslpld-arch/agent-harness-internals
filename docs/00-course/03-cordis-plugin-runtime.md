@@ -83,6 +83,28 @@ disposeOrReloadWhenConfigChanges()
 - 把服务做成全局单例，会破坏 profile 和子 Agent 的隔离。
 - 忽略 Loader entry 状态，会把未激活能力误判为可用。
 
+## 本讲源码证据卡
+
+| 插件问题 | 证据入口 | 看什么 |
+| --- | --- | --- |
+| Context 如何隔离作用域 | `vendor/cordis/src/context.ts` | `extend()`、`isolate()`、`intercept()` |
+| Service 如何注册和清理 | `vendor/cordis/src/service.ts` | `ctx.reflect.provide()` 与 owning fiber |
+| 配置 entry 如何变成插件 | `vendor/loader/src/index.ts` | entry tree、plugin import、fiber ownership |
+| Harness 如何使用 Cordis | `packages/boot/app-boot/src/index.ts` | Loader/Include/Group 如何被挂载 |
+
+## 最小实验
+
+```text
+任务：解释一个 Harness 能力为什么是插件。
+建议对象：DeepSeek provider、headless bundle 或 web-app bundle。
+步骤：
+1. 找到它的 package 入口。
+2. 看它是否导出 apply/name/inject/config。
+3. 找它注册了哪些 service、event 或 prompt section。
+4. 写出 dispose 时应该清理什么。
+过关：能说清“插件注册能力”和“插件生命周期治理”的区别。
+```
+
 ## 检查题
 
 - 为什么 Harness 更像 VS Code Extension Host，而不只是 Webpack plugin？

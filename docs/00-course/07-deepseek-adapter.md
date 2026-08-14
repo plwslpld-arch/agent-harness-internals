@@ -67,6 +67,28 @@ DeepSeek thinking/tool 协议有自己的约束。当前适配器的关键点是
 - malformed event、idle timeout、abort 都要形成可解释错误。
 - Adapter 一次 `stream()` 只代表一次 provider 请求；retry 应由 Agent/request-error 边界处理。
 
+## 本讲源码证据卡
+
+| Adapter 问题 | 证据入口 | 看什么 |
+| --- | --- | --- |
+| provider 如何注册 | `packages/llm/llm-deepseek/src/index.ts` | provider id、config、env key |
+| 请求如何序列化 | `packages/llm/llm-deepseek/src/serialize.ts` | system/messages/tools/thinking 如何映射 |
+| SSE 如何解析 | `packages/llm/llm-deepseek/src/sse.ts` | `[DONE]`、comment、malformed、timeout |
+| provider 输出如何翻译 | `packages/llm/llm-deepseek/src/translate.ts` | reasoning、text、tool call、usage |
+
+## 最小实验
+
+```text
+任务：验证 DeepSeek provider 的成功和失败路径。
+前提：本机设置 DEEPSEEK_API_KEY。
+步骤：
+1. 先在无 key shell 中启动一次，记录受控失败。
+2. 再设置 DEEPSEEK_API_KEY，跑一次纯文本 headless 任务。
+3. 观察 request/header 中 provider/model 是否为 DeepSeek 路径。
+4. 如果出现 streaming 错误，记录是 HTTP、SSE、abort 还是 idle timeout。
+过关：不能只记录最终回答，必须记录 credential_ref、provider、exit_code 和 known_gaps。
+```
+
 ## 检查题
 
 - Adapter 为什么不应该自己偷偷重试？

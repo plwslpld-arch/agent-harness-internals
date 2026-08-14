@@ -72,6 +72,26 @@ while (agent.hasWork()) {
 - 工具调用必须走统一策略管道，不应由某个插件私自执行副作用。
 - 配置是 profile/patch 合成结果，不应只看一个 YAML 文件下结论。
 
+## 本讲源码证据卡
+
+| 架构问题 | 证据入口 | 看什么 |
+| --- | --- | --- |
+| 控制平面怎么装配 | `apps/cli/src/profile-boot.ts`、`packages/boot/app-boot/src/index.ts` | profile、patch、boot 如何生成 Cordis tree |
+| 执行平面在哪里 | `packages/core/agent-loop/src/` | turn、step、model request、tool scheduling |
+| 证据平面在哪里 | `packages/core/session/src/`、`packages/session/session-persistence*/` | event 类型、surface 派生、持久化 |
+| 产品表面在哪里 | `packages/bundle/web-app/`、`packages/bundle/headless/` | Web/headless 如何复用底层服务 |
+
+## 最小实验
+
+```text
+任务：画一次任务的四平面图。
+步骤：
+1. 从 docs/00-course/02-system-architecture.md 画主链路。
+2. 给每个节点标上源码入口。
+3. 标出哪些节点是运行状态，哪些节点是持久事实。
+过关：能解释为什么 UI state 不能替代 Session event。
+```
+
 ## 检查题
 
 - 控制平面和执行平面分别有什么？

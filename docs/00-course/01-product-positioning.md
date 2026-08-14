@@ -58,6 +58,29 @@ flowchart LR
 
 很多错误判断来自把这四层混成一层。
 
+## 本讲源码证据卡
+
+| 要判断的问题 | 证据入口 | 看什么 |
+| --- | --- | --- |
+| Harness 是否只是模型 API 包装 | `packages/core/agent-loop/`、`packages/core/tools/`、`packages/core/session/` | 是否存在独立的任务循环、工具治理和事件账本 |
+| Web 是否等于 Harness 本体 | `packages/bundle/web-app/`、`packages/bundle/headless/` | Web/headless 是否只是不同产品表面 |
+| 功能是否默认可用 | `apps/cli/src/profile-boot.ts`、profile/bundle patch | 功能是否被 profile 装配并激活 |
+| 当前成熟度如何判断 | `PROJECT_STATUS.md`、`docs/01-product/product-maturity.md` | 哪些是源码事实，哪些是推断或待验证 |
+
+## 最小实验
+
+不需要先调用模型。先做一个阅读实验：
+
+```text
+任务：选择一个能力，例如 Web 或 DeepSeek provider。
+步骤：
+1. 在 docs/00-course 找到对应课程。
+2. 在 docs/13-source-studies 找到人工源码研究。
+3. 在 docs/14-file-reference/generated/harness-file-cards.md 查这个能力的文件卡片。
+4. 写出它处于“源码存在 / 配置启用 / 运行激活 / 产品闭环”哪一层。
+过关：不能只回答“仓库里有代码”，必须说明证据层级。
+```
+
 ## 检查题
 
 - Harness 和模型的职责边界是什么？

@@ -76,6 +76,27 @@ Compaction 的重点是：
 - 历史 reasoning 不一定全部回传；不同 adapter 有不同协议要求。
 - prompt 变化会影响 benchmark 结果，不能只比较模型名。
 
+## 本讲源码证据卡
+
+| 上下文问题 | 证据入口 | 看什么 |
+| --- | --- | --- |
+| system prompt 在哪里拼 | `packages/core/system-prompt/src/index.ts` | section、context、tool、variable 如何 assemble |
+| 历史消息怎么来 | `packages/core/session/src/surface.ts` | `deriveMessages()` 如何从事件生成模型可见消息 |
+| 请求头如何记录 | `packages/core/session/src/request-header.ts` | provider/model/system/tools/config 证据 |
+| 上下文窗口如何进入证据 | `packages/core/agent-loop/src/` 与 adapter prepare | `request/context` 与 contextWindow |
+
+## 最小实验
+
+```text
+任务：验证 prompt/context 不是原始日志直传。
+步骤：
+1. 找一个已有 session 或跑一次 headless 任务。
+2. 对比 session event 类型和 deriveMessages 后的模型可见消息。
+3. 查 request/header 和 request/context 是否记录 provider、model、tools、contextWindow。
+4. 如果触发 compaction，确认原始事件仍保留，模型可见 surface 被替换。
+过关：能解释 event log、surface、request body 三者的区别。
+```
+
 ## 检查题
 
 - prompt 拼装在哪里配置？

@@ -75,6 +75,27 @@ export DEEPSEEK_API_KEY="your-own-key"
 - `.env` 可以保存普通凭据引用，但不能承载会改变启动信任边界的变量。
 - profile root、bundle patch、home patch、CLI overlay 的优先级会影响最终行为。
 
+## 本讲源码证据卡
+
+| 配置问题 | 证据入口 | 看什么 |
+| --- | --- | --- |
+| CLI 如何分发模式 | `apps/cli/src/bin.ts` | `profile`、`plugin`、`dump-config` 的分支 |
+| profile 如何组合 | `apps/cli/src/profile-boot.ts` | bundle patch、home patch、CLI overlay 的顺序 |
+| 环境变量如何加载 | `packages/boot/app-boot/src/index.ts` | inherited/project/user env 和 bootstrap-only 拒绝 |
+| 插件如何真正启动 | `packages/boot/app-boot/src/index.ts` | `boot()`、Loader settle、activation assert |
+
+## 最小实验
+
+```text
+任务：验证配置合成不等于运行 ready。
+步骤：
+1. 运行 Atlas 的 npm run sources:verify，确认源码基线一致。
+2. 阅读 profile-boot 和 app-boot 的关键函数卡片。
+3. 如果本机已安装 Harness 依赖，再运行 dump-config。
+4. 记录 dump-config 输出只证明配置层，不证明 Agent 完成任务。
+过关：能写出 profile、patch、env、boot 四个阶段各自证明什么。
+```
+
 ## 检查题
 
 - 为什么不能只看一个 `cordis.yml` 判断默认能力？

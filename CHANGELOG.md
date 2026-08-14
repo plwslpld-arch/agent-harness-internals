@@ -10,6 +10,8 @@
 - Added `QUICKSTART.md` and `LEARNING_PATH.md` as clear public entry points.
 - Added role-route index under `docs/00-start-here/paths/`.
 - Added `docs/00-course/` as the primary 12-part course path.
+- Added source evidence cards and minimum experiment prompts to every course lesson.
+- Added a generated-index navigation page and initial runtime-evidence records.
 
 ### Changed
 
