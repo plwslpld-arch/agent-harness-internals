@@ -21,11 +21,12 @@ evidence: [code, test, runtime, official-doc, community, inference]
 | 插件系统 | Cordis 理论、fork 差异、插件生命周期、host/client、供应链 | [`../03-cordis-foundation/`](../03-cordis-foundation/README.md) |
 | 人工源码研究 | 7 条核心源码研究线，解释“为什么这样实现” | [`../13-source-studies/`](../13-source-studies/README.md) |
 | 逐文件源码入口 | 7,412 个 Harness 文件职责卡片；符号、依赖、测试、Agent notes 索引；附阅读方法 | [`../14-file-reference/source-reading-guide.md`](../14-file-reference/source-reading-guide.md) |
+| 核心 runtime 修改能力 | 从定位改动点、读关键代码块、本地实验到安全修改 runtime 的训练路线 | [`core-runtime-contributor-path.md`](core-runtime-contributor-path.md) |
 | 协议与生态 | DSML、MCP、ACP、SDK JSON-RPC、E2B、参考 Agent、评测层 | [`../11-protocols-and-integrations/`](../11-protocols-and-integrations/README.md) |
 | 实验与评测 | 实验设计、benchmark 变量、失败分类、证据要求 | [`../19-benchmarks-and-evaluation/`](../19-benchmarks-and-evaluation/README.md) |
 | 维护与更新 | 15 个固定来源、每 6 小时检查、stale 文档机制、许可证边界 | [`../18-maintainer-guide/`](../18-maintainer-guide/README.md) |
 
-验证口径：`npm run check` 会确认 15 个 source definition、生成索引可复现、63 篇人工文档 source binding 有效、本地链接、许可证、secret scan 和脚本测试均通过。
+验证口径：`npm run check` 会确认 15 个 source definition、生成索引可复现、人工文档 source binding 有效、本地链接、许可证、secret scan 和脚本测试均通过。
 
 ## 为什么有些目录只有 README
 
@@ -117,6 +118,15 @@ evidence: [code, test, runtime, official-doc, community, inference]
 4. [`../18-maintainer-guide/upstream-and-license.md`](../18-maintainer-guide/upstream-and-license.md)
 
 目标：能自己新增一个插件/实验/版本更新，并知道需要哪些证据才能把结论写入 docs。
+
+### 第 7 阶段：核心 runtime 修改能力
+
+1. [`core-runtime-contributor-path.md`](core-runtime-contributor-path.md)
+2. [`../14-file-reference/key-file-deep-dives.md`](../14-file-reference/key-file-deep-dives.md)
+3. [`../14-file-reference/source-reading-guide.md`](../14-file-reference/source-reading-guide.md)
+4. [`../19-benchmarks-and-evaluation/benchmark-design.md`](../19-benchmarks-and-evaluation/benchmark-design.md)
+
+目标：能判断一个需求是否必须改核心 runtime，能定位受影响服务/事件/测试，能做小而兼容的改动，并用测试、运行证据和文档说明证明没有破坏关键行为。
 
 ## 学习时的查找方法
 
