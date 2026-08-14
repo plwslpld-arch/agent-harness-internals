@@ -61,6 +61,7 @@ DeepSeek Harness Atlas 以固定版本的真实源码和可复现实验证据为
 | 产品经理 | `docs/00-start-here/product-path.md` | 用户、能力、旅程、风险、平台策略和选型框架 |
 | 工程师 | `docs/00-start-here/engineering-path.md` | 从启动到任务完成的端到端实现和源码证据 |
 | 维护者 | `docs/00-start-here/maintainer-path.md` | 来源、许可证、更新、评审、验证和发布流程 |
+| 所有人 | `docs/00-start-here/complete-learning-path.md` | 完整学习顺序、逐文件解析入口和当前覆盖边界 |
 
 完整导航见 [`docs/README.md`](docs/README.md)。
 
