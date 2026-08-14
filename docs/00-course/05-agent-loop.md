@@ -72,6 +72,27 @@ while (hasPendingWork) {
 - 用户取消：已开始工具需要收束，未开始工具要有明确状态。
 - 恢复 session：不能把不完整事件静默当成成功完成。
 
+## 本讲源码证据卡
+
+| Loop 问题 | 证据入口 | 看什么 |
+| --- | --- | --- |
+| Agent 如何创建 | `packages/core/agent-loop/src/index.ts` | `createAgent()`、setup/publish、registry |
+| turn/step 如何推进 | `packages/core/agent-loop/src/agent.ts` | inbox claim、step start、request、turn end |
+| tool call 如何调度 | `packages/core/agent-loop/src/tool-calls.ts` | 并发执行与有序结算 |
+| 错误如何处理 | `packages/core/agent-loop/tests/request-error*` | retry 边界和 durable event |
+
+## 最小实验
+
+```text
+任务：从一个 headless run 观察 turn/step。
+前提：本机已设置 DEEPSEEK_API_KEY，并能启动 Harness。
+步骤：
+1. 用 headless profile 跑一个一句话任务。
+2. 查 session 中是否有 turn/start、step/start、request/header、assistant/message、turn/end。
+3. 再跑一个故意失败的配置，观察 request-error 或受控失败事件。
+过关：能区分“模型输出结束”和“turn durable closure”。
+```
+
 ## 检查题
 
 - 为什么“最后一个文本 chunk 出现”不等于 turn 完成？

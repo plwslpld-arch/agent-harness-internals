@@ -72,6 +72,27 @@ exit(codeFromTurnEnd)
 
 Headless 适合实验，因为它更容易记录命令、退出码和脱敏输出。
 
+## 本讲源码证据卡
+
+| 产品入口问题 | 证据入口 | 看什么 |
+| --- | --- | --- |
+| Web 如何启动 | `packages/bundle/web-app/src/index.ts` | static fallback、webRuntime、ready URL |
+| Headless 如何执行 | `packages/bundle/headless/src/index.ts` | create agent、followup、wait idle、flush、exit |
+| TUI 是否存在 | `apps/cli/tests/built-bin.e2e.ts`、profile/bundle 目录 | CLI 是否接受 `dsh tui`、是否有 shipped bundle |
+| 协议边界在哪里 | `docs/11-protocols-and-integrations/` | ACP、MCP、SDK、DSML 分别属于哪层 |
+
+## 最小实验
+
+```text
+任务：区分 ready 和业务完成。
+步骤：
+1. 启动 Web，记录 ready URL。
+2. 不把 ready URL 当成任务完成证据。
+3. 再通过 Web 或 headless 发起一个任务。
+4. 检查 Agent idle、Session flush、最终输出。
+过关：能解释进程 ready、服务 ready、Agent idle、Session durable closure 的区别。
+```
+
 ## 检查题
 
 - Web 和 headless 共享什么，不共享什么？

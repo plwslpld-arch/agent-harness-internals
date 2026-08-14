@@ -44,6 +44,7 @@ evidence: [code, test, runtime, official-doc, inference]
 1. 先看“人话理解”，建立概念。
 2. 再看“系统位置”，知道它在整条链路中的作用。
 3. 然后看“关键代码片段”，理解实现形状。
-4. 最后做“检查题/实验”，确认不是只看懂文字。
+4. 用“源码证据卡”回到具体文件、包和测试。
+5. 做“最小实验”，确认不是只看懂文字。
 
 需要查具体文件时，再进入 [../14-file-reference/](../14-file-reference/README.md)。需要看更完整的源码研究时，进入 [../13-source-studies/](../13-source-studies/README.md)。

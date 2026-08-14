@@ -68,6 +68,29 @@ Node 版本、系统、是否设置 DEEPSEEK_API_KEY。
 6. 跑一个本地失败实验。
 7. 写出改动前的不变量清单。
 
+## 本讲源码证据卡
+
+| 学习动作 | 证据入口 | 看什么 |
+| --- | --- | --- |
+| 从问题定位文件 | `docs/14-file-reference/source-reading-guide.md` | 能力域到文件的路线 |
+| 看重点文件 | `docs/14-file-reference/key-file-deep-dives.md` | 12 个核心文件的责任和边界 |
+| 看关键函数 | `docs/14-file-reference/key-function-walkthroughs.md` | 关键代码块的正常/失败/边界路径 |
+| 找测试映射 | `docs/14-file-reference/generated-index.md` | 先选索引文件，再查代码文件对应哪些直接测试 |
+| 写实验记录 | `research/runtime-evidence/` | 命令、环境、结果、artifact hash、known gaps |
+
+## 最小实验
+
+```text
+任务：从“prompt 怎么拼”完成一次源码到实验闭环。
+步骤：
+1. 读课程第 06 讲。
+2. 查 system-prompt 和 session/surface 文件卡片。
+3. 找对应测试。
+4. 跑一个最小 headless 任务。
+5. 记录 request/header、request/context 和 known gaps。
+过关：能把一个产品问题追到源码、测试和运行证据。
+```
+
 ## 不要做的事
 
 - 不要把生成索引当作教程正文。

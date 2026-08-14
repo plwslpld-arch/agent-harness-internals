@@ -68,6 +68,27 @@ for (const call of modelToolCalls) {
 
 观察点不是“有没有输出”，而是 Session 里是否有对应 `tool/call` 和 `tool/result`。
 
+## 本讲源码证据卡
+
+| 工具治理问题 | 证据入口 | 看什么 |
+| --- | --- | --- |
+| 工具在哪里注册 | `packages/core/tools/src/index.ts` | tool schema、execute、result materialization |
+| 模型 tool call 如何进入工具 | `packages/core/agent-loop/src/tool-calls.ts` | 调度、并发、安全结算 |
+| 审批在哪里处理 | `packages/interaction/user-approval/src/index.ts` | approval request/result 的事件和状态 |
+| preset 如何组合策略 | `packages/interaction/permission-presets/src/index.ts` | approval 和 sandbox 的组合，不是安全证明 |
+
+## 最小实验补充
+
+```text
+任务：验证工具失败也能回到模型。
+步骤：
+1. 触发一个 schema 不合法或权限被拒绝的工具调用。
+2. 确认 Session 里存在 tool/call。
+3. 确认最终有 tool/result，且 result 标识错误或拒绝。
+4. 确认没有未审计副作用。
+过关：能说明“失败被结构化记录”和“进程崩溃”的区别。
+```
+
 ## 检查题
 
 - 为什么 denial 也要成为模型可见结果？
