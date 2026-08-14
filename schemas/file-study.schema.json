@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/plwslpld-arch/deepseek-harness-atlas/schemas/file-study.schema.json",
+  "$id": "https://github.com/plwslpld-arch/deepseek-harness-internals/schemas/file-study.schema.json",
   "title": "DeepSeek Harness Atlas file study frontmatter",
   "type": "object",
   "required": ["sources", "last_verified", "status", "depth", "evidence"],

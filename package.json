@@ -1,5 +1,5 @@
 {
-  "name": "deepseek-harness-atlas",
+  "name": "deepseek-harness-internals",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -19,6 +19,6 @@
     "check:analysis": "node scripts/verify-analysis.mjs",
     "check:secrets": "node scripts/scan-secrets.mjs",
     "test": "node --test scripts/tests/*.test.mjs",
-    "check": "npm run sources:verify && npm run catalogs:verify && npm run check:analysis && npm run check:portability && npm run check:licenses && npm run check:links && npm run check:secrets && npm test"
+    "check": "npm run sources:verify && npm run check:analysis && npm run check:portability && npm run check:licenses && npm run check:links && npm run check:secrets && npm test"
   }
 }

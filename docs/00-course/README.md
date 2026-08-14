@@ -52,4 +52,4 @@ evidence: [code, test, runtime, official-doc, inference]
 4. 用“源码证据卡”回到具体文件、包和测试。
 5. 做“最小实验”，确认不是只看懂文字。
 
-需要查具体文件时，再进入 [../14-file-reference/](../14-file-reference/README.md)。需要看更完整的源码研究时，进入 [../13-source-studies/](../13-source-studies/README.md)。
+需要查具体文件时，再进入 [../14-file-reference/](https://github.com/plwslpld-arch/deepseek-harness-internals/tree/gh-pages)。需要看更完整的源码研究时，进入 [../13-source-studies/](../13-source-studies/README.md)。
