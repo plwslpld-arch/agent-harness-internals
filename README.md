@@ -59,7 +59,7 @@
 | 08 | [工具、审批、沙箱与威胁模型](docs/08-tools-approval-sandbox.md) | ✅ |
 | 09 | [DeepSeek Adapter：序列化、SSE、thinking 与 usage](docs/09-deepseek-adapter.md) | ✅ |
 | 10 | [产品表面与协议：Web / headless / ACP / MCP / SDK / DSML](docs/10-surfaces-and-protocols.md) | ✅ |
-| 11 | **Invariant 与 Agent Note：一个仓库如何自证** | 规划中 |
+| 11 | [**Invariant 与 Agent Note：一个仓库如何自证**](docs/11-invariants-and-agent-notes.md) | ✅ |
 | 12 | **横向对照：dsh vs Claude Code / Codex / OpenCode** | 规划中 |
 | A | 附录：实验手册（本地跑通与证据留痕） | 规划中 |
 | B | 附录：术语、证据方法与维护 | 规划中 |
