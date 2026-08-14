@@ -2,6 +2,13 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, extname, join, posix } from 'node:path';
 import { checkoutsDir, generatedDir, isReadableText, readManifest, trackedFiles } from './lib.mjs';
 
+// Only the analysis subjects are indexed file-by-file: DeepSeek Harness and the
+// Cordis it vendors. The other checkouts are comparison baselines — their commits
+// stay in the source summary and sources.lock.yml, and the cross-repo claims in
+// docs/12-comparison.md are computed from the checkouts directly, not from here.
+// Indexing all 15 produced a 77k-row symbol table whose 91% was never analysed.
+const INDEXED_SOURCES = new Set(['deepseek-harness', 'cordis']);
+
 const sourceExtensions = new Set(['.c', '.cc', '.cpp', '.go', '.java', '.js', '.jsx', '.mjs', '.py', '.rs', '.ts', '.tsx']);
 const testPattern = /(^|\/)(__tests__\/|tests?\/|testdata\/|fixtures?\/)|(^|\/).+\.(spec|test)\.[^.]+$|(^|\/)test_[^/]+\.py$/i;
 const agentNotePattern = /(^|\/)(AGENTS\.md|CLAUDE\.md)$/i;
@@ -111,6 +118,7 @@ export function buildCatalogs() {
     // Restricted sources are deliberately excluded so public CI and a default
     // clone reproduce the committed catalogs without accepting extra terms.
     if (source.fetchPolicy === 'restricted') continue;
+    if (!INDEXED_SOURCES.has(source.id)) continue;
     const checkout = join(checkoutsDir, source.id);
     if (!existsSync(join(checkout, '.git'))) continue;
     for (const path of trackedFiles(checkout)) {
@@ -131,7 +139,11 @@ export function buildCatalogs() {
   const header = (title, detail) => `# ${title}\n\n> 由 \`npm run catalogs:generate\` 从固定提交生成。不要手工编辑。${detail}\n\n`;
   const sourceSummary = manifest.sources.map((source) => {
     const present = files.some((file) => file.source === source.id);
-    const state = source.fetchPolicy === 'restricted' ? 'restricted; intentionally not indexed' : present ? 'indexed' : 'checkout absent';
+    const state = source.fetchPolicy === 'restricted'
+      ? 'restricted; intentionally not indexed'
+      : !INDEXED_SOURCES.has(source.id)
+          ? 'comparison baseline; pinned but not file-indexed'
+          : present ? 'indexed' : 'checkout absent';
     return `- \`${source.id}\`: \`${locks.get(source.id).commit}\` (${state})`;
   }).join('\n');
   const harnessFiles = files.filter((file) => file.source === 'deepseek-harness');
