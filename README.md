@@ -36,7 +36,7 @@ DeepSeek Harness Atlas 以固定版本的真实源码和可复现实验证据为
 
 | 项目 | 当前状态 |
 | --- | --- |
-| Atlas 版本 | [`v0.1.0`](https://github.com/plwslpld-arch/deepseek-harness-atlas/releases/tag/v0.1.0)，发布于 2026-08-13 |
+| Atlas 版本 | [`v0.1.0`](https://github.com/plwslpld-arch/deepseek-harness-atlas/releases/tag/v0.1.0) |
 | 人工研究文档 | 63 篇，均绑定一个或多个仓库、路径与 Commit |
 | 固定源码生态 | 15 个上游仓库，以 Git submodule 和锁文件共同固定 |
 | Harness 文件导航 | 7,412 张文件职责卡片，含符号、依赖与测试关系 |
@@ -44,10 +44,6 @@ DeepSeek Harness Atlas 以固定版本的真实源码和可复现实验证据为
 | 上游变化检查 | 每 6 小时运行；[查看最近扫描](https://github.com/plwslpld-arch/deepseek-harness-atlas/actions/workflows/upstream-update.yml) |
 | 待审核更新 | 自动化只创建 PR；[查看当前候选更新](https://github.com/plwslpld-arch/deepseek-harness-atlas/pulls?q=is%3Apr+is%3Aopen+head%3Aautomation%2Fupstream-sources) |
 | 版本记录 | [`CHANGELOG.md`](CHANGELOG.md) 与 [GitHub Releases](https://github.com/plwslpld-arch/deepseek-harness-atlas/releases) |
-
-桌面主目录与 GitHub 仓库一一对应：
-`DeepSeek-Harness-Ecosystem/DeepSeek-Harness-Atlas/`。其余同级编号目录是早期采集
-布局，不是维护入口；正式源码基线统一位于本仓库的 `sources/checkouts/`。
 
 ## 你能在这里学到什么
 
@@ -98,8 +94,8 @@ DeepSeek Harness Atlas 以固定版本的真实源码和可复现实验证据为
 
 ## 源码如何对应
 
-15 个第三方源码仓库以固定 SHA 的 Git submodule 指针存在：GitHub 保存来源
-指针，桌面目录可展开真实源码。默认流程只拉取许可明确的自动来源：
+15 个第三方源码仓库以固定 SHA 的 Git submodule 指针存在：远端仓库保存来源
+指针，执行 bootstrap 后可在本地展开真实源码。默认流程只拉取许可明确的自动来源：
 
 ```bash
 GIT_LFS_SKIP_SMUDGE=1 git clone \
