@@ -10,7 +10,7 @@ evidence: [code, official-doc, inference]
 
 本知识库按“先产品、后系统、再实现、最后验证与维护”的顺序组织。
 
-1. `00-start-here`：选择产品、工程或维护者路线。
+1. `00-start-here`：选择产品、工程、维护者路线，并查看完整学习路径与覆盖边界。
 2. `01-product`：用户问题、能力、旅程、信任和平台策略。
 3. `02-system-architecture`：系统全景、控制流、数据流和边界。
 4. `03-cordis-foundation`：插件生命周期、effect/coeffect、配置和 HMR。
