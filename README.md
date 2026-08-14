@@ -56,7 +56,7 @@
 | 05 | [Session：事件溯源、surface 与恢复](docs/05-session.md) | ✅ |
 | 06 | [**KV-cache 纪律：把缓存写进架构约束**](docs/06-kv-cache-discipline.md) | ✅ |
 | 07 | [**压缩：为什么摘要请求不新开一个**](docs/07-compaction.md) | ✅ |
-| 08 | 工具、审批、沙箱与威胁模型 | 规划中 |
+| 08 | [工具、审批、沙箱与威胁模型](docs/08-tools-approval-sandbox.md) | ✅ |
 | 09 | DeepSeek Adapter：序列化 / SSE / thinking / usage | 规划中 |
 | 10 | 产品表面与协议：Web / headless / ACP / MCP / SDK / DSML | 规划中 |
 | 11 | **Invariant 与 Agent Note：一个仓库如何自证** | 规划中 |
