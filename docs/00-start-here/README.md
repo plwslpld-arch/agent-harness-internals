@@ -21,15 +21,17 @@ DeepSeek Harness 不是模型本身，也不只是聊天界面。它是包在模
 
 代码中可以看到模型、工具、会话、沙箱、子 Agent 和 Web 等独立能力域。`evidence: code` 这证明它们可被研究，不自动证明都在默认 profile 中启用，也不证明已达到生产成熟度。`evidence: inference`
 
-## 学习路线
+## 先选一条路线
 
-- [非研发导读](non-engineer-guide.md)：不用先会写代码，也能理解 Harness 的产品、架构、插件和成熟度。
-- [产品路线](product-path.md)：价值、用户旅程、信任和采用判断。
-- [工程路线](engineering-path.md)：从启动配置到模型、工具、会话与 Web 的调用链。
-- [核心 runtime 修改路线](core-runtime-contributor-path.md)：学习如何安全修改 boot、Cordis、Agent Loop、工具、模型和 Session 等核心行为。
-- [维护者路线](maintainer-path.md)：证据、固定版本、许可、更新和文档质量。
-- [完整学习路径与覆盖边界](complete-learning-path.md)：说明资料是否完整、逐文件解析在哪里、哪些目录只是证据落账区。
-- [阶段式学习清单](learning-workbook.md)：每个阶段读什么、做什么、做到什么程度算过关。
+| 目标 | 入口 | 学完后应该能做什么 |
+| --- | --- | --- |
+| 快速理解 | [非研发导读](paths/non-engineer.md) | 用产品和组织类比解释 Harness、插件系统和成熟度 |
+| 产品判断 | [产品路线](paths/product.md) | 判断用户价值、采用风险和平台边界 |
+| 工程学习 | [工程路线](paths/engineer.md) | 串起启动、模型、工具、Session 和 Web 主链路 |
+| 修改核心 runtime | [核心 runtime 修改路线](paths/runtime-contributor.md) | 定位不变量、测试矩阵和安全改动边界 |
+| 维护本仓库 | [维护者路线](paths/maintainer.md) | 处理 source lock、stale 文档、许可证和发布 |
+| 系统学习 | [学习路线](learning-roadmap.md) | 按“从粗到精”完成 12 部分、源码精读和实验 |
+| 每阶段任务 | [学习清单](workbook.md) | 知道每个阶段读什么、做什么、如何验收 |
 
 无论选哪条路线，都先记住：存在源码 ≠ 默认启用；测试通过 ≠ 真实业务闭环；UI 可见 ≠ 副作用已受隔离。
 

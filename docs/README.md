@@ -8,30 +8,50 @@ evidence: [code, official-doc, inference]
 
 # 学习与研究导航
 
-本知识库按“先产品、后系统、再实现、最后验证与维护”的顺序组织。
+本目录是正式学习文档。建议先按路线读，再按目录查。
 
-1. `00-start-here`：选择非研发、产品、工程、核心 runtime、维护者路线，并查看阶段学习清单。
-2. `01-product`：用户问题、能力、旅程、信任和平台策略。
-3. `02-system-architecture`：系统全景、控制流、数据流和边界。
-4. `03-cordis-foundation`：插件生命周期、effect/coeffect、配置和 HMR。
-5. `04-boot-and-configuration`：CLI、profile、环境变量和插件装载。
-6. `05-agent-runtime`：从用户消息到模型、工具和完成。
-7. `06-model-adapter`：DeepSeek 协议、模型抽象和错误处理。
-8. `07-tools-permissions-sandbox`：工具、审批、文件系统与隔离。
-9. `08-session-and-context`：事件、持久化、压缩、恢复和查询。
-10. `09-orchestration`：子 Agent、Goal、Plan、Job、Schedule 和 Workflow。
-11. `10-web-client`：Web 产品、流式通信、设置和审批体验。
-12. `11-protocols-and-integrations`：MCP、ACP、JSON-RPC、E2B、LSP、Hooks 和 SDK。
-13. `12-security-and-trust`：威胁模型、供应链、凭据与跨平台隔离。
-14. `13-source-studies`：人工深度源码分析。
-15. `14-file-reference`：自动生成的全文件、符号、测试和决策索引。
-16. `15-labs-and-tutorials`：可复现实验与扩展教程。
-17. `16-ecosystem-and-community`：竞品、插件、社区和采用证据。
-18. `17-version-tracking`：上游变化、过期判断和兼容矩阵。
-19. `18-maintainer-guide`：来源、许可证、评审、CI 和发布。
-20. `19-benchmarks-and-evaluation`：模型与 Harness 变量隔离的评测。
-21. `20-decisions-and-postmortems`：设计决定、被拒方案和事故复盘。
-22. `99-reference`：术语、仓库、论文和能力矩阵。
+## 推荐入口
 
-自动生成导航只描述“有什么、在哪里、与什么相连”；人工分析负责解释“为什么、
-如何运行、失败时怎样、产品含义是什么”。
+| 需求 | 入口 |
+| --- | --- |
+| 第一次打开 | [`00-start-here/README.md`](00-start-here/README.md) |
+| 从粗到精系统学习 | [`../LEARNING_PATH.md`](../LEARNING_PATH.md) |
+| 每阶段学习任务 | [`00-start-here/workbook.md`](00-start-here/workbook.md) |
+| 查具体源码文件 | [`14-file-reference/source-reading-guide.md`](14-file-reference/source-reading-guide.md) |
+| 做本地实验 | [`15-labs-and-tutorials/README.md`](15-labs-and-tutorials/README.md) |
+
+## 按角色阅读
+
+- 非研发同学：[`00-start-here/paths/non-engineer.md`](00-start-here/paths/non-engineer.md)
+- 产品经理：[`00-start-here/paths/product.md`](00-start-here/paths/product.md)
+- 工程师：[`00-start-here/paths/engineer.md`](00-start-here/paths/engineer.md)
+- 核心 runtime 修改者：[`00-start-here/paths/runtime-contributor.md`](00-start-here/paths/runtime-contributor.md)
+- 维护者：[`00-start-here/paths/maintainer.md`](00-start-here/paths/maintainer.md)
+
+## 按问题查找
+
+| 问题 | 看哪里 |
+| --- | --- |
+| Harness 是什么，成熟度如何 | [`01-product/`](01-product/README.md) |
+| 整体架构怎么分层 | [`02-system-architecture/`](02-system-architecture/README.md) |
+| Cordis 和插件系统如何工作 | [`03-cordis-foundation/`](03-cordis-foundation/README.md) |
+| 启动、profile、配置如何组合 | [`04-boot-and-configuration/`](04-boot-and-configuration/README.md) |
+| 一次任务如何进入 Agent Loop | [`05-agent-runtime/`](05-agent-runtime/README.md) |
+| DeepSeek API 如何适配 | [`06-model-adapter/`](06-model-adapter/README.md) |
+| 工具、审批、沙箱怎么治理 | [`07-tools-permissions-sandbox/`](07-tools-permissions-sandbox/README.md) |
+| Session、上下文、恢复怎么做 | [`08-session-and-context/`](08-session-and-context/README.md) |
+| 子 Agent、Goal、Job 怎么看 | [`09-orchestration/`](09-orchestration/README.md) |
+| Web/headless/SDK 是什么关系 | [`10-web-client/`](10-web-client/README.md) |
+| MCP、ACP、DSML、E2B 在哪层 | [`11-protocols-and-integrations/`](11-protocols-and-integrations/README.md) |
+| 安全和信任边界 | [`12-security-and-trust/`](12-security-and-trust/README.md) |
+| 人工源码深度分析 | [`13-source-studies/`](13-source-studies/README.md) |
+| 全量文件、符号、测试索引 | [`14-file-reference/`](14-file-reference/README.md) |
+| 本地实验和插件教程 | [`15-labs-and-tutorials/`](15-labs-and-tutorials/README.md) |
+| 生态、社区、插件成熟度 | [`16-ecosystem-and-community/`](16-ecosystem-and-community/README.md) |
+| 上游版本和 stale 判断 | [`17-version-tracking/`](17-version-tracking/README.md) |
+| 维护、许可证、发布 | [`18-maintainer-guide/`](18-maintainer-guide/README.md) |
+| benchmark 和评测设计 | [`19-benchmarks-and-evaluation/`](19-benchmarks-and-evaluation/README.md) |
+| 设计决策与复盘 | [`20-decisions-and-postmortems/`](20-decisions-and-postmortems/README.md) |
+| 术语和索引 | [`99-reference/`](99-reference/README.md) |
+
+自动生成导航只描述“有什么、在哪里、与什么相连”；人工分析负责解释“为什么、如何运行、失败时怎样、产品含义是什么”。

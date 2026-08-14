@@ -23,82 +23,61 @@
   <img alt="Chinese documentation" src="https://img.shields.io/badge/language-中文-EA580C">
 </p>
 
-DeepSeek Harness Atlas 以固定版本的真实源码和可复现实验证据为基础，沿着
-“产品定位 → 系统架构 → 运行链路 → 关键源码 → 测试证据 → 设计决策 → 生态演进”
-组织内容。产品经理可以理解能力与成熟度，工程师可以追到具体文件和测试，维护者
-可以在上游变化后定位需要重新审核的结论。
+DeepSeek Harness Atlas 是一个独立的中文研究与教学仓库。它基于固定版本的 DeepSeek Harness 源码，解释这个 Agent Harness 的产品定位、系统架构、插件机制、核心运行链路、源码实现、实验方法和生态边界。
 
-> 当前状态：`v0.1.0` 首个可用基线，持续维护中。所有分析固定到
-> [`sources/sources.lock.yml`](sources/sources.lock.yml) 中的上游 Commit；
-> “存在源码”不等于“默认启用”，“测试通过”也不等于真实业务闭环。
+它的目标不是复制一批仓库，也不是生成文件清单；而是帮助读者回答三个问题：
 
-## 当前进度与更新信息
+1. DeepSeek Harness 到底解决什么问题。
+2. 它的 runtime、插件、模型、工具、Session 和 Web 是如何协作的。
+3. 如果上游代码持续变化，哪些结论仍然有效，哪些需要重新审核。
 
-| 项目 | 当前状态 |
+当前基线：`v0.1.0`，持续维护中。所有核心分析都绑定到 [`sources/sources.lock.yml`](sources/sources.lock.yml) 中的上游 Commit。
+
+## 直接开始
+
+| 你是谁 | 入口 |
 | --- | --- |
-| Atlas 版本 | [`v0.1.0`](https://github.com/plwslpld-arch/deepseek-harness-atlas/releases/tag/v0.1.0) |
-| 人工研究文档 | 全部人工文档均绑定一个或多个仓库、路径与 Commit，并由 CI 校验 |
-| 固定源码生态 | 15 个上游仓库，以 Git submodule 和锁文件共同固定 |
-| Harness 文件导航 | 7,412 张文件职责卡片，含符号、依赖与测试关系 |
-| 主分支质量门 | [`Verify`](https://github.com/plwslpld-arch/deepseek-harness-atlas/actions/workflows/verify.yml) 必须通过 |
-| 上游变化检查 | 每 6 小时运行；[查看最近扫描](https://github.com/plwslpld-arch/deepseek-harness-atlas/actions/workflows/upstream-update.yml) |
-| 待审核更新 | 自动化只创建 PR；[查看当前候选更新](https://github.com/plwslpld-arch/deepseek-harness-atlas/pulls?q=is%3Apr+is%3Aopen+head%3Aautomation%2Fupstream-sources) |
-| 版本记录 | [`CHANGELOG.md`](CHANGELOG.md) 与 [GitHub Releases](https://github.com/plwslpld-arch/deepseek-harness-atlas/releases) |
+| 第一次打开仓库 | [QUICKSTART.md](QUICKSTART.md) |
+| 想系统学习 | [LEARNING_PATH.md](LEARNING_PATH.md) |
+| 非研发同学 | [docs/00-start-here/paths/non-engineer.md](docs/00-start-here/paths/non-engineer.md) |
+| 产品经理 | [docs/00-start-here/paths/product.md](docs/00-start-here/paths/product.md) |
+| 工程师 | [docs/00-start-here/paths/engineer.md](docs/00-start-here/paths/engineer.md) |
+| 想改核心 runtime | [docs/00-start-here/paths/runtime-contributor.md](docs/00-start-here/paths/runtime-contributor.md) |
+| 维护者 | [docs/00-start-here/paths/maintainer.md](docs/00-start-here/paths/maintainer.md) |
+| 查完整目录 | [docs/README.md](docs/README.md) |
 
-## 你能在这里学到什么
+## 你能学到什么
 
-- 产品：Harness 为谁解决什么问题，完整用户旅程、信任模型、插件平台和成熟度。
-- 架构：Cordis 插件底座、Agent Loop、模型适配、工具权限、沙箱、Session、编排和 Web。
-- 源码：从能力域进入具体文件、符号、测试、配置、事件和设计决策。
-- 实验：区分模型与 Harness 变量，记录成功率、成本、延迟、缓存、人工介入和危险操作。
-- 生态：MCP、ACP、E2B、Pi、Codex、Claude Agent SDK、OpenCode、Qwen Code、mini-swe-agent 与评测层的可比/不可比边界。
-- 维护：每 6 小时检查上游；发现变化后生成差异和过期提示，通过 PR 审核更新。
+- 产品定位：Harness 和模型、评测 Harness、聊天 UI 的区别。
+- 系统架构：Cordis 插件底座、Agent Loop、模型适配、工具权限、沙箱、Session、编排和 Web。
+- 源码实现：从重点文件、关键函数、全量文件卡片和测试索引进入源码。
+- 本地实验：用个人 `DEEPSEEK_API_KEY` 跑通 headless/Web/插件/Session 证据。
+- 生态判断：Cordis、DeepSeek API、DSML、MCP、ACP、E2B、Codex、Claude Code、OpenCode、Qwen Code、mini-swe-agent 的关系与边界。
+- 开源维护：上游每 6 小时检查，source-bound 文档过期标记，许可证和证据治理。
 
-## 学习路线
+## 当前关键结论
 
-| 读者 | 从哪里开始 | 最终获得什么 |
-| --- | --- | --- |
-| 非研发同学 | `docs/00-start-here/non-engineer-guide.md` | 用产品和组织类比理解 Harness、插件系统、证据边界和成熟度 |
-| 产品经理 | `docs/00-start-here/product-path.md` | 用户、能力、旅程、风险、平台策略和选型框架 |
-| 工程师 | `docs/00-start-here/engineering-path.md` | 从启动到任务完成的端到端实现和源码证据 |
-| 核心贡献者 | `docs/00-start-here/core-runtime-contributor-path.md` | 修改核心 runtime 时的不变量、测试矩阵和证据要求 |
-| 维护者 | `docs/00-start-here/maintainer-path.md` | 来源、许可证、更新、评审、验证和发布流程 |
-| 所有人 | `docs/00-start-here/learning-workbook.md` | 每个阶段读什么、做什么、做到什么程度算过关 |
+- 插件是主线。Cordis 不只是扩展 API，而是 profile、模型、工具、权限、Session、编排与 Web 的运行底座。
+- Web 是当前主要产品表面。固定 Harness 基线中，内置 TUI 产品层已移除；通用终端零件或历史记录不等于当前可用 TUI。
+- 219 个 workspace packages 不等于 219 个社区插件。内部模块化和外部插件生态成熟度是两件事。
+- 代码存在不等于默认启用。Atlas 会区分源码、profile 挂载、运行 ready、权限隔离和用户旅程。
+- 评测结果属于“模型 + Harness + 工具 + 上下文 + 沙箱 + 终止条件”的组合，不应只归因于模型。
 
-完整导航见 [`docs/README.md`](docs/README.md)。
+## 仓库结构
 
-## 当前基线的几个关键结论
+```text
+docs/       正式学习文档：产品、架构、源码、实验、生态、维护
+research/   证据落账区：runtime 记录、benchmark、版本追踪、工作笔记
+sources/    固定上游源码：source manifest、lock 和 submodule checkouts
+scripts/    生成、验证、更新和安全检查脚本
+schemas/    文档和证据元数据约束
+templates/  新增源码研究和证据记录模板
+assets/     Logo 与公开展示资源
+```
 
-- **插件是主线。** Cordis 不只是扩展 API，而是 profile、模型、工具、权限、
-  Session、编排与 Web 组合的运行底座；参见[插件系统全景](docs/03-cordis-foundation/plugin-system-mainline.md)。
-- **Web 是当前官方交互产品面。** 固定 Harness SHA 已删除内置 TUI package 和
-  shipped composition；Headless、ACP 与 JSON-RPC 是非 Web 入口。通用终端/审批
-  零件仍在，但不等于存在完整 TUI 产品。
-- **219 个 workspace packages 不等于 219 个社区插件。** 第一方模块化程度与
-  外部插件供给、兼容、安全审核和真实采用是不同指标。
-- **代码存在不等于用户可用。** Atlas 分别核对源码、profile 挂载、运行时 ready、
-  权限/隔离和用户旅程。
-- **评测结果属于模型加 Harness 的完整组合。** Prompt、工具、上下文、沙箱、
-  重试、预算和终止条件都必须进入实验清单。
+## 源码如何展开
 
-## 证据等级
-
-`docs/` 下所有人工文档都声明一个或多个仓库、路径、Commit 与审核状态；任一
-绑定来源更新都会将该文档标记为 `stale`。文中的结论还使用以下证据标签：
-
-| 标签 | 含义 |
-| --- | --- |
-| `code` | 固定 Commit 中可以定位的实现 |
-| `test` | 自动测试、fixture 或 snapshot 所表达的契约 |
-| `runtime` | 记录了环境、命令、退出码和产物的实际运行 |
-| `official-doc` | 上游官方文档、公告或发布元数据 |
-| `community` | Discussion、社交媒体或第三方实践，仅代表样本 |
-| `inference` | 基于证据的推断，不能写成已验证事实 |
-
-## 源码如何对应
-
-15 个第三方源码仓库以固定 SHA 的 Git submodule 指针存在：远端仓库保存来源
-指针，执行 bootstrap 后可在本地展开真实源码。默认流程只拉取许可明确的自动来源：
+默认只拉取许可清晰的自动来源：
 
 ```bash
 GIT_LFS_SKIP_SMUDGE=1 git clone \
@@ -107,63 +86,41 @@ cd deepseek-harness-atlas
 npm run bootstrap
 ```
 
-只有在自行核对并接受上游条款后，才显式拉取 Cordis 论文与 Claude SDK：
+需要自行核对并接受上游条款后，再显式拉取受限来源：
 
 ```bash
 npm run bootstrap -- --include-restricted
 npm run catalogs:generate
 ```
 
-脚本会校验/补齐 `sources/checkouts/` 并切到锁文件 SHA，然后生成：
-
-- 文件目录与职责卡片；
-- 轻量导出符号、静态相对依赖和反向依赖；
-- 源码到直接静态测试、fixture、文档和 Agent Note 的关系；
-- 上游版本和许可证账本。
-
-自动目录只是“全覆盖导航”，人工深度分析位于
-`docs/13-source-studies/`，两者不会混为一谈。
-
-Cordis 论文没有明确再发布许可证，Claude Agent SDK 受商业条款约束；默认
-bootstrap、CI 和机器目录均不读取它们。显式选择时 Git 从公开上游按 SHA 获取，
-本项目仍不复制或重新授权其内容。
-
-## 自动更新
-
-GitHub Actions 每 6 小时检查 DeepSeek Harness 及关键生态仓库：
-
-1. 比较锁定 Commit 与上游默认分支；
-2. 报告新增、删除、重命名和修改的文件；
-3. 以路径级规则提示许可证、依赖、测试、文档或实现变化；
-4. 将绑定旧 Commit 的人工文档标成 `stale`，生成待复核清单；
-5. 仅创建更新 PR，不直接修改主分支；
-6. 人工确认语义分析后再提升基线。
-
-自动化不能替代人工判断。架构结论、产品判断、论文解释和安全结论必须审核。
-
-## API Key
-
-真实 DeepSeek API 实验从环境变量读取：
+真实 DeepSeek API 实验只从环境变量读取：
 
 ```bash
 export DEEPSEEK_API_KEY="your-own-key"
 ```
 
-仓库、日志、fixture 和更新报告禁止保存真实密钥。无密钥 CI 与带密钥真实 E2E
-必须分开；公共 fork 默认只运行无密钥检查。
+仓库、日志、fixture 和更新报告禁止保存真实密钥。
 
-## 开源边界
+## 状态与更新
 
-- 本项目原创脚本：MIT，见 `LICENSE-CODE`。
-- 本项目原创文档：CC BY 4.0，见 `LICENSE-DOCS`。
-- DeepSeek Harness：上游 MIT，但本仓库只保留引用和固定版本信息。
-- Claude Agent SDK：受 Anthropic 商业条款约束，不随本仓库再分发。
-- Cordis 论文：上游仓库未提供明确再发布许可证，只做引用、释义和阅读笔记。
-- MCP SDK 等混合许可项目按文件和文档范围记录，不使用一个总许可证覆盖。
-- 项目 Logo 使用 DeepSeek Harness 上游 MIT 源码中的鱼形图标并加入 Atlas 罗盘
-  子标；仅用于说明研究对象，不表示 DeepSeek 官方认可或维护本项目。
+| 项目 | 状态 |
+| --- | --- |
+| Atlas 版本 | [`v0.1.0`](https://github.com/plwslpld-arch/deepseek-harness-atlas/releases/tag/v0.1.0) |
+| 固定源码生态 | 15 个上游仓库，由 submodule 与 lock 文件共同固定 |
+| 文件导航 | DeepSeek Harness 7,412 张文件职责卡片 |
+| 主分支质量门 | [`Verify`](https://github.com/plwslpld-arch/deepseek-harness-atlas/actions/workflows/verify.yml) |
+| 上游变化检查 | 每 6 小时运行，只创建候选更新 PR |
+| 版本记录 | [CHANGELOG.md](CHANGELOG.md) 与 [GitHub Releases](https://github.com/plwslpld-arch/deepseek-harness-atlas/releases) |
 
-详见 [`THIRD_PARTY.md`](THIRD_PARTY.md)。
+更详细的覆盖度、证据边界和维护状态见 [PROJECT_STATUS.md](PROJECT_STATUS.md)。
+
+## 边界说明
+
+- 本项目不是 DeepSeek 官方仓库、镜像或贡献入口。
+- 自动生成索引是源码导航，不是人工教程。
+- 社交媒体和社区内容只作为采样证据，不能替代源码、官方文档和运行记录。
+- Cordis 论文、Claude Agent SDK 等受限来源不随默认流程再分发。
+- Logo 使用 DeepSeek Harness 上游 MIT 源码中的鱼形图标并加入 Atlas 罗盘子标；仅用于说明研究对象，不表示 DeepSeek 官方认可或维护本项目。
 
 ## 本地检查
 
@@ -173,7 +130,4 @@ npm run sources:verify
 npm run catalogs:verify
 ```
 
-## 项目定位
-
-这是独立研究与教学仓库，不是官方 Harness 的镜像、分叉或贡献入口。
-欢迎修正文档事实、补充可复现实验、增加文件级分析和提交上游变化证据。
+许可证和第三方边界见 [THIRD_PARTY.md](THIRD_PARTY.md)。

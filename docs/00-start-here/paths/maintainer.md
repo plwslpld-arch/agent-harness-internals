@@ -13,10 +13,10 @@ evidence: [code, official-doc, inference]
 ## 推荐顺序
 
 1. 阅读根目录的 `AGENTS.md`、`THIRD_PARTY.md` 和 `PROJECT_STATUS.md`。
-2. 从[人工源码研究](../13-source-studies/README.md)理解稳定的研究单元。
-3. 从[自动文件参考](../14-file-reference/README.md)理解生成内容与人工内容的边界。
+2. 从[人工源码研究](../../13-source-studies/README.md)理解稳定的研究单元。
+3. 从[自动文件参考](../../14-file-reference/README.md)理解生成内容与人工内容的边界。
 4. 检查 `sources/sources.yml` 与 `sources/sources.lock.yml`，所有源码结论绑定到锁定 Commit。`evidence: code`
-5. 阅读[维护指南](../18-maintainer-guide/README.md)和[版本追踪](../17-version-tracking/README.md)。
+5. 阅读[维护指南](../../18-maintainer-guide/README.md)和[版本追踪](../../17-version-tracking/README.md)。
 
 ## 维护原则
 

@@ -32,3 +32,17 @@ analysis. Full semantic review of thousands of files is an ongoing, versioned pr
   learning paths have an initial evidence-backed edition.
 - Scheduled automation checks upstream every six hours and proposes changes by pull
   request. Human semantic review remains required.
+
+## Information architecture
+
+The public entry points are intentionally layered:
+
+- `README.md`: short project overview and links to the right starting point.
+- `QUICKSTART.md`: first-read guide for new visitors.
+- `LEARNING_PATH.md`: coarse-to-deep learning sequence.
+- `docs/00-start-here/`: role-based routes and workbook.
+- `docs/13-source-studies/`: human source studies.
+- `docs/14-file-reference/`: machine-generated source navigation and selected deep dives.
+- `research/`: evidence ledger, not a tutorial surface.
+
+Generated catalogs are large by design and should not be treated as onboarding documents.

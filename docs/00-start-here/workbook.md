@@ -16,9 +16,9 @@ evidence: [code, test, runtime, official-doc, inference]
 
 读：
 
-- [非研发导读](non-engineer-guide.md)
-- [产品路线](product-path.md)
-- [完整学习路径](complete-learning-path.md)
+- [非研发导读](paths/non-engineer.md)
+- [产品路线](paths/product.md)
+- [完整学习路径](learning-roadmap.md)
 
 做：
 
@@ -140,7 +140,7 @@ evidence: [code, test, runtime, official-doc, inference]
 
 读：
 
-- [核心 runtime 修改路线](core-runtime-contributor-path.md)
+- [核心 runtime 修改路线](paths/runtime-contributor.md)
 - [工具策略管道](../07-tools-permissions-sandbox/tool-policy-pipeline.md)
 - [Session 事件与恢复](../08-session-and-context/event-log-and-recovery.md)
 - [benchmark 设计](../19-benchmarks-and-evaluation/benchmark-design.md)
