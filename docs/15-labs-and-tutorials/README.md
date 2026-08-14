@@ -19,3 +19,11 @@ Harness 实验单位不是“模型跑了一次”，而是：
 从零学习扩展系统时，继续做 [最小插件实验](minimal-plugin-lab.md)：先 host-only 可逆 service，再做配置/HMR，最后才加 client UI 与 tree 外安装。
 
 第一次上手不要直接做 benchmark。先做 [本地第一次跑通](local-first-run.md)：配置个人 `DEEPSEEK_API_KEY`，跑 headless 正向任务，再跑缺 key 或工具失败的负向任务，并按模板记录证据层级。
+
+如果只是准备证据记录格式，可以先运行仓库级草稿生成器：
+
+```bash
+npm run evidence:local -- --scenario local-first-run
+```
+
+它只生成脱敏模板，不调用模型、不打印密钥。真实运行后，再把命令、退出码、session 事件摘要和 known gaps 补进 `research/runtime-evidence/`。

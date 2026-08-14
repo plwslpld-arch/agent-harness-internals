@@ -24,21 +24,74 @@ Agent Loop 只知道“我要请求一个模型”。DeepSeek Adapter 负责把 
 
 ## 关键代码片段
 
-理解形状：
+DeepSeek provider 的注册点：
 
 ```ts
-config = resolveDeepSeekConfig(env, modelSettings)
-requestBody = serializeHarnessRequestToDeepSeek(request)
+const DEFAULT_API_KEY_ENV = 'DEEPSEEK_API_KEY'
+const PROVIDER = 'deepseek-official'
 
-stream = fetch(baseUrl, {
-  headers: { Authorization: `Bearer ${apiKey}` },
-  body: JSON.stringify(requestBody),
-})
+ctx.llm.registerConfigurableProviders([
+  { provider: PROVIDER, displayName: 'DeepSeek', settingsNs: NS }
+])
+ctx.llm.registerAdapter([PROVIDER], adapter)
+```
 
-for await (const event of parseSse(stream)) {
-  yield translateDeepSeekDelta(event)
+这里有两个结论：
+
+- `deepseek-official` 是 Harness 内部的 provider route，不是随便写的展示名。
+- API key 默认不是硬编码，而是通过 credential ref / 环境变量按请求解析。
+
+配置解析的真实形状：
+
+```ts
+resolveAdapterOptions(config, environment) {
+  return {
+    apiKeyEnv: credentialRef(config.apiKeyEnv ?? 'DEEPSEEK_API_KEY'),
+    baseURL: config.baseURL ?? environment?.get('DEEPSEEK_BASE_URL') ?? PUBLIC_BASE_URL,
+    defaults: { thinking, reasoningEffort },
+    maxTokens,
+    defaultContextWindow,
+    streamIdleTimeoutMs,
+  }
 }
 ```
+
+注意这里解析的是“连接事实”，不是一次模型响应。它会把 endpoint、key 引用、thinking 默认值、上下文窗口和超时组合成同一个快照。这样可以避免“新 endpoint 配旧 key”这种难排查问题。
+
+真正发请求时：
+
+```ts
+const body = serializeRequest(options, connection.defaults)
+const response = await fetch(`${connection.baseURL}/chat/completions`, {
+  method: 'POST',
+  headers: {
+    authorization: `Bearer ${apiKey}`,
+    accept: 'text/event-stream',
+  },
+  body: JSON.stringify(body),
+  signal,
+})
+yield* translate(parseSse(response.body, onComment))
+```
+
+这段说明 adapter 只做 provider 通信和协议翻译，不负责 Agent 的多 step 策略。
+
+请求序列化的关键规则：
+
+```ts
+serializeRequest(options, defaults) {
+  messages = [system?, ...serializeMessages(options.messages)]
+  tools = options.tools?.map(tool => function schema)
+  return { model, messages, stream: true, stream_options: { include_usage: true }, ...thinking }
+}
+```
+
+`serializeMessages()` 里有一个非常重要的转换：Harness 内部的 tool result 是 user-role message 中的 `tool-result` block，但 DeepSeek wire protocol 要求变成单独的 `{ role: 'tool' }` message。这个地方如果改错，工具调用链路会直接断。
+
+SSE 处理分两层：
+
+- `parseSse()` 只保证事件流完整，必须看到 `[DONE]`；EOF 但没有 `[DONE]` 会报 `STREAM_CLOSED`。
+- `translate()` 才把 provider delta 变成 Harness 的 `text-delta`、`reasoning-delta`、`tool-call-delta`、`usage` 和 `finish`。
 
 ## API Key
 
@@ -49,6 +102,14 @@ export DEEPSEEK_API_KEY="your-own-key"
 ```
 
 仓库里只能写变量名，不能写真实 key。
+
+如果 Web 模型页写入了 credential service，则优先从 credential seam 解析；没有 seam 时才从启动环境读取。对学习者来说，最稳的本地方式仍然是：
+
+```bash
+export DEEPSEEK_API_KEY="your-own-key"
+```
+
+不要把它写进 `.env` 再提交，也不要把真实值贴进 runtime evidence。
 
 ## thinking 和 tool call
 
@@ -66,6 +127,10 @@ DeepSeek thinking/tool 协议有自己的约束。当前适配器的关键点是
 - SSE `[DONE]` 和连接提前结束要区分。
 - malformed event、idle timeout、abort 都要形成可解释错误。
 - Adapter 一次 `stream()` 只代表一次 provider 请求；retry 应由 Agent/request-error 边界处理。
+
+HTTP 错误会被归类，例如 401/403 是 `AUTH`，429 是 `RATE_LIMIT`，400 可能是 `INVALID_REQUEST` 或 context window exceeded，5xx 是 `SERVER`。这对产品同学也重要：同样是“失败”，配额、鉴权、上下文太长、服务端错误，对用户提示和自动重试策略完全不同。
+
+Usage 也不是简单读一个总数。DeepSeek 的 prompt token 可能包含 cache hit，Harness 需要把 cache read 从输入 token 中拆出来，避免成本和能力评估被混淆。
 
 ## 本讲源码证据卡
 

@@ -38,32 +38,69 @@ Agent Loop 是 Harness 的任务推进器。它负责把一次用户请求拆成
 - `packages/core/agent-loop/src/agent.ts`
 - `packages/core/agent-loop/src/tool-calls.ts`
 
-理解形状：
+先看真实形状，不需要背行号：
 
 ```ts
-session.append(turnStart)
+private async turn(): Promise<boolean> {
+  session.append('turn/start', { turn })
 
-while (hasPendingWork) {
-  session.append(stepStart)
-  request = buildRequest(systemPrompt, derivedMessages, tools)
-  response = await model.stream(request)
-  session.append(assistantMessage)
-
-  if (response.toolCalls.length) {
-    results = await scheduleToolCalls(response.toolCalls)
-    session.append(toolResultsInModelOrder)
-    continue
+  while (true) {
+    const decision = await this.preStep(target, { turn, step })
+    session.append('step/start', { turn, step })
+    // append user/message
+    const stepEnd = await this.step(decision.assembly)
+    session.append('step/end', { turn, step })
+    if (turn should stop) break
+    target = 'next-step'
   }
 
-  session.append(turnEnd)
-  break
+  session.append('turn/end', { turn, reason })
 }
 ```
 
-这段伪代码要抓住两个点：
+这段来自 `ReactLoopAgent` 的实际控制结构。非研发可以把它理解成“任务账本先开 turn，再一轮轮开 step，最后必须把 turn 关掉”。研发要抓住两个点：
 
-- 工具 body 可以并发，但结果写入和模型可见顺序必须稳定。
-- request/header、request/context、tool/result、turn/end 都是证据事件，不是普通日志。
+- `finally` 里一定会尝试追加 `turn/end`，所以失败、取消、被阻塞都要变成结构化结束原因。
+- step 结束和 turn 结束不是同一件事；一个 turn 可能因为工具结果进入下一 step。
+
+模型请求是在 `step()` 内部建立的：
+
+```ts
+const system = renderPrompt(assembly)
+const messages = this.session.deriveMessages()
+const { request, preparedCall } = await this.buildRequest(...)
+const stream = preparedCall?.stream(request) ?? this.loopCtx.llm.stream(request)
+```
+
+这解释了为什么 Agent Loop 不直接拼 provider wire body。它只生成 Harness 内部 `GenerateOptions`，真正变成 DeepSeek/OpenAI 风格请求，是 adapter 的责任。
+
+工具调度器的核心形状是：
+
+```ts
+const planned = toolCalls.map(block => ({ block, exec: parsedInput }))
+while (next < planned.length) {
+  const mode = ctx.tools.executionMode(first.exec).kind
+  const group = mode === 'parallel' ? planned.slice(next) : [first]
+  const outcome = await runGroup(...)
+  next += outcome.consumed
+}
+```
+
+这里不是简单 `Promise.all(toolCalls)`。它会先按模型给出的顺序规划，再根据工具声明判断能否并发；遇到 exclusive 工具会形成 barrier。这样做的结果是：实际执行可以重叠，但写入 Session、回给模型的工具结果顺序仍然稳定。
+
+## 一次 step 到底发生什么
+
+按代码的真实语义，一次 step 是这样的：
+
+1. `preStep()` 从 inbox 领取本轮输入，并调用 `systemPrompt.assemble()`。
+2. runtime context 被渲染成一个附加的 user-role snapshot，放进本 step 的消息里。
+3. `buildRequest()` 解析 provider/model，调用 `llm.prepareCall()`，写入 `request/header` 和 `request/context`。
+4. `llm.stream()` 或 `preparedCall.stream()` 返回流式 chunk。
+5. `BlockAssembler` 把 chunk 聚合成 assistant message，同时保留 usage、finish reason、replay state。
+6. 没有 tool-call 时，step 返回 completed。
+7. 有 tool-call 时，`executeToolCalls()` 负责执行工具，并把工具结果塞进下一 step 的 inbox。
+
+换成产品语言：Agent Loop 是“任务状态机 + 证据记账器”。它不只负责让模型多想几步，还负责让每一步可解释、可恢复、可审计。
 
 ## 失败路径
 
@@ -71,6 +108,15 @@ while (hasPendingWork) {
 - 工具被拒绝：仍要产生 model-visible result。
 - 用户取消：已开始工具需要收束，未开始工具要有明确状态。
 - 恢复 session：不能把不完整事件静默当成成功完成。
+
+错误处理也有清晰分层：
+
+- provider 返回错误 finish：进入 `agent/request-error` waterfall，只有明确返回 retry 才会重试。
+- 非 LLM 错误：被包装成 `UNKNOWN` 结构化错误并写进 turn end。
+- abort：turn end reason 变成 `aborted`，并携带取消原因。
+- tool scheduler 自身失败：不伪造成功工具结果，避免把不可信状态喂回模型。
+
+这就是改核心 runtime 时最容易破坏的部分：你不能只让函数“返回了”，还要保证 Session 事件仍然能解释这次返回。
 
 ## 本讲源码证据卡
 
@@ -92,6 +138,14 @@ while (hasPendingWork) {
 3. 再跑一个故意失败的配置，观察 request-error 或受控失败事件。
 过关：能区分“模型输出结束”和“turn durable closure”。
 ```
+
+如果你是研发，最小回归不要只跑一个成功样例，至少要覆盖：
+
+- 正常纯文本完成。
+- 模型先请求工具、工具成功、下一 step 完成。
+- provider 错误进入 request-error。
+- 工具拒绝或工具失败仍产生 tool/result。
+- cancel 后未开始工具有 synthetic result，已开始工具完成 drain。
 
 ## 检查题
 

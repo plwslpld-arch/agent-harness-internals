@@ -12,6 +12,7 @@
     "sources:update": "node scripts/update-sources.mjs",
     "catalogs:generate": "node scripts/generate-catalogs.mjs",
     "catalogs:verify": "node scripts/verify-generated.mjs",
+    "evidence:local": "node scripts/run-local-evidence.mjs",
     "check:links": "node scripts/check-links.mjs",
     "check:portability": "node scripts/verify-portability.mjs",
     "check:licenses": "node scripts/verify-licenses.mjs",
