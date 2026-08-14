@@ -1,6 +1,6 @@
 ---
-sources: [{"repo":"deepseek-harness","path":"packages","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-v4-flash-0731","path":".","commit":"7872f01b1d1fe23eabc4c98b48bffcef5a386062"},{"repo":"acp-typescript-sdk","path":".","commit":"e1054d0122e844cca9f1016a598a1da06f78ccef"},{"repo":"mcp-typescript-sdk","path":".","commit":"cc4b41617ce3601b1290d67216ea0b194a3cd9ac"}]
-last_verified: 2026-08-13
+sources: [{"repo":"deepseek-harness","path":"packages","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-v4-flash-0731","path":".","commit":"7872f01b1d1fe23eabc4c98b48bffcef5a386062"},{"repo":"acp-typescript-sdk","path":".","commit":"01010146a731212fbbb677d6055e0b7bf183b288"},{"repo":"mcp-typescript-sdk","path":".","commit":"cc4b41617ce3601b1290d67216ea0b194a3cd9ac"}]
+last_verified: 2026-08-14
 status: reviewed
 depth: L2
 evidence: [code, official-doc, inference]
@@ -33,5 +33,7 @@ evidence: [code, official-doc, inference]
 ### ACP/SDK 生命周期差异
 
 [code] ACP 一个连接拥有多个新会话，连接清理会 drain 自有可继续后代；SDK runtime 更像一个由外部进程管理的无人值守组合。ACP prompt 返回 stop reason，SDK prompt 先返回持久入队 message id，再靠 event/status 判定活动。
+
+[code] ACP SDK `01010146a731...` 强化了内置 response parser、batch response 验证和 extension/unrecognized method typing。它提升 SDK 边界的 shape 安全性，但没有把 ACP 与 Harness 自有 SDK JSON-RPC 合并成同一套 lifecycle。
 
 [inference] benchmark 采集优先 SDK full events；编辑器/父 Agent 互操作优先 ACP。不得用一个 client 的成功用例为另一套 wire 背书。

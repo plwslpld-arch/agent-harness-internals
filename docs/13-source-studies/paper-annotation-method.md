@@ -1,6 +1,6 @@
 ---
-sources: [{"repo":"cordis-paper","path":".","commit":"948a07b369c62adb3b12e102458be5c18dfb69b9"},{"repo":"deepseek-harness","path":"vendor/cordis","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-v4-flash-0731","path":".","commit":"7872f01b1d1fe23eabc4c98b48bffcef5a386062"},{"repo":"claude-agent-sdk-typescript","path":".","commit":"b5321a4b65ec1b034fea19f684e2d8db728875da"}]
-last_verified: 2026-08-13
+sources: [{"repo":"cordis-paper","path":".","commit":"948a07b369c62adb3b12e102458be5c18dfb69b9"},{"repo":"deepseek-harness","path":"vendor/cordis","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-v4-flash-0731","path":".","commit":"7872f01b1d1fe23eabc4c98b48bffcef5a386062"},{"repo":"claude-agent-sdk-typescript","path":".","commit":"8716a39f83dd7506e6421199caface603d4941ab"}]
+last_verified: 2026-08-14
 status: reviewed
 depth: L2
 evidence: [code, official-doc, inference]
@@ -45,4 +45,4 @@ Claim ID:
 4. 运行最小实验，保存 manifest/trajectory/scorer。
 5. 用“论文主张 / 源码事实 / 实测 / 推断”四标签写结论与反例。
 
-Claude Agent SDK 只研究公开 API、README 与条款，不复制源码或平台 payload。任何论文、图表、代码、模型权重和 SDK 都按各自许可证单独判断。
+Claude Agent SDK 只研究公开 API、README、changelog 与条款，不复制源码或平台 payload。2026-08-14 复核到 `8716a39f83dd...`：本次公开 changelog 更新集中在 subagent `tool_result` 的 `_meta` 形状、`context_usage` 结构化 payload 和 `vcs_state_changed.branch`，不改变本方法中“只做 API/条款边界研究”的许可证处理。任何论文、图表、代码、模型权重和 SDK 都按各自许可证单独判断。

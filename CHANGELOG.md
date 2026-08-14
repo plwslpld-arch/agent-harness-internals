@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Refreshed the pinned ecosystem baseline for ACP SDK, Claude Agent SDK TS, Codex, Pi, OpenCode, Qwen Code, and SWE-bench.
+- Regenerated source catalogs and reviewed affected source-bound analysis against the new commits.
+
 ## [0.1.0] - 2026-08-13
 
 ### Added

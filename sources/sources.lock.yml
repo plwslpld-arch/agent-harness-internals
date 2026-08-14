@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-13T18:17:50.405Z",
+  "generatedAt": "2026-08-14T03:50:34.452Z",
   "sources": [
     {
       "id": "deepseek-v4-flash-0731",
@@ -24,7 +24,7 @@
     },
     {
       "id": "acp-typescript-sdk",
-      "commit": "e1054d0122e844cca9f1016a598a1da06f78ccef",
+      "commit": "01010146a731212fbbb677d6055e0b7bf183b288",
       "licenseSha256": "6ed4f049cce59e05197d585bdf8a39980b45d546d6ea718ee344555f3a867c3a"
     },
     {
@@ -39,27 +39,27 @@
     },
     {
       "id": "claude-agent-sdk-typescript",
-      "commit": "b5321a4b65ec1b034fea19f684e2d8db728875da",
+      "commit": "8716a39f83dd7506e6421199caface603d4941ab",
       "licenseSha256": "728158fd1037143fad6907e8fa34804177e598b7326519503fe83cafdef849e6"
     },
     {
       "id": "codex",
-      "commit": "42bb50d5027fbad3431bdd56667bbee30700aad5",
+      "commit": "cbe85e117b1db59cdbe8175c59793c3cf2a4a7b8",
       "licenseSha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc"
     },
     {
       "id": "pi",
-      "commit": "6f707eb36064e82af9c1320a7634f4dfad21049b",
+      "commit": "9d2ec7ffabe927bfad2214c1cee25b6632a78dcf",
       "licenseSha256": "0457f5bcec3b3b211605dfb5d1a49042fd638f3686a410fe099c24a25af13c48"
     },
     {
       "id": "opencode",
-      "commit": "d0c2b41adf90c5300fa2c754c1c66c211a36af20",
+      "commit": "722e717e995b38123b442150ec2c5b149c081e85",
       "licenseSha256": "625f0f619133f89bbbb2abe37369613dfa1885eba1e50d02170deb62bb42cb6b"
     },
     {
       "id": "qwen-code",
-      "commit": "8e0033d64de83c7c212f9806ea9d39e7aea2cd51",
+      "commit": "53a7f2fd1bd439f16be3269b4945460628d2a39b",
       "licenseSha256": "55367b61ccd2a016a0159ad886bd66a3ee6cb5e873d0c75c803c897dd245b075"
     },
     {
@@ -69,7 +69,7 @@
     },
     {
       "id": "swe-bench",
-      "commit": "c7fd5abffe0b2086a8bb9389d23c47d930ef571f",
+      "commit": "b3f33bf3f7dc07080486fa2e1c5d3f0de8ab14e2",
       "licenseSha256": "2bd2e08df7147f67a69b42c10efae09bd4bf119df397371036187d5dd1b02f57"
     },
     {

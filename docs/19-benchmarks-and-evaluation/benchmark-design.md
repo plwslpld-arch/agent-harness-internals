@@ -1,6 +1,6 @@
 ---
-sources: [{"repo":"deepseek-harness","path":".","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"swe-bench","path":".","commit":"c7fd5abffe0b2086a8bb9389d23c47d930ef571f"},{"repo":"terminal-bench","path":".","commit":"d435a67e30ecb41f916716607c30c4646f208ee6"}]
-last_verified: 2026-08-13
+sources: [{"repo":"deepseek-harness","path":".","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"swe-bench","path":".","commit":"b3f33bf3f7dc07080486fa2e1c5d3f0de8ab14e2"},{"repo":"terminal-bench","path":".","commit":"d435a67e30ecb41f916716607c30c4646f208ee6"}]
+last_verified: 2026-08-14
 status: reviewed
 depth: L2
 evidence: [code, official-doc, inference]
@@ -44,6 +44,7 @@ evidence: [code, official-doc, inference]
 ### 效率
 
 - 输入、输出、reasoning、cache-read token；
+- provider usage 原始字段、cache creation/cache read 归一化字段；
 - 实际费用、TTFT、端到端时间、active model time；
 - turn/step/tool 数、compaction 次数、最大上下文压力；
 - 人工批准/追问次数、被拒动作和返工。
@@ -52,6 +53,7 @@ evidence: [code, official-doc, inference]
 
 - provider 429/5xx/timeout、重试与最终恢复；
 - MCP/ACP/SDK protocol failure、工具/runner/scorer failure；
+- 基础设施失败只做附加分类，不能把样本从 resolved/unresolved/error 分母中静默移除；
 - 取消延迟、孤儿进程/会话、持久化恢复；
 - 危险动作召回率、误拒率、越权成功率、secret exfiltration；
 - full/partial/unavailable sandbox enforcement 分布。

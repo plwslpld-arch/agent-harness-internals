@@ -1,6 +1,6 @@
 ---
-sources: [{"repo":"deepseek-harness","path":"packages","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"acp-typescript-sdk","path":".","commit":"e1054d0122e844cca9f1016a598a1da06f78ccef"},{"repo":"mcp-typescript-sdk","path":".","commit":"cc4b41617ce3601b1290d67216ea0b194a3cd9ac"}]
-last_verified: 2026-08-13
+sources: [{"repo":"deepseek-harness","path":"packages","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"acp-typescript-sdk","path":".","commit":"01010146a731212fbbb677d6055e0b7bf183b288"},{"repo":"mcp-typescript-sdk","path":".","commit":"cc4b41617ce3601b1290d67216ea0b194a3cd9ac"}]
+last_verified: 2026-08-14
 status: reviewed
 depth: L2
 evidence: [code, official-doc, inference]
@@ -37,6 +37,8 @@ V4 模型仓库不提供 Jinja chat template，而提供 Python encoder/parser�
 ACP bridge 占用 stdin/stdout，stdout 必须协议纯净。一个连接可拥有多会话；`session/new` 需要绝对 cwd，当前拒绝非空 additional directories 和 MCP servers。
 
 公开面有意较窄：文本 prompt、已提交 assistant 文本、一次性权限应答、取消和连接级清理。不公开完整 reasoning/tool/plan/title/transcript，也不支持 load/list/fork/delete 与单会话 close。`end_turn` 表示桥接拥有的活动已停稳，不应解释成某个底层 turn 的精确 finish reason。
+
+ACP SDK `01010146a731...` 的 v2 实现新增了对内置 response parser 的统一校验、batch response mapper 前校验，以及未识别协议方法/扩展方法的类型区分。这让“协议能连上”更接近“双方 message shape 被验证”，但仍不等于 Harness 暴露了完整会话管理、完整 transcript 或 UI 能力。
 
 ## SDK JSON-RPC：仓库自有 wire
 

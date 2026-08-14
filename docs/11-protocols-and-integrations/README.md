@@ -1,6 +1,6 @@
 ---
-sources: [{"repo":"deepseek-harness","path":"packages","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"acp-typescript-sdk","path":".","commit":"e1054d0122e844cca9f1016a598a1da06f78ccef"},{"repo":"mcp-typescript-sdk","path":".","commit":"cc4b41617ce3601b1290d67216ea0b194a3cd9ac"}]
-last_verified: 2026-08-13
+sources: [{"repo":"deepseek-harness","path":"packages","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"acp-typescript-sdk","path":".","commit":"01010146a731212fbbb677d6055e0b7bf183b288"},{"repo":"mcp-typescript-sdk","path":".","commit":"cc4b41617ce3601b1290d67216ea0b194a3cd9ac"}]
+last_verified: 2026-08-14
 status: reviewed
 depth: L2
 evidence: [code, official-doc, inference]
@@ -16,6 +16,8 @@ evidence: [code, official-doc, inference]
 | MCP | client | stdio / Streamable HTTP | 外部 server tools 注册为 Harness 工具 | ACP；当前也不是资源/提示词桥 |
 | ACP | server | JSON-RPC over stdio | 编辑器/父 Agent 创建会话、提示、取消与权限应答 | 完整 Web UI 或 transcript 协议 |
 | SDK JSON-RPC | server + SDK client | 每行一个 JSON-RPC 2.0 frame | Python/TS 无人值守驱动与事件采集 | ACP；当前无版本协商与单轮取消 |
+
+2026-08-14 复核 ACP SDK `01010146a731...`：v2 类型层新增内置方法与扩展/未知方法的区分，并在返回调用方 mapper 前校验内置响应 shape。这加强了协议 client/server 的类型与运行时防线，但不改变本章结论：ACP 仍是窄自动化协议面，不是 Web UI、完整 transcript 或 Harness 内部 event vocabulary。
 
 读 [协议边界与转换链](protocol-boundaries.md) 后，再对照锁定源码：
 
