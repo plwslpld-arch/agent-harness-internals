@@ -24,12 +24,6 @@ DeepSeek Harness Internals 是一个独立的、以证据为基础的中文深�
 
 生成索引回答「有什么、在哪里」；`docs/` 回答「为什么、怎么失效」。生成流程绝不能覆盖人工分析。
 
-## 重构进行中
-
-仓库正从「21 章百科」转为「12 篇深度长文 + 2 附录」。`docs/` 下仍存在旧的编号分章文档，它们随每篇新文章发布被吸收并移除。新增内容一律写进新文章，不要再往旧分章里加。
-
-已删除文件的内容可用 `git show <commit>:<path>` 取回；`docs/00-start-here/` 的角色路线、`QUICKSTART.md`、`LEARNING_PATH.md` 均在历史中。
-
 ## 验证
 
 文档改动运行 `npm run check`（`sources:verify` → `check:analysis` → `check:portability` → `check:licenses` → `check:links` → `check:secrets` → `test`，`&&` 串联，任一步失败即短路）。
