@@ -15,7 +15,8 @@ evidence: [code, official-doc, inference]
 | 需求 | 入口 |
 | --- | --- |
 | 第一次打开 | [`00-start-here/README.md`](00-start-here/README.md) |
-| 从粗到精系统学习 | [`../LEARNING_PATH.md`](../LEARNING_PATH.md) |
+| 从粗到精系统学习 | [`00-course/README.md`](00-course/README.md) |
+| 查看学习阶段 | [`../LEARNING_PATH.md`](../LEARNING_PATH.md) |
 | 每阶段学习任务 | [`00-start-here/workbook.md`](00-start-here/workbook.md) |
 | 查具体源码文件 | [`14-file-reference/source-reading-guide.md`](14-file-reference/source-reading-guide.md) |
 | 做本地实验 | [`15-labs-and-tutorials/README.md`](15-labs-and-tutorials/README.md) |
@@ -32,6 +33,7 @@ evidence: [code, official-doc, inference]
 
 | 问题 | 看哪里 |
 | --- | --- |
+| 按课程系统学习 | [`00-course/`](00-course/README.md) |
 | Harness 是什么，成熟度如何 | [`01-product/`](01-product/README.md) |
 | 整体架构怎么分层 | [`02-system-architecture/`](02-system-architecture/README.md) |
 | Cordis 和插件系统如何工作 | [`03-cordis-foundation/`](03-cordis-foundation/README.md) |

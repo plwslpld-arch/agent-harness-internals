@@ -9,11 +9,13 @@
 
 - Added `QUICKSTART.md` and `LEARNING_PATH.md` as clear public entry points.
 - Added role-route index under `docs/00-start-here/paths/`.
+- Added `docs/00-course/` as the primary 12-part course path.
 
 ### Changed
 
 - Reorganized the `00-start-here` entry structure around route, roadmap and workbook layers.
 - Simplified the root README so GitHub visitors start from the right learning path instead of reading every evidence rule on the homepage.
+- Repositioned generated catalogs and research ledgers as reference layers rather than onboarding content.
 - Refreshed the pinned ecosystem baseline for ACP SDK, Claude Agent SDK TS, Codex, Pi, OpenCode, Qwen Code, and SWE-bench.
 - Regenerated source catalogs and reviewed affected source-bound analysis against the new commits.
 
