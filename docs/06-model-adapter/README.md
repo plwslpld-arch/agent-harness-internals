@@ -25,6 +25,6 @@ Harness 的 LLM seam 把内部 message、block、usage、finish 与 error 词汇
 - 输出上限映射为 `max_tokens`；`tool_choice` 未进入共享核心词汇。`evidence: code`
 - 上下文溢出被归一为稳定错误码，消费方不应解析 provider 文案。`evidence: official-doc`
 
-继续阅读：[DeepSeek 协议边界](deepseek-protocol.md)、[上下文与压缩](../08-session-and-context/README.md)。
+继续阅读：[DeepSeek 协议边界](deepseek-protocol.md)、[上下文与压缩](../05-session.md)。
 
 证据入口：[人工源码研究](../13-source-studies/README.md) · [自动文件参考](https://github.com/plwslpld-arch/deepseek-harness-internals/tree/gh-pages)
