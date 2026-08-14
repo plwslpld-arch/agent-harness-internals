@@ -96,6 +96,6 @@ flowchart TD
 ## 延伸阅读
 
 - [../13-source-studies/paper-annotation-method.md](../13-source-studies/paper-annotation-method.md)
-- [../16-ecosystem-and-community/plugin-ecosystem.md](../16-ecosystem-and-community/plugin-ecosystem.md)
+- [../16-ecosystem-and-community/plugin-ecosystem.md](../12-comparison.md)
 - [../17-version-tracking/README.md](../17-version-tracking/README.md)
 - [../18-maintainer-guide/upstream-and-license.md](../18-maintainer-guide/upstream-and-license.md)
