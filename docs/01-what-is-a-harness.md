@@ -226,7 +226,7 @@ terminal、命令适配、通用 client primitives 这些底层零件仍在仓�
 
 | 维度 | 当前可见证据 | 仍要验证 |
 | --- | --- | --- |
-| 可运行性 | 构建、快照测试、Web smoke 曾通过 `evidence: runtime` | 你的 OS、Node、凭据、网络下能否重现 |
+| 可运行性 | 上游 CI 覆盖构建、无密钥快照测试与覆盖率门禁 `evidence: official-doc` | 你的 OS、Node、凭据、网络下能否重现——本仓库没有做过带凭据的 E2E |
 | 可扩展性 | service / provider / consumer seam 与插件树设计完整 `evidence: code` | 扩展能否走 seam，而不 fork 核心循环 |
 | 数据连续性 | append-only log、JSONL / SQLite 与恢复语义存在 `evidence: code` | 预览期格式变化时如何迁移、备份、回滚 |
 | 安全性 | 审批、guard、sandbox、permission preset 分层存在 `evidence: code` | 最终副作用发生在哪个进程、容器、身份下 |

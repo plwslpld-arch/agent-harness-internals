@@ -9,3 +9,4 @@ levels and must not be substituted for an authenticated task-level end-to-end re
 
 - [2026-08-14 Atlas local check](2026-08-14-atlas-local-check.md): local `npm run check` passed; proves repository consistency, not authenticated model E2E.
 - [2026-08-14 DeepSeek authenticated E2E pending](2026-08-14-deepseek-auth-e2e-pending.md): records that `DEEPSEEK_API_KEY` was not present in the current environment, so authenticated headless E2E remains pending.
+- [2026-08-14 Refactor verification](2026-08-14-refactor-verification.md): local gates and three GitHub Actions runs after the 12-article restructure; the `publish-index` job created and republished `gh-pages`. Still no authenticated E2E.
