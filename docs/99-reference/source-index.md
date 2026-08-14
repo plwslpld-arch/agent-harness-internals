@@ -1,7 +1,7 @@
 ---
 sources: [{"repo":"deepseek-v4-flash-0731","path":".","commit":"7872f01b1d1fe23eabc4c98b48bffcef5a386062"},{"repo":"deepseek-harness","path":".","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"cordis-paper","path":".","commit":"948a07b369c62adb3b12e102458be5c18dfb69b9"},{"repo":"cordis","path":".","commit":"8cc9e33fab69e2d0476d126baaf2acb24e6a6ab4"},{"repo":"acp-typescript-sdk","path":".","commit":"e1054d0122e844cca9f1016a598a1da06f78ccef"},{"repo":"e2b","path":".","commit":"f5d702a520de52ac0e5d4dda3ca0d5fca01d7993"},{"repo":"mcp-typescript-sdk","path":".","commit":"cc4b41617ce3601b1290d67216ea0b194a3cd9ac"},{"repo":"claude-agent-sdk-typescript","path":".","commit":"b5321a4b65ec1b034fea19f684e2d8db728875da"},{"repo":"codex","path":".","commit":"42bb50d5027fbad3431bdd56667bbee30700aad5"},{"repo":"pi","path":".","commit":"6f707eb36064e82af9c1320a7634f4dfad21049b"},{"repo":"opencode","path":".","commit":"d0c2b41adf90c5300fa2c754c1c66c211a36af20"},{"repo":"qwen-code","path":".","commit":"8e0033d64de83c7c212f9806ea9d39e7aea2cd51"},{"repo":"mini-swe-agent","path":".","commit":"a83fcae82d2a08f0ee0c688f9d137b3566c097f8"},{"repo":"swe-bench","path":".","commit":"c7fd5abffe0b2086a8bb9389d23c47d930ef571f"},{"repo":"terminal-bench","path":".","commit":"d435a67e30ecb41f916716607c30c4646f208ee6"}]
 last_verified: 2026-08-13
-status: reviewed
+status: stale
 depth: L2
 evidence: [code, official-doc, inference]
 ---

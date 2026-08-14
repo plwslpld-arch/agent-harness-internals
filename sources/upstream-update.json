@@ -1,14 +1,875 @@
 {
-  "generatedAt": "2026-08-13T18:17:50.405Z",
+  "generatedAt": "2026-08-14T02:50:59.908Z",
   "sources": [
     {
-      "id": "codex",
-      "from": "d167a3604c404e4ee4bc5b5d0b7923e24e0f54f8",
-      "to": "42bb50d5027fbad3431bdd56667bbee30700aad5",
+      "id": "acp-typescript-sdk",
+      "from": "e1054d0122e844cca9f1016a598a1da06f78ccef",
+      "to": "01010146a731212fbbb677d6055e0b7bf183b288",
       "impact": [
-        "implementation"
+        "implementation",
+        "tests"
       ],
       "files": [
+        {
+          "status": "M",
+          "paths": [
+            "src/v2/acp.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "src/v2/acp.ts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "claude-agent-sdk-typescript",
+      "from": "b5321a4b65ec1b034fea19f684e2d8db728875da",
+      "to": "8716a39f83dd7506e6421199caface603d4941ab",
+      "impact": [],
+      "files": []
+    },
+    {
+      "id": "codex",
+      "from": "42bb50d5027fbad3431bdd56667bbee30700aad5",
+      "to": "9d012ca4f54c5adc86e605a7bedbdd03ef63f516",
+      "impact": [
+        "dependencies",
+        "documentation",
+        "implementation",
+        "tests"
+      ],
+      "files": [
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/Cargo.lock"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/analytics/src/accepted_lines.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/analytics/src/analytics_client_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/analytics/src/client_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/analytics/src/events.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/analytics/src/facts.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/analytics/src/lib.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/analytics/src/reducer.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server-protocol/schema/json/ServerNotification.json"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server-protocol/schema/json/codex_app_server_protocol.schemas.json"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server-protocol/schema/json/codex_app_server_protocol.v2.schemas.json"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server-protocol/schema/json/v2/ModelListResponse.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/app-server-protocol/schema/json/v2/ThreadQueueChangedNotification.json"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/app-server-protocol/schema/json/v2/ThreadRevertedNotification.json"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server-protocol/schema/precomputed/app-server-exports-experimental.json.zst"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server-protocol/schema/precomputed/app-server-exports-stable.json.zst"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server-protocol/schema/typescript/ServerNotification.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server-protocol/schema/typescript/ServerNotificationEnvelope.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server-protocol/schema/typescript/v2/ModelUpgradeInfo.ts"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/app-server-protocol/schema/typescript/v2/QueuedSubmission.ts"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/app-server-protocol/schema/typescript/v2/ThreadQueueChangedNotification.ts"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/app-server-protocol/schema/typescript/v2/ThreadRevertedNotification.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server-protocol/schema/typescript/v2/index.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server-protocol/src/protocol/common.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server-protocol/src/protocol/v2/model.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server-protocol/src/protocol/v2/thread.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/README.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/src/config_manager_service_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/src/extensions.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/src/external_agent_migration/processor.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/src/in_process.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/src/lib.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/src/mcp_refresh.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/src/message_processor.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/src/message_processor_tracing_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/src/models.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/src/request_processors.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/src/request_processors/account_processor.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/src/request_processors/mcp_processor.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/src/request_processors/plugins.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/src/request_processors/thread_lifecycle.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/src/request_processors/thread_processor.rs"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/app-server/src/request_processors/thread_queue_processor.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/src/request_processors/turn_processor.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/src/thread_state.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/tests/suite/v2/current_time.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/tests/suite/v2/executor_mcp.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/tests/suite/v2/mod.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/tests/suite/v2/model_auto_review.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/tests/suite/v2/model_list.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/tests/suite/v2/model_provider_capabilities_read.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/tests/suite/v2/plugin_install.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/tests/suite/v2/plugin_list.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/tests/suite/v2/skills_list.rs"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/app-server/tests/suite/v2/thread_queue.rs"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/app-server/tests/suite/v2/thread_revert.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/tests/suite/v2/thread_start.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/app-server/tests/suite/v2/turn_start.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/chatgpt/src/chatgpt_client.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/chatgpt/src/connectors.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/cli/src/debug_sandbox/cloud_config.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/cli/src/doctor.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/cli/src/login.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/cli/src/main.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/cli/src/marketplace_cmd.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/cli/src/mcp_cmd.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/cli/src/mcp_cmd/cloud_config.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/cli/src/plugin_cmd.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/cli/tests/login.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/cloud-config/src/bundle_loader.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/cloud-tasks/src/util.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/codex-client/Cargo.toml"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/codex-client/src/lib.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/codex-client/src/retry.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/codex-mcp/src/connection_manager.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/codex-mcp/src/connection_manager/startup.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/codex-mcp/src/connection_manager_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/codex-mcp/src/plugin_config.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/codex-mcp/src/plugin_config_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/codex-mcp/src/runtime.rs"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/config/src/bedrock_runtime_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/config/src/config_toml.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/config/src/mcp_types.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/config/src/mcp_types_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core-plugins/src/discoverable_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core-plugins/src/manager.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core-plugins/src/manager_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core-plugins/src/test_support.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/Cargo.toml"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/config.schema.json"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/agent/control/spawn.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/agent/role_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/agents_md.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/agents_md_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/codex_thread.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/compact_remote_v2.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/config/config_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/config/edit/document_helpers.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/config/edit_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/config/mod.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/config/permissions.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/connectors.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/connectors_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/context/current_time_reminder.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/context/mod.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/context/node_repl_review_evidence.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/context/node_repl_review_evidence_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/context/world_state/environment.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/environment_selection.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/exec_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/guardian/prompt.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/guardian/review.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/guardian/review_session.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/guardian/tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/lib.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/mcp_openai_file.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/mcp_skill_dependencies.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/mcp_tool_call.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/mcp_tool_call_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/plugins/discoverable_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/plugins/mod.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/plugins/test_support.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/prompt_debug.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/responses_metadata.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/responses_retry.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/session/environment.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/session/mcp.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/session/mcp_runtime.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/session/mod.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/session/session.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/session/tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/session/tests/guardian_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/session/thread_settings.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/session/turn.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/session/turn_context.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/shell_snapshot.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/tasks/lifecycle.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/tasks/mod.rs"
+          ]
+        },
         {
           "status": "M",
           "paths": [
@@ -18,37 +879,1924 @@
         {
           "status": "M",
           "paths": [
-            "codex-rs/core/src/thread_manager_tests.rs"
+            "codex-rs/core/src/tools/handlers/apply_patch.rs"
           ]
         },
         {
           "status": "M",
           "paths": [
-            "codex-rs/thread-store/src/in_memory.rs"
+            "codex-rs/core/src/tools/handlers/current_time.rs"
           ]
         },
         {
           "status": "M",
           "paths": [
-            "codex-rs/thread-store/src/live_thread.rs"
+            "codex-rs/core/src/tools/handlers/extension_tools.rs"
           ]
         },
         {
           "status": "M",
           "paths": [
-            "codex-rs/thread-store/src/local/mod.rs"
+            "codex-rs/core/src/tools/handlers/mcp.rs"
           ]
         },
         {
           "status": "M",
           "paths": [
-            "codex-rs/thread-store/src/local/update_thread_metadata.rs"
+            "codex-rs/core/src/tools/handlers/mod.rs"
           ]
         },
         {
           "status": "M",
           "paths": [
-            "codex-rs/thread-store/src/store.rs"
+            "codex-rs/core/src/tools/handlers/request_plugin_install_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/tools/handlers/shell.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/tools/handlers/shell/shell_command.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/tools/handlers/shell_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/tools/handlers/view_image.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/tools/handlers/wait_for_environment.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/tools/lifecycle.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/tools/network_approval.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/tools/runtimes/apply_patch.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/tools/runtimes/apply_patch_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/tools/runtimes/shell.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/tools/runtimes/shell_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/tools/runtimes/unified_exec.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/tools/spec_plan_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/turn_metadata.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/src/turn_metadata_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/tests/suite/code_mode.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/tests/suite/compact_remote.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/tests/suite/current_time_reminder.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/tests/suite/mcp_auth_refresh.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/tests/suite/mcp_startup_refresh_http_proxy.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/tests/suite/mod.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/tests/suite/openai_file_mcp.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/tests/suite/plugins.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/tests/suite/remote_env.rs"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/core/tests/suite/retry_after.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/tests/suite/rmcp_client.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/tests/suite/skills_extension.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/tests/suite/snapshots/all__suite__compact_remote__remote_manual_compact_api_auth_prompt_cache_key_request_diff.snap"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/tests/suite/snapshots/all__suite__compact_remote__remote_manual_compact_chatgpt_auth_service_tier_prompt_cache_key_request_diff.snap"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/tests/suite/subagent_notifications.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/tests/suite/token_budget.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/tests/suite/tool_lifecycle.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/tests/suite/turn_input_submission.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/core/tests/suite/web_search.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/exec-server/src/capability_discovery_cache.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/exec-server/src/client.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/exec-server/src/client/route_aware_http_client.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/exec-server/src/client_recovery.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/exec-server/src/client_recovery_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/exec-server/src/environment.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/exec-server/src/fs_sandbox.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/exec-server/tests/environment.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/exec/src/lib.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/ext/extension-api/src/contributors.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/ext/extension-api/src/contributors/tool_lifecycle.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/ext/git-attribution/src/world_state.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/ext/guardian-v2/src/extension.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/ext/guardian-v2/src/extension_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/ext/guardian-v2/src/lib.rs"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/ext/guardian-v2/src/transcript.rs"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/ext/guardian-v2/src/transcript_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/ext/mcp/tests/hosted_apps_mcp.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/ext/queue/src/service.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/ext/queue/tests/queue_service.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/ext/skills/src/dynamic_skill_selector/character_routing_card_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/ext/skills/src/dynamic_skill_selector/routing_card_lexical_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/ext/skills/src/host_roots_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/ext/skills/src/host_service_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/ext/skills/src/loader/environment.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/ext/skills/src/loader/environment_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/ext/skills/src/loader/host.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/ext/skills/src/loader/host_io_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/ext/skills/src/loader/host_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/ext/skills/src/loader/metadata.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/ext/skills/src/state.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/ext/skills/tests/skills_extension.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/external-agent-migration/src/detect/mod.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/external-agent-migration/src/plugins.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/external-agent-migration/src/service.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/external-agent-migration/src/service_tests/plugins/basics.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/features/src/lib.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/http-client/src/client_builder.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/http-client/src/lib.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/http-client/src/route_aware_client_pool.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/http-client/src/route_aware_client_pool_tests.rs"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/http-client/src/route_aware_tls_fallback_tests.rs"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/http-client/src/tls_backend_fallback.rs"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/http-client/src/tls_backend_fallback_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/linux-sandbox/src/bwrap.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/login/src/auth/auth_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/login/src/auth/manager.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/login/src/auth/workload_identity.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/login/src/auth/workload_identity_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/login/src/lib.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/mcp-server/src/lib.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/mcp-server/src/message_processor.rs"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/mcp-server/src/workload_identity_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/model-provider-info/src/lib.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/model-provider-info/src/model_provider_info_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/model-provider/src/amazon_bedrock/auth.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/model-provider/src/amazon_bedrock/mantle.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/model-provider/src/amazon_bedrock/mod.rs"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/model-provider/src/amazon_bedrock/runtime.rs"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/model-provider/src/amazon_bedrock/runtime_catalog.rs"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/model-provider/src/amazon_bedrock/runtime_catalog_tests.rs"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/model-provider/src/amazon_bedrock/runtime_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/model-provider/src/lib.rs"
+          ]
+        },
+        {
+          "status": "R087",
+          "paths": [
+            "codex-rs/core/src/environment_config.rs",
+            "codex-rs/protocol/src/environment.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/protocol/src/lib.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/protocol/src/models.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/protocol/src/openai_models.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/protocol/src/permissions.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/protocol/src/protocol.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/rmcp-client/src/bin/test_stdio_server.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/sandboxing/src/manager_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/sandboxing/src/policy_transforms.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/sandboxing/src/policy_transforms_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/shell-command/src/parse_command.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/skills/src/invocation.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/skills/src/invocation_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/skills/src/lib.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/skills/src/model.rs"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/skills/src/model_delegation.rs"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/skills/src/model_delegation_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/skills/src/parser.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/skills/src/parser_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/skills/src/selection_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/state/src/runtime/queued_items.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/thread-manager-sample/src/main.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/thread-store/src/queue_store.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/tui/src/app.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/tui/src/app/app_server_event_targets.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/tui/src/app/event_dispatch.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/tui/src/app/input.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/tui/src/app/startup_prompts.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/tui/src/app/tests.rs"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/tui/src/app/tests/background_exit_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/tui/src/app/tests/model_catalog.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/tui/src/app/tests/safety_buffering.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/tui/src/app_event.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/tui/src/app_server_session.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/tui/src/chatwidget.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/tui/src/chatwidget/interaction.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/tui/src/chatwidget/protocol.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/tui/src/chatwidget/turn_runtime.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/tui/src/exec_cell/render.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/tui/src/lib.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/tui/src/onboarding/auth.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/tui/src/session_archive_commands.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/utils/image/src/image_tests.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/utils/image/src/lib.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "codex-rs/windows-sandbox-rs/BUILD.bazel"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "codex-rs/windows-sandbox-rs/tests/helper_manifest.rs"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "defs.bzl"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pi",
+      "from": "6f707eb36064e82af9c1320a7634f4dfad21049b",
+      "to": "9d2ec7ffabe927bfad2214c1cee25b6632a78dcf",
+      "impact": [
+        "implementation",
+        "tests"
+      ],
+      "files": [
+        {
+          "status": "M",
+          "paths": [
+            "packages/ai/CHANGELOG.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/ai/scripts/generate-models.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/ai/src/api/anthropic-messages.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/ai/src/api/openai-codex-responses.ts"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "packages/ai/src/utils/pi-user-agent.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/ai/test/anthropic-auth-token.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/ai/test/openai-codex-stream.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/coding-agent/CHANGELOG.md"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "opencode",
+      "from": "d0c2b41adf90c5300fa2c754c1c66c211a36af20",
+      "to": "0e3474509aa5ad16afcf9c439785514d6443c6af",
+      "impact": [
+        "documentation",
+        "implementation",
+        "tests"
+      ],
+      "files": [
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/session/projector.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/test/session-projector.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/test/session-runner.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/opencode/src/control-plane/workspace.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/opencode/test/control-plane/workspace.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web/src/content/docs/ar/zen.mdx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web/src/content/docs/bs/zen.mdx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web/src/content/docs/da/zen.mdx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web/src/content/docs/de/zen.mdx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web/src/content/docs/es/zen.mdx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web/src/content/docs/fr/zen.mdx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web/src/content/docs/it/zen.mdx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web/src/content/docs/ja/zen.mdx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web/src/content/docs/ko/zen.mdx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web/src/content/docs/nb/zen.mdx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web/src/content/docs/pl/zen.mdx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web/src/content/docs/pt-br/zen.mdx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web/src/content/docs/ru/zen.mdx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web/src/content/docs/th/zen.mdx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web/src/content/docs/tr/zen.mdx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web/src/content/docs/zen.mdx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web/src/content/docs/zh-cn/zen.mdx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web/src/content/docs/zh-tw/zen.mdx"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "qwen-code",
+      "from": "8e0033d64de83c7c212f9806ea9d39e7aea2cd51",
+      "to": "d670bb81093496a8e242144a76fa70183bb6abb9",
+      "impact": [
+        "documentation",
+        "implementation",
+        "tests"
+      ],
+      "files": [
+        {
+          "status": "M",
+          "paths": [
+            ".github/CODEOWNERS"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            ".github/workflows/e2e.yml"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            ".github/workflows/live-host.yml"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            ".github/workflows/qwen-autofix.yml"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            ".github/workflows/scorecard-monthly.yml"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            ".github/workflows/sdk-python.yml"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            ".github/workflows/security-checks.yml"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            ".gitignore"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/design/gen-ai-arms-field-alignment.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/design/live-journal-truncation-recovery.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/design/standalone-daemon-sessions.md"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "docs/design/telemetry-main-agent-spans-design.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/design/telemetry-subagent-spans-design.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "docs/developers/development/telemetry.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "integration-tests/cli/gen-ai-telemetry.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/acp-bridge/src/bridge.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/acp-bridge/src/bridge.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/acp-bridge/src/bridgeTypes.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/acp-bridge/src/compactionEngine.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/acp-bridge/src/compactionEngine.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/acp-bridge/src/daemon-memory-budget.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/acp-bridge/src/eventBus.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/acp-bridge/src/eventBus.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/acp-bridge/src/journalGrowthPolicy.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/acp-bridge/src/replayWindowLimits.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/acp-integration/acpAgent.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/acp-integration/session/Session.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/acp-integration/session/Session.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/commands/review/agent-prompt.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/commands/review/agent-prompt.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/commands/review/compose-review.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/commands/review/lib/agent-briefs.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/commands/review/lib/authorization.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/commands/review/lib/repository-context.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/commands/review/parse-args.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/commands/review/pr-context.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/commands/review/publish-assets.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/commands/review/submit.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/commands/review/submit.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/nonInteractiveCli.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/nonInteractiveCli.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/serve/acp-http/dispatch.ts"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "packages/cli/src/serve/conversations/conversation-runtime-manager.test.ts"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "packages/cli/src/serve/conversations/conversation-runtime-manager.ts"
+          ]
+        },
+        {
+          "status": "R083",
+          "paths": [
+            "packages/cli/src/serve/live/conversation-workspace.test.ts",
+            "packages/cli/src/serve/conversations/conversation-workspace.test.ts"
+          ]
+        },
+        {
+          "status": "R081",
+          "paths": [
+            "packages/cli/src/serve/live/conversation-workspace.ts",
+            "packages/cli/src/serve/conversations/conversation-workspace.ts"
+          ]
+        },
+        {
+          "status": "R100",
+          "paths": [
+            "packages/cli/src/serve/live/session-source.test.ts",
+            "packages/cli/src/serve/conversations/session-source.test.ts"
+          ]
+        },
+        {
+          "status": "R100",
+          "paths": [
+            "packages/cli/src/serve/live/session-source.ts",
+            "packages/cli/src/serve/conversations/session-source.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/serve/live/live-session-coordinator.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/serve/live/live-task-service.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/serve/live/live-task-service.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/serve/live/live-worker-workspace.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/serve/multi-workspace-sessions.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/serve/routes/session.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/serve/routes/workspace-management.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/serve/routes/workspace-management.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/serve/run-qwen-serve.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/serve/server.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/serve/server.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/ui/hooks/useGeminiStream.test.tsx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/cli/src/ui/hooks/useGeminiStream.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/agents/agent-transcript.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/agents/agent-transcript.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/agents/background-agent-resume.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/agents/background-agent-resume.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/agents/runtime/workflow-orchestrator.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/agents/runtime/workflow-orchestrator.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/core/client.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/core/client.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/core/coreToolScheduler.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/core/coreToolScheduler.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/core/loggingContentGenerator/loggingContentGenerator.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/core/loggingContentGenerator/loggingContentGenerator.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/services/chatRecordingService.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/skills/bundled/review/DESIGN.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/skills/bundled/review/SKILL.md"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/skills/bundled/review/SKILL.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/telemetry/detailed-span-attributes.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/telemetry/detailed-span-attributes.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/telemetry/index.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/telemetry/sdk.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/telemetry/sdk.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/telemetry/session-tracing.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/telemetry/session-tracing.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/tools/agent/agent.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/tools/agent/agent.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/utils/gitUtils.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/utils/gitUtils.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/utils/transcript-records.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/core/src/utils/transcript-records.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/sdk-typescript/src/daemon/DaemonClient.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/sdk-typescript/test/unit/DaemonClient.test.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web-shell/client/components/artifacts/ArtifactPanel.tsx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web-shell/client/components/artifacts/CodeReviewArtifactDetail.test.tsx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web-shell/client/components/artifacts/CodeReviewArtifactDetail.tsx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web-shell/client/components/dialogs/GitDialog.tsx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web-shell/client/components/dialogs/GitHubPrsDialog.module.css"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web-shell/client/components/dialogs/GitHubPrsDialog.test.tsx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web-shell/client/components/dialogs/GitHubPrsDialog.tsx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web-shell/client/components/mcp/McpManagerPage.tsx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web-shell/client/components/messages/AuthMessage.tsx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web-shell/client/components/messages/Markdown.tsx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web-shell/client/components/messages/ToolGroup.test.tsx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web-shell/client/components/messages/ToolGroup.tsx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web-shell/client/components/messages/tools/ParallelAgentsGroup.module.css"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web-shell/client/components/messages/tools/ParallelAgentsGroup.test.tsx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web-shell/client/components/messages/tools/ParallelAgentsGroup.tsx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web-shell/client/components/messages/tools/SubAgentPanel.test.tsx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web-shell/client/components/messages/tools/ToolChrome.module.css"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web-shell/client/components/messages/tools/toolDisplay.tsx"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "packages/web-shell/client/hooks/useExternalLinkOpener.test.ts"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "packages/web-shell/client/hooks/useExternalLinkOpener.ts"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/web-shell/client/i18n.tsx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/webui/src/daemon/session/DaemonSessionProvider.test.tsx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "packages/webui/src/daemon/session/DaemonSessionProvider.tsx"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/installation/install-qwen-standalone.bat"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/tests/install-script.test.js"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "scripts/tests/qwen-autofix-workflow.test.js"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "scripts/tests/security-workflows.test.js"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "swe-bench",
+      "from": "c7fd5abffe0b2086a8bb9389d23c47d930ef571f",
+      "to": "b3f33bf3f7dc07080486fa2e1c5d3f0de8ab14e2",
+      "impact": [
+        "implementation",
+        "tests"
+      ],
+      "files": [
+        {
+          "status": "M",
+          "paths": [
+            "swebench/harness/constants/__init__.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "swebench/harness/grading.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "swebench/harness/infra_failure.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "swebench/harness/reporting.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "swebench/harness/utils.py"
+          ]
+        },
+        {
+          "status": "M",
+          "paths": [
+            "swebench/inference/run_api.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "swebench/inference/usage.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "tests/test_grading_spoofed_output.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "tests/test_inference_usage.py"
+          ]
+        },
+        {
+          "status": "A",
+          "paths": [
+            "tests/test_infra_failure.py"
           ]
         }
       ]
