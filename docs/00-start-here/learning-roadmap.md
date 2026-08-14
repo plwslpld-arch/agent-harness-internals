@@ -6,7 +6,7 @@ depth: L2
 evidence: [code, test, runtime, official-doc, community, inference]
 ---
 
-# 完整学习路径与覆盖边界
+# 学习路线与覆盖边界
 
 本仓库按“先理解产品，再进入架构，再追源码证据”的顺序组织 DeepSeek Harness。读者可以从产品问题进入，也可以从某个源码文件反查它属于哪条运行链路、有哪些测试和设计决策。
 
@@ -16,8 +16,8 @@ evidence: [code, test, runtime, official-doc, community, inference]
 
 | 范围 | 当前覆盖 | 入口 |
 | --- | --- | --- |
-| 非研发理解 | 用产品和组织类比解释 Harness、插件系统、证据边界和成熟度 | [`non-engineer-guide.md`](non-engineer-guide.md) |
-| 阶段学习清单 | 每个阶段读什么、做什么、验收标准是什么 | [`learning-workbook.md`](learning-workbook.md) |
+| 非研发理解 | 用产品和组织类比解释 Harness、插件系统、证据边界和成熟度 | [`paths/non-engineer.md`](paths/non-engineer.md) |
+| 阶段学习清单 | 每个阶段读什么、做什么、验收标准是什么 | [`workbook.md`](workbook.md) |
 | 产品与成熟度 | 用户问题、能力边界、developer preview 风险、采用判断 | [`../01-product/`](../01-product/README.md) |
 | 系统架构 | Cordis、profile、agent loop、模型、工具、权限、session、Web、编排 | [`../02-system-architecture/`](../02-system-architecture/README.md) |
 | 插件系统 | Cordis 理论、fork 差异、插件生命周期、host/client、供应链 | [`../03-cordis-foundation/`](../03-cordis-foundation/README.md) |
@@ -25,7 +25,7 @@ evidence: [code, test, runtime, official-doc, community, inference]
 | 逐文件源码入口 | 7,412 个 Harness 文件职责卡片；符号、依赖、测试、Agent notes 索引；附阅读方法 | [`../14-file-reference/source-reading-guide.md`](../14-file-reference/source-reading-guide.md) |
 | 代码块级解析 | 关键函数按“责任、正常路径、失败路径、边界”解释 | [`../14-file-reference/key-function-walkthroughs.md`](../14-file-reference/key-function-walkthroughs.md) |
 | 本地实验闭环 | 从个人 API key 到 headless 正向/负向实验和证据记录 | [`../15-labs-and-tutorials/local-first-run.md`](../15-labs-and-tutorials/local-first-run.md) |
-| 核心 runtime 修改能力 | 从定位改动点、读关键代码块、本地实验到安全修改 runtime 的训练路线 | [`core-runtime-contributor-path.md`](core-runtime-contributor-path.md) |
+| 核心 runtime 修改能力 | 从定位改动点、读关键代码块、本地实验到安全修改 runtime 的训练路线 | [`paths/runtime-contributor.md`](paths/runtime-contributor.md) |
 | 协议与生态 | DSML、MCP、ACP、SDK JSON-RPC、E2B、参考 Agent、评测层 | [`../11-protocols-and-integrations/`](../11-protocols-and-integrations/README.md) |
 | 实验与评测 | 实验设计、benchmark 变量、失败分类、证据要求 | [`../19-benchmarks-and-evaluation/`](../19-benchmarks-and-evaluation/README.md) |
 | 维护与更新 | 15 个固定来源、每 6 小时检查、stale 文档机制、许可证边界 | [`../18-maintainer-guide/`](../18-maintainer-guide/README.md) |
@@ -58,10 +58,10 @@ evidence: [code, test, runtime, official-doc, community, inference]
 ### 第 0 阶段：建立判断框架
 
 1. [`README.md`](../../README.md)：看项目定位、证据等级、当前结论。
-2. [`non-engineer-guide.md`](non-engineer-guide.md)：先用非研发语言理解 Harness。
-3. [`learning-workbook.md`](learning-workbook.md)：确定每个阶段读什么、做什么。
+2. [`paths/non-engineer.md`](paths/non-engineer.md)：先用非研发语言理解 Harness。
+3. [`workbook.md`](workbook.md)：确定每个阶段读什么、做什么。
 4. [`README.md`](README.md)：理解 Agent Harness、Evaluation Harness、模型和产品表面的区别。
-5. [`product-path.md`](product-path.md) 或 [`engineering-path.md`](engineering-path.md)：按你的角色选路线。
+5. [`paths/product.md`](paths/product.md) 或 [`paths/engineer.md`](paths/engineer.md)：按你的角色选路线。
 
 目标：不要把源码存在、默认启用、产品可用、实验通过混成一个结论。
 
@@ -129,7 +129,7 @@ evidence: [code, test, runtime, official-doc, community, inference]
 
 ### 第 7 阶段：核心 runtime 修改能力
 
-1. [`core-runtime-contributor-path.md`](core-runtime-contributor-path.md)
+1. [`paths/runtime-contributor.md`](paths/runtime-contributor.md)
 2. [`../14-file-reference/key-file-deep-dives.md`](../14-file-reference/key-file-deep-dives.md)
 3. [`../14-file-reference/source-reading-guide.md`](../14-file-reference/source-reading-guide.md)
 4. [`../19-benchmarks-and-evaluation/benchmark-design.md`](../19-benchmarks-and-evaluation/benchmark-design.md)

@@ -25,13 +25,13 @@ evidence: [code, test, official-doc, inference]
 
 | 不变量 | 为什么重要 | 先读 |
 | --- | --- | --- |
-| profile 是 patch 组合结果 | 改默认行为时不能只看一个 `cordis.yml` | [`config-composition.md`](../04-boot-and-configuration/config-composition.md) |
-| Cordis service 随 fiber 生命周期清理 | 插件/HMR/teardown 是否安全取决于 effect disposer | [`plugin-lifecycle.md`](../03-cordis-foundation/plugin-lifecycle.md) |
-| Loader entry tree 是插件装配事实来源 | 功能存在、entry 启用、profile 挂载是三件事 | [`key-file-deep-dives.md`](../14-file-reference/key-file-deep-dives.md) |
-| Agent 和 Session 共享身份边界 | resume、fork、persistence、Web 投影都依赖 SessionId 语义 | [`event-log-and-recovery.md`](../08-session-and-context/event-log-and-recovery.md) |
-| ToolRuntime 是唯一工具策略管道 | 不能让工具绕过 pre/post、approval、guard、schema、result 通知 | [`tool-policy-pipeline.md`](../07-tools-permissions-sandbox/tool-policy-pipeline.md) |
-| DeepSeek adapter 按请求解析配置和 key | 改模型配置不能把 endpoint/key/retry 绑定到错误生命周期 | [`deepseek-protocol.md`](../06-model-adapter/deepseek-protocol.md) |
-| HTTP ready 不等于业务 ready | Web URL、进程 ready、Agent idle、Session flush 是不同证据 | [`web-dataflow.md`](../10-web-client/web-dataflow.md) |
+| profile 是 patch 组合结果 | 改默认行为时不能只看一个 `cordis.yml` | [`config-composition.md`](../../04-boot-and-configuration/config-composition.md) |
+| Cordis service 随 fiber 生命周期清理 | 插件/HMR/teardown 是否安全取决于 effect disposer | [`plugin-lifecycle.md`](../../03-cordis-foundation/plugin-lifecycle.md) |
+| Loader entry tree 是插件装配事实来源 | 功能存在、entry 启用、profile 挂载是三件事 | [`key-file-deep-dives.md`](../../14-file-reference/key-file-deep-dives.md) |
+| Agent 和 Session 共享身份边界 | resume、fork、persistence、Web 投影都依赖 SessionId 语义 | [`event-log-and-recovery.md`](../../08-session-and-context/event-log-and-recovery.md) |
+| ToolRuntime 是唯一工具策略管道 | 不能让工具绕过 pre/post、approval、guard、schema、result 通知 | [`tool-policy-pipeline.md`](../../07-tools-permissions-sandbox/tool-policy-pipeline.md) |
+| DeepSeek adapter 按请求解析配置和 key | 改模型配置不能把 endpoint/key/retry 绑定到错误生命周期 | [`deepseek-protocol.md`](../../06-model-adapter/deepseek-protocol.md) |
+| HTTP ready 不等于业务 ready | Web URL、进程 ready、Agent idle、Session flush 是不同证据 | [`web-dataflow.md`](../../10-web-client/web-dataflow.md) |
 
 这些不变量是改核心 runtime 前的底线。任何改动如果破坏其中一条，都应该被当成架构变更，而不是普通 bug fix。
 
@@ -43,9 +43,9 @@ evidence: [code, test, official-doc, inference]
 
 要做：
 
-1. 读 [完整学习路径](complete-learning-path.md)。
-2. 读 [重点文件精读](../14-file-reference/key-file-deep-dives.md)。
-3. 在 [文件卡片](../14-file-reference/generated/harness-file-cards.md) 中查同一个能力域的 source、test、decision 文件。
+1. 读 [完整学习路径](../learning-roadmap.md)。
+2. 读 [重点文件精读](../../14-file-reference/key-file-deep-dives.md)。
+3. 在 [文件卡片](../../14-file-reference/generated/harness-file-cards.md) 中查同一个能力域的 source、test、decision 文件。
 4. 为一个假需求写 5 行判断：应该改哪个包、风险在哪、需要哪些测试。
 
 验收：能把“想改模型默认参数”“想新增工具权限”“想改变 session 恢复行为”分别定位到不同子系统。
@@ -82,7 +82,7 @@ evidence: [code, test, official-doc, inference]
 
 要做：
 
-1. 从 [minimal-plugin-lab.md](../15-labs-and-tutorials/minimal-plugin-lab.md) 开始。
+1. 从 [minimal-plugin-lab.md](../../15-labs-and-tutorials/minimal-plugin-lab.md) 开始。
 2. 写一个插件注册 service。
 3. 写一个插件注册 tool。
 4. 给 tool 加 output schema 和 render。

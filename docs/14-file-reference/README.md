@@ -10,7 +10,10 @@ evidence: [code, official-doc, inference]
 
 本目录回答“有什么、在哪里、与什么连接”，不负责解释“为什么、运行时怎样、产品意义是什么”。
 
-- `generated/` 只存脚本从 `sources/sources.lock.yml` 固定源码生成的文件、符号、测试、依赖和决策索引。
+如果你是第一次学习，不要从 `generated/` 开始。先读
+[`../00-start-here/learning-roadmap.md`](../00-start-here/learning-roadmap.md)，再回到本目录查具体文件。
+
+- `generated/` 只存脚本从 `sources/sources.lock.yml` 固定源码生成的文件、符号、测试、依赖和决策索引；它是机器导航，不是教程正文。
 - 生成文件绑定 source commit，并保持确定性（不写入每次运行时间）；可删除后重建，不接受手工修补。
 - [`generated/harness-file-cards.md`](generated/harness-file-cards.md) 为 7,412 个 Harness 文件提供分类、职责、符号、依赖和测试摘要。
 - [`source-reading-guide.md`](source-reading-guide.md) 说明如何把文件卡片当作逐文件源码解析入口使用。

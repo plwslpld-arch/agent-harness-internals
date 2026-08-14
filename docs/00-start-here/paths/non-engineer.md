@@ -79,12 +79,12 @@ Atlas 的文档会刻意区分这四层。这样做不是保守，而是防止�
 
 建议顺序：
 
-1. [产品路线](product-path.md)：先判断它解决什么问题。
-2. [产品成熟度](../01-product/product-maturity.md)：看 developer preview 的边界。
-3. [系统架构](../02-system-architecture/README.md)：理解核心模块。
-4. [插件系统全景](../03-cordis-foundation/plugin-system-mainline.md)：理解为什么插件是主线。
-5. [生态与社区](../16-ecosystem-and-community/README.md)：看外部生态是否成熟。
-6. [本地第一次跑通](../15-labs-and-tutorials/local-first-run.md)：亲眼看到一次任务闭环。
+1. [产品路线](product.md)：先判断它解决什么问题。
+2. [产品成熟度](../../01-product/product-maturity.md)：看 developer preview 的边界。
+3. [系统架构](../../02-system-architecture/README.md)：理解核心模块。
+4. [插件系统全景](../../03-cordis-foundation/plugin-system-mainline.md)：理解为什么插件是主线。
+5. [生态与社区](../../16-ecosystem-and-community/README.md)：看外部生态是否成熟。
+6. [本地第一次跑通](../../15-labs-and-tutorials/local-first-run.md)：亲眼看到一次任务闭环。
 
 目标不是记住每个文件，而是能回答：
 
@@ -97,11 +97,11 @@ Atlas 的文档会刻意区分这四层。这样做不是保守，而是防止�
 
 建议顺序：
 
-1. [工程路线](engineering-path.md)
-2. [完整学习路径](complete-learning-path.md)
-3. [重点文件精读](../14-file-reference/key-file-deep-dives.md)
-4. [关键函数代码块解析](../14-file-reference/key-function-walkthroughs.md)
-5. [核心 runtime 修改路线](core-runtime-contributor-path.md)
+1. [工程路线](engineer.md)
+2. [完整学习路径](../learning-roadmap.md)
+3. [重点文件精读](../../14-file-reference/key-file-deep-dives.md)
+4. [关键函数代码块解析](../../14-file-reference/key-function-walkthroughs.md)
+5. [核心 runtime 修改路线](runtime-contributor.md)
 
 目标是能判断：
 
