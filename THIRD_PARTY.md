@@ -5,7 +5,7 @@
 
 | 来源 | 用途 | 公开仓库处理方式 |
 | --- | --- | --- |
-| DeepSeek Harness | 核心研究对象 | MIT；只记录 URL、SHA 和原创分析，源码按需拉取 |
+| DeepSeek Harness | 核心研究对象与项目 Logo 的鱼形主标 | MIT；源码按需拉取；鱼形图标来自固定 Commit 的 `website/public/favicon.svg`，Atlas 子标为本项目新增，不表示官方认可 |
 | DeepSeek V4 Flash materials | 模型协议与编码背景 | 按上游条款拉取；不下载或再分发模型权重 |
 | Cordis | 插件运行时上游 | MIT；按 SHA 拉取 |
 | Cordis Paper | 理论研究 | 未见明确再发布许可证；默认不拉取，只保存引用与原创释义 |
