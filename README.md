@@ -62,11 +62,9 @@
 | 11 | [**Invariant 与 Agent Note：一个仓库如何自证**](docs/11-invariants-and-agent-notes.md) | ✅ |
 | 12 | [**横向对照：dsh vs Claude Code / Codex / OpenCode**](docs/12-comparison.md) | ✅ |
 | A | [附录：实验手册（本地跑通与证据留痕）](docs/appendix-a-labs.md) | ✅ |
-| B | 附录：术语、证据方法与维护 | 规划中 |
+| B | [附录：术语、证据方法与维护](docs/appendix-b-glossary-and-method.md) | ✅ |
 
 加粗的四篇是上游与其它中文内容都不会有的部分。
-
-> 重构进行中：旧的分章文档仍在 `docs/` 下，随每篇新文章发布逐步吸收并移除。
 
 ## 证据规则
 
