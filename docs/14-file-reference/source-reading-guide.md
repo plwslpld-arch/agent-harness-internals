@@ -64,7 +64,7 @@ flowchart TD
 | 2 | Profile 与插件装配 | [`../03-cordis-foundation/plugin-lifecycle.md`](../02-cordis-and-boot.md) | `packages/bundle/headless`、`packages/bundle/web-app`、`vendor/loader` |
 | 3 | Cordis 底座 | [`../03-cordis-foundation/plugin-system-mainline.md`](../02-cordis-and-boot.md) | `vendor/cordis/src/context.ts`、`service.ts`、`index.ts` |
 | 4 | Agent Loop | [`../05-agent-runtime/turn-step-tool-loop.md`](../03-agent-loop.md) | `packages/core/agent-loop`、`packages/core/agent` |
-| 5 | 模型适配 | [`../06-model-adapter/deepseek-protocol.md`](../06-model-adapter/deepseek-protocol.md) | `packages/llm/llm-deepseek`、`packages/llm/llm`、`llm-retry` |
+| 5 | 模型适配 | [`../06-model-adapter/deepseek-protocol.md`](../09-deepseek-adapter.md) | `packages/llm/llm-deepseek`、`packages/llm/llm`、`llm-retry` |
 | 6 | 工具与权限 | [`../07-tools-permissions-sandbox/tool-policy-pipeline.md`](../08-tools-approval-sandbox.md) | `packages/core/tools`、`packages/shell/tool-bash`、`packages/sandbox` |
 | 7 | Session 与恢复 | [`../08-session-and-context/event-log-and-recovery.md`](../05-session.md) | `packages/core/session`、`session-persistence`、`session-query` |
 | 8 | Web 与产品界面 | [`../10-web-client/web-dataflow.md`](../10-web-client/web-dataflow.md) | `packages/web/web`、`packages/client`、`packages/host/webserver` |
@@ -95,7 +95,7 @@ flowchart TD
 2. 看该文件的公开符号、直接依赖、反向依赖和直接测试。
 3. 打开 [`generated/harness-source-test-map.md`](https://github.com/plwslpld-arch/deepseek-harness-internals/blob/gh-pages/harness-source-test-map.md)，找它关联的测试。
 4. 打开 [`generated/symbols.md`](https://github.com/plwslpld-arch/deepseek-harness-internals/blob/gh-pages/symbols.md)，确认关键函数或类型是否还有其他导出位置。
-5. 回到人工研究 [`../13-source-studies/deepseek-adapter-study.md`](../13-source-studies/deepseek-adapter-study.md)，把文件细节放回模型适配链路里理解。
+5. 回到人工研究 [`../13-source-studies/deepseek-adapter-study.md`](../09-deepseek-adapter.md)，把文件细节放回模型适配链路里理解。
 
 这个流程比“打开源码从第一行读到最后一行”更稳定，因为它同时检查实现、调用者、测试和人工解释。
 
