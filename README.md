@@ -26,26 +26,17 @@
 
 ## 这是什么
 
-一组绑定固定上游 Commit 的中文深度解析，讲 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的核心机制**为什么这样设计、在什么条件下失效**。
+[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（简称 dsh）是 DeepSeek 在 2026 年 8 月开源的 agent harness——包在模型外面、负责拼上下文、调工具、管权限、记轨迹的那一层。
 
-**读者只有一类**：有工程背景、想搞懂现代 agent harness 如何构建的人。产品视角通过每篇文章的「产品现象」一节覆盖，不单独设路线。
+这个仓库是它的中文源码分析，12 篇文章加 2 个附录，每篇讲清楚一个机制：它解决什么问题、代码在哪、怎么运作、什么时候会失效。所有结论都绑定一个固定的上游 commit，可以自己核。
 
-**不做的事**：不翻译上游文档（上游自带 54,584 行双语文档，覆盖度这条路没有意义），不做 API 手册，不做入门教程。
+适合想搞懂 agent harness 内部构造的人读。不需要用过 dsh，但需要能读 TypeScript。
 
-## 为什么值得存在
-
-上游文档按包组织、写给自己人看，有四类内容它结构上不会写：
-
-| 上游不写 | 本仓库写 |
-| --- | --- |
-| 跨包的因果链 | 一个决策如何同时约束 5 个包 |
-| 设计决策的通俗还原 | `.agents/notes/` 里 507 篇高密度记录，铺垫后讲清楚 |
-| 横向对照 | 与 Claude Code / Codex / OpenCode 的实现差异 |
-| 产品视角翻译 | 「KV-cache 契约」→「为什么长会话第二轮变便宜」 |
+上游自己有 5 万多行双语文档，讲得比这里全。这里补的是它不太会写的部分：一个设计决策如何同时约束好几个包、`.agents/notes/` 里那 500 多篇设计记录到底在说什么、和 Claude Code / Codex / OpenCode 比差在哪、以及像「KV-cache 契约」这种工程约定实际影响的是什么体验。
 
 ## 文章
 
-每篇固定五段：**产品现象 → 源码路径（精确到文件行号，绑定锁定 Commit）→ 机制 → 约束与失效条件 → 可复核实验**。
+每篇都按同一个顺序展开：先讲用户能看到的现象，再给源码位置（精确到行号），然后讲机制，接着讲它什么时候不成立，最后给可以自己跑的验证方法。
 
 | # | 文章 | 状态 |
 | --- | --- | --- |
@@ -64,27 +55,27 @@
 | A | [附录：实验手册（本地跑通与证据留痕）](docs/appendix-a-labs.md) | ✅ |
 | B | [附录：术语、证据方法与维护](docs/appendix-b-glossary-and-method.md) | ✅ |
 
-加粗的四篇是上游与其它中文内容都不会有的部分。
+加粗那四篇挖得比较深，别处不太容易看到，时间有限可以先读它们。
 
-## 证据规则
+## 结论是怎么来的
 
-每个结论至少绑定一种证据，并在句末标注：
+每句重要的话后面都会标它的依据：
 
 ```
 DeepSeek 的 prompt_tokens 包含缓存命中，适配器扣除后映射到互不重叠的内部字段。 `evidence: code`
 ```
 
-| 标签 | 含义 |
+| 标签 | 依据 |
 | --- | --- |
-| `code` | 锁定 Commit 的源码 |
-| `test` | 上游测试文件 |
-| `runtime` | 本地实际运行结果（记环境、命令、退出码、产物） |
+| `code` | 锁定 commit 下的源码 |
+| `test` | 上游的测试文件 |
+| `runtime` | 本地真跑出来的结果，附环境、命令、退出码、产物 |
 | `official-doc` | 官方文档或公告 |
-| `community` | 社区样本，只能支持采样性结论 |
+| `community` | 社区里的个别样本，只能说明「有人遇到过」 |
 
-所有源码结论绑定 [`sources/sources.lock.yml`](sources/sources.lock.yml) 中的 Commit。上游每 6 小时检查一次，变动只生成候选 PR 并把受影响文档标记为 `stale`，不自动改写结论。
+所有源码结论都绑定 [`sources/sources.lock.yml`](sources/sources.lock.yml) 里的 commit。上游每 6 小时检查一次，有变动只会开一个候选 PR 并把受影响的文章标成 `stale`，不会自动改写结论。
 
-**三条边界**：源码存在 ≠ 默认启用；测试通过 ≠ 真实业务闭环；UI 可见 ≠ 副作用已隔离。
+读的时候有三件事容易混：**仓库里有代码，不等于默认开启；测试通过，不等于真实业务能跑通；界面上看得见，不等于副作用已经被隔离。** 文章里会反复区分这三层。
 
 ## 快速开始
 
@@ -111,11 +102,11 @@ export DEEPSEEK_API_KEY="your-own-key"
 
 文件、符号、依赖、测试映射索引由 `npm run catalogs:generate` 从锁定 checkout 生成到本地 `.generated/`（不入库），并由 CI 发布到 [`gh-pages`](https://github.com/plwslpld-arch/deepseek-harness-internals/tree/gh-pages) 分支。
 
-**索引范围只含分析对象** `deepseek-harness` 与它 vendored 的 `cordis`（23 个文件、30,642 行、3.5MB）。其余 13 个对照仓库的 commit 记录在 `sources/sources.lock.yml`，但不做文件级索引——它们在文章 12 里只用于结构对照，符号级索引没有读者。
+索引只覆盖 `deepseek-harness` 和它 vendored 的那份 `cordis`，共 23 个文件、30,642 行、3.5MB。另外 13 个仓库是做横向对比用的，commit 记在 `sources/sources.lock.yml` 里，但没做文件级索引——文章 12 只用到它们的目录结构，逐个符号列出来没人会看。
 
-**全部索引都在 GitHub 的 1MB 渲染阈值以内，可以直接在网页上读**：路径以纯文本给出（每份索引开头有链接构造规则），文件卡片按顶层目录分区。
+每个文件都控制在 1MB 以内，可以直接在 GitHub 网页上打开。路径是纯文本，每份索引开头写了怎么拼成永久链接；文件卡片按顶层目录分成了几份。
 
-它们仍是机器索引，主要用途是 grep 与程序消费：
+不过它们本质还是给机器用的，最常见的用法是 grep：
 
 ```bash
 git clone --branch gh-pages --depth 1 \
@@ -123,15 +114,15 @@ git clone --branch gh-pages --depth 1 \
 grep -n "ReactLoopAgent" dsh-index/symbols.md
 ```
 
-索引回答「有什么、在哪里」；`docs/` 下的人工文章回答「为什么、怎么失效」。两者不互相替代。
+索引告诉你「有什么、在哪里」，`docs/` 下的文章告诉你「为什么这么设计、什么时候会失效」。
 
-## 边界说明
+## 几点说明
 
-- 本项目不是 DeepSeek 官方仓库、镜像或贡献入口。
-- 自动生成索引是源码导航，不是人工分析。
-- 社区内容只作为采样证据，不能替代源码、官方文档和运行记录。
-- Cordis 论文、Claude Agent SDK 等受限来源不随默认流程再分发。
-- Logo 使用 DeepSeek Harness 上游 MIT 源码中的鱼形图标并加子标；仅用于说明研究对象，不表示 DeepSeek 官方认可或维护本项目。
+- 这不是 DeepSeek 的官方仓库、镜像或贡献入口。
+- 自动生成的索引只是导航，不是分析。
+- 社区里的说法只当作个别样本，不能替代源码、官方文档和实际运行结果。
+- Cordis 论文、Claude Agent SDK 这类有使用条款的来源，默认流程不会重新分发。
+- Logo 取自 dsh 上游 MIT 源码里的鱼形图标并加了子标，只是为了标明研究对象，不代表 DeepSeek 认可或参与本项目。
 
 ## 其它
 
