@@ -53,7 +53,7 @@ evidence: [code, test, official-doc, inference]
 - [04｜启动与配置](../02-cordis-and-boot.md)
 - [05｜Agent Loop](../03-agent-loop.md)
 - [06｜Prompt 与上下文](../04-system-prompt.md)
-- [07｜DeepSeek Adapter](07-deepseek-adapter.md)
+- [07｜DeepSeek Adapter](../09-deepseek-adapter.md)
 
 学完要能做到：
 
