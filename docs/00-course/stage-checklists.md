@@ -72,7 +72,7 @@ evidence: [code, test, official-doc, inference]
 读：
 
 - [08｜工具、审批与沙箱](08-tools-approval-sandbox.md)
-- [09｜Session、持久化与恢复](09-session-persistence-repair.md)
+- [09｜Session、持久化与恢复](../05-session.md)
 
 学完要能做到：
 

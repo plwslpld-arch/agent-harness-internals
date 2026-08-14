@@ -66,7 +66,7 @@ flowchart TD
 | 4 | Agent Loop | [`../05-agent-runtime/turn-step-tool-loop.md`](../03-agent-loop.md) | `packages/core/agent-loop`、`packages/core/agent` |
 | 5 | 模型适配 | [`../06-model-adapter/deepseek-protocol.md`](../06-model-adapter/deepseek-protocol.md) | `packages/llm/llm-deepseek`、`packages/llm/llm`、`llm-retry` |
 | 6 | 工具与权限 | [`../07-tools-permissions-sandbox/tool-policy-pipeline.md`](../07-tools-permissions-sandbox/tool-policy-pipeline.md) | `packages/core/tools`、`packages/shell/tool-bash`、`packages/sandbox` |
-| 7 | Session 与恢复 | [`../08-session-and-context/event-log-and-recovery.md`](../08-session-and-context/event-log-and-recovery.md) | `packages/core/session`、`session-persistence`、`session-query` |
+| 7 | Session 与恢复 | [`../08-session-and-context/event-log-and-recovery.md`](../05-session.md) | `packages/core/session`、`session-persistence`、`session-query` |
 | 8 | Web 与产品界面 | [`../10-web-client/web-dataflow.md`](../10-web-client/web-dataflow.md) | `packages/web/web`、`packages/client`、`packages/host/webserver` |
 
 第一批已经整理成可直接阅读的人工精读：[重点文件精读：第一批 12 个核心文件](key-file-deep-dives.md)。读完文件级解释后，继续读[关键函数代码块解析](key-function-walkthroughs.md)。

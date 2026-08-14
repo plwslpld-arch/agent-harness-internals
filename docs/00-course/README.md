@@ -31,7 +31,7 @@ evidence: [code, test, runtime, official-doc, inference]
 | 06 | [Prompt 与上下文](../04-system-prompt.md) | system prompt、history、context window、compaction |
 | 07 | [DeepSeek Adapter](07-deepseek-adapter.md) | API key、请求序列化、SSE、thinking、usage |
 | 08 | [工具、审批与沙箱](08-tools-approval-sandbox.md) | tool policy pipeline 和副作用治理 |
-| 09 | [Session、持久化与恢复](09-session-persistence-repair.md) | append-only event log、flush、repair |
+| 09 | [Session、持久化与恢复](../05-session.md) | append-only event log、flush、repair |
 | 10 | [Web、Headless 与协议入口](10-web-headless-protocols.md) | Web/headless/ACP/MCP/SDK 的边界 |
 | 11 | [源码阅读与本地实验](11-source-reading-and-labs.md) | 从问题定位源码，再用实验闭环验证 |
 | 12 | [生态、论文与维护](12-ecosystem-maintenance.md) | Cordis 论文、生态证据、上游更新和开源维护 |
