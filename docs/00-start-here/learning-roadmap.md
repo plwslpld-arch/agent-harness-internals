@@ -8,6 +8,8 @@ evidence: [code, test, runtime, official-doc, community, inference]
 
 # 学习路线与覆盖边界
 
+主学习线已经收敛到 [../00-course/README.md](../00-course/README.md)。本文件保留覆盖边界和查找方法，避免把课程正文、源码索引和证据落账区混在一起。
+
 本仓库按“先理解产品，再进入架构，再追源码证据”的顺序组织 DeepSeek Harness。读者可以从产品问题进入，也可以从某个源码文件反查它属于哪条运行链路、有哪些测试和设计决策。
 
 ## 当前内容是否完整

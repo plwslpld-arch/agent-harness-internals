@@ -1,29 +1,25 @@
 # Quickstart
 
-如果你第一次打开这个仓库，不要从 `sources/` 或 `docs/14-file-reference/generated/` 开始。那两个地方是源码基线和机器索引，不是入门教程。
+第一次打开仓库时，按这个顺序走。
 
-## 5 分钟判断读哪里
+## 1. 先选目标
 
-| 你的目标 | 先读 |
+| 你的目标 | 先看 |
 | --- | --- |
-| 我不是研发，但想看懂 Harness 是什么 | [docs/00-start-here/paths/non-engineer.md](docs/00-start-here/paths/non-engineer.md) |
-| 我要判断产品价值、成熟度和风险 | [docs/00-start-here/paths/product.md](docs/00-start-here/paths/product.md) |
-| 我要看懂实现主链路 | [docs/00-start-here/paths/engineer.md](docs/00-start-here/paths/engineer.md) |
-| 我要改 Agent runtime 核心 | [docs/00-start-here/paths/runtime-contributor.md](docs/00-start-here/paths/runtime-contributor.md) |
-| 我要维护这个学习仓库 | [docs/00-start-here/paths/maintainer.md](docs/00-start-here/paths/maintainer.md) |
-| 我要按阶段系统学习 | [LEARNING_PATH.md](LEARNING_PATH.md) |
+| 系统学习 Harness | [docs/00-course/README.md](docs/00-course/README.md) |
+| 只想快速判断项目价值 | [docs/00-course/01-product-positioning.md](docs/00-course/01-product-positioning.md) |
+| 想看懂核心实现 | [docs/00-course/05-agent-loop.md](docs/00-course/05-agent-loop.md) |
+| 想理解 prompt/context | [docs/00-course/06-prompt-and-context.md](docs/00-course/06-prompt-and-context.md) |
+| 想理解插件系统 | [docs/00-course/03-cordis-plugin-runtime.md](docs/00-course/03-cordis-plugin-runtime.md) |
+| 想改核心 runtime | [docs/00-start-here/paths/runtime-contributor.md](docs/00-start-here/paths/runtime-contributor.md) |
 
-## 最短学习顺序
+## 2. 不要从这些地方开始
 
-1. 先读 [docs/00-start-here/README.md](docs/00-start-here/README.md)，建立基本概念。
-2. 再读 [LEARNING_PATH.md](LEARNING_PATH.md)，确定从粗到精的学习路线。
-3. 如果想看产品和成熟度，进入 [docs/01-product/](docs/01-product/README.md)。
-4. 如果想看架构，进入 [docs/02-system-architecture/](docs/02-system-architecture/README.md)。
-5. 如果想看插件系统，进入 [docs/03-cordis-foundation/](docs/03-cordis-foundation/README.md)。
-6. 如果想看源码，先读 [docs/14-file-reference/source-reading-guide.md](docs/14-file-reference/source-reading-guide.md)，再看 generated 索引。
-7. 如果想动手验证，进入 [docs/15-labs-and-tutorials/](docs/15-labs-and-tutorials/README.md)。
+- `sources/`：这是固定源码，不是教程。
+- `docs/14-file-reference/generated/`：这是机器索引，不是入门正文。
+- `research/`：这是证据落账区，不是学习目录。
 
-## 本地准备
+## 3. 需要本地跑时
 
 ```bash
 GIT_LFS_SKIP_SMUDGE=1 git clone \
@@ -41,8 +37,8 @@ export DEEPSEEK_API_KEY="your-own-key"
 
 不要把真实 key 写入仓库、日志、fixture 或 issue。
 
-## 先记住三个边界
+## 4. 三个判断边界
 
 1. Harness 不是模型本身，而是模型外面的 Agent 执行系统。
 2. 代码存在不等于默认启用，测试通过不等于真实业务闭环。
-3. `generated/` 是机器索引，适合查文件；正式学习从 `docs/00-start-here/` 开始。
+3. 源码索引用来查文件；课程目录用来学习。

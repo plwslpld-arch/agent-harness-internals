@@ -30,7 +30,7 @@ DeepSeek Harness 不是模型本身，也不只是聊天界面。它是包在模
 | 工程学习 | [工程路线](paths/engineer.md) | 串起启动、模型、工具、Session 和 Web 主链路 |
 | 修改核心 runtime | [核心 runtime 修改路线](paths/runtime-contributor.md) | 定位不变量、测试矩阵和安全改动边界 |
 | 维护本仓库 | [维护者路线](paths/maintainer.md) | 处理 source lock、stale 文档、许可证和发布 |
-| 系统学习 | [学习路线](learning-roadmap.md) | 按“从粗到精”完成 12 部分、源码精读和实验 |
+| 系统学习 | [核心课程](../00-course/README.md) | 按 12 讲完成产品、架构、源码、实验和生态学习 |
 | 每阶段任务 | [学习清单](workbook.md) | 知道每个阶段读什么、做什么、如何验收 |
 
 无论选哪条路线，都先记住：存在源码 ≠ 默认启用；测试通过 ≠ 真实业务闭环；UI 可见 ≠ 副作用已受隔离。

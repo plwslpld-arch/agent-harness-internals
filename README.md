@@ -38,12 +38,9 @@ DeepSeek Harness Atlas 是一个独立的中文研究与教学仓库。它基于
 | 你是谁 | 入口 |
 | --- | --- |
 | 第一次打开仓库 | [QUICKSTART.md](QUICKSTART.md) |
-| 想系统学习 | [LEARNING_PATH.md](LEARNING_PATH.md) |
-| 非研发同学 | [docs/00-start-here/paths/non-engineer.md](docs/00-start-here/paths/non-engineer.md) |
-| 产品经理 | [docs/00-start-here/paths/product.md](docs/00-start-here/paths/product.md) |
-| 工程师 | [docs/00-start-here/paths/engineer.md](docs/00-start-here/paths/engineer.md) |
+| 想系统学习 | [docs/00-course/README.md](docs/00-course/README.md) |
+| 想看学习路径 | [LEARNING_PATH.md](LEARNING_PATH.md) |
 | 想改核心 runtime | [docs/00-start-here/paths/runtime-contributor.md](docs/00-start-here/paths/runtime-contributor.md) |
-| 维护者 | [docs/00-start-here/paths/maintainer.md](docs/00-start-here/paths/maintainer.md) |
 | 查完整目录 | [docs/README.md](docs/README.md) |
 
 ## 你能学到什么
@@ -63,16 +60,15 @@ DeepSeek Harness Atlas 是一个独立的中文研究与教学仓库。它基于
 - 代码存在不等于默认启用。Atlas 会区分源码、profile 挂载、运行 ready、权限隔离和用户旅程。
 - 评测结果属于“模型 + Harness + 工具 + 上下文 + 沙箱 + 终止条件”的组合，不应只归因于模型。
 
-## 仓库结构
+## 内容结构
 
 ```text
-docs/       正式学习文档：产品、架构、源码、实验、生态、维护
-research/   证据落账区：runtime 记录、benchmark、版本追踪、工作笔记
-sources/    固定上游源码：source manifest、lock 和 submodule checkouts
-scripts/    生成、验证、更新和安全检查脚本
-schemas/    文档和证据元数据约束
-templates/  新增源码研究和证据记录模板
-assets/     Logo 与公开展示资源
+docs/00-course/              主课程：从产品定位到源码、实验、生态和维护
+docs/13-source-studies/   人工源码研究：解释关键实现为什么这样设计
+docs/14-file-reference/   源码索引：文件、符号、依赖、测试和重点函数
+docs/15-labs-and-tutorials/ 本地实验：把理解变成可复核证据
+research/                 证据落账区，不是教程入口
+sources/                  固定上游源码和 source lock
 ```
 
 ## 源码如何展开
@@ -107,7 +103,7 @@ export DEEPSEEK_API_KEY="your-own-key"
 | --- | --- |
 | Atlas 版本 | [`v0.1.0`](https://github.com/plwslpld-arch/deepseek-harness-atlas/releases/tag/v0.1.0) |
 | 固定源码生态 | 15 个上游仓库，由 submodule 与 lock 文件共同固定 |
-| 文件导航 | DeepSeek Harness 7,412 张文件职责卡片 |
+| 文件导航 | DeepSeek Harness 7,412 张文件职责卡片，作为源码查询索引 |
 | 主分支质量门 | [`Verify`](https://github.com/plwslpld-arch/deepseek-harness-atlas/actions/workflows/verify.yml) |
 | 上游变化检查 | 每 6 小时运行，只创建候选更新 PR |
 | 版本记录 | [CHANGELOG.md](CHANGELOG.md) 与 [GitHub Releases](https://github.com/plwslpld-arch/deepseek-harness-atlas/releases) |

@@ -39,7 +39,8 @@ The public entry points are intentionally layered:
 
 - `README.md`: short project overview and links to the right starting point.
 - `QUICKSTART.md`: first-read guide for new visitors.
-- `LEARNING_PATH.md`: coarse-to-deep learning sequence.
+- `LEARNING_PATH.md`: short map from learning stages to the course.
+- `docs/00-course/`: the primary 12-part teaching path.
 - `docs/00-start-here/`: role-based routes and workbook.
 - `docs/13-source-studies/`: human source studies.
 - `docs/14-file-reference/`: machine-generated source navigation and selected deep dives.
