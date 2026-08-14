@@ -24,8 +24,7 @@ evidence: [code, test, runtime, official-doc, inference]
 
 | 讲次 | 主题 | 重点 |
 | --- | --- | --- |
-| 01 | [项目定位](01-product-positioning.md) | Harness 解决什么问题，什么不是它的目标 |
-| 02 | [系统架构](02-system-architecture.md) | 控制平面、执行平面、证据平面、产品表面 |
+| 01 | [Harness 是什么](../01-what-is-a-harness.md) | 定位、四平面架构、四层证据阶梯、成熟度判断 |
 | 03 | [Cordis 插件运行时](03-cordis-plugin-runtime.md) | Context、Service、Event、Fiber、Effect |
 | 04 | [启动与配置](04-boot-and-config.md) | CLI、profile、patch、环境变量如何合成 |
 | 05 | [Agent Loop](05-agent-loop.md) | turn、step、model request、tool call 的主循环 |

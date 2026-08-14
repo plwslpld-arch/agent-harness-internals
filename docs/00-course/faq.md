@@ -93,7 +93,7 @@ Agent Loop 记录 `request/context`，adapter/model resolution 提供 `contextWi
 
 如果你是第一次学：
 
-1. 读 [README](README.md) 和 [01｜项目定位](01-product-positioning.md)。
+1. 读 [README](README.md) 和 [01｜项目定位](../01-what-is-a-harness.md)。
 2. 连续读完 12 讲主课程。
 3. 按 [stage-checklists.md](stage-checklists.md) 每阶段自测。
 4. 做一次本地 evidence 模板。
