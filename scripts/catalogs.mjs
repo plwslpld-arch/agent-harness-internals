@@ -74,13 +74,60 @@ function escapeCell(value) {
   return String(value).replaceAll('|', '\\|').replaceAll('\n', ' ');
 }
 
-function link(sourceId, path, line) {
-  const source = sourceReferences.get(sourceId);
-  const encoded = encodeURI(path).replaceAll('(', '%28').replaceAll(')', '%29');
-  const target = source
-    ? `${source.url.replace(/\.git$/u, '')}/blob/${source.commit}/${encoded}${line ? `#L${line}` : ''}`
-    : `../../../sources/checkouts/${sourceId}/${encoded}${line ? `#L${line}` : ''}`;
-  return `[${escapeCell(path)}](${target})`;
+// Paths are emitted as plain code spans, not per-row links. A full permalink is
+// ~145 bytes and repeats on every row: with links these tables ran 238-403
+// bytes per row and four of them exceeded GitHub's 1 MB Markdown render limit,
+// so the index could not be read in a browser at all. The base URL is stated
+// once per source in `sourceBaseUrls()`; append the path (and `#L<line>`) to
+// rebuild any permalink. Nobody clicks 7,000 links — they grep and copy paths.
+function cell(path, line) {
+  return `\`${escapeCell(path)}${line ? `:${line}` : ''}\``;
+}
+
+/** Top-level segment a file card is grouped under; root files share `root`. */
+function cardSegment(path) {
+  const first = path.split('/')[0];
+  return path.includes('/') ? first : 'root';
+}
+
+const CARD_COLUMNS = '| 路径 | 分类 | 行数 | 文件职责 | 公开符号 | 直接依赖 | 反向依赖 | 直接测试 |\n| --- | --- | ---: | --- | --- | ---: | ---: | ---: |\n';
+
+function cardRow(file) {
+  const symbols = file.symbols.slice(0, 5).map((item) => `\`${escapeCell(item.name)}\``).join('、') || '—';
+  return `| ${cell(file.path)} | ${file.classification} | ${file.lines || '—'} | ${escapeCell(file.purpose)} | ${symbols} | ${file.imports.length} | ${file.importedBy.length} | ${file.tests.length} |`;
+}
+
+/**
+ * Build the file-card index plus one part per top-level segment.
+ * @returns entries of `[name, content]` for the catalog map.
+ */
+function fileCardParts(harnessFiles, header, baseUrls) {
+  const groups = new Map();
+  for (const file of harnessFiles) {
+    const segment = cardSegment(file.path);
+    (groups.get(segment) ?? groups.set(segment, []).get(segment)).push(file);
+  }
+  const ordered = [...groups.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
+  const detail = '每个跟踪文件都有机器生成的 L0/L1 导航；职责为启发式摘要，核心行为以人工源码研究为准。';
+  const rows = ordered.map(([segment, group]) =>
+    `| [\`${segment}\`](harness-file-cards-${segment}.md) | ${group.length} |`).join('\n');
+  const index = `${header('DeepSeek Harness 文件卡片', detail)}${baseUrls}## 分区（共 ${harnessFiles.length} 个文件）\n\n按顶层目录拆分，每个分区都在 GitHub 网页可直接阅读。\n\n| 分区 | 文件数 |\n| --- | ---: |\n${rows}\n`;
+  const parts = ordered.map(([segment, group]) => [
+    `harness-file-cards-${segment}.md`,
+    `${header(`DeepSeek Harness 文件卡片 · ${segment}`, detail)}${baseUrls}返回 [全部分区](harness-file-cards.md)。\n\n## 文件卡片（${group.length}）\n\n${CARD_COLUMNS}${group.map(cardRow).join('\n')}\n`,
+  ]);
+  return [['harness-file-cards.md', index], ...parts];
+}
+
+function sourceBaseUrls(ids) {
+  const rows = ids.map((id) => {
+    const source = sourceReferences.get(id);
+    const base = source
+      ? `${source.url.replace(/\.git$/u, '')}/blob/${source.commit}/`
+      : `../sources/checkouts/${id}/`;
+    return `- \`${id}\`: ${base}`;
+  });
+  return `## 链接构造\n\n把表中的路径接在对应基址后面即可得到永久链接；行号用 \`#L<行>\`。\n\n${rows.join('\n')}\n\n`;
 }
 
 function symbolsFor(path, content) {
@@ -175,14 +222,21 @@ export function buildCatalogs() {
   }
   const classCounts = [...new Set(harnessFiles.map((file) => file.classification))].sort().map((classification) => ({ classification, count: harnessFiles.filter((file) => file.classification === classification).length }));
   const sourceTestRows = harnessFiles.filter((file) => ['source', 'vendored-source'].includes(file.classification));
+  const indexedIds = [...INDEXED_SOURCES];
+  const harnessBase = sourceBaseUrls(['deepseek-harness']);
+  const allBase = sourceBaseUrls(indexedIds);
   return new Map([
-    ['files.md', `${header('文件索引', '路径链接指向锁定 Commit 的公开上游；相同路径的本地源码位于 sources/checkouts/<source-id>/。')}## 来源基线\n\n${sourceSummary}\n\n## 文件（${files.length}）\n\n| 来源 | 路径 | 类型 |\n| --- | --- | --- |\n${files.map((item) => `| ${item.source} | ${link(item.source, item.path)} | ${item.type} |`).join('\n')}\n`],
-    ['symbols.md', `${header('符号索引', '这是轻量语法索引，不替代语言服务器。')}## 导出或公开符号（${symbols.length}）\n\n| 来源 | 符号 | 定义 |\n| --- | --- | --- |\n${symbols.map((item) => `| ${item.source} | \`${escapeCell(item.name)}\` | ${link(item.source, item.path, item.line)}:${item.line} |`).join('\n')}\n`],
-    ['tests.md', `${header('测试与 Fixture 索引', '')}## 测试资产（${tests.length}）\n\n| 来源 | 类型 | 路径 |\n| --- | --- | --- |\n${tests.map((item) => `| ${item.source} | ${item.kind} | ${link(item.source, item.path)} |`).join('\n')}\n`],
-    ['agent-notes.md', `${header('Agent Note 索引', '包含 AGENTS.md、CLAUDE.md 与 DeepSeek Harness 的 .agents/notes。')}## 指令与设计记录（${notes.length}）\n\n| 来源 | 文件 |\n| --- | --- |\n${notes.map((item) => `| ${item.source} | ${link(item.source, item.path)} |`).join('\n')}\n`],
-    ['harness-file-cards.md', `${header('DeepSeek Harness 文件卡片', '每个跟踪文件都有机器生成的 L0/L1 导航；职责为启发式摘要，核心行为以人工源码研究为准。')}## 文件卡片（${harnessFiles.length}）\n\n| 路径 | 分类 | 行数 | 文件职责 | 公开符号 | 直接依赖 | 反向依赖 | 直接测试 |\n| --- | --- | ---: | --- | --- | ---: | ---: | ---: |\n${harnessFiles.map((file) => `| ${link(file.source, file.path)} | ${file.classification} | ${file.lines || '—'} | ${escapeCell(file.purpose)} | ${file.symbols.slice(0, 5).map((item) => `\`${escapeCell(item.name)}\``).join('、') || '—'} | ${file.imports.length} | ${file.importedBy.length} | ${file.tests.length} |`).join('\n')}\n`],
-    ['harness-dependencies.md', `${header('DeepSeek Harness 文件依赖边', '只解析能够静态定位的仓库内相对 import/export/require；动态解析和 Cordis 运行时注入需结合人工分析。')}## 静态依赖边（${dependencyEdges.length}）\n\n| 调用/导入方 | 被依赖文件 |\n| --- | --- |\n${dependencyEdges.map((edge) => `| ${link('deepseek-harness', edge.from)} | ${link('deepseek-harness', edge.to)} |`).join('\n')}\n`],
-    ['harness-source-test-map.md', `${header('DeepSeek Harness 源码到测试映射', '直接测试来自静态 import 关系；0 不等于没有间接、组装或真实 E2E 覆盖。')}## 源码与直接测试（${sourceTestRows.length}）\n\n| 源码 | 能力域 | 直接测试数 | 直接测试 |\n| --- | --- | ---: | --- |\n${sourceTestRows.map((file) => `| ${link(file.source, file.path)} | ${escapeCell(areaFor(file.path))} | ${file.tests.length} | ${file.tests.slice(0, 8).map((path) => link(file.source, path)).join('<br>') || '—'} |`).join('\n')}\n\n未直接映射的测试资产仍可在 [tests.md](tests.md) 查询，共 ${testPaths.length} 个。\n`],
+    ['files.md', `${header('文件索引', '相同路径的本地源码位于 sources/checkouts/<source-id>/。')}## 来源基线\n\n${sourceSummary}\n\n${allBase}## 文件（${files.length}）\n\n| 来源 | 路径 | 类型 |\n| --- | --- | --- |\n${files.map((item) => `| ${item.source} | ${cell(item.path)} | ${item.type} |`).join('\n')}\n`],
+    ['symbols.md', `${header('符号索引', '这是轻量语法索引，不替代语言服务器。')}${allBase}## 导出或公开符号（${symbols.length}）\n\n| 来源 | 符号 | 定义 |\n| --- | --- | --- |\n${symbols.map((item) => `| ${item.source} | \`${escapeCell(item.name)}\` | ${cell(item.path, item.line)} |`).join('\n')}\n`],
+    ['tests.md', `${header('测试与 Fixture 索引', '')}${allBase}## 测试资产（${tests.length}）\n\n| 来源 | 类型 | 路径 |\n| --- | --- | --- |\n${tests.map((item) => `| ${item.source} | ${item.kind} | ${cell(item.path)} |`).join('\n')}\n`],
+    ['agent-notes.md', `${header('Agent Note 索引', '包含 AGENTS.md、CLAUDE.md 与 DeepSeek Harness 的 .agents/notes。')}${allBase}## 指令与设计记录（${notes.length}）\n\n| 来源 | 文件 |\n| --- | --- |\n${notes.map((item) => `| ${item.source} | ${cell(item.path)} |`).join('\n')}\n`],
+    // File cards carry eight columns including a generated purpose sentence, so
+    // even without per-row links the single table exceeds GitHub's 1 MB render
+    // limit. Split by top-level segment: every part stays readable in a browser,
+    // and "show me the cards under packages/" is how this table is actually used.
+    ...fileCardParts(harnessFiles, header, harnessBase),
+    ['harness-dependencies.md', `${header('DeepSeek Harness 文件依赖边', '只解析能够静态定位的仓库内相对 import/export/require；动态解析和 Cordis 运行时注入需结合人工分析。')}${harnessBase}## 静态依赖边（${dependencyEdges.length}）\n\n| 调用/导入方 | 被依赖文件 |\n| --- | --- |\n${dependencyEdges.map((edge) => `| ${cell(edge.from)} | ${cell(edge.to)} |`).join('\n')}\n`],
+    ['harness-source-test-map.md', `${header('DeepSeek Harness 源码到测试映射', '直接测试来自静态 import 关系；0 不等于没有间接、组装或真实 E2E 覆盖。')}${harnessBase}## 源码与直接测试（${sourceTestRows.length}）\n\n| 源码 | 能力域 | 直接测试数 | 直接测试 |\n| --- | --- | ---: | --- |\n${sourceTestRows.map((file) => `| ${cell(file.path)} | ${escapeCell(areaFor(file.path))} | ${file.tests.length} | ${file.tests.slice(0, 8).map((path) => cell(path)).join('<br>') || '—'} |`).join('\n')}\n\n未直接映射的测试资产仍可在 [tests.md](tests.md) 查询，共 ${testPaths.length} 个。\n`],
     ['coverage-report.md', `${header('知识覆盖报告', '覆盖状态描述 Atlas 产物，不代表上游测试覆盖率或人工审核完成度。')}## Harness 基线\n\n- 固定 Commit：\`${locks.get('deepseek-harness').commit}\`\n- 跟踪文件：${harnessFiles.length}\n- 自动文件卡片：${harnessFiles.length}（L0/L1 启发式）\n- 可静态定位的仓库内依赖边：${dependencyEdges.length}\n- 源码/受 vendored 源码文件：${sourceTestRows.length}\n- 有直接静态测试映射的源码：${sourceTestRows.filter((file) => file.tests.length).length}\n- 人工核心源码研究：见主干分支 docs/ 下的深度文章\n\n## 文件分类\n\n| 分类 | 文件数 |\n| --- | ---: |\n${classCounts.map((item) => `| ${item.classification} | ${item.count} |`).join('\n')}\n\n## 解释边界\n\n自动卡片保证“每个文件可定位且有基础语义”，不声称每个文件已经人工逐行审阅。L2/L3 只授予包含 happy/error/edge path、测试和运行证据的人工研究；上游变化后由更新报告标记待复核。\n`],
   ]);
 }

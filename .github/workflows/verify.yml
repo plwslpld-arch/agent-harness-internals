@@ -83,8 +83,8 @@ jobs:
               fi
               printf -- '| `%s` | %s MB | %s |\n' "$name" "$mb" "$note"
             done
-            printf '\n> GitHub 网页对超过 1MB 的文件不渲染 Markdown。'
-            printf '这些是机器索引，主要用途是 grep 与程序消费，不是逐行阅读。\n\n'
+            printf '\n> 全部索引都控制在 GitHub 的 1MB Markdown 渲染阈值以内：路径以纯文本给出（链接构造规则见每份索引开头），'
+            printf '文件卡片按顶层目录分区。它们仍是机器索引，主要用途是 grep 与程序消费。\n\n'
             printf '```bash\n'
             printf '# 全量拉下来 grep\n'
             printf 'git clone --branch gh-pages --depth 1 https://github.com/%s.git dsh-index\n' "$GITHUB_REPOSITORY"
