@@ -12,7 +12,7 @@ evidence: [code, official-doc, inference]
 
 当前关键研究：
 
-- [协议实现对照](protocol-implementation-study.md)：DSML、DeepSeek adapter、MCP、ACP 和 SDK JSON-RPC 的真实边界；
+- [协议实现对照](../10-surfaces-and-protocols.md)：DSML、DeepSeek adapter、MCP、ACP 和 SDK JSON-RPC 的真实边界；
 - [Cordis 分叉与插件系统](../02-cordis-and-boot.md)：upstream 与 vendored 18 类差异、host/client 插件和 HMR；
 - [论文注释方法](paper-annotation-method.md)：不复制 Cordis 论文全文，如何把理论 claim 变成源码/实验问题。
 

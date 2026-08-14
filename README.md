@@ -58,7 +58,7 @@
 | 07 | [**压缩：为什么摘要请求不新开一个**](docs/07-compaction.md) | ✅ |
 | 08 | [工具、审批、沙箱与威胁模型](docs/08-tools-approval-sandbox.md) | ✅ |
 | 09 | [DeepSeek Adapter：序列化、SSE、thinking 与 usage](docs/09-deepseek-adapter.md) | ✅ |
-| 10 | 产品表面与协议：Web / headless / ACP / MCP / SDK / DSML | 规划中 |
+| 10 | [产品表面与协议：Web / headless / ACP / MCP / SDK / DSML](docs/10-surfaces-and-protocols.md) | ✅ |
 | 11 | **Invariant 与 Agent Note：一个仓库如何自证** | 规划中 |
 | 12 | **横向对照：dsh vs Claude Code / Codex / OpenCode** | 规划中 |
 | A | 附录：实验手册（本地跑通与证据留痕） | 规划中 |
