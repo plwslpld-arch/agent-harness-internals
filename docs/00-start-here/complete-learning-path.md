@@ -44,6 +44,7 @@ evidence: [code, test, runtime, official-doc, community, inference]
 1. **全量逐文件导航**：[`../14-file-reference/generated/harness-file-cards.md`](../14-file-reference/generated/harness-file-cards.md) 覆盖 7,412 个 DeepSeek Harness 文件。每个文件都有分类、行数、职责摘要、公开符号、直接依赖、反向依赖和直接测试数量。
 2. **人工深度源码研究**：[`../13-source-studies/`](../13-source-studies/README.md) 覆盖核心路径，包括 Cordis fork、插件系统、核心 runtime、DeepSeek adapter、协议实现、安全/编排、Web bridge 与产品表面。
 3. **逐文件阅读方法**：[`../14-file-reference/source-reading-guide.md`](../14-file-reference/source-reading-guide.md) 说明如何从“我要学插件/模型/工具/Session/Web”进入具体文件，如何读文件卡片，如何回到测试和设计决策。
+4. **第一批重点文件精读**：[`../14-file-reference/key-file-deep-dives.md`](../14-file-reference/key-file-deep-dives.md) 把 12 个核心文件按启动、插件、Agent Loop、模型、工具、Session 串起来。
 
 没有提供“每一行源码的逐行中文注释”。这是有意保留的边界：全仓逐行解释会非常巨大且低信号，也容易在上游更新后快速过期。需要追某个文件时，先用文件卡片定位，再进入对应人工源码研究和上游源码。
 
