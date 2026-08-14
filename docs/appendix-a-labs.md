@@ -4,7 +4,7 @@ last_verified: 2026-08-14
 status: draft
 depth: L2
 audience: [engineering]
-evidence: [code, runtime, official-doc]
+evidence: [code, official-doc]
 ---
 
 # 附录 A｜实验手册：本地跑通与证据留痕
