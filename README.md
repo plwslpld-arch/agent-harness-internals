@@ -109,7 +109,19 @@ export DEEPSEEK_API_KEY="your-own-key"
 
 ## 源码索引
 
-全量文件、符号、依赖、测试映射索引由 `npm run catalogs:generate` 从锁定 checkout 生成到本地 `.generated/`（不入库），并由 CI 发布到 [`gh-pages`](https://github.com/plwslpld-arch/deepseek-harness-internals/tree/gh-pages) 分支。
+文件、符号、依赖、测试映射索引由 `npm run catalogs:generate` 从锁定 checkout 生成到本地 `.generated/`（不入库），并由 CI 发布到 [`gh-pages`](https://github.com/plwslpld-arch/deepseek-harness-internals/tree/gh-pages) 分支。
+
+**索引范围只含分析对象** `deepseek-harness` 与它 vendored 的 `cordis`（8 个文件、30,339 行）。其余 13 个对照仓库的 commit 记录在 `sources/sources.lock.yml`，但不做文件级索引——它们在文章 12 里只用于结构对照，符号级索引没有读者。
+
+这些是**机器索引**，主要用途是 grep 与程序消费：
+
+```bash
+git clone --branch gh-pages --depth 1 \
+  https://github.com/plwslpld-arch/deepseek-harness-internals.git dsh-index
+grep -n "ReactLoopAgent" dsh-index/symbols.md
+```
+
+其中 4 个超过 1MB，GitHub 网页不渲染，需走 raw 链接或 clone；`gh-pages` 的 `index.md` 逐个标了体积与可读性。
 
 索引回答「有什么、在哪里」；`docs/` 下的人工文章回答「为什么、怎么失效」。两者不互相替代。
 
