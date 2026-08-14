@@ -60,9 +60,9 @@ flowchart TD
 
 | 顺序 | 能力域 | 先读文档 | 再查文件卡片关键词 |
 | ---: | --- | --- | --- |
-| 1 | CLI 与启动 | [`../04-boot-and-configuration/README.md`](../04-boot-and-configuration/README.md) | `apps/cli/src/bin.ts`、`profile-boot.ts`、`app-boot` |
-| 2 | Profile 与插件装配 | [`../03-cordis-foundation/plugin-lifecycle.md`](../03-cordis-foundation/plugin-lifecycle.md) | `packages/bundle/headless`、`packages/bundle/web-app`、`vendor/loader` |
-| 3 | Cordis 底座 | [`../03-cordis-foundation/plugin-system-mainline.md`](../03-cordis-foundation/plugin-system-mainline.md) | `vendor/cordis/src/context.ts`、`service.ts`、`index.ts` |
+| 1 | CLI 与启动 | [`../04-boot-and-configuration/README.md`](../02-cordis-and-boot.md) | `apps/cli/src/bin.ts`、`profile-boot.ts`、`app-boot` |
+| 2 | Profile 与插件装配 | [`../03-cordis-foundation/plugin-lifecycle.md`](../02-cordis-and-boot.md) | `packages/bundle/headless`、`packages/bundle/web-app`、`vendor/loader` |
+| 3 | Cordis 底座 | [`../03-cordis-foundation/plugin-system-mainline.md`](../02-cordis-and-boot.md) | `vendor/cordis/src/context.ts`、`service.ts`、`index.ts` |
 | 4 | Agent Loop | [`../05-agent-runtime/turn-step-tool-loop.md`](../05-agent-runtime/turn-step-tool-loop.md) | `packages/core/agent-loop`、`packages/core/agent` |
 | 5 | 模型适配 | [`../06-model-adapter/deepseek-protocol.md`](../06-model-adapter/deepseek-protocol.md) | `packages/llm/llm-deepseek`、`packages/llm/llm`、`llm-retry` |
 | 6 | 工具与权限 | [`../07-tools-permissions-sandbox/tool-policy-pipeline.md`](../07-tools-permissions-sandbox/tool-policy-pipeline.md) | `packages/core/tools`、`packages/shell/tool-bash`、`packages/sandbox` |
@@ -76,9 +76,9 @@ flowchart TD
 插件系统是主线，建议按这条路径：
 
 1. 先读论文方法：[`../13-source-studies/paper-annotation-method.md`](../13-source-studies/paper-annotation-method.md)。
-2. 再读插件全景：[`../03-cordis-foundation/plugin-system-mainline.md`](../03-cordis-foundation/plugin-system-mainline.md)。
-3. 再读生命周期：[`../03-cordis-foundation/plugin-lifecycle.md`](../03-cordis-foundation/plugin-lifecycle.md)。
-4. 然后读 fork 对照：[`../13-source-studies/cordis-fork-and-plugin-system.md`](../13-source-studies/cordis-fork-and-plugin-system.md)。
+2. 再读插件全景：[`../03-cordis-foundation/plugin-system-mainline.md`](../02-cordis-and-boot.md)。
+3. 再读生命周期：[`../03-cordis-foundation/plugin-lifecycle.md`](../02-cordis-and-boot.md)。
+4. 然后读 fork 对照：[`../13-source-studies/cordis-fork-and-plugin-system.md`](../02-cordis-and-boot.md)。
 5. 最后去文件卡片里搜 `vendor/cordis`、`vendor/loader`、`profile`、`bundle`、`plugin`。
 
 这里要区分三层：
