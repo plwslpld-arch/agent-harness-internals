@@ -9,16 +9,14 @@
   "scripts": {
     "bootstrap": "node scripts/bootstrap.mjs",
     "sources:verify": "node scripts/verify-sources.mjs",
-    "sources:update": "node scripts/update-sources.mjs",
-    "catalogs:generate": "node scripts/generate-catalogs.mjs",
-    "catalogs:verify": "node scripts/verify-generated.mjs",
     "evidence:local": "node scripts/run-local-evidence.mjs",
+    "check:analysis": "node scripts/verify-analysis.mjs",
+    "check:anchors": "node scripts/verify-anchors.mjs",
     "check:links": "node scripts/check-links.mjs",
     "check:portability": "node scripts/verify-portability.mjs",
     "check:licenses": "node scripts/verify-licenses.mjs",
-    "check:analysis": "node scripts/verify-analysis.mjs",
     "check:secrets": "node scripts/scan-secrets.mjs",
-    "test": "node --test scripts/tests/*.test.mjs",
-    "check": "npm run sources:verify && npm run check:analysis && npm run check:portability && npm run check:licenses && npm run check:links && npm run check:secrets && npm test"
+    "test": "node --test scripts/tests/",
+    "check": "npm run sources:verify && npm run check:analysis && npm run check:anchors && npm run check:portability && npm run check:licenses && npm run check:links && npm run check:secrets && npm test"
   }
 }

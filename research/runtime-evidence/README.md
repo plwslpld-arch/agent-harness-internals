@@ -1,12 +1,23 @@
-# Runtime evidence
+# 运行记录
 
-Runtime claims require a sanitized record containing source SHA, command, environment,
-start/end time, exit code, pass/fail/skip counts, log or artifact path, artifact hash and
-known gaps. HTTP 200, compilation, CI success and a ready process are different evidence
-levels and must not be substituted for an authenticated task-level end-to-end result.
+这里只放**真的跑过**的东西：源码 SHA、命令、环境、开始/结束时间、退出码、通过/失败/跳过数、日志或产物路径、以及已知缺口。
 
-## Current records
+三件事经常被混为一谈，这里必须分开写：
 
-- [2026-08-14 Atlas local check](2026-08-14-atlas-local-check.md): local `npm run check` passed; proves repository consistency, not authenticated model E2E.
-- [2026-08-14 DeepSeek authenticated E2E pending](2026-08-14-deepseek-auth-e2e-pending.md): records that `DEEPSEEK_API_KEY` was not present in the current environment, so authenticated headless E2E remains pending.
-- [2026-08-14 Refactor verification](2026-08-14-refactor-verification.md): local gates and three GitHub Actions runs after the 12-article restructure; the `publish-index` job created and republished `gh-pages`. Still no authenticated E2E.
+- 进程起来了、HTTP 返回 200、编译通过 —— 只证明「装得起来」；
+- `npm run check` 通过 —— 只证明「仓库自身一致」；
+- 带真实凭据跑完一次完整任务 —— 才是端到端结论。
+
+前两种不能替代第三种。
+
+## 当前记录
+
+- [2026-08-14 DeepSeek 带凭据 E2E 待办](2026-08-14-deepseek-auth-e2e-pending.md)：当时环境没有 `DEEPSEEK_API_KEY`，带凭据的 headless E2E 未执行。这条记录存在的意义是——**没跑就写没跑**，不要把它转写成成功结论。
+
+## 怎么生成一份新记录
+
+```bash
+npm run evidence:local -- --scenario <场景名>
+```
+
+生成的草稿只记录「凭据是否存在」，不写入凭据值。

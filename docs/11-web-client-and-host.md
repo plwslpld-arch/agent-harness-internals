@@ -1,0 +1,488 @@
+---
+title: Web 客户端与 host：39 个 UI 包如何把事件日志变成界面
+sources: [{"repo":"deepseek-harness","path":"packages/client","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
+last_verified: 2026-08-16
+status: draft
+---
+
+# Web 客户端与 host：39 个 UI 包如何把事件日志变成界面
+
+`packages/client` 是 dsh 全仓最大的一组代码：39 个包，449 个 `.ts`/`.tsx` 文件，71,896 行源码（不含 CSS 与测试）。加上 `packages/host` 的 8 个包和 `packages/api` 的 2 个包，构成 dsh 唯一的交互界面。
+
+这组代码和 harness 的核心机制关系不大——它不决定模型看到什么、不决定 token 怎么花。但它决定了**你在浏览器里看到的每一样东西**，而且它对「一条 session 事件」的处理方式，恰好是理解 dsh 事件溯源设计的一个好切口：后端的 append-only 事件日志，是怎么变成屏幕上一条会滚动的消息的。
+
+---
+
+## 一、先看见：一条 session 事件的九跳
+
+后端追加一条 `assistant/message` 事件之后，到它出现在浏览器里，中间有九跳。每一跳都能指到源码。
+
+**跳 1，host 上有人在监听。** apiproxy 订阅 `session/event`：
+
+```ts
+          ctx.on('session/event', (session: Session, event: SessionEvent) => {
+```
+
+（`packages/host/apiproxy/src/api-proxy.ts:3475`）然后把它包成一个帧压进队列：
+
+```ts
+            queue.push(frame({ type: 'session/event', sessionId: session.id, event, ...view === undefined ? {} : { view } }))
+```
+
+（`:3493`）帧的类型定义在 `packages/host/apiproxy/src/api/events.ts:70`：
+
+```ts
+  | { type: 'session/event'; sessionId: SessionId; event: SessionEvent; view?: ToolEventView }
+```
+
+注意 `event` 字段是**原封不动的 SessionEvent 信封**。浏览器收到的和落盘的是同一个结构。
+
+**跳 1b，投影走另一条支路。** 有些东西（token 用量、todo 列表、goal、plan、权限档位）不适合让浏览器自己从事件流折叠——那样每个客户端都要重算一遍，还容易算错。这些由 host 算好整值再广播：
+
+```ts
+      broadcast({ type: 'session/projection', sessionId: session.id, key, value, seq })
+```
+
+（`packages/host/apiproxy/src/api-proxy.ts:1285`）投影本身在 `packages/session/session-projection/src/index.ts:181` 订阅同一个事件计算。
+
+**跳 2，传输是 WebSocket 下行，不是 HTTP。** 上行（浏览器调 host 方法）走 HTTP POST，下行（事件推送）走两条 WebSocket：
+
+```ts
+export const API_PATH = '/api'
+export const MUX_EVENTS_PATH = `${API_PATH}/events.mux`
+export const HOST_EVENTS_PATH = `${API_PATH}/events.host`
+```
+
+（`packages/client/connection/src/api-path.ts:8`、`:11`、`:14`）承载类是 `WebSocketDownlinks`（`packages/client/connection/src/websocket-downlink.ts:51`），注册在 `packages/client/connection/src/index.ts:193-194`。两条流的分工：`events.mux` 是「按 session 复用的会话流」，`events.host` 是「进程级的 host 事件流」。
+
+**跳 3，浏览器接收。**
+
+```ts
+  private async *readWebSocket<F extends MuxFrame | HostFrame>(
+```
+
+（`packages/client/connection/src/client/web-api-client.ts:34`）这是一个 async generator，内部 `const socket = new WebSocket(url)`（`:42`），解析后 yield 出帧。外层是 `ConnectionController`（`packages/client/connection/src/client/connection.ts:61`）负责重连与 generation 管理。
+
+**跳 4，runtime 挂 sink。**
+
+```ts
+  const loop = connection.start({
+    onMuxEnvelope: (envelope) => {
+      sessions.handleMuxEnvelope(envelope)
+```
+
+（`packages/client/runtime/src/client/index.ts:204-206`）同一段里还有一行处理 host 流的 Remote 事件转发：
+
+```ts
+      if (frame.type === 'host/remote-event') ctx.remote.$dispatch(frame.event, frame.args)
+```
+
+（`:216`）
+
+**跳 5-6，路由到 Session 对象。** manager 按 sessionId 分发（`packages/client/runtime/src/client/sessions/manager.ts:683`、`:788`），Session 对象吸收：
+
+```ts
+  handleMuxEnvelope(rpcId: RpcId, frame: MuxFrame): void {
+```
+
+（`packages/client/runtime/src/client/sessions/session.ts:467`）走 `acceptLiveEvent`（`:684`）→ `appendLive`（`:668`）。
+
+**跳 7，变成可订阅状态。** Session 是一个**裸的 observable**，不是 React 状态：
+
+```ts
+  subscribe(listener: () => void): () => void {
+  getSnapshot(): ConversationSnapshot {
+```
+
+（`packages/client/runtime/src/client/sessions/session.ts:447`、`:455`）到这一跳为止，整条链路里没有一行 React。
+
+**跳 8，唯一的 hook 构造器。**
+
+```ts
+export function bindSnapshotSelector<T>(w: HostObservable<T>): SnapshotSelectorHook<T> {
+```
+
+（`packages/client/web-react/src/bind.ts:18`）内部是 `useSyncExternalStoreWithSelector`（`:22`）。整个 client 只有这一个地方把 observable 变成 hook——README 写得很直白（`packages/client/web-react/README.md:5`）：「hosts and engines traffic in bare observable sources; every hook binds here, cached per source」。
+
+**跳 9，组件渲染。**
+
+```tsx
+  const order = useSession(s => s.chat.order)
+  const nodeStore = useSession(s => s.chat.nodes)
+  const timeline = useSession(s => s.chat.timeline)
+```
+
+（`packages/client/ui-conversation/src/client/chat/ChatView.tsx:150-152`）ChatView 注册进 `'conversation.view'` 这个 slot（`packages/client/ui-conversation/src/client/apply.ts:377`），`ui-trajectory` 在同一个 slot 里注册第二个 tab。
+
+**九跳总结**：`ctx.on('session/event')` → mux 队列 → `/api/events.mux` WebSocket → `readWebSocket` → `ConnectionController` → `SessionRuntime` → `Session.acceptLiveEvent` → `subscribe`/`getSnapshot` → `bindSnapshotSelector` → `useSession` → `ChatView`。
+
+这条链路有一个明确的分层意图：**React 只出现在最后一跳**。数据层（connection、runtime、Session 对象）完全是普通 TypeScript，这也是为什么 `packages/client/runtime` 有 8,989 行却一个 `.tsx` 都没有。
+
+### 同一份事件，两种视图
+
+上面最后一跳落在 ChatView，但同一份事件其实同时喂着两个视图。Session 对象持有的是一个**共享的事件窗口**加上历史分页，注册进来的每个「会话视图目标」各自从它派生自己的表示（`packages/client/runtime/README.md:5`）。
+
+Chat 视图把事件折叠成对话：分组的步骤摘要流、流式尾部隔离、turn 状态（`packages/client/ui-conversation/README.md:5`）。Trajectory 视图把同一批事件摊成一本**账本**：User / Assistant / Tool / 嵌套 Subtool 每条一行，粗分隔线标记 turn 边界，紧凑的行内标记标出 step；选中一行会打开局部检查器，显示 token 用量、耗时、Input、Output、Timing。账本上方还有一条时间轴 Overview，把真实的起止时刻从左到右投影出来，Assistant 的跨度里区分了 TTFT 与解码两段，拖选一个区间就把账本收窄到该区间内活跃过的所有记录（`packages/client/ui-trajectory/README.md:5`）。
+
+关键的一句在同一段末尾：
+
+> Trajectory-owned Definitions assemble business records, including cancellation-frozen Assistant and Tool records, from the shared Session window, so Trajectory neither reads nor changes the Chat conversation snapshot.
+
+两个视图**互不读取对方的快照**。它们共享的是原始事件窗口，不是彼此的派生状态。这正是事件溯源的直接红利：加一个新视图不需要改任何已有视图，只要注册一套自己的 Event Definition 和一个 `'conversation.view'` tab。`ui-trajectory` 那 7,900 行里没有一个 Service，也没有任何 Context 合并——它纯粹是一个消费者。
+
+代价是长账本的性能得自己扛：虚拟滚动只挂可见行加少量 overscan，向上滚到已加载范围顶端时加载一页更早的，选中/时间轴/折叠/搜索/Request 合计**都只覆盖当前已加载的窗口**。
+
+---
+
+## 二、39 个包的分工
+
+| 分组 | 包 | 行数 | 职责 |
+|---|---|---|---|
+| 外壳 | `web` | 642 | shell kernel，两阶段启动 |
+| | `web-react` | 1,224 | 唯一的 React 胶水层 |
+| | `modules` | 972 | 客户端模块系统（双面） |
+| 线缆 | `connection` | 4,693 | HTTP 上行 + 两条 WebSocket 下行 + 信任围栏 |
+| 状态 | `runtime` | 8,989 | Session/Workspace 对象、slot 注册表、投影存储 |
+| 扩展点 | `ui-slots` | 1,563 | slot 内核（零 React、零 cordis） |
+| 基础设施 | `ui-primitives` | 6,727 | 纯 React 原子（零 cordis） |
+| | `ui-theme` | 693 | 主题偏好与 token |
+| | `locale` | 674 | i18n |
+| | `schema-form` | 195 | 设置表单的 schema 层 |
+| | `hmr` | 447 | 客户端插件热重载 |
+| 会话域 | `ui-conversation` | 11,310 | 骨架、chat 视图、composer、审批面板 |
+| | `ui-trajectory` | 7,900 | 轨迹视图 |
+| | `ui-tool` | 2,300 | 工具调用呈现 |
+| | `ui-attachment` / `ui-deliverables` / `ui-message-feedback` | 514 / 493 / 769 | 附件、产出文件、逐条反馈 |
+| 输入 | `ui-input-trigger` / `ui-commands` / `ui-skill` / `ui-subagent` | 1,356 / 1,329 / 434 / 898 | `/` 与 `@` 触发管线及其候选源 |
+| 会话控制 | `ui-model-selection` / `ui-agent-preset` / `ui-permission-presets` / `ui-plan` / `ui-goal` / `ui-jobs` / `ui-workflow-run` / `ui-user-questions` | 940 / 2,067 / 611 / 202 / 501 / 324 / 582 / 727 | composer 与会话头上的各个座位 |
+| 导航 | `ui-layout` / `ui-sidebar` / `ui-workspace` | 678 / 399 / 2,973 | 三栏框架、侧栏、工作区 |
+| 设置 | `ui-settings` / `-general` / `-models` / `-plugins` / `-plugin-inventory` | 482 / 714 / 3,341 / 1,541 / 322 | 设置域 |
+| 目录选择 | `ui-directory-picker-native` / `-browse` | 146 / 1,224 | 与 host 的两种 picker 后端配对 |
+
+以上 39 行即 `packages/client/` 的全部内容。另有一个 `ui-cordis` 也是浏览器插件，但它住在 `packages/extensions/ui-cordis`——它是 `tool-cordis` 的浏览器半，属于「agent 修改自身运行时」那一组，见 [09 扩展与 Code Mode](09-extensions-and-code-mode.md)。
+
+39 个包**全部**有 README。绝大多数是**双面包**：`src/index.ts` 是运行在 Node 上的 host 半，`src/client/index.ts` 是浏览器半，由 package.json 里的 `dsh.client` 字段声明。这个设计让「一个功能」始终是一个包，而不是拆成前后端两个包再靠命名约定对齐。
+
+有几个包的 host 半是**故意为空**的。`ui-user-questions` 的 README 解释了为什么（`packages/client/ui-user-questions/README.md:5`）：
+
+> Its host half is empty on purpose — mounting `dsh-tool-ask-user` there put the tool in the registry's GLOBAL layer, which merges into every agent regardless of the preset that composed it, so a two-tool benchmark preset really presented three.
+
+也就是说：**渲染一个提问是 host 的 UI 能力，拥有那个工具是 agent 的能力**。前者归这个包，后者归 preset。这条边界如果划错，`minimal` preset 那个「只有两个工具」的承诺就不成立了。
+
+---
+
+## 三、slot：插件怎么往界面里插东西
+
+39 个包能拼成一个界面而不互相 import，靠的是 slot。核心在 `ui-slots`，一个**零 React、零 cordis** 的纯类型包。
+
+### 声明即授权
+
+slot 契约表是一个可被声明合并（declaration merging）的空接口：
+
+```ts
+export interface SlotMap {}
+```
+
+（`packages/client/ui-slots/src/index.ts:24`）每个包在自己的类型文件里往里加条目。四种基数：
+
+```ts
+export type SlotKind = 'single' | 'list' | 'keyed' | 'chain'
+```
+
+（`:88`）三种数据作用域：`'root' | 'session-maybe' | 'session'`（`:90-91`）。
+
+注册只有一个 API：
+
+```ts
+  register(options: ErasedOptions, component: unknown): () => void {
+```
+
+（`:787`）而且**未声明的 slot 直接抛错**：
+
+```ts
+      throw new Error(`slot "${options.name}" is not declared (a parent entry's children table must declare it)`)
+```
+
+（`:790`）意思是：一个包想在界面某处插东西，得先有另一个包在它的 children 表里**声明**了这个洞。`ui-conversation` 声明了 `conversation.view`、`conversation.composer`、`conversation.input.dock`、`conversation.chat.node` 等等，别的包才能往里注册。这把「谁能改哪块界面」变成了编译期可检查的事。
+
+### chain：让候选者自荐
+
+`chain` 是四种基数里最特别的一种。README 的原文（`packages/client/ui-slots/README.md:16`）：
+
+> Chain-kind slots invert keyed routing — entries self-nominate instead of the dispatch site picking an `entryKey`: each registration carries a pure `ChainSelect` selector (plus optional ascending `priority`, ties in registration order), the first non-null return elects its entry and becomes the component's `matched` prop, and all-null falls to the owner's `renderSlotChain` fallback.
+
+选择器的类型是：
+
+```ts
+export type ChainSelect<O extends object, M> = (owner: O) => M | null
+```
+
+（`packages/client/ui-slots/src/index.ts:257`）
+
+**审批弹窗就是 chain 的用法。** 它不是弹窗，是把 composer 整个换掉：
+
+```ts
+  slots.register({ name: 'conversation.composer', select: selectApproval, priority: 1, locale: NS }, ApprovalPanel)
+```
+
+（`packages/client/ui-conversation/src/client/apply.ts:371`）当有一个待审批的工具调用时，`selectApproval` 返回非空，`ApprovalPanel` 就占住 composer 的位置（琥珀色条、理由标题、从调用参数拼出的命令行、一次性的拒绝/允许）；没有时它返回 null，普通输入框继续占位。`ui-user-questions` 用完全一样的模式注册 `question` 条目。
+
+这带来一个可观察的产品行为：**待审批和待回答不会在消息流里留下一张占位卡片**（`packages/client/ui-conversation/README.md:17` 明说了这一点）。它们只接管输入区，答完就还回去。
+
+---
+
+## 四、hmr：热重载的真实条件
+
+`packages/client/hmr` 让客户端插件在不刷新页面的情况下重新加载。机制是：Node 半 stat 轮询每个 client bundle（`packages/client/hmr/src/index.ts:57` 起；轮询而非 inotify 是刻意的，因为网络挂载不发文件事件），变化时通过 `/plugins/events` 这条 SSE 通道通知浏览器（`packages/client/hmr/src/events.ts:16`）。浏览器半收到之后换 fiber：
+
+```ts
+    modLoader.invalidate(id)
+    await modLoader.prefetch(id)
+```
+
+（`packages/client/hmr/src/client/index.ts:115-116`）然后删旧 runtime（`:124`）、移除该插件拥有的样式（`:132`）、`await entry.refresh()`（`:137`）。
+
+**但默认情况下它什么也不做。** README 第一句（`packages/client/hmr/README.md:5`）：
+
+> The web bundle mounts the row unconditionally; without a rebuild watcher (`pnpm run dev:web`) rewriting client bundles, the poll observes no changes and the chain stays idle.
+
+这条限制重要到被写进了**模型看到的 system prompt**。`app:web-surface` section 的文本（`packages/bundle/web-app/src/index.ts:96-98`，注册在 `:143-147`，order `-98`）：
+
+> The client-plugin HMR receiver is active, but client-plugin changes reload without a refresh only while `pnpm run dev:web` is also running from this same checkout to rebuild their bundles; verify that watcher before promising automatic updates. Every other change — the apps/web shell and plain packages — requires rebuilding the affected Web artifacts and verifying this existing URL after a page refresh.
+
+这段 prompt 是一次事故的产物（上游 `docs/postmortem/0003-web-agent-gui-feedback-loop.md`）：让 agent 改 Web 界面时，它会以为自己改完就生效了，然后向用户宣布「已更新，刷新看看」——而实际上什么都没变。同一段 prompt 里还有两句同样来自事故的话：「Starting another server does not update this GUI」和「The apps/web Vite entry builds the shell but is not a standalone application because only `dsh web` injects `window.__DSH_BOOT__`」（`:103-104`）。
+
+HMR 自己的三条已知限制（`packages/client/hmr/README.md:19-21`）：重载是**粗粒度**的（新 fiber、新组件，插件内的 React 状态丢失，但数据层不动）；**失败不回滚**（entry 停在 FAILED，旧 bundle 不会自动恢复）；graph 的 `rev` 不被 rebuilt 帧刷新（无害，因为 bundle 端点是 no-cache）。
+
+---
+
+## 五、apps/web 与 `window.__DSH_BOOT__`
+
+`apps/web` 只有两个 TypeScript 文件。`apps/web/src/main.ts` 全文 10 行：
+
+```ts
+import { AppWebEntry } from '@deepseek-ai/dsh-client-web'
+
+const el = document.getElementById('root')
+if (el === null) throw new Error('web app: missing #root')
+void new AppWebEntry(el).run()
+```
+
+另一个（`apps/web/src/node-module-stub.ts`，12 行）是 `node:module` 的浏览器替身，`createRequire` 被实现成直接抛错。
+
+**为什么 Vite 入口不是独立应用？** 因为组合不在这里。整个浏览器插件名册由 host 在运行时注入：
+
+```ts
+  const script = `<script>window.__DSH_BOOT__ = ${json}</script>`
+```
+
+（`packages/client/modules/src/index.ts:170`）注入的内容是一张 boot graph：`{ rev, entries: [{ id, url, rev, inject?, immediately? }] }`。每个 entry 对应 web-app bundle 补丁里的一行 `ui-*`。shell 启动时读它：
+
+```ts
+    this.manifest = parseBootManifest((globalThis as DshWindow).__DSH_BOOT__)
+```
+
+（`packages/client/web/src/boot.tsx:98`）缺失就抛错（`packages/client/modules/src/client/manifest.ts:110`）。
+
+所以 `vite dev` 单独跑 `apps/web` 得到的是一个**没有任何插件的空壳**。Vite 配置里直接把这件事做成了显式错误：
+
+```ts
+const STANDALONE_ERROR = 'apps/web is not a standalone application: bare Vite cannot inject window.__DSH_BOOT__. '
+```
+
+（`apps/web/vite.config.ts:7`）
+
+shell 的启动是两阶段的（`packages/client/web/README.md:5`）：阶段一建模块系统并并行预取 `immediately` 那一档——**执行 bundle 只注册工厂函数，不执行模块体**；阶段二挂 vendored cordis Loader，把模块系统通过它的 `internal` 契约注入，每行 graph 建一个 loader entry，然后**等 Loader 静默且每个 entry fiber 都 ACTIVE，才一次性把整个 UI 切出来**。没有半成品界面。
+
+这里有一个漂亮的复用：浏览器里跑的是**同一个 vendored Cordis Loader**（见 [10 Cordis、启动、bundle 与 preset](10-cordis-boot-preset.md)）。它对「插件代码怎么到达」这件事是可替换的——Node 上是 ESM import，浏览器上是 `packages/client/modules` 提供的惰性 CJS 表。替换点只有一个：`EntryTree.import`（`packages/client/modules/README.md:5`）。
+
+---
+
+## 六、host 与 api：Node 半边
+
+| 包 | ctx key | 职责 |
+|---|---|---|
+| `host/webserver` | `ctx.webServer` | HTTP 路由载体，266 行，只用 `node:http` |
+| `host/apiproxy` | `ctx.apiProxy` | 共享 host API 网关与 wire 契约，8,571 行 |
+| `host/frontend-static` | 消费 `ctx.webServer` | SPA dist 服务，占 fallback 座 |
+| `host/directory-picker` | `ctx.directoryPicker` | 目录选择 seam |
+| `host/directory-picker-native` / `-browse` / `-auto` | 注册/挂载 | 三种后端与一个自适应选择器 |
+| `host/plugin-inventory` | Remote `pluginInventory/list` | Loader entry 的只读投影 |
+| `api/gateway` | `ctx.typertGateway` / 浏览器 `ctx.remote` | Typert 一元 Remote RPC 分发 |
+| `api/remotes` | — | BFF 装配：挂 contribution + 事件白名单 |
+
+（表出自 `packages/host/README.md:7-16` 与各包 package.json。）
+
+**webserver 什么都不知道。** 它提供四个注册方法——`register`（`packages/host/webserver/src/index.ts:94`）、`registerUpgrade`（`:109`）、`registerFallback`（`:125`）、`tapIndex`（`:139`）——加一个最长前缀匹配的 `match`（`:242`）。它不认识任何 harness 概念，不服务任何文件，`/api` 和 WebSocket 都是别的插件注册的路由。重复注册直接抛错（`:97`、`:111`、`:127-128`）。
+
+**frontend-static 占 fallback 座**（`packages/host/frontend-static/src/index.ts:98`），语义锁死：非 GET/HEAD 返回 405，越界返回 403，未命中的路径回落到 index.html 且状态码 200（`:83` 的注释：`// Miss (ENOENT/EISDIR) falls back to index.html with 200 (SPA routing).`）。dist 路径不是它自己找的，是 web-app bundle 用 `require.resolve('@deepseek-ai/dsh-web-frontend/dist/index.html')` 解析后传进来的（`packages/bundle/web-app/src/index.ts:119`、`:139`）。
+
+**directory-picker-auto 是一个纯决策函数**，值得整段贴：
+
+```ts
+export function resolveDirectoryPickerBackend(facts: DirectoryPickerHostFacts): DirectoryPickerBackendKind {
+  if (facts.bindHost !== '127.0.0.1') return 'browse'
+  if (present(facts.env.SSH_CONNECTION) || present(facts.env.SSH_TTY)) return 'browse'
+  if (facts.platform === 'darwin' || facts.platform === 'win32') return 'native'
+  if (facts.platform !== 'linux' || !facts.linuxChooser) return 'browse'
+  return present(facts.env.DISPLAY) || present(facts.env.WAYLAND_DISPLAY) ? 'native' : 'browse'
+}
+```
+
+（`packages/host/directory-picker-auto/src/resolve.ts:47-53`）逻辑很实在：非回环绑定或 SSH 会话说明「浏览器和 host 不在一台机器上」，弹一个 host 侧的原生对话框毫无意义，只能用应用内浏览器。判定完之后它在 Loader 根树里依次创建后端和对应的浏览器插件两行（`packages/host/directory-picker-auto/src/index.ts:86-88`）。
+
+### 网关：为什么有两个
+
+`api/gateway` 是新的：`@Remote` 装饰器标记的方法从 TypeScript 源码类型生成契约，浏览器端拿到的是**具体函数对象，不是 Proxy**（`docs/api-gateway.md:58`）。调用形状：
+
+```ts
+      const result = await connection.rpc.call('/api', endpoint, { args }, signal)
+```
+
+（`packages/api/gateway/src/client/index.ts:406`）endpoint 是 `<namespace>/<method>`，HTTP 层映射成 `POST /api/<namespace>/<method>`，payload 里**有且只有一个 `args` 纯对象**——这条约束是硬校验的（`packages/api/gateway/src/index.ts:201-208`）。取消协议也很干净：host 签名最后一个参数必须是 `signal: AbortSignal`，它进 descriptor 而不进 `args`（`docs/api-gateway.md:56`）。
+
+`host/apiproxy` 是旧的，作为尚未迁移方法的兜底（`packages/api/README.md:17`）。运行时的分工在 connection 里三行说清楚：
+
+```ts
+      const apiProxy = ctx.get('apiProxy')
+      if (apiProxy === undefined) return new Response('not found', { status: 404 })
+      return toFetchHandler(apiProxy).fetch(request)
+```
+
+（`packages/client/connection/src/index.ts:156-158`）Gateway 先认领它有 descriptor 的两段式 endpoint，认不下的落到 apiProxy。这是一次**正在进行中**的迁移（上游有一篇 `.agents/notes/proposed/architecture/2026-08-10-unary-apiproxy-remote-migration.md`），所以现在两套网关并存。
+
+### 信任围栏
+
+`/api` 这一条路由上有一道信任检查（`packages/client/connection/src/index.ts:165`），WebSocket upgrade 上也有一道（`:184`）。而且有一组方法被**钉死在回环地址**：`host.pickDirectory`、`host.openPath`、整个配置面（`settings.describe`/`update`/`replace`/`mutate`、`credentials.describe`/`set`/`unset`），以及 agent-preset 的创作面（`agentPreset.read`/`copy`/`openDocument`/`remove`）。connection 的 README 逐条解释了理由（`packages/client/connection/README.md:5`）：读一份 composition 是侦察，因为它写明了一个 session 会跑哪些插件；copy/remove/openDocument 管理名册并驱动 host 桌面。而 `agentPreset.list` 和 `agentPreset.select` 不在名单里——名册只带 id 和信任等级，选一个 preset 也不会给出 `session.create` 的 `agentPreset` 参数没给的东西。
+
+顺带：`--host 0.0.0.0` 是被显式禁掉的：
+
+```ts
+      program.error('error: --host 0.0.0.0 is intentionally not supported yet for safety: it would expose remote code execution to the network; use 127.0.0.1 instead')
+```
+
+（`packages/bundle/web-app/src/startup.ts:70`）
+
+---
+
+## 七、设置界面与 i18n
+
+**设置表单由 schema 生成，但不是通用渲染器。** `settings.describe` 这个 RPC 把每个命名空间的 schemastery schema 序列化过来（`schema.toJSON()` 的 ref 信封），浏览器把它复水成一个活的 validator：
+
+```ts
+export function rehydrateSchema(serialized: unknown): SchemaNode {
+  return new Schema(serialized as Schema)
+```
+
+（`packages/client/schema-form/src/model.ts:19-20`）目的写在 README（`packages/client/schema-form/README.md:5`）：**在 host 上校验一个配置段的，和在浏览器里校验草稿的，是同一个 schema 对象**，所以客户端校验不可能与服务定义漂移。
+
+这个包只有 195 行，且**不含任何 React**。`hasPath` 的语义是「这个字段被用户覆写过」，`deletePath` 就是「重置这一个字段」。真正的表单控件由各个设置页自己写——Models 页手写了自己的卡片。代价写在 README `:21`：`rehydrateSchema` 会通过 `new Function` 复活序列化的回调，所以这个信封是可执行内容，只对同源可信 host 安全。
+
+**i18n 的默认语言是中文。** `LocaleRuntime`（`packages/client/locale/src/client/index.ts:114`）管 `zh`/`en` 两种，偏好存在 `$DSH_HOME/settings.yaml` 的 `locale.preference`。查找链是 ns → common → zh → key：
+
+```ts
+    return locales?.get(this.snapshot.active)?.[key] ?? locales?.get(FALLBACK_LOCALE)?.[key]
+```
+
+（`:286`，`FALLBACK_LOCALE` 在 `:90` 定义为 `'zh'`）字典按 (namespace × locale) 注册，命名空间表和 SlotMap 用同一套声明合并手法（`packages/client/ui-slots/src/index.ts:34`）。切换语言时渲染器按 (namespace, revision) 重新派生 `t` 函数，给出**新的函数引用**，所以 memo 组件会自然重渲。
+
+已知的一个缺口（`packages/client/locale/README.md:18`）：注册期捕获的文案（比如 `/model` 命令的描述）会保持注册时的语言，直到重新注册。
+
+---
+
+## 八、界面上的东西对应哪个包
+
+| 你看到的 | 包 | 挂在哪个 slot |
+|---|---|---|
+| 聊天视图 | `ui-conversation` | `conversation.view`（id `chat`） |
+| 轨迹视图 | `ui-trajectory` | `conversation.view` 的第二个 tab |
+| 工具调用卡片 | `ui-tool` | `conversation.chat.node` → `tool.call.toolview`（keyed） |
+| 审批面板 | `ui-conversation`（`ApprovalPanel`） | `conversation.composer`（chain，priority 1） |
+| 提问面板 | `ui-user-questions` | `conversation.composer`（chain） |
+| 模型选择 | `ui-model-selection` | `/model` popupSelect + `conversation.input.model` |
+| agent preset 选择器 | `ui-agent-preset` | General 设置行 + 新会话页 chip + 会话头只读标签 |
+| 权限档位 chip | `ui-conversation`（`PermissionSelect`） | composer 底排 Access 座，读 `permissions` 投影 |
+| goal 条 | `ui-goal` | `conversation.input.dock` order 10 |
+| todo 条 | `ui-conversation`（`TodoDock`，**不是独立包**） | `conversation.input.dock` order 0，读 `todos` 投影 |
+| plan chip | `ui-plan` | `conversation.input.plan` 单座 |
+| workflow 面板 | `ui-workflow-run` | `conversation.chat.node`（keyed） |
+| 后台 job 列表 | `ui-jobs` | `conversation.session.header.actions` |
+| 产出文件行 | `ui-deliverables` | `conversation.chat.turnTail` |
+
+### `ui-deliverables`：唯一一个既改界面又改 prompt 的例子
+
+大部分 `ui-*` 包只管渲染。`ui-deliverables` 不一样，它的 host 半往 system prompt 里加了一段（`packages/client/ui-deliverables/src/index.ts:15-16`）：
+
+> When you successfully create or modify files, mention the primary outputs in your final response. To make those and any other changed-file references clickable in Web, format them as Markdown inline code using the exact file-tool path, or a basename when unique among the files changed in that turn.
+
+注册在 `:23-27`，`name: 'ui:deliverable-file-references'`，`order: 190`。浏览器半则在收尾 assistant 消息下面渲染一行产出文件，并把匹配的行内代码变成可点击链接。
+
+这是一个很干净的因果链：**因为界面要把文件路径变成链接，所以要教模型用行内代码写路径**。而且这两件事被绑在同一个包、同一行 `cordis.patch.yml` 上——README 明说（`packages/client/ui-deliverables/README.md:5`）：删掉那一行 entry，提示词、那一行界面、以及散文里的链接一起消失。
+
+KV cache 的影响也写清了（`:29`）：这个 section 在包挂载期间是静态的、order 190，所以它留在可复用的 prompt 前缀里，不随 turn 变化。这条纪律见 [02 KV Cache](02-kv-cache.md)。
+
+---
+
+## 九、代价与失效点
+
+**39 个包的界面，改一处要动几个地方。** 加一个新的界面元素，最少要：在某个包的 children 表里声明 slot（否则 `register` 抛错）、写浏览器半、在 `web-app/cordis.patch.yml` 加一行、如果需要 host 数据还要加 Remote 方法或投影。`docs/cookbook/adding-a-conversation-node.md` 就是为这条路径写的。
+
+**投影是 host 算的，所以 host 版本决定浏览器能显示什么。** todo、goal、plan、权限档位、token 用量全是 `session/projection` 帧。浏览器不从事件流自己折叠这些——好处是一致性，坏处是新增一种投影必须改 host。
+
+**信任围栏是「回环 vs 非回环」的二分，没有认证层。** connection 的 README 自己写了：这些方法「stay loopback-local until a real authentication layer exists」。局域网上的浏览器能看会话、能发消息，但改不了设置、读不了 preset 组合。这不是权限系统，是一道临时围栏。
+
+**两套网关并存。** Remote 和 apiProxy 共用 `/api`，靠 endpoint 形状分流。迁移期间「某个方法走哪条路」是要查代码才知道的。
+
+**文档会落后于源码。** 一个具体例子：`packages/api/remotes/README.md:9` 说 Client 装配只挂 Goal 与 pluginInventory 两个 contribution，而源码 `packages/api/remotes/src/client/index.ts:108-110` 实际挂了 5 个（commands / goals / cordis-host-runner / pluginInventory / messageFeedback）。上游的文档纪律很严（每个包必须有 README、必须有 Model Experience 段），但一致性靠人。
+
+**HMR 默认是空转的**，见第四节。这一点连模型都被专门告知过，因为它误导过人。
+
+---
+
+## 十、别人怎么做
+
+| harness | 交互面 | 前后端边界 | 扩展 UI |
+|---|---|---|---|
+| dsh | 唯一一个 Web GUI（TUI 已删除） | host 算投影，浏览器只渲染；WebSocket 下行 + HTTP 上行 | 39 个插件包 + slot 声明表 |
+| Claude Code | CLI 为主，另有桌面端、Web、IDE 扩展 | 不开源 | 不适用（有 hooks/skills/plugins 但不是 UI 插件） |
+| Codex | Rust CLI，可选 UI 与 app server | rollout 记录 + 客户端全量重放历史 | Extension API 的 `context_contributors()`，不含 UI |
+| OpenCode | TUI + server；`Session.Event.*` 经 EventV2 总线推给 TUI/Web | 从 DB 消息重建，中断可续 | npm/本地插件 14 个钩子，含 UI 相关的少数几个 |
+| pi | 自定义 TUI | 扩展可 `registerTool` 并自定义 `renderCall`/`renderResult` | Extension API 里 `ctx.ui.*`（对话框/组件/widget） |
+| mini-swe-agent | 无 | 不适用 | 不适用 |
+
+差别不只在「有没有图形界面」。pi 和 OpenCode 的扩展也能画东西，但它们画在 TUI 里，扩展点是「渲染这个工具调用」这种粒度。dsh 的 slot 表是**整个界面的骨架**——侧栏、composer 的每一个座位、会话头的每一个动作，都是可声明可注册的洞，连内建的 chat 视图自己都是注册进 `conversation.view` 的一个 tab。
+
+代价也一样明显。pi 的 TUI 大概几千行；dsh 为了同样的「能扩展」，付了 71,896 行。这 7 万行里没有一行影响模型看到什么——除了 `ui-deliverables` 那 2 句话。
+
+---
+
+## 十一、怎么自己核
+
+```bash
+# 39 个 client 包与各自行数
+ls -d packages/client/*/
+find packages/client -name '*.ts' -o -name '*.tsx' | grep -v '/tests/' | xargs wc -l | tail -1
+
+# 事件链路的每一跳
+grep -n "session/event" packages/host/apiproxy/src/api-proxy.ts
+sed -n '204,220p' packages/client/runtime/src/client/index.ts
+sed -n '447,470p' packages/client/runtime/src/client/sessions/session.ts
+
+# 唯一的 hook 构造器（确认整个 client 只有这一处）
+grep -rn "useSyncExternalStore" packages/client --include=*.ts --include=*.tsx | grep -v '/tests/'
+
+# slot 声明与注册
+grep -rn "slots.register({" packages/client --include=*.ts --include=*.tsx | grep -v '/tests/' | wc -l
+
+# __DSH_BOOT__ 的注入与读取
+grep -rn "__DSH_BOOT__" packages/client apps/web --include=*.ts --include=*.tsx
+
+# web surface prompt 的实际文本
+sed -n '95,106p' packages/bundle/web-app/src/index.ts
+```
+
+启动之后，浏览器控制台里 `window.__DSH_BOOT__` 就是那张 boot graph；设置页里的 Plugin list tab（`ui-settings-plugin-inventory`）调 `pluginInventory/list`，能看到每一行 Loader entry 当前的 fiber 状态——这是判断「某一行到底激活没有」最直接的办法。
+
+---
+
+相关：[10 Cordis、启动、bundle 与 preset](10-cordis-boot-preset.md) 讲这些 `ui-*` 行从哪来；[05 Session](05-session.md) 讲事件日志与投影本身；[12 产品表面与协议](12-surfaces-and-protocols.md) 讲不经浏览器的那些入口；[14 横向对比](14-comparison.md) 有完整对照。术语见[附录 A 术语表](appendix-a-glossary.md)。

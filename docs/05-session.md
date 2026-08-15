@@ -1,106 +1,127 @@
 ---
-sources: [{"repo":"deepseek-harness","path":"packages/core/session/src/types.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-harness","path":"packages/core/session/src/surface.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-harness","path":"packages/core/session/src/repair.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-harness","path":"packages/core/session/src/request-header.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-harness","path":"packages/session/session-persistence","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-harness","path":"packages/session/session-persistence-jsonl/src/format.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-harness","path":"packages/session/session-persistence-sqlite","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
-last_verified: 2026-08-14
+title: Session：事件溯源、surface 与持久化
+sources: [{"repo":"deepseek-harness","path":"packages/core/session/src/types.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/core/session/src/surface.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/session/session-persistence/src/coordinator.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/session/session-checkpoint-policy/src/index.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
+last_verified: 2026-08-16
 status: draft
-depth: L2
-audience: [engineering]
-evidence: [code, test, official-doc]
 ---
 
-# 05｜Session：事件溯源、surface 与恢复
+# Session：事件溯源、surface 与持久化
 
-> 本文基线 `47f9438`。所有行号对应该 Commit。
+dsh 的会话不是「一个消息数组」，而是一条只追加的事件日志。模型看到的历史是从这条日志上投影出来的，请求头（system prompt、工具 schema、模型路由）也在日志里，连崩溃修复和压缩都是往日志上追加事件。这篇讲清楚：日志里都有什么、模型能看到其中哪一部分、什么时候一定落盘、以及派生服务是怎么从这条日志上长出来的。
 
-## 一、产品现象
+## 先看见：一段真实的 JSONL 会话日志
 
-「关掉再打开，任务还能接着跑。」 但更重要的是它**没做**的事——崩溃恢复后，一个可能已经删过文件的工具不会被自动重跑一遍。
+下面是上游 e2e 快照里的一整个会话（`examples/acp-agent/tests/snapshots/bash-tool-turn/session.jsonl`，共 35 行，为了排版截去了每行的长尾）。这是一次「让模型跑 `echo TERMINAL_OK` 然后回 DONE」的完整交互：
 
-| 现象 | 背后是什么 |
-| --- | --- |
-| 断电重启后会话能续上 | append-only 事件日志 + 崩溃修复 |
-| 恢复后某个工具显示「结果未知，请先确认」 | `TOOL_OUTCOME_UNKNOWN` 而不是盲目重试 |
-| UI 显示的过程和审计导出的记录一致 | 两者从同一份事件词汇投影 |
-| 压缩后模型「忘了」早期细节，但导出记录仍完整 | surface 被替换，日志没被删 |
-
-这一层把「模型看到的历史」和「真实发生过什么」拆成了两件事，再用类型系统和运行时不变量保证两者不会悄悄分叉。
-
-## 二、源码路径
-
-```
-packages/core/session/src/                 3,156 行
-  index.ts            1157   Session 服务主体
-  surface.ts           460   模型可见投影
-  types.ts             436   事件词汇与 SurfaceOp
-  chunk-rows.ts        346   流式 chunk 行
-  invariant.ts         250   运行时不变量
-  json.ts              190
-  repair.ts            133   崩溃修复
-  request-header.ts     71   请求头重建
-  known-event-types.ts  64
-  preparation.ts        49
-
-packages/session/                          13 个包
-  session-persistence / -jsonl / -sqlite   持久化三件套
-  session-projection / -cache              投影
-  session-title / -llm / -first-prompt-llm / -all-prompts-llm
-  session-telemetry / -otel
-  session-stats
-  session-checkpoint-policy
+```jsonl
+{"type":"session","version":0,"id":"e128dda9-…","createdAt":1783352050748,"cwd":"{{cwd}}","delegationDepth":0}
+{"type":"agent/inbox/spliced","seq":0,"time":…,"data":{"target":"next-turn","start":0,"inserted":[{…用户消息…}]}}
+{"type":"turn/start","seq":1,"time":…,"data":{"turn":1}}
+{"type":"agent/inbox/spliced","seq":2,…,"data":{"target":"next-turn","start":0,"removedCount":1,"inserted":[]}}
+{"type":"step/start","seq":3,…,"data":{"turn":1,"step":1}}
+{"type":"user/message","seq":4,…,"data":{…},"surfaceOp":"append"}
+{"type":"user/message","seq":5,…,"data":{"content":[{"type":"text","text":"Current runtime context. …"}]…},"surfaceOp":"append"}
+{"type":"session/title","seq":6,…,"data":{"title":"Use the bash tool to","messageSeqs":[4],"source":{"kind":"fallback"}}}
+{"type":"request/header","seq":7,…,"data":{"header":{"config":{"provider":"deepseek-official","model":"deepseek-v4-flash"},"system":"{{system}}","tools":"{{tools}}"},"reason":"initial"}}
+{"type":"request/context","seq":8,…,"data":{"provider":"deepseek-official","model":"deepseek-v4-flash"}}
+{"type":"assistant/chunk","seq":9,…,"data":{"turn":1,"step":1,"chunk":{"type":"block-start","index":0,"blockType":"reasoning"}}}
+{"type":"reasoning-chunks","seq0":10,"time0":…,"data":{"turn":1,"step":1,"index":0,"dt":[0,1,0,…],"texts":["The"," user"," wants",…]}}
+{"type":"assistant/chunk","seq":28,…,"chunk":{"type":"block-start","index":1,"blockType":"tool-call"}}}
+{"type":"tool-call-chunks","seq0":29,…,"data":{…,"id":"call_00_fkbBRJ…","name":"bash","args":["","{","\"","command",…]}}
+{"type":"assistant/chunk","seq":60,…,"chunk":{"type":"block-end","index":0,"block":{"type":"reasoning","text":"…"}}}}
+{"type":"assistant/chunk","seq":61,…,"chunk":{"type":"block-end","index":1,"block":{"type":"tool-call",…}}}}
+{"type":"assistant/chunk","seq":62,…,"chunk":{"type":"usage","usage":{"inputTokens":2877,"outputTokens":90,"cacheReadTokens":0,"reasoningTokens":18}}}}
+{"type":"assistant/chunk","seq":63,…,"chunk":{"type":"finish","reason":{"kind":"tool-calls"}}}}
+{"type":"assistant/message","seq":64,…,"data":{…},"sourceEventSeqs":[…],"surfaceOp":"append"}
+{"type":"tool/call","seq":65,…,"data":{"turn":1,"step":1,"callId":"call_00_fkbBRJ…","name":"bash","arguments":"{\"command\": \"echo TERMINAL_OK\", …}"}}
+{"type":"tool/result","seq":66,…,"data":{…"content":[{"type":"text","text":"TERMINAL_OK\n"}],"isError":false…},"sourceEventSeqs":[65],"surfaceOp":"append"}
+{"type":"step/end","seq":67,…,"data":{"turn":1,"step":1}}
+{"type":"step/start","seq":68,…,"data":{"turn":1,"step":2}}
+… 第二步的 chunk …
+{"type":"assistant/chunk","seq":97,…,"chunk":{"type":"usage","usage":{"inputTokens":168,"outputTokens":25,"cacheReadTokens":2816,"reasoningTokens":22}}}}
+{"type":"assistant/message","seq":99,…}
+{"type":"step/end","seq":100,…}
+{"type":"turn/end","seq":101,…,"data":{"turn":1,"reason":{"kind":"completed"}}}
 ```
 
-**13 个 `session/*` 包**说明一件事：事件日志不是一个存储细节，是一整个能力域。持久化、投影、标题生成、遥测、统计、检查点策略全都是同一份事件的不同 consumer。
+几处值得先记住的事实：
 
-### 行号锚点
+- **第一行不是事件**，是会话头（`type:"session"`，无 `seq`）。事件从 `seq: 0` 开始，`seq` 与行序严格对应。
+- **整个 35 行文件里只有 5 行带 `surfaceOp`**：`seq 4`、`seq 5`、`seq 64`、`seq 66`、`seq 99`（两条 user、两条 assistant、一条 tool result）。带这个标记的事件才是模型能看到的历史，其余全是证据。
+- `seq 5` 是运行时上下文快照（sandbox / approval 策略），走的是 **user 消息**而不是 system prompt —— 原因见 [02 KV-Cache](02-kv-cache.md)。
+- `reasoning-chunks` 和 `tool-call-chunks` 不是事件类型，是**存储打包行**：`seq0: 10` 那一行在读回来时展开成 `seq 10..27` 共 18 个 `assistant/chunk` 事件。
+- 两步之间 `cacheReadTokens` 从 0 跳到 2816，`inputTokens` 从 2877 掉到 168 —— 第一步没有热缓存，第二步整个前缀命中。
 
-| 位置 | 是什么 |
-| --- | --- |
-| `types.ts:56` | `SESSION_FORMAT_VERSION = 0` |
-| `types.ts:357` | `SurfaceEvent = SessionEvent<SurfaceEventType> & { surfaceOp: SurfaceOp }` |
-| `types.ts:372` | `export type SurfaceOp` |
-| `types.ts:422` | `ignorable?: true` |
-| `surface.ts:83` | `deriveEventMessage(event)` |
-| `surface.ts:387` | `foldSurface(events)` |
-| `surface.ts:398` | `class SurfaceManager` |
-| `repair.ts:13` | `TOOL_NOT_STARTED` |
-| `repair.ts:16` | `TOOL_OUTCOME_UNKNOWN` |
-| `repair.ts:27` | `interruptedTurnClosers(events)` |
-| `repair.ts:104-105` | 给模型的两段恢复指示原文 |
-| `request-header.ts:21` | `canonicalHeader(header)` |
-| `request-header.ts:44` | `headerEquals(a, b)` |
+下面按层拆开。
 
-## 三、机制
+## 事件信封
 
-### 事件的形状
-
-`types.ts:404-436`： `evidence: code`
+`SessionEvent`（`packages/core/session/src/types.ts:404-436`）的形状：
 
 ```ts
-{
-  type: K
-  seq: number        // 会话内单调序号
-  time: number       // Unix 毫秒
-  data: SessionEventMap[K]
-  ignorable?: true
-  // 仅 surface 事件：
-  sourceEventSeqs?: number[]
-  surfaceOp?: SurfaceOp
-}
+export type SessionEvent<T extends SessionEventType = SessionEventType> = {
+  [K in SessionEventType]: {
+    type: K
+    /** Monotonic sequence number within the session. */
+    seq: number
+    /** Unix epoch milliseconds. */
+    time: number
+    data: SessionEventMap[K]
+    ignorable?: true
+  } & (K extends SurfaceEventType ? {
+    sourceEventSeqs?: number[]
+    surfaceOp?: SurfaceOp
+  } : object)
+}[T]
 ```
 
-`SESSION_FORMAT_VERSION = 0`（`:56`），上游 `AGENTS.md` 明确写着**预览期不作兼容承诺**。
+这是一个真正的可辨识联合：`switch (event.type)` 会直接把 `event.data` 收窄，不需要断言。`surfaceOp` 和 `sourceEventSeqs` 两个字段**只存在于三种 surface 事件的变体上**，编译期就挡住了「给 `turn/start` 加 surfaceOp」这种写法。
 
-### 两类事件
+`ignorable` 的缺省语义是「必需」。注释（`packages/core/session/src/types.ts:412-422`）把理由写全了：读到一个不认识、又没有这个标记的事件类型，必须**拒绝重建整个会话**，因为一个不认识的必需事件可能改变后面整条日志的解释方式；漏标 `ignorable` 只会导致过度拒绝（不方便），漏判则会静默恢复出一个被掏空的会话（灾难）。
 
-| 类 | 例子 | 进模型吗 |
+会话头 `SessionHeader`（`packages/core/session/src/types.ts:61-99`）在日志之外：`version` / `id` / `createdAt` / `cwd?` / `parentSession?` / `seedLength?` / `origin?:'subagent'` / `delegationDepth?` / `agentPreset?`。`SESSION_FORMAT_VERSION = 0`（`packages/core/session/src/types.ts:56`）——预发布版本，任何其它值直接拒绝，**没有迁移路径**。
+
+## 核心事件全表
+
+核心 `SessionEventMap` 声明了 13 个事件（`packages/core/session/src/types.ts:236-333`）：
+
+| 事件 | 载荷 | surfaceOp |
 | --- | --- | --- |
-| **Surface 事件** | `user/message`、`assistant/message`、`tool/result` | 是，且必须带 `surfaceOp` |
-| **Log-only 事件** | `turn/start`、`step/end`、`assistant/chunk`、`request/header` | 否，只是证据 |
+| `turn/start` | `{turn}` | 无（log-only） |
+| `turn/end` | `{turn, reason: TurnEndReason}` | 无 |
+| `step/start` | `{turn, step}` | 无 |
+| `step/end` | `{turn, step}` | 无 |
+| `user/message` | `UserMessage` | **必需** |
+| `assistant/chunk` | `{turn, step, chunk: StreamChunk}` | 无 |
+| `assistant/message` | `{turn, step, message: AssistantMessage, usage?}` | **必需** |
+| `tool/call` | `{turn, step, callId, name, arguments}` | 无 |
+| `tool/result` | `{turn, step, message: ToolResultMessage, error?, meta?}` | **必需** |
+| `todo/write` | `{todos}` | 无 |
+| `request/header` | `{header: EpochHeader, reason: 'initial'\|'resume'\|'change'}` | 无 |
+| `request/context` | `{provider, model, contextWindow?}` | 无 |
+| `session/end-seed` | `{}` | 无 |
 
-`SurfaceIntent` 的注释把规则写死了：`surfaceOp` 在产生消息的事件上必填，在 log-only 事件上禁止。
+`TurnEndReason` 有六种（`packages/core/session/src/types.ts:155-174`）：`completed`、`aborted{reason}`、`blocked`、`error{error: LlmFailure}`、`max-tokens`、`interrupted`。最后一种循环永远不会写——它是持久化后端在重载时给崩溃遗留的开放 turn 补上的标记。
 
-### SurfaceOp 只有两种，replace 必须举证
+`RequestHeaderReason` 三种（`packages/core/session/src/types.ts:222-228`）：`initial`（日志的第一条 header，全新会话）、`resume`（一个 loop 实例在已有 header 的日志上发的第一个请求，即进程重启或 fork 种子）、`change`（后来的请求换了 header）。**日志里出现 `request/header{reason:'change'}` 就是前缀被改动的确定性证据**。
 
-`types.ts:372`： `evidence: code`
+整个仓库（含所有插件的声明合并）的已知事件全集有 44 个，写在一个生成文件里（`packages/core/session/src/known-event-types.ts:19-64`）：从 `agent-preset/selected` 到 `web/deepseek-search-llm-request`。这个集合是持久化读路径的门禁——文件头注释直说，这里的意图是「新版 harness 写的日志被旧版读到时，宁可拒绝也不要静默跳过」。
+
+## Surface：模型可见历史的唯一来源
+
+只有三种事件类型可以上 surface（`packages/core/session/src/surface.ts:14-19`）：
+
+```ts
+const SURFACE_EVENT_TYPES = new Set<string>([
+  'user/message',
+  'assistant/message',
+  'tool/result',
+])
+```
+
+而且它们**必须**带 `surfaceOp`，其它事件带了就抛（`surfaceOpOf`，`packages/core/session/src/surface.ts:184-208`）。这两条一起构成了一个双向约束：符合条件的事件不带标记会被拒，不符合条件的事件带了标记也会被拒。
+
+`SurfaceOp` 只有两种（`packages/core/session/src/types.ts:372-374`）：
 
 ```ts
 export type SurfaceOp =
@@ -108,177 +129,187 @@ export type SurfaceOp =
   | { op: 'replace'; start: number; end: number }
 ```
 
-`:360-371` 的注释里有一条硬约束：
+`replace` 的 `start` / `end` 是**当前 surface 上存在的节点 seq**，是位置语义而不是数值区间。因为一次 replace 会把一个高 seq 的新节点放到旧区间的位置上，所以后续的 `start` 可以比 `end` 大——这个反直觉的事实在 `packages/compaction/compaction/src/types.ts:106-113` 有专门说明。`sourceEventSeqs` 必须覆盖所有被遮蔽的节点（`assertProvenance`，`packages/core/session/src/surface.ts:211-243`）。
 
-> The node's `sourceEventSeqs` must include **every** shadowed surface node.
+`tool/result` 的 replace 有额外约束（`assertToolResultRewrite`，`packages/core/session/src/surface.ts:287-317`）：只能替换**恰好一个** `tool/result` 节点，而且除了 `content` 之外所有字段必须深度相等。这是给工具结果剪枝专用的窄门，防止有人借 replace 之名改写工具调用的身份。
 
-替换一段历史，必须列出被遮蔽的每一个 surface 节点。 这就是「surface replacement 需要证明来源，不能无凭据覆盖模型历史」这条不变量的类型级表达。压缩是它的主要使用者，但任何 surface 替换者都可以用。
+投影规则只有一处，就是 `deriveEventMessage`（`packages/core/session/src/surface.ts:83-114`），四个分支：
 
-`start` 和 `end` 都是闭区间，且都必须是当前 surface 里存在的节点；`start === end` 表示替换单个节点。
+- `user/message` → `event.data` 本身；
+- `assistant/message` → `event.data.message`，但**内容为空时返回 null**（那种只承载 usage 的 max-tokens 消息不能变成一个空的 assistant 轮次）；
+- `tool/result` → `event.data.message`；
+- 其它 → null。
 
-### deriveEventMessage：四个分支
+函数上方的注释还立了一条规矩：不要在这里加每类型的框架（比如 `<context>` 标签）——框架是生产者的事，要么烘进 `content`，要么走 `meta` + 专门的渲染器，这个投影必须是逐字透传。
 
-`surface.ts:83`，模型可见历史的唯一入口： `evidence: code`
+`Session.deriveMessages()`（`packages/core/session/src/index.ts:726-746`）是带缓存的：每个 surface 节点只投影一次，`replaceGeneration`（每次 replace 递增，`packages/core/session/src/surface.ts:432-434`）变化才整体重建；返回的是一个新数组，但里面的 `Message` 对象是**共享且深冻结**的。JSDoc 里说明了为什么不做第二次深拷贝：内容直接复用已冻结的日志数据，消费者还是改不了。
 
-| 事件 | 派生成 |
-| --- | --- |
-| `user/message` | user 消息 |
-| `assistant/message` | assistant 消息，**内容为空则跳过** |
-| `tool/result` | 工具结果消息 |
-| 其它 | `null` |
+这就得到了本篇最重要的一条不变量：**模型可见 ⟺ 已记录**。任何进入模型上下文的东西都是某条带 `surfaceOp` 的事件投影出来的；反过来，surface 上的每个节点在日志里都有一条对应事件。也因此，「日志 ≠ transcript」：`assistant/chunk` 记录逐 token 的过程、`tool/call` 记录调用被派发过、`llm/retry` 记录重试等待过、`request/header` 记录当时的 system 和 tools —— 这些都是**证据**，模型一个都看不到。`packages/core/session/src/surface.ts:40-54` 还专门给出了 `isAppendSurfaceEvent`，注释解释道：给人看的 transcript 应该用 append 起源的事件，因为 surface 会遮蔽被替换的区间，直接用 surface 会把用户已经看过的对话抹掉。
 
-`foldSurface(events)`（`:387`）把整条日志折叠成有序 surface，`SurfaceManager`（`:398`）维护增量状态。
+## `Session.append`：一次写入要过几道关
 
-关键点：`deriveEventMessage` 是**纯函数并对外暴露**，外部重建器用同一套规则，不会和内部缓存产生分歧。
+`append`（`packages/core/session/src/index.ts:604-655`）的顺序是：
 
-### `ignorable`：默认拒绝，而不是默认跳过
+1. `snapshotJsonValue(data)` 校验并复制。拒绝任何非无损 JSON 的东西（BigInt、`undefined`、`-0`、`NaN`、Map、Date、循环引用……）。
+2. `assertSupportedRequestHeader` 对 `request/header` 做额外检查。
+3. surface 元数据同样过 `snapshotJsonValue`。
+4. 拒绝重入：一次 append 正在发布时不允许再 append。
+5. 构造事件对象（`seq: this.log.length`，`time: Date.now()`）并 `deepFreeze`。
+6. `surfaceManager.validateNext(event)` —— surface 校验发生在**入库之前**，不合法就不会进日志。
+7. push 进日志，然后同步派发 `session/event` 通知；观察者的失败被隔离，不影响写入。
 
-`types.ts:422` 的注释把这个默认值的理由讲得很清楚： `evidence: code`
+`requestHeader()`（`packages/core/session/src/index.ts:670-681`）是增量折叠：每条 header 事件只折一次，读一次的代价是 O(新事件)。返回值被冻结，注释解释道：这是按引用暴露的会话状态，就地改它会让后面每一次与日志的比较都失准，所以宁可让改动抛错。
 
-> Absent means required: a reader meeting an unrecognized type without this marker **MUST refuse to reconstruct** the session instead of silently dropping the event, because an unrecognized required event may change how the rest of the log is interpreted. A writer sets `true` only on purely informational records whose loss cannot affect reconstruction; **defaulting to required means a forgotten marker over-refuses (an inconvenience) rather than silently resuming a gutted session.**
+## `request-header.ts`：三个函数
 
-翻译成一句话：忘记打标记的代价是「过度拒绝」，这是不便；反过来默认跳过的代价是「静默地在残缺会话上继续跑」，这是事故。 两者不对称，所以默认值选拒绝。
+- `canonicalHeader`（`packages/core/session/src/request-header.ts:21-31`）：空 system、空 tools 规范化为**字段缺席**，与请求实际构造方式对齐。日志、折叠、比较都用这一种表示。
+- `headerEquals`（`:44-54`）：逐字段比，`config` 走 `callConfigEquals`，`adapterDefaults` 比两个布尔标记，`system` 直接 `===`，`tools` **按顺序**用 `JSON.stringify` 比每个 schema。
+- `foldRequestHeader`（`:65-71`）：扫一遍事件，取最后一个 `request/header` 的 canonical 形式。这是纯离线重建路径；活会话用同一个折叠函数增量维护。
 
-这条约束向前兼容：新版本加了事件类型，旧版本读到会明确报错，而不是丢掉一半上下文照常运行。
+循环只在 header 变化时写事件（`packages/core/agent-loop/src/agent.ts:464-470`）。因此「任何一次请求 = 最新 header + surface 派生消息」是可以从日志离线重建的，这也是 [02 KV-Cache](02-kv-cache.md) 里那套稳定性论证的地基。
 
-### 崩溃修复：两种工具状态，两段给模型的话
+## 崩溃修复：`repair.ts`
 
-`repair.ts:27` 的 `interruptedTurnClosers(events)` 扫描 open turn、open step、pending tool call，合成缺失的结尾事件，最后（`:131`）追加：
+`interruptedTurnClosers(events)`（`packages/core/session/src/repair.ts:27-133`）扫描开放的 turn / step 和未配对的工具调用，为每个未配对调用合成一条错误 `tool/result`，然后补 `step/end` 和 `turn/end{interrupted}`。两种错误码对应两种情况（`packages/core/session/src/repair.ts:13, 16`）：`TOOL_NOT_STARTED`（assistant 请求了工具，但 harness 还没记录它启动）和 `TOOL_OUTCOME_UNKNOWN`（记录了启动，但结果没落盘）。
+
+后一种给模型的原文很值得看（`packages/core/session/src/repair.ts:104`）：
+
+> The tool call was interrupted after it was recorded, but no result was durably recorded. Its outcome is unknown. Decide whether to retry from the tool semantics: retry only if the operation is read-only or idempotent; if it may have side effects, first verify external state or ask the user. Do not retry blindly.
+
+这段话是给模型的行为指令，不是给人看的错误信息——它把「不知道刚才那个 `rm` 到底跑没跑」这个事实和处理原则一起交给模型。合成的顺序也有讲究（`packages/core/session/src/repair.ts:89-90, 126-129`）：先关工具调用（provider 会拒绝悬空的 assistant tool call），再关 step，最后关 turn。这个函数只对冷日志跑；活跃会话不做静默修复。
+
+## 持久化：什么时候一定落盘
+
+### 抽象与协调器
+
+`SessionPersistence` 是一个抽象类（`packages/session/session-persistence/src/index.ts`），定义 `locate/create/append/load/inspect/prepare/list/...`。真正干活的是 `PersistenceCoordinator`（`packages/session/session-persistence/src/coordinator.ts`），它挂四个监听（`packages/session/session-persistence/src/coordinator.ts:1117-1132`）：`session/created` → 初始化；`session/event` → 把事件 `structuredClone` 一份塞进写队列；`session/flush` → 立即 drain；`session/disposed` → 退役。
+
+写队列是 `SessionWriteBehind`（`packages/session/session-persistence/src/write-behind.ts`）：第一个待写事件启动一个**固定窗口**，后续事件不重置窗口（`packages/session/session-persistence/src/write-behind.ts:43-56`）；到期写一批。默认窗口 200 毫秒（`packages/session/session-persistence/src/coordinator.ts:29-30`）。写失败会保留事件并暂停自动重试，新事件重开窗口，显式 flush 会立刻重试。另外还有一个冷会话准备结果的 LRU，默认 5 个（`packages/session/session-persistence/src/coordinator.ts:26-27`），供「先看历史、再接着 resume」复用。
+
+### 三个语义检查点
+
+「什么时候一定落盘」的真正答案不在协调器里，而在 `session-checkpoint-policy`（`packages/session/session-checkpoint-policy/src/index.ts:63-83`）——整个插件只有三个监听：
 
 ```ts
-{ type: 'turn/end', seq: seq++, time, data: { turn: openTurn, reason: { kind: 'interrupted' } } }
-```
+export function apply(ctx: Context): void {
+  ctx.on('llm/stream', (options, next): AsyncIterable<StreamChunk> => {
+    if (options.sessionId === undefined) return next()
+    const session = ctx.sessions.get(options.sessionId)
+    return session === undefined ? next() : afterCheckpoint(ctx, session, next)
+  })
 
-工具分两种状态（`:13`、`:16`），而且恢复策略是用自然语言写给模型看的（`:104-105` 原文）： `evidence: code`
+  ctx.on('tools/execute', async (exec, next): Promise<ToolExecutionResult> => {
+    if (exec.agent === undefined || exec.parent !== undefined) return next()
+    await ctx.sessions.flush(exec.agent.session)
+    if (exec.signal.aborted) return abortedBeforeDispatchResult()
+    return next()
+  })
 
-`TOOL_OUTCOME_UNKNOWN` —— 工具已记录开始，但结果没落盘：
-
-> The tool call was interrupted after it was recorded, but no result was durably recorded. Its outcome is unknown. Decide whether to retry from the tool semantics: retry only if the operation is read-only or idempotent; if it may have side effects, first verify external state or ask the user. **Do not retry blindly.**
-
-`TOOL_NOT_STARTED` —— 模型要求过，但 Harness 还没记录它开始：
-
-> The tool call was interrupted before the Harness recorded it as started. Retry it if it is still needed.
-
-两者的错误名分别是 `ToolOutcomeUnknownError` 和 `ToolNotStartedError`（`:118-119`）。
-
-注意这里的做法：恢复策略没有做成一个状态码交给上层解释，而是直接把判断依据写成模型能读的指令：「只有只读或幂等才重试；可能有副作用就先核对外部状态或问用户」。模型是这条恢复路径上的决策者之一，所以策略得说给它听。
-
-### 持久化：write-behind，不是每次 append 都落盘
-
-协调器监听事件入队，在 flush / dispose / load 边界保证耐久： `evidence: code`
-
-```ts
-ctx.on('session/event', (session, event) => live.writes.enqueue(event))
-ctx.on('session/flush', session => this.flush(session))
-
-private async flush(session) {
-  await live.init
-  await live.writes.flush()
+  ctx.on('agent/pre-step', async ({ agent }, next): Promise<PreStepDecision> => {
+    await ctx.sessions.flush(agent.session)
+    return next()
+  })
 }
 ```
 
-这就是 headless 退出前必须 flush 的原因：屏幕上出现了模型回答，不代表事件已经持久化完成。
+翻译成三句话：**发请求前，请求前缀必须已落盘**；**跑顶层工具体之前，那条 `tool/call` 必须已落盘**（如果这期间被取消，返回一个 `TOOL_ABORTED_BEFORE_DISPATCH` 结果而不是真去执行）；**开始下一步之前，上一步产生的一切必须已落盘**。检查点失败是 fail-closed 的——下游适配器和工具体都不会被调用（`packages/session/session-checkpoint-policy/src/index.ts:58-59` 的注释）。嵌套工具调用复用外层已经落盘的那次（`:71` 的 `exec.parent !== undefined` 分支）。
 
-两个后端：
+### JSONL 后端
 
-| 后端 | 格式 |
-| --- | --- |
-| **JSONL** | `.jsonl.zstd`（Zstandard）或 `.jsonl`（明文），`JsonlCompression = 'zstd' \| 'none'`（`format.ts:17`）；单 session 单 active writer；支持撕裂帧前缀恢复（`:326`） |
-| **SQLite** | 同步 `node:sqlite`，**无 busy retry** |
+目录布局（`packages/session/session-persistence-jsonl/src/format.ts:147-207`）：`<root>/<projectKey(cwd)>/<encodeSegment(id)>/session.jsonl[.zstd]`。`projectKey` 把 `/`、`\`、`:` 折成 `-`，其它不安全字符转成 `~XXXX`，最后包一层 `--…--`（`packages/session/session-persistence-jsonl/src/format.ts:166`）；没有 cwd 就放进 `_no-cwd`（`packages/session/session-persistence-jsonl/src/format.ts:177`）。
 
-SQLite 用同步 API 这一点要注意：它会阻塞事件循环。选后端时这是个真实权衡，不是实现细节。
+第一行是会话头行（`HeaderLine`，`packages/session/session-persistence-jsonl/src/format.ts:33-44`），带 `type:'session'` 标签好和事件行区分。之后每行要么是一个事件，要么是一个**打包行**。
 
-### 请求头可重建
+打包的逻辑在 `packages/core/session/src/chunk-rows.ts`。模块注释给出了动机和实测数字：provider 流回来的是 token 级的 delta，日志里会有几百行 JSON 信封比载荷还大的事件——实测「~56×」。连续至少 3 个（`MIN_RUN = 3`，`packages/core/session/src/chunk-rows.ts:77`）同块的 delta chunk 打成一行 `text-chunks` / `reasoning-chunks` / `tool-call-chunks`（`packages/core/session/src/chunk-rows.ts:65-67`），时间戳存成差值数组 `dt`。README 与配置注释里给的收益是「~60% smaller logs measured on a real session」（`packages/session/session-persistence-jsonl/src/index.ts:71-76`）。编码器只对完全识别的形状打包，认不出的原样存——「unknown fields or future chunk variants lose compression, never data」。读是无条件解包的，日志的可读性不依赖写入时的开关。
 
-`request-header.ts`（71 行）三个函数： `evidence: code`
+压缩默认是 zstd（`packages/session/session-persistence-jsonl/src/index.ts:37-38`），文件名后缀因此是 `.jsonl.zstd`（`packages/session/session-persistence-jsonl/src/format.ts:24-25`）。首帧单独放 header 行（列表页只解首帧就够），之后每个 append 批一帧。一个 root 只允许一种编码。写入时首次物化走「fsync 临时文件 → hard link 发布」，Windows 上走 `MoveFileExW WRITE_THROUGH`（`packages/session/session-persistence-jsonl/src/win32.ts`）。
 
-- `canonicalHeader(header)`（`:21`）—— 规范化：空 system prompt 和空工具列表变成缺省字段，与请求构建方式一致
-- `headerEquals(a, b)`（`:44`）—— 逐字段比较，工具 schema 按顺序比
-- `foldHeader(events)` —— 把日志（或任意前缀）折叠成当时生效的 `EpochHeader`
+### SQLite 后端
 
-模块注释说明了用途：任何持有会话日志的人都能重建出某次请求是在什么 header 下构建的；loop 用同一个相等性判断来避免记录未变化的 header。
+用 `node:sqlite` 的同步 API。`SCHEMA_VERSION = 15`（`packages/session/session-persistence-sqlite/src/schema.ts:19`），`application_id = 0x44534850`（`:22`）——一个防呆措施，避免往不相关的数据库里写。
 
-这条直接服务于文章 06：header 不变，才谈得上请求前缀稳定。
+两张表：`sessions`（`packages/session/session-persistence-sqlite/src/schema.ts:31-45`，一行一个会话的元数据，另加 `incarnation` 和 `revision` 两个本后端自己的字段）和 `events`（`packages/session/session-persistence-sqlite/src/schema.ts:48-60`，一行一个事件，`data` 是 JSON 文本，`source_event_seqs` / `surface_op` 各自 JSON 编码，`ignorable` 是 1 或 null）。
 
-## 四、约束与失效条件
+`sessions` 行的**存在本身**就是物化信号（`packages/session/session-persistence-sqlite/src/schema.ts:26-30`）：只有第一次 append 才写这一行，所以「创建了但从没写过」的会话没有行、不出现在 `list` 里——刻意对齐 JSONL 后端「第一次 append 之前没有文件」的行为。journal 默认 `wal`，可选 `delete`/`truncate`/`persist`（网络挂载上 WAL 的共享内存文件不工作），`memory`/`off` 被拒绝，理由写在注释里（`packages/session/session-persistence-sqlite/src/schema.ts:62-70`）：悄悄放弃 journal 持久性就等于悄悄违背这个后端的承诺。这个后端没有独立的 per-session 文件，`locate()` 返回 undefined。
 
-### 不能盲目重跑副作用工具
+### 两道拒绝闸门
 
-`TOOL_OUTCOME_UNKNOWN` 意味着**工具可能已经执行了一半**——文件可能已写、请求可能已发、钱可能已扣。自动重试会把一次不确定变成一次确定的重复副作用。
+读路径上有两处会拒绝而不是降级：格式版本不符抛 `SessionFormatUnsupportedError`（`packages/session/session-persistence/src/coordinator.ts:55-63`），数据校验失败抛 `SessionPersistenceCorruptionError`（`:36-43`）。前者的诊断信息会带上原始日志的位置（`packages/session/session-persistence/src/coordinator.ts:1069-1075`），因为「没有东西损坏，只是这个 build 读不了」。
 
-### 活跃会话与冷日志的修复规则不同
+未知事件类型的门禁在 `assertEventsSupported`（`packages/session/session-persistence/src/coordinator.ts:1061-1066`）：不在 `KNOWN_SESSION_EVENT_TYPES` 里、又没有 `ignorable` 标记的，直接拒绝解释整条日志，错误信息里会说「它很可能是更新版本的 harness 写的」。
 
-- **冷日志**（进程已退出）：可以追加合成的 interrupted / tool / step / turn 结尾
-- **活跃会话**：不平衡状态**拒绝静默修复**
+## 派生服务
 
-HMR / live adoption 尤其危险：不能把一个还活着的 open turn 误修成 interrupted。上游 `AGENTS.md` 提到过 HMR adoption 不把 open turn 当作 interrupted，这是一条专门的防御。
+**`session-projection`**：把「日志 → 某个视图」抽象成三个纯同步函数（`packages/session/session-projection/src/index.ts:42-73`）：`init()` 给空日志的初始状态，`apply(state, event)` 是纯转移（不感兴趣的事件**必须返回同一个引用**，`Object.is` 相等就意味着零下游工作），`view(state)` 出 wire 载荷。每个定义还带一个 `stateVersion`，序列化形状或折叠语义一变就要 bump，好让持久化的旧缓存行被丢弃而不是被错误地继续前推。
 
-### 持久化要检测 collision
+**`session-projection-cache`**：把每个投影的 `(ver, seq, val)` 写进 storage 域。这里要说一件容易误导的事——**它和 KV cache 毫无关系**。包头注释（`packages/session/session-projection-cache/src/index.ts:1-12`）说得很明确：它是折叠捷径，永远不是权威；一行可能过时（`seq` 会说明过时多少）但绝不会错，所以每条写路径都是 fail-soft 的，丢一次写只是下次冷读多replay一段尾巴；`ver` 不匹配就丢弃而不是迁移。名字里的 "cache" 指的是「投影状态的检查点」，不是模型侧的前缀缓存。
 
-同一个 session id 出现在不同 cwd 或不同前缀下，必须被检测出来，而不是两个进程往同一份账本里写。
+**`session-stats`**：全日志折叠出八个数字（`packages/session/session-stats/src/types.ts:22-40`）：`turns` / `steps` / `llmMs` / `toolMs` / `ttftMs` / `ttftSteps` / `decodeMs` / `decodeTokens`。定义都很具体，例如 `turns` 只数「至少有一个已关闭 step」的 turn，被拒绝或空的 turn 不算。
 
-### 「模型可见 ⟺ 已记录」是双向的
+**`session-telemetry`**（含 `-otel`）是捕获侧；`session-telemetry/record` 是一个 waterfall（`packages/session/session-telemetry/src/index.ts:43`），作为脱敏扩展点，默认没有任何规则。
 
-- 进模型的必须能从日志重建（文章 01）
-- 反过来，想让模型看见新东西，必须先扩展 `SessionEventMap` 并从日志渲染，不能只加个内存变量
+**`session-title`**：`session/title` 事件带 `{title, messageSeqs, source}`，source 三种（`packages/session/session-title/src/index.ts:48-58`）：`fallback`（截取第一条人类消息，就是上面快照 `seq 6` 那条）、`provider`（模型生成）、`user`（手动改名）。三个策略包分别是：`session-title-llm` 定义共享的 LLM 起名机制（把辅助请求全文记进 `session/title-llm-request` 事件，并用 `purpose: 'session-title'` 让 DeepSeek 适配器关掉 thinking，`packages/session/session-title-llm/src/index.ts:259-262`）、`session-title-first-prompt-llm` 只用第一条人类消息、`session-title-all-prompts-llm` 用全部。
 
-### 改这层的最小回归
+**`session-query`** 家族（`packages/session-query/`）提供跨会话的授权检索：`session-query` 定义可信读、关系查询和搜索操作；`session-query-sqlite` 用 SQLite 全文搜索实现；`session-log-export` 提供 Web `/export`；`tool-session-query` 把这些能力暴露给模型。它与压缩是相互独立的两件事——README 第一句就强调 "independently of compaction"。
 
-1. `core/session` 的 surface、repair、json、derived-cache 测试
-2. `session-persistence` 的 coordinator contract
-3. JSONL 和 SQLite 各自的 load / flush / repair 测试
-4. headless「退出前 flush」测试
-5. **至少一次手工中断恢复实验**，确认 open tool 不会被当成成功
+另外三个相邻的包：`storage` 是命名后端注册表（JSON / SQLite / 带 zod 校验的 KV 域）；`spill` 把超大工具文本存到会话私有位置、只给模型一个预览加定位符；`attachment` 是图像字节的内容寻址存储，`ImageBlock` 里只放引用。
 
-`packages/session/session-checkpoint-policy/tests/crash-recovery.e2e.ts` 是这条线的 e2e。 `evidence: test`
+## fork 与 resume
 
-## 五、可复核实验
+`SessionStore.fork(source, boundary?)`（`packages/core/session/src/index.ts:1081-1101`）拷贝 `events[0..boundary]` 作为子会话的种子，头部记下 `parentSession` 和 `seedLength`。边界校验有四条（`_forkSeed`，`:1103-1138`）：必须是非负安全整数；必须存在于源日志中；必须与连续的 seq 对应；**边界不能落在一个开放的 turn 里**，否则抛 `OPEN_TURN`。最后一条是硬性的——从一个半截 turn 分叉出去，子会话一开始就是一个 provider 拒绝的消息序列。
 
-### 实验 1：读两段恢复指示原文（无需凭据）
+种子会话在构造时补一条 `session/end-seed` 标记（`packages/core/session/src/index.ts:544-547`），同时记下 `firstLiveSeq`（`:539`）。两者的区别在注释里讲得很细（`packages/core/session/src/index.ts:456-472`）：`firstLiveSeq` 是**进程内的构造事实**，不持久化；`session/end-seed` 是它在日志里的投影，供读存储历史的消费者使用；而 `header.seedLength` 是**持久的 fork 血缘边界**。已经以该标记结尾的种子不会被重复标记，所以反复打开一个没动过的会话不会让日志变长。
+
+resume 时会发生什么：日志被完整读回（含解包 chunk 行、格式版本与事件类型门禁）；`repair.ts` 给崩溃遗留的开放 turn 补上关闭事件；`deriveMessages()` 从头折叠出模型历史；loop 实例发第一个请求时写 `request/header{reason:'resume'}`（`packages/core/agent-loop/src/agent.ts:465-467`），因为日志里已经有 header 了。如果这次进程的插件组合导致 system 或 tools 与上次不同，这条 resume 快照会与上一条不同——**漂移被记录，但不被阻止**。
+
+## 代价与失效点
+
+1. **`SESSION_FORMAT_VERSION = 0`、无迁移**（`packages/core/session/src/types.ts:56`）。预发布阶段这是明智的；但意味着任何格式变更都会让已有会话不可读。
+2. **未知事件类型一律拒绝**是安全的默认，代价是：装了插件 A 写的日志，在没装 A 的组合里打不开——除非 A 记得给自己的事件打 `ignorable`。
+3. **200ms 写窗口 + 三个检查点**给的是「语义边界处一定持久」，不是「每个事件立刻持久」。在两个检查点之间崩溃，最近一批事件可能丢失，靠 `repair.ts` 补齐一致性，而不是靠数据完整。
+4. **`replace` 会遮蔽历史**。surface 是模型视角，不是人的视角；任何直接拿 surface 当 transcript 渲染的消费者，在一次压缩之后就会让用户看见的对话凭空消失。上游的应对是提供 `isAppendSurfaceEvent`（`packages/core/session/src/surface.ts:51-54`），但这是约定，不是强制。
+5. **`deriveMessages()` 在 replace 之后整体重建**（`packages/core/session/src/index.ts:730-734`）。一次压缩会让下一次派生的成本回到 O(surface)，而不是 O(新节点)。
+6. **`headerEquals` 用 `JSON.stringify` 比工具 schema**（`packages/core/session/src/request-header.ts:34-36`）。语义相同但键序不同的两个 schema 会被判为不等，从而多写一条 `request/header{change}` —— 也就多一次「前缀可能失效」的假信号。
+7. **SQLite 后端没有 busy 超时设置**：在 `packages/session/session-persistence-sqlite/src` 下 grep 不到 `busy_timeout`，也没有重试循环。多进程同时写同一个库时的行为由 `node:sqlite` 的默认值决定。
+8. **投影缓存的 fail-soft 是有条件的**：`ver` 不符会丢弃，但如果一个投影改了折叠语义却忘了 bump `stateVersion`，旧行会被继续前推成垃圾——这条靠代码评审，不靠机制。
+
+## 别人怎么做
+
+| harness | 存储形态 | 恢复 / 分支 | 特点 |
+| --- | --- | --- | --- |
+| **dsh** | JSONL（zstd 分帧 + chunk 打包行）或 SQLite（schema v15，一行一事件），二选一的后端 | resume 走完整重放 + `repair.ts` 补齐；`fork(boundary)` 拷贝前缀，禁止切在开放 turn 内 | 事件溯源；模型可见历史是日志的纯投影；三个语义 flush 检查点 |
+| **Codex** | `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl`，支持 `.jsonl.zst`，另有 SQLite 索引 | `New / Resumed / Forked` 三态；`Compacted` 行带 `replacement_history`，恢复时从最后一个压缩点起重放；`ThreadRolledBack` 可回退 N 个 turn | 行类型丰富（`WorldState` 首个全量、之后 merge-patch），恢复后第一个 turn 只发上下文增量 |
+| **Claude Code** | `~/.claude/projects/<project>/<session-id>.jsonl`，每行一个消息/工具调用/元数据条目 | `--continue` / `--resume` / `--from-pr`；`--fork-session` 与 `/branch` 复制 transcript 到新 ID | 官方文档明说「条目格式是内部的，版本间会变」；`cleanupPeriodDays` 默认 30 天 |
+| **OpenCode** | SQLite（bun:sqlite + drizzle），`session` / `message` / `part` 等表，**每个 part 一行** | `runLoop` 完全基于 DB 重建，中断后重开即可继续；`session/revert.ts` 支持撤销到某条消息 | 文本、推理、工具、step 标记、patch 各自成行，天然支持增量推送给 TUI/Web |
+| **pi** | JSONL **追加树**：每个 entry 有 `id` 和 `parentId`，`leaf` 指针标记当前位置 | 分支就是把 leaf 移到更早的 entry；`/tree` 可在树上跳转并自动生成 branch summary；`/fork` | 分支是存储模型的原生能力，不是「复制一份日志」 |
+| **mini-swe-agent** | 每步 `finally` 把完整轨迹重写成一个 JSON 文件 | **没有 resume**（`run()` 开头 `self.messages = []`） | 轨迹是给分析/微调/inspector 用的，不是给续跑用的 |
+
+一条值得对照的分野：dsh 和 Codex 都把「压缩」表达成日志里的一等事件（前者是 `compaction/*` 加一条 `replace` 的 `user/message`，后者是 `Compacted` 行带 `replacement_history`），恢复时不需要重新做一次压缩；OpenCode 靠 `filterCompacted` 在读的时候重排消息；pi 则把压缩记成树上的一个 `CompactionEntry`。而 mini-swe-agent 根本没有这个问题，因为它没有压缩也没有恢复。
+
+## 怎么自己核
+
+看一个真实会话的事件类型分布：
 
 ```bash
 cd sources/checkouts/deepseek-harness
-sed -n '100,122p' packages/core/session/src/repair.ts
-sed -n '404,436p' packages/core/session/src/types.ts   # ignorable 的默认拒绝理由
+grep -o '^{"type":"[^"]*"' examples/acp-agent/tests/snapshots/bash-tool-turn/session.jsonl | sort | uniq -c | sort -rn
 ```
 
-回答：为什么恢复策略要写成给模型看的自然语言，而不是只给一个状态码？
-
-### 实验 2：跑 session 与崩溃恢复测试（无需凭据）
+数一数哪些行带 surfaceOp（应当只有 `user/message`、`assistant/message`、`tool/result`）：
 
 ```bash
-cd sources/checkouts/deepseek-harness
-pnpm install
-pnpm vitest run packages/core/session
-pnpm vitest run packages/session/session-persistence
+grep -c 'surfaceOp' examples/acp-agent/tests/snapshots/bash-tool-turn/session.jsonl
+grep 'surfaceOp' examples/acp-agent/tests/snapshots/bash-tool-turn/session.jsonl   | grep -o '^{"type":"[^"]*","seq":[0-9]*'
 ```
 
-记录：命令、退出码、用例数。重点看 `surface` 和 `repair` 相关用例。
-
-### 实验 3：制造一次中断并观察修复（需要凭据）
+核对本文引用的关键行号：
 
 ```bash
-export DEEPSEEK_API_KEY="your-own-key"
-cd sources/checkouts/deepseek-harness
-pnpm dsh --profile headless "逐个读取 packages/core 下每个子目录的 README" &
-sleep 6 && kill -9 %1     # 在工具执行中途硬杀
+sed -n '19,64p'   packages/core/session/src/known-event-types.ts   # 44 个已知事件
+sed -n '83,114p'  packages/core/session/src/surface.ts             # deriveEventMessage
+sed -n '63,83p'   packages/session/session-checkpoint-policy/src/index.ts  # 三个检查点
+sed -n '26,33p'   packages/session/session-persistence/src/coordinator.ts  # 200ms / LRU 5
+sed -n '19,22p'   packages/session/session-persistence-sqlite/src/schema.ts
 ```
 
-然后加载该 session，检查：
-
-1. 是否出现 `turn/end` 且 `reason.kind === 'interrupted'`
-2. 中断的工具调用是否有合成 `tool/result`
-3. 它的 error code 是 `TOOL_NOT_STARTED` 还是 `TOOL_OUTCOME_UNKNOWN`
-4. 结果文本里是否包含「Do not retry blindly」那段
-
-**该记录**：命令、杀进程的时机、事件序列、两个 code 各出现几次。
-**该得出**：`kill -9` 的时机决定你看到哪种 code——杀在工具记录开始之前是 `TOOL_NOT_STARTED`，之后是 `TOOL_OUTCOME_UNKNOWN`。这两种状态的区别不是理论，是可以用时机复现出来的。
-
-## 本篇尚未覆盖的源文件
-
-- `packages/core/session/src/index.ts`（1,157 行）—— Session 服务主体、fork、seed 边界
-- `packages/core/session/src/invariant.ts`（250 行）—— 本包的运行时不变量，是全仓最大的一个（文章 11）
-- `packages/core/session/src/chunk-rows.ts`（346 行）—— 流式 chunk 的行式存储
-- `packages/session/session-projection*` —— 投影的纯函数契约（`init`/`apply`/`view`）
-- `packages/session/session-title*`（4 个包）—— 标题生成为什么需要四个包
-- 压缩如何使用 `surfaceOp: 'replace'` → 文章 07
+相关阅读：请求是怎么从 header + surface 拼出来的见 [04 LLM 层](04-llm-adapter.md)；为什么只追加就自然保住前缀缓存见 [02 KV-Cache](02-kv-cache.md)；`replace` 的两个使用者见 [06 压缩](06-compaction.md)；turn/step 的边界语义见 [03 Agent 循环](03-agent-loop.md)；扩展点机制见 [12 表面与协议](12-surfaces-and-protocols.md)；术语见 [附录 A 词汇表](appendix-a-glossary.md)。
