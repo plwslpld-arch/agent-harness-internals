@@ -16,7 +16,7 @@
     "check:portability": "node scripts/verify-portability.mjs",
     "check:licenses": "node scripts/verify-licenses.mjs",
     "check:secrets": "node scripts/scan-secrets.mjs",
-    "test": "node --test scripts/tests/",
+    "test": "node --test scripts/tests/analysis-metadata.test.mjs scripts/tests/gitlink.test.mjs scripts/tests/run-local-evidence.test.mjs",
     "check": "npm run sources:verify && npm run check:analysis && npm run check:anchors && npm run check:portability && npm run check:licenses && npm run check:links && npm run check:secrets && npm test"
   }
 }
