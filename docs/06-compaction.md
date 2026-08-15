@@ -23,7 +23,7 @@ status: draft
 读法：
 
 - `seq 19` 是**锁**。`seq 22` 放锁。中间的一切失败都要保证至少尝试写一次 `compaction/end`。
-- `seq 20` 是账本：摘要正文、模型原始输出、被影范围与被影 seq 列表、被影内容的估价（266 token）、实际路由到哪个 provider/model、辅助请求的 usage。这条事件**不上 surface**，模型看不到。
+- `seq 20` 是账本：摘要正文、模型原始输出、被遮蔽（源码里叫 shadowed，指「被这次替换顶掉、模型从此看不见」的那些节点）的范围与 seq 列表、被遮蔽内容的估价（266 token）、实际路由到哪个 provider/model、辅助请求的 usage。这条事件**不上 surface**，模型看不到。
 - `seq 21` 才是模型看得见的东西：一条 `user/message`，`surfaceOp` 是 `{op:'replace', start:4, end:4}`——它把 surface 上的 `seq 4` 节点整个遮蔽掉，自己占据那个位置。`sourceEventSeqs: [19,20,4]` 把锁、账本、被遮蔽节点全部引上。
 - checkpoint 消息的正文结构是固定的三段：前言 + `<compacted-summary>` 开标签、摘要文本块、`</compacted-summary>` 闭标签。
 
@@ -62,7 +62,7 @@ surface 的变化因此是：
 | `maxTokens` | `8192` | 摘要调用的输出上限 |
 | `compactionRetries` | `1` | 一次压力事件里最多再压一轮 |
 | `maxOverflowRetries` | `1` | 溢出恢复最多重试一次 |
-| `auto` | `true` | 是否启用自动压缩 |
+| `auto` | `true` | 是否启用自动压缩。**只能在顶层配**，下面说的 per-model 覆盖不包括它 |
 
 换算发生在 `resolveCompactSpec`（`packages/compaction/compaction-basic/src/config.ts:144-147`）：
 
@@ -73,7 +73,7 @@ surface 的变化因此是：
     : policy.retainTokens
 ```
 
-并且校验 `retainTokens < thresholdTokens`（`:148-154`），否则压缩后立刻又超阈值。DeepSeek 默认窗口 1,000,000，所以出厂配置下阈值 800,000、保留 160,000。`modelPolicies[]` 可以按 provider/model 覆盖这几个数。
+并且校验 `retainTokens < thresholdTokens`（`:148-154`），否则压缩后立刻又超阈值。DeepSeek 默认窗口 1,000,000，所以出厂配置下阈值 800,000、保留 160,000。`modelPolicies[]` 可以按 provider/model 覆盖上表里除 `auto` 之外的每一项——可覆盖的键名单写死在 `POLICY_CONFIG_KEYS`（`packages/compaction/compaction-basic/src/config.ts:26-35`），`auto` 不在里面。
 
 ### 溢出恢复（`agent/request-error`）
 
@@ -104,8 +104,8 @@ surface 的变化因此是：
 
 `selectCompactableRange`（`packages/compaction/compaction-basic/src/region.ts:98-133`）：
 
-1. 校验 token-meter 看到的 surface 与 session 当前 surface 完全一致，不一致直接抛（`:107-111`）——两者错位时任何选择都是错的。
-2. 从尾部向前累计每个节点的估价，直到累计 `>= retainTokens`，得到 `keepFromIdx`（`:113-121`）。
+1. 校验 token-meter 看到的 surface 与 session 当前 surface 完全一致，不一致直接抛（`:107-110`）——两者错位时任何选择都是错的。
+2. 从尾部向前累计每个节点的估价，直到累计 `>= retainTokens`，得到 `keepFromIdx`（`:112-120`）。
 3. `keepFromIdx === 0` 表示尾巴就吃掉了全部预算，无可压，返回 null。
 4. 从 `keepFromIdx` 继续向前退，直到那个 cut 处 tool 配对是平衡的（`toolPairingBalancedBefore`，`:123-127`）。再退到 0 也是无可压。
 5. 返回 `{start: surfaceNodes[0], end: surfaceNodes[keepFromIdx - 1]}`。
@@ -116,7 +116,7 @@ surface 的变化因此是：
 
 ## 事务：三个事件加一次 replace
 
-`compactSurfaceRegion`（`packages/compaction/compaction-basic/src/region.ts:152-251`）的骨架：
+`compactSurfaceRegion`（`packages/compaction/compaction-basic/src/region.ts:152-254`）的骨架：
 
 ```
 validateSurfaceRegion（区间存在、有序、两端平衡）
@@ -125,7 +125,7 @@ assertCompactionInactive
   ↓
 append compaction/start          ← 锁；与上面的校验同步紧邻，中间不 await
   ↓
-prepareCompaction                ← 测量、给被影节点估价、buildSummarizationInput
+prepareCompaction                ← 测量、给被遮蔽节点估价、buildSummarizationInput
 summarizeCompaction              ← 真正发那次 LLM 请求
 assertStable                     ← whole-surface 或 selected-span
 commitCompactionBody             ← append compaction/summary，再 append user/message(replace)
@@ -136,9 +136,9 @@ append compaction/end            ← 放锁
 
 **锁的语义**。`compaction/start` 的 `turn` 字段是 `number | null`（`packages/compaction/compaction/src/types.ts:23`）：数字表示这次压缩被那个开放 turn 严格包住（自动路径），`null` 表示这是两个 turn 之间的独立事务（手动路径）。`assertCompactionInactive`（`packages/compaction/compaction-basic/src/region.ts:286-298`）判断「有没有未配对的 start」时，会拿 `session/end-seed` 的位置做比较：如果最新的种子边界比那条未配对的 start 还靠后，说明那是上个生命周期留下的，不算活跃锁。这就是 [05 Session](05-session.md) 里 `session/end-seed` 存在的实际用途之一。
 
-**失败一定尝试收尾**（`packages/compaction/compaction-basic/src/region.ts:216-228`）：catch 里会再 append 一条带 `error` 的 `compaction/end`；连这一步都写不出去，就故意留下一个未配对的 `start`——可检测，好过假装干净。
+**失败一定尝试收尾**（`packages/compaction/compaction-basic/src/region.ts:218-229`）：catch 里会再 append 一条带 `error` 的 `compaction/end`；连这一步都写不出去，就故意留下一个未配对的 `start`——可检测，好过假装干净。
 
-**两种稳定性检查**。自动路径用 `assertWholeSurfaceUnchanged`（`packages/compaction/compaction-basic/src/region.ts:387-397`）：重新 measure，整个 surface 的节点列表必须与准备时深度相等，否则抛 `SurfaceChangedError`。手动路径用 `assertSelectedSpanStable`（`packages/compaction/compaction-basic/src/region.ts:403-425`）：只要求所选的那一段仍然是同一个存在、连续、等价定价、配对平衡的替换目标——摘要期间新追加的上下文不算破坏。区别的理由很实际：手动压缩跑在 idle 期，但用户随时可能再输入。
+**两种稳定性检查**。自动路径用 `assertWholeSurfaceUnchanged`（`packages/compaction/compaction-basic/src/region.ts:387-396`）：重新 measure，整个 surface 的节点列表必须与准备时深度相等，否则抛 `SurfaceChangedError`。手动路径用 `assertSelectedSpanStable`（`packages/compaction/compaction-basic/src/region.ts:403-424`）：只要求所选的那一段仍然是同一个存在、连续、等价定价、配对平衡的替换目标——摘要期间新追加的上下文不算破坏。区别的理由很实际：手动压缩跑在 idle 期，但用户随时可能再输入。
 
 **摘要必须比被替换的内容小**（`packages/compaction/compaction-basic/src/region.ts:373-378`）：
 
@@ -169,6 +169,8 @@ function buildSummarizationInput(
   const header = session.requestHeader()
   const events = session.events
   const regionMessages = shadowedSeqs
+    // shadowedSeqs are current surface seqs, so each is a valid log index.
+    // oxlint-disable-next-line typescript/no-non-null-assertion
     .map(seq => session.deriveEventMessage(events[seq]!))
     .filter((message): message is Message => message !== null)
   return {
@@ -179,7 +181,7 @@ function buildSummarizationInput(
 }
 ```
 
-`system` 和 `tools` 直接取自最新的 `request/header`；消息是被影 seq 逐个过 `deriveEventMessage`——也就是 `deriveMessages()` 折进主请求的**同一批对象**。
+`system` 和 `tools` 直接取自最新的 `request/header`；消息是被遮蔽的 seq 逐个过 `deriveEventMessage`——也就是 `deriveMessages()` 折进主请求的**同一批对象**。
 
 然后 `summarizeWithLlm`（`packages/compaction/compaction-basic/src/summarizer.ts:121-163`）把指令追加在**最后**：
 
@@ -234,12 +236,12 @@ export function frameSummary(summary: readonly ContentBlock[]): ContentBlock[] {
 
 设计记录在 `.agents/notes/implemented/bug-fix/2026-07-21-compaction-summary-prefix-cache-reuse.md`。原来的实现用一个独立的 summarizer system prompt 加一段拍平的 transcript 字符串，Note 的问题陈述（`:9`）：
 
-> A provider caches on the request's leading token sequence, so a first token that differs — a different system prompt — invalidates the entire cached prefix. Every compaction therefore paid full prompt-processing cost for the whole replayed history twice.
+> A provider caches on the request's leading token sequence, so a first token that differs — a different system prompt — invalidates the entire cached prefix. Every compaction therefore paid full prompt-processing cost for the whole replayed history twice: once for the conversation request that tripped pressure, and again for the summarization call, defeating the cache exactly when the conversation is largest.
 
 决定是把指令从**请求前部**挪到**对话末尾**（`:13`）。Note 里被否决的四个方案值得记（`:29-32`）：
 
 - 「保留 summarizer system prompt，其余照抄」——被否：system 槽正是 provider 缓存的第一个 token 区域，换掉它后面写什么都没用。
-- 「只发被影区间，不带 system/tools 头」——被否：头不一样照样从第一个 token 就分叉，缓存一点没省，还丢了摘要需要的框架。
+- 「只发被遮蔽区间，不带 system/tools 头」——被否：头不一样照样从第一个 token 就分叉，缓存一点没省，还丢了摘要需要的框架。
 - 「省掉 `tools`（反正摘要器不会调工具）」——被否，原话是 "tool schemas are part of the cached token sequence; omitting them misaligns every following token and defeats reuse"。**即使不调用也必须带上**。
 - 「专门开一个发 `assistant/chunk` 的子会话做快照回放」——被否：`compaction/summary` 事件已经记录了这次本地调用的位置和完整输出，它的显式调用标记（`llmStreamCall: true`）防止回放把模板或远程产出的摘要当成本地流。这条正好解释了那个字段为什么存在。
 
@@ -249,7 +251,7 @@ Note 也划清了保证范围（`:23-25`）：自动压缩锚在 surface 头，�
 
 ## 模型无关的剪枝
 
-`compaction-tool-result-pruner` 是压缩之前的一道廉价关卡，完全确定性、不调模型。默认值（`packages/compaction/compaction-tool-result-pruner/src/config.ts:9-13`）：
+`compaction-tool-result-pruner` 是压缩之前的一道廉价关卡，完全确定性、不调模型。默认值（`packages/compaction/compaction-tool-result-pruner/src/config.ts:10-14`）：
 
 ```ts
 export const DEFAULTS: ResolvedConfig = deepFreeze({
@@ -265,9 +267,9 @@ export const DEFAULTS: ResolvedConfig = deepFreeze({
 export const PRUNE_MARKER = '\n\n[... tool result middle pruned ...]\n\n'
 ```
 
-按 Unicode code point 计数（`packages/compaction/compaction-tool-result-pruner/src/config.ts:22-28`），不按 UTF-16 code unit，所以保留边界不会劈开代理对（但仍可能劈开字素簇，注释坦承了这点，`packages/compaction/compaction-tool-result-pruner/src/index.ts:76-79`）。超过阈值的 `tool/result` 保留头 4096 + 标记 + 尾 1024，非文本块原样保留（`pruneContent`，`packages/compaction/compaction-tool-result-pruner/src/index.ts:82-121`）。
+按 Unicode code point 计数（`packages/compaction/compaction-tool-result-pruner/src/config.ts:22-28`），不按 UTF-16 code unit，所以保留边界不会劈开代理对（但仍可能劈开字素簇，注释坦承了这点，`packages/compaction/compaction-tool-result-pruner/src/index.ts:76-79`）。超过阈值的 `tool/result` 保留头 4096 + 标记 + 尾 1024，非文本块原样保留（`pruneContent`，`packages/compaction/compaction-tool-result-pruner/src/index.ts:83-122`）。
 
-每次替换前先写一条计量事件（`packages/compaction/compaction-tool-result-pruner/src/index.ts:159-168`）：
+每次替换前先写一条计量事件（`packages/compaction/compaction-tool-result-pruner/src/index.ts:162-173`）：
 
 ```ts
       session.append('compaction/prune', {
@@ -302,6 +304,8 @@ export const PRUNE_MARKER = '\n\n[... tool result middle pruned ...]\n\n'
 
 ## 别人怎么做
 
+开头那四个问题（何时动手、砍哪一段、用什么替代、这次操作花多少钱）正好是下表的前四列。Claude Code 一行来自官方公开文档，其余读自源码。读的时候盯住「摘要怎么发」这一列——那是唯一一处 dsh 和所有人都不一样的地方。
+
 | harness | 触发 | 砍哪一段 | 摘要怎么发 | 特别之处 |
 | --- | --- | --- | --- | --- |
 | **dsh** | `agent/pre-step` 压力（默认 0.8×窗口）；`agent/request-error` 上的 `CONTEXT_WINDOW_EXCEEDED`；`/compact` | 永远从 surface 头开始，从尾累计保留 0.16×窗口，退到 tool 配对平衡的 cut | 独立请求，但复用主对话的 system/tools/消息前缀，指令作为最后一条 user 消息 | 全过程事件化可审计；先廉价剪枝再花钱摘要；摘要不缩小就拒绝 |
@@ -316,7 +320,7 @@ export const PRUNE_MARKER = '\n\n[... tool result middle pruned ...]\n\n'
 - **切点约束**：dsh 用「tool 配对平衡」的 cut，pi 用「合法切点白名单」，OpenCode 允许在 turn 内切分。三者都在解决同一个问题——不能留下悬空的工具调用。
 - **摘要请求的头**：只有 dsh 刻意让它与主对话请求对齐。OpenCode 和 pi 都用独立的 summarizer system prompt，Codex 本地实现用 `base_instructions` 加空工具列表。上游提案的自评（`.agents/notes/proposed/feature/2026-07-06-recallable-compaction.md:13`）：「none of the surveyed implementations makes compaction prefix-cache-aware」。
 - **压缩之外的便宜办法**：Claude Code 的 `/rewind`（回退到一个已缓存的前缀）和 Codex 的 token-budget 新窗口都绕开了「摘要」这件事本身。dsh 的对应物是模型无关的剪枝——它同样不花模型的钱，只是保守得多。
-- **压缩后的重新注入**：Claude Code 会把 CLAUDE.md 和已用 skill 的正文重新注入，Codex 会重新注入初始上下文并对齐位置，OpenCode 会追加一条续跑消息。dsh 什么都不重注入——运行时上下文快照会在下一步被 `RuntimeContextProjection` 自然重发（因为保留的快照被 replace 掉了），除此之外只有那条 checkpoint。
+- **压缩后的重新注入**：Claude Code 会把 CLAUDE.md 和已用 skill 的正文重新注入，Codex 会重新注入初始上下文并对齐位置，OpenCode 会追加一条续跑消息。dsh 什么都不重注入，压缩之后 surface 上只多了那一条 checkpoint。唯一的例外是运行时上下文快照：**如果**被压区间恰好盖住了那条还留着的快照，`RuntimeContextProjection` 的 `retained` 会被置空，下一步于是重发一份完整快照（机制见 [01 System Prompt](01-system-prompt.md) 的 `retained` 三态；本条是从那段逻辑推出来的，**是推断**，本文开头那个 fixture 里被替换的是 `seq 4`，运行时快照 `seq 5` 并没被盖住，所以看不到这个效果）。
 
 ## 怎么自己核
 

@@ -7,9 +7,9 @@ status: draft
 
 # 工具、审批与沙箱：到底什么时候会弹窗
 
-## 先纠正一句话
+## 先纠正一个直觉
 
-本仓库早先的版本这么开篇：「改文件前弹窗问你 —— 这就是 approval seam」。这句话是错的，而且错得挺关键。
+看到 dsh 有一个叫 approval（审批）的服务，多数人的第一反应是：「改文件前它会弹窗问我」。这个直觉是错的，而且错得挺关键。
 
 在默认组合下（`packages/bundle/base/cordis.patch.yml` 那套，沙箱 `workspace-write` + 审批 `ask`），模型调 `write`、`edit`、`bash` 都**不会弹窗**。安全边界不是弹窗，是沙箱：`bash` 的 argv 被 bwrap / Landlock / Seatbelt / Windows 受限令牌包住，`write`/`edit` 在进程内被路径围栏挡住。弹窗只在两种情况下出现：
 
@@ -138,7 +138,11 @@ dsh 把权限拆成三个互不包含的东西。搞混它们是理解这套系�
 
 ## 完整工具目录：默认组合下模型看得见什么
 
-下面这张表覆盖默认 bundle（`packages/bundle/base/cordis.patch.yml`）与 CLI 的 `standard` preset（`apps/cli/config/agent-presets/standard/agent.cordis.yml`）。描述原文摘自上游自动生成的目录 `docs/tool-catalog.md`（那份文件是**启动真实插件后读 `ctx.tools.schemas()`** 生成的，所以就是模型收到的字面文本）。"并发"一列的判据是 §「并发分类」。
+下面这张表覆盖默认 bundle（`packages/bundle/base/cordis.patch.yml`）与 CLI 的 `standard` preset（`apps/cli/config/agent-presets/standard/agent.cordis.yml`）。描述原文摘自上游自动生成的目录 `docs/tool-catalog.md`——那份文件是启动真实插件后读 `ctx.tools.schemas()` 生成的，所以是**真实 schema**，不是手写文档。
+
+但有一个必须知道的差别：**生成器给每个包用的是它自己的默认配置，不是这两套组合**。最直接的证据是 `grep -c sandbox_permissions docs/tool-catalog.md` 返回 0——目录里 `bash` 的 schema **没有** `sandbox_permissions` / `justification` 这两个字段，因为 `packages/shell/tool-bash/src/index.ts:259-269` 只在挂了会限制的执行器（`escalationModes.length > 0`）时才把它们加进 schema，而默认组合恰恰挂了。所以：描述文本可以照读，字段清单要按组合另算——前面 `escalation-approved` 那条日志里模型真的填了这两个字段，就是这个道理。
+
+"并发"一列的判据是 §「并发分类」。
 
 | 工具 | 模型看到的描述（摘要，原文见目录） | 并发 | 在哪 |
 | --- | --- | --- | --- |
@@ -168,7 +172,7 @@ dsh 把权限拆成三个互不包含的东西。搞混它们是理解这套系�
 
 三点要注意：
 
-- `web_fetch` 存在但**默认关掉**（`packages/bundle/base/cordis.patch.yml:417` 的 `fetch: false`），注释写明理由是这个 provider 把 SSRF 防护推给了调用方而请求目标由模型选。
+- `web_fetch` 存在但**默认关掉**（`packages/bundle/base/cordis.patch.yml:417` 的 `fetch: false`），理由写在上面十几行的注释里（`:399-401`）：这个 provider 把 SSRF 防护推给了调用方，而请求目标是模型选的。
 - `run_code` 是保留名，只在 `tools.mode` 为 `code`/`both` 时出现；默认组合注释明说保持 `native`（`packages/bundle/base/cordis.patch.yml:422-423`）。见 [09 扩展与 Code Mode](09-extensions-and-code-mode.md)。
 - `terminal_*`、`lsp`、`session_*`、`cordis_*`、`schedule_*` 都在仓库里但不在这两套组合中。
 
@@ -191,11 +195,11 @@ dsh 把权限拆成三个互不包含的东西。搞混它们是理解这套系�
   }
 ```
 
-fail-closed 到了偏执的程度：未声明、返回了别的东西、抛异常、工具不存在，一律 exclusive。而且 `defineTool` 会先校验参数再调分类器，参数非法直接当 exclusive（`packages/core/tools/src/schema.ts:610-615`）。整个仓库里 opt-in 的一共 8 处，用 `grep -rn "isConcurrencySafe" packages/*/*/src/*.ts` 一眼能数完。调度细节见 [03 Agent Loop](03-agent-loop.md)。
+fail-closed 到了偏执的程度：未声明、返回了别的东西、抛异常、工具不存在，一律 exclusive。而且 `defineTool` 会先校验参数再调分类器，参数非法直接当 exclusive（`packages/core/tools/src/schema.ts:610-615`）。整个仓库里 opt-in 的一共 8 处，用 `grep -rn "isConcurrencySafe: () => true" packages/*/*/src/*.ts` 一眼能数完（不加冒号后缀会把接口声明和分类器本身也数进来）。调度细节见 [03 Agent Loop](03-agent-loop.md)。
 
 ## `ToolRuntime` 的执行流水线
 
-一次工具调用的完整路径是六段：`createExecution` → `tools/pre-execute` → guard → `tools/execute` → 工具体 → `tools/post-execute` → `finalizeContent` → `tools/result`。前两段和 guard 打包在 `prepareExecution`（`packages/core/tools/src/index.ts:1463-1507`）：
+一次工具调用的完整路径是六段：`createExecution` → `tools/pre-execute` → guard → `tools/execute` → 工具体 → `tools/post-execute` → `finalizeContent` → `tools/result`。前两段和 guard 打包在 `prepareExecution`（`packages/core/tools/src/index.ts:1463-1505`）：
 
 ```ts
       const carrier = scopeTarget(this, exec.agent)
@@ -230,7 +234,7 @@ fail-closed 到了偏执的程度：未声明、返回了别的东西、抛异�
 
 - `tools/pre-execute` 是 waterfall，默认 `{kind:'allow'}`，三种决定 `allow | deny{reason} | ask{reason?}`（`packages/core/tools/src/index.ts:588-591`）。
 - `ask` 走审批服务，`allowed-once` 才继续。
-- **guard 在 pre-execute 之后**，而且是单调的：任何 guard 返回字符串就拒绝，没有 guard 能把别的 guard 拒掉的调用放行（`packages/core/tools/src/index.ts:1110-1116`）。顺序是全局层先、再 scope 链由远到近（`:1119-1128`）。
+- **guard 在 pre-execute 之后**，而且是单调的：任何 guard 返回字符串就拒绝，没有 guard 能把别的 guard 拒掉的调用放行（注册接口的契约写在 `packages/core/tools/src/index.ts:1107`，取第一条拒绝的实现在 `:1118-1128`）。顺序是全局层先、再 scope 链由远到近。
 - 被拒绝的调用**仍然会走 post-execute**（返回的是 `post-result`），所以 hooks 的 PostToolUse 一样看得到它。
 - 拒绝的模型可见文本统一是 `Error: <reason>`。
 
@@ -300,7 +304,7 @@ fail-closed 到了偏执的程度：未声明、返回了别的东西、抛异�
 
 ### `ABORTED` 与 `ABORTED_BEFORE_DISPATCH`
 
-取消有两个码，判据是"工具体有没有被调用过"（`packages/core/tools/src/index.ts:1518-1529`）：
+取消有两个码，判据是"工具体有没有被调用过"（`packages/core/tools/src/index.ts:1518-1525`）：
 
 ```ts
   private cancellationResult(exec: ToolRunContext, prior?: ToolExecutionResult): ToolExecutionResult {
@@ -317,7 +321,7 @@ fail-closed 到了偏执的程度：未声明、返回了别的东西、抛异�
 
 ### `fuseToolSignals`：取消不会丢
 
-`tools/execute` 是"环绕派发"的 waterfall，wrapper 可以替换 `exec.signal`（超时策略就是这么加 deadline 的）。问题是：wrapper 换了 signal 之后，调用方的原始取消还灵不灵？答案在 `dispatchToolBody`（`packages/core/tools/src/index.ts:1537-1539`）：
+`tools/execute` 是"环绕派发"的 waterfall，wrapper 可以替换 `exec.signal`（超时策略就是这么加 deadline 的）。问题是：wrapper 换了 signal 之后，调用方的原始取消还灵不灵？答案在 `dispatchToolBody`（`packages/core/tools/src/index.ts:1536-1538`）：
 
 ```ts
     const wrapperSignal = exec.signal
@@ -352,7 +356,7 @@ fail-closed 到了偏执的程度：未声明、返回了别的东西、抛异�
 
 ## 沙箱后端：四个平台，两种完整度
 
-`ctx.sandbox.confine(argv, policy)` 返回一个 `ConfinedArgv`：包好的 argv、这次的强制完整度、这个后端的**拒绝方言**、以及 runner 自身失败的识别规则（`packages/sandbox/sandbox/src/index.ts:91-116`）。没有可用后端就抛 `SANDBOX_UNAVAILABLE`（`packages/sandbox/sandbox/src/index.ts:124`），**绝不静默放行**。
+`ctx.sandbox.confine(argv, policy)` 返回一个 `ConfinedArgv`：包好的 argv、这次的强制完整度、这个后端的**拒绝方言**、以及 runner 自身失败的识别规则（`packages/sandbox/sandbox/src/index.ts:95-117`）。没有可用后端就抛 `SANDBOX_UNAVAILABLE`（`packages/sandbox/sandbox/src/index.ts:124`），**绝不静默放行**。
 
 后端按平台先选、再探测（`packages/sandbox/sandbox-local/src/index.ts:159-166`）：
 
@@ -369,7 +373,7 @@ const PLATFORM_CHAINS: Record<string, readonly SelectedRunner['runner'][]> = {
 
 只有候选多于一个的平台才做功能性探测（Linux 上先真跑一次 `bwrap ... true` 看退出码）；只有一个候选的平台不探测——探测是用来仲裁的，不是用来复验一个没有替代品的选择的。Landlock 那条路自带一个约 300 行 C 的 launcher（`native/landlock-run`）随 SDK 发布，因为 `bwrap` 恰恰在最需要沙箱的宿主上不可用（最小容器、禁用 unprivileged userns、拒绝 `mount` 的 LSM）。
 
-**`SandboxEnforcement` 只有两态**：`'full' | 'partial'`（`packages/sandbox/sandbox/src/index.ts:59`）。这里要更正本仓库早期的一处说法——`'unavailable'` 不是 enforcement 的取值，它是 `EscalationOutcome` 的一个成员（`packages/sandbox/sandbox/src/escalation.ts:93`），语义是"审批渠道答不上来"。两者是不同轴上的东西。
+**`SandboxEnforcement` 只有两态**：`'full' | 'partial'`（`packages/sandbox/sandbox/src/index.ts:59`）。别把它和 `'unavailable'` 混在一起——后者不是 enforcement 的取值，它是 `EscalationOutcome` 的一个成员（`packages/sandbox/sandbox/src/escalation.ts:93`），语义是"审批渠道答不上来"。一个说的是沙箱能兑现多少承诺，一个说的是有没有人来批准，两者在不同的轴上。
 
 `partial` 目前只有一个来源（`packages/sandbox/sandbox-local/src/index.ts:177-187`）：
 
@@ -480,6 +484,10 @@ dsh 的仓库在这件事上相当坦白，几处原文：
 
 ## 别人怎么做
 
+六家在同一条轴上分布得很开：一端是「靠一套规则语言逐调用判」（Claude Code、OpenCode、Codex），另一端是「干脆不做权限系统、把隔离推给容器」（pi）。dsh 靠近后者，但补了一层真 OS 沙箱。
+
+**Claude Code 那一列全部来自官方公开文档**（`code.claude.com/docs` 的 permissions / sandboxing / settings 几页），它闭源，本仓库没有它的 checkout，那些模式名和「`auto` 用第二个模型分类」都无法从源码核实；其余五家读自 `sources/checkouts/` 里锁定的 commit。
+
 | 维度 | dsh | Codex CLI | Claude Code | OpenCode | pi | mini-swe-agent |
 | --- | --- | --- | --- | --- | --- | --- |
 | 审批词汇 | policy `ask`/`never` × sandbox 三档；grant 一次性 | `AskForApproval` 四态：`UnlessTrusted`/`OnRequest`/`Granular`/`Never`；决定还有 `ApprovedForSession`、写回规则等多种 | 6 种权限模式（`default`/`acceptEdits`/`plan`/`auto`/`dontAsk`/`bypassPermissions`），`auto` 用第二个模型做分类器 | 规则引擎 `allow`/`ask`/`deny`，取**最后一条**匹配，默认 `ask` | **刻意没有权限系统**，README 建议用容器隔离 | `human`/`confirm`/`yolo` 三档，默认 `confirm` |
@@ -517,8 +525,8 @@ grep -rn "kind: 'ask'" --include=*.ts packages/
 # 全仓库里谁调用审批
 grep -rn "approval.request(\|approveEscalation(" --include=*.ts packages/
 
-# 谁 opt-in 了并发
-grep -rn "isConcurrencySafe" packages/*/*/src/*.ts
+# 谁 opt-in 了并发（应当恰好 8 处）
+grep -rn "isConcurrencySafe: () => true" packages/*/*/src/*.ts
 
 # 两段运行时上下文的原文
 sed -n '38,52p' packages/sandbox/sandbox-policy/src/index.ts

@@ -7,7 +7,7 @@ status: draft
 
 # Web 客户端与 host：39 个 UI 包如何把事件日志变成界面
 
-`packages/client` 是 dsh 全仓最大的一组代码：39 个包，449 个 `.ts`/`.tsx` 文件，71,896 行源码（不含 CSS 与测试）。加上 `packages/host` 的 8 个包和 `packages/api` 的 2 个包，构成 dsh 唯一的交互界面。
+`packages/client` 是 dsh 全仓最大的一组代码：39 个包，各包 `src/` 下 501 个 `.ts`/`.tsx` 文件，71,896 行源码（不含 CSS 与 `tests/`）。加上 `packages/host` 的 8 个包和 `packages/api` 的 2 个包，构成 dsh 唯一的交互界面。
 
 这组代码和 harness 的核心机制关系不大——它不决定模型看到什么、不决定 token 怎么花。但它决定了**你在浏览器里看到的每一样东西**，而且它对「一条 session 事件」的处理方式，恰好是理解 dsh 事件溯源设计的一个好切口：后端的 append-only 事件日志，是怎么变成屏幕上一条会滚动的消息的。
 
@@ -102,7 +102,9 @@ export const HOST_EVENTS_PATH = `${API_PATH}/events.host`
 export function bindSnapshotSelector<T>(w: HostObservable<T>): SnapshotSelectorHook<T> {
 ```
 
-（`packages/client/web-react/src/bind.ts:18`）内部是 `useSyncExternalStoreWithSelector`（`:22`）。整个 client 只有这一个地方把 observable 变成 hook——README 写得很直白（`packages/client/web-react/README.md:5`）：「hosts and engines traffic in bare observable sources; every hook binds here, cached per source」。
+（`packages/client/web-react/src/bind.ts:18`）内部是 `useSyncExternalStoreWithSelector`（`:22`）。这是整个 client 唯一的 **hook 构造器**——唯一一处把「host / engine 交出来的裸 observable 源」变成带 selector 的 React hook 的地方，README 写得很直白（`packages/client/web-react/README.md:5`）：「hosts and engines traffic in bare observable sources; every hook binds here, cached per source」。
+
+（注意别把这句读成「client 里只有一处 `useSyncExternalStore`」：`ui-primitives`、`ui-commands`、`ui-model-selection`、`web/AppRoot.tsx` 等处也直接调 React 的 `useSyncExternalStore`，但它们订阅的是组件自己的局部 store——语法高亮的懒加载计数、popup 的选中态、启动状态机——不是 Session/Workspace 这类业务数据源。业务数据只从 `bindSnapshotSelector` 进来。）
 
 **跳 9，组件渲染。**
 
@@ -112,7 +114,7 @@ export function bindSnapshotSelector<T>(w: HostObservable<T>): SnapshotSelectorH
   const timeline = useSession(s => s.chat.timeline)
 ```
 
-（`packages/client/ui-conversation/src/client/chat/ChatView.tsx:150-152`）ChatView 注册进 `'conversation.view'` 这个 slot（`packages/client/ui-conversation/src/client/apply.ts:377`），`ui-trajectory` 在同一个 slot 里注册第二个 tab。
+（`packages/client/ui-conversation/src/client/chat/ChatView.tsx:150-152`）ChatView 注册进 `'conversation.view'` 这个 **slot**——slot 是界面上一个具名的「洞」，由某个包声明出来，别的包往里注册组件（第三节讲机制，`packages/client/ui-conversation/src/client/apply.ts:377`）。`ui-trajectory` 在同一个 slot 里注册第二个 tab（`packages/client/ui-trajectory/src/client/index.ts:43-44`）。
 
 **九跳总结**：`ctx.on('session/event')` → mux 队列 → `/api/events.mux` WebSocket → `readWebSocket` → `ConnectionController` → `SessionRuntime` → `Session.acceptLiveEvent` → `subscribe`/`getSnapshot` → `bindSnapshotSelector` → `useSession` → `ChatView`。
 
@@ -135,6 +137,8 @@ Chat 视图把事件折叠成对话：分组的步骤摘要流、流式尾部隔
 ---
 
 ## 二、39 个包的分工
+
+下面这张表按「离界面多远」分组。要看的是两件事：一是**行数集中在哪**（`ui-conversation` / `runtime` / `ui-trajectory` / `ui-primitives` 四个包占了将近一半），二是**哪些包刻意不依赖 React 或 cordis**（`ui-slots`、`ui-primitives`、`schema-form`），这决定了它们能被谁复用。行数为各包 `src/` 下 `.ts`/`.tsx` 的行数，不含 `tests/`。
 
 | 分组 | 包 | 行数 | 职责 |
 |---|---|---|---|
@@ -159,7 +163,7 @@ Chat 视图把事件折叠成对话：分组的步骤摘要流、流式尾部隔
 | 设置 | `ui-settings` / `-general` / `-models` / `-plugins` / `-plugin-inventory` | 482 / 714 / 3,341 / 1,541 / 322 | 设置域 |
 | 目录选择 | `ui-directory-picker-native` / `-browse` | 146 / 1,224 | 与 host 的两种 picker 后端配对 |
 
-以上 39 行即 `packages/client/` 的全部内容。另有一个 `ui-cordis` 也是浏览器插件，但它住在 `packages/extensions/ui-cordis`——它是 `tool-cordis` 的浏览器半，属于「agent 修改自身运行时」那一组，见 [09 扩展与 Code Mode](09-extensions-and-code-mode.md)。
+表里这 39 个包就是 `packages/client/` 的全部内容（有几行合并了同类包，`ls -d packages/client/*/` 数出来正好 39）。另有一个 `ui-cordis` 也是浏览器插件，但它住在 `packages/extensions/ui-cordis`——它是 `tool-cordis` 的浏览器半，属于「agent 修改自身运行时」那一组，见 [09 扩展与 Code Mode](09-extensions-and-code-mode.md)。
 
 39 个包**全部**有 README。绝大多数是**双面包**：`src/index.ts` 是运行在 Node 上的 host 半，`src/client/index.ts` 是浏览器半，由 package.json 里的 `dsh.client` 字段声明。这个设计让「一个功能」始终是一个包，而不是拆成前后端两个包再靠命名约定对齐。
 
@@ -225,7 +229,9 @@ export type ChainSelect<O extends object, M> = (owner: O) => M | null
   slots.register({ name: 'conversation.composer', select: selectApproval, priority: 1, locale: NS }, ApprovalPanel)
 ```
 
-（`packages/client/ui-conversation/src/client/apply.ts:371`）当有一个待审批的工具调用时，`selectApproval` 返回非空，`ApprovalPanel` 就占住 composer 的位置（琥珀色条、理由标题、从调用参数拼出的命令行、一次性的拒绝/允许）；没有时它返回 null，普通输入框继续占位。`ui-user-questions` 用完全一样的模式注册 `question` 条目。
+（`packages/client/ui-conversation/src/client/apply.ts:371`）当有一个待审批的工具调用时，`selectApproval` 返回非空，`ApprovalPanel` 就占住 composer 的位置（琥珀色条、理由标题、从调用参数拼出的命令行、一次性的拒绝/允许）；没有时它返回 null，普通输入框继续占位。`ui-user-questions`（`packages/client/ui-user-questions/src/client/index.ts:56-57`）和 `ui-subagent`（`packages/client/ui-subagent/src/client/index.ts:121-123`）用完全一样的模式注册各自的条目。
+
+`priority` 是**升序**的，数字小的先跑（`packages/client/ui-slots/src/index.ts:248`、`:862-868`）。审批面板写了 `priority: 1`，提问面板用默认的 0，所以两者同时挂起时提问先被选中——注册处的注释解释了理由（`packages/client/ui-conversation/src/client/apply.ts:367-370`）：提问是模型在等的一次对话，审批只卡住一次工具调用，先答提问不会把审批饿死（提问一结束审批立刻重新当选）。
 
 这带来一个可观察的产品行为：**待审批和待回答不会在消息流里留下一张占位卡片**（`packages/client/ui-conversation/README.md:17` 明说了这一点）。它们只接管输入区，答完就还回去。
 
@@ -233,7 +239,7 @@ export type ChainSelect<O extends object, M> = (owner: O) => M | null
 
 ## 四、hmr：热重载的真实条件
 
-`packages/client/hmr` 让客户端插件在不刷新页面的情况下重新加载。机制是：Node 半 stat 轮询每个 client bundle（`packages/client/hmr/src/index.ts:57` 起；轮询而非 inotify 是刻意的，因为网络挂载不发文件事件），变化时通过 `/plugins/events` 这条 SSE 通道通知浏览器（`packages/client/hmr/src/events.ts:16`）。浏览器半收到之后换 fiber：
+`packages/client/hmr` 让客户端插件在不刷新页面的情况下重新加载。机制是：Node 半用一个定时器 stat 轮询每个 client bundle（`packages/client/hmr/src/index.ts:139` 的 `setInterval`，默认 500ms，`:37`；轮询而非 inotify 是刻意的，模块注释 `:2-4` 写了理由——网络挂载不发文件事件），变化时通过 `/plugins/events` 这条 SSE 通道通知浏览器（`packages/client/hmr/src/events.ts:16`）。浏览器半收到之后换 fiber——fiber 是 cordis 里「一行 entry 的活实例」，见 [10 Cordis、启动、bundle 与 preset](10-cordis-boot-preset.md)：
 
 ```ts
     modLoader.invalidate(id)
@@ -258,7 +264,7 @@ HMR 自己的三条已知限制（`packages/client/hmr/README.md:19-21`）：重
 
 ## 五、apps/web 与 `window.__DSH_BOOT__`
 
-`apps/web` 只有两个 TypeScript 文件。`apps/web/src/main.ts` 全文 10 行：
+`apps/web` 只有两个 TypeScript 文件。`apps/web/src/main.ts` 一共 10 行，去掉 5 行文件头注释就剩这些：
 
 ```ts
 import { AppWebEntry } from '@deepseek-ai/dsh-client-web'
@@ -300,18 +306,20 @@ shell 的启动是两阶段的（`packages/client/web/README.md:5`）：阶段�
 
 ## 六、host 与 api：Node 半边
 
+浏览器那一半讲完了，下面是它对面的 Node 半边。看这张表时注意「ctx key」这一列——它就是这个包往 cordis context 上挂的服务名，别的包靠它找到这个能力；空着的表示这个包只消费别人、不提供服务。
+
 | 包 | ctx key | 职责 |
 |---|---|---|
-| `host/webserver` | `ctx.webServer` | HTTP 路由载体，266 行，只用 `node:http` |
+| `host/webserver` | `ctx.webServer` | HTTP 路由载体，325 行，不用任何 HTTP 框架，直接 `node:http` |
 | `host/apiproxy` | `ctx.apiProxy` | 共享 host API 网关与 wire 契约，8,571 行 |
 | `host/frontend-static` | 消费 `ctx.webServer` | SPA dist 服务，占 fallback 座 |
-| `host/directory-picker` | `ctx.directoryPicker` | 目录选择 seam |
+| `host/directory-picker` | `ctx.directoryPicker` | 目录选择 seam（seam＝一个只定契约、由别人填实现的接缝） |
 | `host/directory-picker-native` / `-browse` / `-auto` | 注册/挂载 | 三种后端与一个自适应选择器 |
 | `host/plugin-inventory` | Remote `pluginInventory/list` | Loader entry 的只读投影 |
-| `api/gateway` | `ctx.typertGateway` / 浏览器 `ctx.remote` | Typert 一元 Remote RPC 分发 |
-| `api/remotes` | — | BFF 装配：挂 contribution + 事件白名单 |
+| `api/gateway` | `ctx.typertGateway` / 浏览器 `ctx.remote` | Typert（上游自研的、从 TS 源码类型生成 RPC 契约的工具）一元 Remote RPC 分发 |
+| `api/remotes` | — | BFF（Backend For Frontend，专为这一个前端拼装的后端门面）装配：挂 contribution + 事件白名单 |
 
-（表出自 `packages/host/README.md:7-16` 与各包 package.json。）
+（表出自 `packages/host/README.md:7-16` 与各包 package.json；行数为各包 `src/` 下 `.ts` 的行数。）
 
 **webserver 什么都不知道。** 它提供四个注册方法——`register`（`packages/host/webserver/src/index.ts:94`）、`registerUpgrade`（`:109`）、`registerFallback`（`:125`）、`tapIndex`（`:139`）——加一个最长前缀匹配的 `match`（`:242`）。它不认识任何 harness 概念，不服务任何文件，`/api` 和 WebSocket 都是别的插件注册的路由。重复注册直接抛错（`:97`、`:111`、`:127-128`）。
 
@@ -353,7 +361,7 @@ export function resolveDirectoryPickerBackend(facts: DirectoryPickerHostFacts): 
 
 ### 信任围栏
 
-`/api` 这一条路由上有一道信任检查（`packages/client/connection/src/index.ts:165`），WebSocket upgrade 上也有一道（`:184`）。而且有一组方法被**钉死在回环地址**：`host.pickDirectory`、`host.openPath`、整个配置面（`settings.describe`/`update`/`replace`/`mutate`、`credentials.describe`/`set`/`unset`），以及 agent-preset 的创作面（`agentPreset.read`/`copy`/`openDocument`/`remove`）。connection 的 README 逐条解释了理由（`packages/client/connection/README.md:5`）：读一份 composition 是侦察，因为它写明了一个 session 会跑哪些插件；copy/remove/openDocument 管理名册并驱动 host 桌面。而 `agentPreset.list` 和 `agentPreset.select` 不在名单里——名册只带 id 和信任等级，选一个 preset 也不会给出 `session.create` 的 `agentPreset` 参数没给的东西。
+`/api` 这一条路由上有一道信任检查（`packages/client/connection/src/index.ts:165`），WebSocket upgrade 上也有一道（`:184`）。而且有一组方法被**钉死在回环地址**——名单是硬编码的 15 条（`packages/client/connection/src/index.ts:104-118`）：agent-preset 的创作面 `agentPreset.read`/`copy`/`openDocument`/`remove`，`host.pickDirectory`、`host.openPath`，整个配置面 `settings.describe`/`openDocument`/`update`/`replace`/`mutate` 与 `credentials.describe`/`set`/`unset`，再加一个 `llm.discoverModels`。connection 的 README 逐条解释了理由（`packages/client/connection/README.md:5`）：读一份 composition 是侦察，因为它写明了一个 session 会跑哪些插件；copy/remove/openDocument 管理名册并驱动 host 桌面。而 `agentPreset.list` 和 `agentPreset.select` 不在名单里——名册只带 id 和信任等级，选一个 preset 也不会给出 `session.create` 的 `agentPreset` 参数没给的东西。
 
 顺带：`--host 0.0.0.0` 是被显式禁掉的：
 
@@ -378,13 +386,15 @@ export function rehydrateSchema(serialized: unknown): SchemaNode {
 
 这个包只有 195 行，且**不含任何 React**。`hasPath` 的语义是「这个字段被用户覆写过」，`deletePath` 就是「重置这一个字段」。真正的表单控件由各个设置页自己写——Models 页手写了自己的卡片。代价写在 README `:21`：`rehydrateSchema` 会通过 `new Function` 复活序列化的回调，所以这个信封是可执行内容，只对同源可信 host 安全。
 
-**i18n 的默认语言是中文。** `LocaleRuntime`（`packages/client/locale/src/client/index.ts:114`）管 `zh`/`en` 两种，偏好存在 `$DSH_HOME/settings.yaml` 的 `locale.preference`。查找链是 ns → common → zh → key：
+**i18n 只有 `zh`/`en` 两种语言，中文是兜底不是默认。** `LocaleRuntime`（`packages/client/locale/src/client/index.ts:114`）管这两种；初始语言取**浏览器自己的语言**（按主语言标签匹配，`zh-Hans-CN` → zh、`en-GB` → en，`:332-343`），匹配不上才落到 `FALLBACK_LOCALE`，也就是 `zh`（`:319-320`、`:90`）。用户显式选的偏好存在 `$DSH_HOME/settings.yaml` 的 `locale.preference`（`packages/client/locale/src/locale-settings.ts:6`、`:9`），插件激活后覆盖这个临时值。
+
+查一个 key 是两层嵌套的回退，先在自己的命名空间里试当前语言再试 `zh`，还没有才去 `common` 里把同样两步再走一遍：
 
 ```ts
     return locales?.get(this.snapshot.active)?.[key] ?? locales?.get(FALLBACK_LOCALE)?.[key]
 ```
 
-（`:286`，`FALLBACK_LOCALE` 在 `:90` 定义为 `'zh'`）字典按 (namespace × locale) 注册，命名空间表和 SlotMap 用同一套声明合并手法（`packages/client/ui-slots/src/index.ts:34`）。切换语言时渲染器按 (namespace, revision) 重新派生 `t` 函数，给出**新的函数引用**，所以 memo 组件会自然重渲。
+（`:286`，这是「一个命名空间内」的两步；外面那层在 `:276-278`：`lookup(ns)` → `lookup('common')` → 最后直接把 key 本身当文案吐出去）字典按 (namespace × locale) 注册，命名空间表和 SlotMap 用同一套声明合并手法（`packages/client/ui-slots/src/index.ts:34`）。切换语言时渲染器按 (namespace, revision) 重新派生 `t` 函数，给出**新的函数引用**，所以 memo 组件会自然重渲。
 
 已知的一个缺口（`packages/client/locale/README.md:18`）：注册期捕获的文案（比如 `/model` 命令的描述）会保持注册时的语言，直到重新注册。
 
@@ -392,7 +402,9 @@ export function rehydrateSchema(serialized: unknown): SchemaNode {
 
 ## 八、界面上的东西对应哪个包
 
-| 你看到的 | 包 | 挂在哪个 slot |
+这张表是给「我想改屏幕上那个东西，该去哪个目录」用的。第三列同时告诉你**它是怎么进去的**——是抢一个单人座、排进一个 list、按 key 被点名、自荐进 chain，还是干脆不走 slot 而由某个组件直接渲染（最后一种表里有一行，看列名就知道 slot 不是唯一途径）。
+
+| 你看到的 | 包 | 怎么进到界面里 |
 |---|---|---|
 | 聊天视图 | `ui-conversation` | `conversation.view`（id `chat`） |
 | 轨迹视图 | `ui-trajectory` | `conversation.view` 的第二个 tab |
@@ -400,8 +412,8 @@ export function rehydrateSchema(serialized: unknown): SchemaNode {
 | 审批面板 | `ui-conversation`（`ApprovalPanel`） | `conversation.composer`（chain，priority 1） |
 | 提问面板 | `ui-user-questions` | `conversation.composer`（chain） |
 | 模型选择 | `ui-model-selection` | `/model` popupSelect + `conversation.input.model` |
-| agent preset 选择器 | `ui-agent-preset` | General 设置行 + 新会话页 chip + 会话头只读标签 |
-| 权限档位 chip | `ui-conversation`（`PermissionSelect`） | composer 底排 Access 座，读 `permissions` 投影 |
+| agent preset 选择器 | `ui-agent-preset` | 四个 slot：`settings.general.item`（`packages/client/ui-agent-preset/src/client/index.ts:207`）、`settings.section`（`:216`）、新会话页的 `conversation.hero.agentPreset`（`:165`）、会话头只读标签 `conversation.session.header.actions`（`:170`，order −10） |
+| 权限档位 chip | `ui-conversation`（`PermissionSelect`） | **不走 slot**：由 composer 的 `InputBar` 直接渲染（`packages/client/ui-conversation/src/client/skeleton/InputBar.tsx:562`），读 `permissions` 投影 |
 | goal 条 | `ui-goal` | `conversation.input.dock` order 10 |
 | todo 条 | `ui-conversation`（`TodoDock`，**不是独立包**） | `conversation.input.dock` order 0，读 `todos` 投影 |
 | plan chip | `ui-plan` | `conversation.input.plan` 单座 |
@@ -441,34 +453,47 @@ KV cache 的影响也写清了（`:29`）：这个 section 在包挂载期间是
 
 ## 十、别人怎么做
 
+最后一列是重点：别人有没有「让第三方往界面里塞东西」这件事，以及那个扩展点的粒度有多粗。
+
 | harness | 交互面 | 前后端边界 | 扩展 UI |
 |---|---|---|---|
 | dsh | 唯一一个 Web GUI（TUI 已删除） | host 算投影，浏览器只渲染；WebSocket 下行 + HTTP 上行 | 39 个插件包 + slot 声明表 |
 | Claude Code | CLI 为主，另有桌面端、Web、IDE 扩展 | 不开源 | 不适用（有 hooks/skills/plugins 但不是 UI 插件） |
-| Codex | Rust CLI，可选 UI 与 app server | rollout 记录 + 客户端全量重放历史 | Extension API 的 `context_contributors()`，不含 UI |
-| OpenCode | TUI + server；`Session.Event.*` 经 EventV2 总线推给 TUI/Web | 从 DB 消息重建，中断可续 | npm/本地插件 14 个钩子，含 UI 相关的少数几个 |
-| pi | 自定义 TUI | 扩展可 `registerTool` 并自定义 `renderCall`/`renderResult` | Extension API 里 `ctx.ui.*`（对话框/组件/widget） |
-| mini-swe-agent | 无 | 不适用 | 不适用 |
+| Codex | Rust CLI，可选 UI 与 app server | rollout 记录 + 客户端全量重放历史 | Extension API 有 12 类 contributor（`context_contributors()` 等，`codex!codex-rs/ext/extension-api/src/registry.rs:145-156`），**一个都不是 UI** |
+| OpenCode | TUI + server；`Session.Event.*` 经 EventV2 总线推给 TUI/Web | 从 DB 消息重建，中断可续 | 两套：server 侧 `Hooks` 21 个键（`opencode!packages/plugin/src/index.ts:222`，无一个是 UI），另有独立的 `TuiPluginApi`——12 个具名 host slot + 对话框/toast/路由/keymap |
+| pi | 自定义 TUI（`packages/tui` 1.7 万行 + `modes/interactive` 1.8 万行） | 扩展可 `registerTool` 并自定义 `renderCall`/`renderResult` | Extension API 里 `ctx.ui.*`：`setHeader`/`setFooter`/`setWidget`/`setEditorComponent`/`custom`/`select`/`confirm` 等 |
+| mini-swe-agent | 交互式 CLI，另有一个 Textual 写的轨迹检查器（`mini-swe-agent!src/minisweagent/run/utilities/inspector.py:16`） | 不适用 | 不适用 |
 
-差别不只在「有没有图形界面」。pi 和 OpenCode 的扩展也能画东西，但它们画在 TUI 里，扩展点是「渲染这个工具调用」这种粒度。dsh 的 slot 表是**整个界面的骨架**——侧栏、composer 的每一个座位、会话头的每一个动作，都是可声明可注册的洞，连内建的 chat 视图自己都是注册进 `conversation.view` 的一个 tab。
+差别不在「谁能画东西」——pi 和 OpenCode 的扩展都能画，而且画的不止是工具卡片：pi 的 `ctx.ui.setHeader`/`setFooter`/`setWidget` 直接换掉框架的边条，OpenCode 的 `TuiHostSlotMap` 是一张实打实的具名洞表（`app`、`session_prompt`、`sidebar_content`、`home_footer` 等 12 个，`opencode!packages/plugin/src/tui.ts:455-486`），跟 dsh 的 `SlotMap` 是同一个思路。
 
-代价也一样明显。pi 的 TUI 大概几千行；dsh 为了同样的「能扩展」，付了 71,896 行。这 7 万行里没有一行影响模型看到什么——除了 `ui-deliverables` 那 2 句话。
+真正的差别是**规模和强制力**。dsh 的 slot 声明表覆盖到 composer 底排的每一个座位、会话头的每一个动作、聊天流里的每一种节点；未声明的 slot 注册直接抛错，所以「谁能改哪块界面」是编译期加运行期双重可查的；连内建的 chat 视图自己都只是注册进 `conversation.view` 的一个 tab，没有特权。OpenCode 的 12 个 host slot 是宿主开好的固定几个口子，插件可以自带私有 slot，但宿主界面的其余部分不通过这套机制。
+
+代价也很明显。pi 的终端界面（框架包 + 交互模式）合计约 3.4 万行；dsh 为了「整个界面都可替换」，付了 71,896 行。这 7 万行里没有一行影响模型看到什么——除了 `ui-deliverables` 那 2 句话。
 
 ---
 
 ## 十一、怎么自己核
 
 ```bash
-# 39 个 client 包与各自行数
-ls -d packages/client/*/
-find packages/client -name '*.ts' -o -name '*.tsx' | grep -v '/tests/' | xargs wc -l | tail -1
+# 39 个 client 包与总行数
+# 注意用 `cat | wc -l` 而不是 `xargs wc -l | tail -1`：文件多到 xargs 分批时，
+# 最后那个 total 只是最后一批的合计。
+ls -d packages/client/*/ | wc -l
+find packages/client -path '*/src/*' \( -name '*.ts' -o -name '*.tsx' \) \
+  | grep -v '/tests/' | xargs cat | wc -l
+
+# 单个包的行数（表里那一列就是这么来的）
+find packages/client/ui-conversation -path '*/src/*' \( -name '*.ts' -o -name '*.tsx' \) \
+  | grep -v '/tests/' | xargs cat | wc -l
 
 # 事件链路的每一跳
 grep -n "session/event" packages/host/apiproxy/src/api-proxy.ts
 sed -n '204,220p' packages/client/runtime/src/client/index.ts
 sed -n '447,470p' packages/client/runtime/src/client/sessions/session.ts
 
-# 唯一的 hook 构造器（确认整个 client 只有这一处）
+# 唯一的 hook 构造器：确认 bindSnapshotSelector 只定义一次
+grep -rn "export function bindSnapshotSelector" packages/client --include=*.ts
+# 对照：直接用 useSyncExternalStore 的地方有十几处，但订阅的都是组件局部 store
 grep -rn "useSyncExternalStore" packages/client --include=*.ts --include=*.tsx | grep -v '/tests/'
 
 # slot 声明与注册

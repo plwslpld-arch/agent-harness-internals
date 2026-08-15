@@ -7,7 +7,7 @@ status: draft
 
 # System Prompt：模型第一眼看到的到底是什么
 
-dsh 里没有 `prompts.ts`。你 grep 不到一个把 system prompt 写在一起的文件，因为它压根不存在——模型看到的那段文字是十几个互不认识的插件各贡献一两句话，在 `renderPrompt()` 这四行代码里按 `order` 排序、插值、丢空、用空行拼起来的。
+dsh 里没有 `prompts.ts`。你 grep 不到一个把 system prompt 写在一起的文件，因为它压根不存在——模型看到的那段文字是十几个互不认识的插件各贡献一两句话，先由 `assemble()` 按 `order` 排好序，再由 `renderPrompt()` 这四行代码插值、丢空、用空行拼起来。
 
 这一篇先把默认组合下模型真实收到的东西逐字贴出来，再回过头讲它是怎么来的。
 
@@ -63,7 +63,7 @@ When you successfully create or modify files, mention the primary outputs in you
 
 有几段**不在**上面：`plan:policy`（order 50）在未进入 plan 模式时 provider 返回 `''`，被 `renderPrompt` 的 `.filter(text => text.length > 0)` 丢掉；`tools:code-only`（99）与 `tools:sdk`（150）在默认的 `native` 呈现模式下同样渲染为空。
 
-**上游 fixture 可以直接对照**。`apps/web/tests/snapshots/fresh-round-trip/system-prompt.expected.md` 是 Web 的真实录制结果，逐字是这样的（`{{sourceRoot}}` / `{{webUrl}}` / `{{cwd}}` 是快照录制器的归一化 token，见 `packages/test-support/acp-snapshot/README.md`，不是源码里的变量）：
+**上游 fixture 可以直接对照**。`apps/web/tests/snapshots/fresh-round-trip/system-prompt.expected.md` 是 Web 的真实录制结果，逐字是这样的。注意 `{{sourceRoot}}` / `{{webUrl}}` / `{{cwd}}` 这三个都**不是**源码里的 prompt 变量，而是录制器为了让快照跨机器稳定而替进去的归一化 token：`{{cwd}}` 由通用的快照工具产生（`packages/test-support/acp-snapshot/README.md`），前两个由 Web 那套回放测试自己替（`apps/web/tests/replay-round-trip.e2e.ts:89`、`:91`）。
 
 ```text
 You are an AI agent powered by DeepSeek Harness.
@@ -75,7 +75,7 @@ You are interacting with the user through the DeepSeek Harness Web GUI at {{webU
 You are a coding agent powered by the deepseek-v4-flash model. Your working directory is {{cwd}}.
 ```
 
-它只有四段，因为那个测试场景没挂 preset 的工具行。挂满工具的版本看 `examples/acp-agent/tests/snapshots/text-turn/system-prompt.expected.md`（3.4 KB，11 段——那个组合没装 fs-search 和 web，persona 也不同）。
+它只有四段，因为那个测试场景没挂 preset 的工具行。挂满工具的版本看 `examples/acp-agent/tests/snapshots/text-turn/system-prompt.expected.md`（3,466 字节，11 段——那个组合没装 fs-search 和 web，persona 也不同）。数段落的时候小心：那份文件里空行分隔的自然段有 12 个，因为 ACP 那份 persona 一段里自己带了个空行。
 
 ### 1.2 `tools[]`：字典序的 24 个 schema
 
@@ -88,11 +88,11 @@ send_message, skill, subagent, subagent_fork, todo_write, update_goal,
 web_search, workflow, write
 ```
 
-（这份清单是我按 `apps/cli/config/agent-presets/standard/agent.cordis.yml` 逐行推出来的，**是推断**；已录制的等价物是 ACP 示例的 `examples/acp-agent/tests/snapshots/text-turn/tool-schemas.expected.json`，那份组合少了 fs-search 与 web，多了别的，19 个名字同样是纯字典序。）
+（这份清单是我按 `apps/cli/config/agent-presets/standard/agent.cordis.yml` 逐行推出来的，**是推断**；已录制的等价物是 ACP 示例的 `examples/acp-agent/tests/snapshots/text-turn/tool-schemas.expected.json`，那份组合是这 24 个的真子集——少了 `glob`、`grep`、`web_search`、`ask_user_question`、`exit_plan_mode` 五个，剩下 19 个名字同样是纯字典序。）
 
 注意 `exit_plan_mode` 即使不在 plan 模式也一直注册着——注释写得很直白：「It stays registered while plan mode is inactive so the request tool catalog is stable across transitions」（`packages/plan/plan-mode/src/index.ts:64-67`）。工具目录稳定是缓存约束，不是功能需要。
 
-每个工具的 `description` 才是模型看到的大头。`bash` 的 description 一个人就有 1,600 多字符（`examples/acp-agent/tests/snapshots/text-turn/tool-schemas.expected.json` 第 5 行），从「每次调用是全新 shell」讲到「被沙箱拒绝时怎么升级」——这是上游「单次调用语义放 description」原则的直接结果，见 §六。
+每个工具的 `description` 才是模型看到的大头。`bash` 的 description 一个人就有 1,836 个字符（`examples/acp-agent/tests/snapshots/text-turn/tool-schemas.expected.json` 第 5 行），从「每次调用是全新 shell」讲到「被沙箱拒绝时怎么升级」——这是上游「单次调用语义放 description」原则的直接结果，见 §六。
 
 ### 1.3 `messages[1..]`：四条 user 消息
 
@@ -133,6 +133,7 @@ web_search, workflow, write
     in this session:
 
     <available_skills>
+    - `model-only-skill`: Prove user-disabled skills remain available to the model.
     - `snapshot-skill`: Exercise project skill discovery and loading in snapshot tests.
     </available_skills>
 
@@ -171,7 +172,7 @@ seq 5 的正文逐字就是上面 `[2]` 的框架；seq 6 的正文逐字就是 
 | --- | --- | --- | --- |
 | `section({name, order, text, complete?})` | `:381` | `sections` → system 字符串 | `name` 在同一层内唯一；`order` 必须有限；`text` 可以是 `string`，也可以是 `(AssembleContext) => string`，每次装配重新求值 |
 | `context({name, order, text})` | `:398` | `contexts` → user-role 快照 | 同上；返回空串等于「本次不贡献」而不是占位 |
-| `tools(provider)` | `:430` | `tools` | provider 返回 `{schemas, knownNames?}`；`knownNames` 是**限制之前**的名字全集 |
+| `tools(provider)` | `:430` | `tools` | provider 返回 `{schemas, knownNames?}`；`knownNames` 是这个 scope 在被 `tools.restrict()` 过滤**之前**能看见的名字全集，用来区分「名字写错了」和「名字被过滤掉了」 |
 | `variable(name, provider)` | `:446` | `variables` | 名字必须匹配 `/^[a-z][a-z0-9_]*$/`（`:134`）；provider 可以返回 `undefined`，但被引用时渲染抛错 |
 | `suppressRuntimeContext()` | `:415` | 让 `contexts = []` | 匿名条目，可注册多个各自 dispose |
 
@@ -190,7 +191,7 @@ prompt section "deployment:persona" is already registered
 
 ### `assemble()` 做了什么
 
-`assemble(context)` 是 `:467-542`，每个 step 跑一次。关键步骤：
+`assemble(context)` 在 `:467-542`，每个 step 跑一次。关键步骤：
 
 1. `chainLayers(scope)` 取出 scope 父链上**已存在**的层，最远祖先在前、本 scope 最后（`:469`）。典型链是 `agent → preset → global`。
 2. 抑制判定：全局层或链上任一层有抑制器，`runtimeContextSuppressed` 就为真（`:470-471`）。
@@ -202,7 +203,7 @@ prompt section "deployment:persona" is already registered
 8. 求值每段文本（函数就调用），顺手记下 complete 的那一份（`:510-518`）。
 9. contexts：被抑制就是 `[]`，否则按 order 排序求值（`:521-528`）。
 10. `orderTools(collected, this.toolOrder, knownNames)`（`:529`）。
-11. `ctx.waterfall(scopeTarget(this, scope), 'system-prompt/assemble', assembly, context, …)`（`:532-535`）：scope 过滤分发，监听器的返回值**权威**。
+11. 把装好的 assembly 交给 `system-prompt/assemble` 这个 waterfall 走一圈（`:532-535`）。第一个参数 `scopeTarget(this, scope)` 的作用是「只分发给挂在这个 scope 或它祖先上的监听器」，别的 agent 的监听器收不到。监听器的返回值**权威**——它可以整体改写 assembly。
 12. 事后强制（`:536-541`）：有 complete section 就把 `sections` 换成只有那一段；有抑制就把 `contexts` 清空——**连 waterfall 里加进来的也丢**。
 
 全仓库只有三个 `system-prompt/assemble` 监听器：`packages/core/agent/src/model-selection.ts:40` 把 UI 选中的 provider/model 覆写进 `variables`（让 `{{model}}` 与真正路由一致），加上两个纯校验用的 invariant（`packages/core/system-prompt/src/invariant.ts:47`、`packages/preset/agent-presets/src/invariant.ts:60`）。这个拦截点很强，但上游自己几乎不用。
@@ -226,7 +227,7 @@ export function renderPrompt(assembly: PromptAssembly): string {
 
 `interpolate` 在 `:258-295`，逐个扫描 `{{`：
 
-1. **未知或无值即抛错。** 名字用 `Object.hasOwn(variables, name)` 查（`:282`），所以 `{{constructor}}` 算未知而不是解析到 `Object.prototype`；provider 返回 `undefined` 时抛 `has no value for this assembly`。抛错发生在**每步渲染时**，后果是这个 turn 以 error 结束、loop 存活——不是启动失败。
+1. **未知或无值即抛错。** 名字用 `Object.hasOwn(variables, name)` 查（`:283`），所以 `{{constructor}}` 算未知而不是解析到 `Object.prototype`；provider 返回 `undefined` 时抛 `has no value for this assembly`。抛错发生在**每步渲染时**，后果是这个 turn 以 error 结束、loop 存活——不是启动失败。
 2. **不完整的引用要么是错误、要么是散文。** 匹配 `/^\{\{([^{}]*)\}\}/` 失败时，如果后面还有 `}}` 就抛 malformed（`{{{model}}}` 会中招），否则孤立的 `{{` 原样输出（`:268-276`）。
 3. **替换值不再扫描**（`:291`）。变量值里如果碰巧有 `{{…}}`（比如 cwd 里有），不会被二次展开。
 
@@ -245,13 +246,13 @@ export function renderPrompt(assembly: PromptAssembly): string {
     includeRuntimeContext: false
 ```
 
-于是 `harness:identity`、`harness:source`、`app:web-surface`、所有 `tool:*` 段落**全部消失**，模型只看到那一句。这就是上游拿去跑 benchmark 的组合。
+于是 `harness:identity`、`harness:source`、`app:web-surface`、所有 `tool:*` 段落**全部消失**，模型只看到那一句。上游给这个 preset 的定位是「Claude SWE 兼容的 RL 契约」组合（`.agents/notes/implemented/feature/2026-07-29-persistent-bash-str-replace-editor.md:21`）——要的正是「system prompt 完全由部署固定、其它包一句话都插不进来」。
 
 ### `toolOrder` 与字典序
 
 `orderTools` 在 `:164-178`：
 
-- 没配 ⇒ `tools.sort(compareToolNames)`（`:169`），纯 code-unit 比较，注释写明「locale-independent, so the order is identical on every machine」（`:181`）。
+- 没配 ⇒ `tools.sort(compareToolNames)`（`:169`），纯 code-unit 比较，注释写明「locale-independent, so the order is identical on every machine」（`:180`）。
 - 配了 ⇒ 加载时校验必须恰好含一次 `'<unlisted-tools>'`、不许重复（`:146-157`）；装配时校验列出的名字都在 `knownNames` 里（`:170-173`），所以配错名字是**第一个 turn** 炸，不是启动炸。未列出的按字典序插到 rest 位置。
 
 为什么要多这一层？`.agents/notes/implemented/feature/2026-07-06-explicit-tool-order.md` 记着：工具顺序影响请求字节、缓存和持久 header，而注册顺序受并发 import 影响，CI 出现过快照漂移。解法是「在列表诞生的地方规范化」，让无序列表不可表示。
@@ -260,11 +261,11 @@ export function renderPrompt(assembly: PromptAssembly): string {
 
 ## 三、全部 section 贡献者
 
-`grep -rn "systemPrompt.section({" packages/ --include=*.ts | grep -v /tests/` 数出 26 处调用点；再加上服务构造时自注册的两段（`packages/core/system-prompt/src/index.ts:357` 与 `:364`）和 `core/tools` 用私有方法注册的两段（`packages/core/tools/src/index.ts:834-835`），就是模型可能看到的全部段落。按 order 排：
+`grep -rn "systemPrompt.section({" packages/ --include=*.ts | grep -v /tests/` 数出 26 处调用点；再加上服务构造时自注册的两段（`packages/core/system-prompt/src/index.ts:358` 与 `:364`）和 `core/tools` 用私有方法注册的两段（`packages/core/tools/src/index.ts:834-835`），就是模型可能看到的全部段落。按 order 排：
 
 | order | name | owner（文件:行） | 文本（原文或摘要） | 何时出现 |
 | ---: | --- | --- | --- | --- |
-| −100 | `harness:identity` | `packages/core/system-prompt/src/index.ts:357` | `You are an AI agent powered by DeepSeek Harness.` | 默认总在 |
+| −100 | `harness:identity` | `packages/core/system-prompt/src/index.ts:358` | `You are an AI agent powered by DeepSeek Harness.` | 默认总在 |
 | −99 | `harness:source` | `packages/boot/app-boot/src/index.ts:824`（由 `packages/bundle/web-app/src/index.ts:142` 调用） | `The DeepSeek Harness implementation checkout is at ${sourceRoot}. …never infer the working directory from this path. Use pwd…` | Web 且 `surfaceContext: true` |
 | −98 | `app:web-surface` | `packages/bundle/web-app/src/index.ts:143`（文本 `:95-105`） | `You are interacting with the user through the DeepSeek Harness Web GUI at ${webUrl}. …` | 同上；`text` 是函数，每次装配读端口 |
 | 0 | `deployment:persona` | 全局：`packages/core/system-prompt/src/index.ts:364`（文本来自配置）；preset 遮蔽：`packages/preset/persona/src/index.ts:61`；子代理遮蔽：`packages/subagent/subagent/src/child-agent.ts:172` | Web/headless 默认 `You are a coding agent powered by the {{model}} model. Your working directory is {{cwd}}.` | 总在（空则丢） |
@@ -361,9 +362,9 @@ project(current: string, sections: readonly ContextSnapshotSection[]): UserMessa
 
 `CLEARED` 是 `'Current runtime context: none. Earlier runtime-context snapshots no longer apply.'`（`:13`）——最后一条 context 消失时要发一条「清空」快照，而不是什么都不发。
 
-三个 `undefined` / `null` / 有值的三态区分是整个逻辑的核心：从没发过 + 当前为空 ⇒ 什么都不做；发过但被压缩掉了 ⇒ 即使内容没变也要重发。
+`retained` 的三种取值（`undefined` = 从来没发过、`null` = 发过但已经不在 surface 上、有值 = 现在还留着）是整个逻辑的核心：从没发过 + 当前为空 ⇒ 什么都不做；发过但被压缩掉了 ⇒ 即使内容一个字没变也要重发一遍。
 
-### 实测：这条设计值多少 token
+### 上游实测：这条设计值多少 token（不是我跑的）
 
 `.agents/notes/implemented/feature/2026-07-30-current-sandbox-policy-context.md` 记录了改造前后的真实 provider 测量。
 
@@ -377,7 +378,7 @@ project(current: string, sections: readonly ContextSnapshotSection[]): UserMessa
 
 > Across the permission switches and four mutation steps, cache reads were 14,848–15,872 tokens while uncached input was 59–306 tokens per request.
 
-未命中从 14,691 降到 59–306。笔记里被「Rejected」的备选方案第一条就是「Put current policy in a dynamic system section」，理由写得很干脆：「DeepSeek matches complete prefixes; changing the first wire message prevents reuse of the longer system-plus-history prefix.」
+未命中从 14,691 降到 59–306。笔记里「Alternatives considered」一节否掉了四个方案，第三个正是「Put current policy in a dynamic system section」，理由写得很干脆：「DeepSeek matches complete prefixes; changing the first wire message prevents reuse of the longer system-plus-history prefix.」
 
 ### 录制证据
 
@@ -403,7 +404,7 @@ project(current: string, sections: readonly ContextSnapshotSection[]): UserMessa
 
 | 插件 | 监听点 | 插到哪 | 内容框架 |
 | --- | --- | --- | --- |
-| `dsh-agent-instructions` | `packages/context/agent-instructions/src/index.ts:322` | `toSpliced(lastClaimedIndex + 1, 0, desired)`（`:345`）——紧跟用户消息之后、runtime 快照之前 | `<system-reminder>` 包裹的 AGENTS.md 基线 |
+| `dsh-agent-instructions` | `packages/context/agent-instructions/src/index.ts:322` | `toSpliced(lastClaimedIndex + 1, 0, desired)`（`:346`）——紧跟用户消息之后、runtime 快照之前 | `<system-reminder>` 包裹的 AGENTS.md 基线 |
 | `dsh-tool-skill` 目录 | `packages/skill/tool-skill/src/index.ts:213` | `[...decision.messages, catalog]`（`:248`）——追加到尾 | `<system-reminder>` + `<available_skills>` |
 | `dsh-tool-skill` 用户显式调用 | `packages/skill/tool-skill/src/index.ts:177` | 目录之后（注册在目录监听器之前，所以是更外层，改得更晚，见 `:166-170` 的注释） | `<skill_content>` 块 |
 | `dsh-plan-mode` 叙述 | `packages/plan/plan-mode/src/index.ts:205` | 追加到尾（`:221`） | 切换 plan 模式的通知 |
@@ -476,10 +477,10 @@ const FILE_TOUCH_TOOL_NAMES = new Set(['read', 'write', 'edit'])
 ctx.systemPrompt.tools(context => this.wireSchemas(context.scope))
 ```
 
-3. **`wireSchemas(scope)`**（`packages/core/tools/src/index.ts:981-1001`）按呈现模式分支：`native` 返回该 scope 可见的全部 schema 加 `knownNames`；`code` 只暴露 `run_code`，`knownNames` 也只有它；`both` 全部加 `run_code`。`knownNames` 是「限制之前」的名字全集，用来区分「`toolOrder` 里写错了名字」和「这个 scope 被 `restrict()` 挡住了」。
+3. **`wireSchemas(scope)`**（`packages/core/tools/src/index.ts:980-1000`）按呈现模式分支：`native` 返回该 scope 可见的全部 schema 加 `knownNames`；`code` 只暴露 `run_code`，`knownNames` 也只有它；`both` 全部加 `run_code`。`knownNames` 是「限制之前」的名字全集，用来区分「`toolOrder` 里写错了名字」和「这个 scope 被 `restrict()` 挡住了」。
 4. **`orderTools`** 规范化顺序，见 §二。
 
-代码模式下还多两段 prompt，`tools:code-only`（99）在所有 `tool:*`（100–199）之前，`tools:sdk`（150）在它们之后。为什么这么排，注释解释得很清楚（`packages/core/tools/src/index.ts:842-850`）：
+代码模式下还多两段 prompt，`tools:code-only`（99）在所有 `tool:*`（100–199）之前，`tools:sdk`（150）在它们之后。为什么这么排，注释解释得很清楚（`packages/core/tools/src/index.ts:843-850`）：
 
 > Every tool contributes its own guidance section naming its tool, none of them qualify how that tool is reached … Without this the model reads a catalog of tools it is told to use and no statement that only `run_code` may be called, so it emits a native call, receives `UNKNOWN_TOOL` for a tool the prompt just declared, and concludes the deployment is inconsistent.
 
@@ -508,7 +509,7 @@ this.ctx = this.scope.ctx.extend({ agent: this })
 
 任何用 `agent.ctx` 调 `systemPrompt.*` 的注册都落在这一层。
 
-**preset** 是中间一层。`apps/cli/config/agent-presets/<name>/agent.cordis.yml` 每进程挂载一次到一个 standing scope，session 通过 scope 父链加入，于是链是 `agent → preset → global`。Web bundle 把 base 里所有每-agent 的工具行全部 `disabled: true`，改由 preset 挂——所以 **Web 下模型看到的工具和段落几乎完全由 preset 决定**。`packages/bundle/web-app/cordis.patch.yml` 里每一段禁用都带着注释解释 host 平面与 agent 平面的判据。
+**preset** 是中间一层。`apps/cli/config/agent-presets/<name>/agent.cordis.yml` 每进程挂载一次到一个 standing scope，session 通过 scope 父链加入，于是链是 `agent → preset → global`。Web bundle 把 base 里所有 agent 级的工具行全部 `disabled: true`，改由 preset 挂——所以 **Web 下模型看到的工具和段落几乎完全由 preset 决定**。`packages/bundle/web-app/cordis.patch.yml` 里每一段禁用都带着注释解释 host 平面与 agent 平面的判据。
 
 **子代理**走 `applyChildComposition`（`packages/subagent/subagent/src/child-agent.ts:163-175`）：
 

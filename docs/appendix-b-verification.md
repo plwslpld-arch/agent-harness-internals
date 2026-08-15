@@ -73,9 +73,9 @@ sed -n '300,322p' packages/core/agent-loop/src/agent.ts
 # 24 行，模型收到的完整 system prompt
 cat examples/acp-agent/tests/snapshots/text-turn/system-prompt.expected.md
 
-# 模型收到的工具 schema（27 KB）
-python -c "import json;d=json.load(open('examples/acp-agent/tests/snapshots/text-turn/tool-schemas.expected.json'));print(len(d))" 2>/dev/null \
-  || head -c 400 examples/acp-agent/tests/snapshots/text-turn/tool-schemas.expected.json
+# 模型收到的工具 schema（27 KB）。文件是 {"initial": [...], "changes": [[...]]}，
+# initial 就是首次请求里那串工具，数一下有几个、都叫什么：
+python -c "import json;d=json.load(open('examples/acp-agent/tests/snapshots/text-turn/tool-schemas.expected.json',encoding='utf-8'));print(len(d['initial']));print([t['name'] for t in d['initial']])"
 
 # 一次完整会话的事件日志（22 行 JSONL）
 cat examples/acp-agent/tests/snapshots/text-turn/session.jsonl
@@ -101,12 +101,16 @@ find packages \( -name '*.ts' -o -name '*.tsx' \) -not -path '*/node_modules/*' 
 find packages \( -name '*.ts' -o -name '*.tsx' \) -not -path '*/node_modules/*' -print0 \
   | grep -z  -E '/tests?/|__tests__' | xargs -0 cat | wc -l    # 268040
 
+# 同一口径下的测试文件个数（把 cat|wc -l 换成数文件）
+find packages \( -name '*.ts' -o -name '*.tsx' \) -not -path '*/node_modules/*' -print0 \
+  | grep -z  -E '/tests?/|__tests__' | tr '\0' '\n' | wc -l    # 854
+
 find .agents/notes -name '*.md' ! -name '*.zh.md' \
   ! -name 'AGENTS.md' ! -name 'README.md' ! -name 'CLAUDE.md' | wc -l   # 683
 find docs -name '*.md' ! -name '*.zh.md' | wc -l               # 110
 ```
 
-口径必须跟着数字一起给，否则数字没有意义。举个反例：`packages/client` 只数 `.ts` 是 44,093 行，加上 `.tsx` 是 72,428 行——两个都对，但不说口径就是误导。
+口径必须跟着数字一起给，否则数字没有意义。举个反例：`packages/client` 在上面这套「排除 `tests/`」的口径下，只数 `.ts` 是 44,093 行，加上 `.tsx` 是 72,428 行——两个都对，但不说数了哪些后缀、排没排测试，就是误导。
 
 ### 2.5 跑上游的单元测试
 
@@ -170,16 +174,18 @@ pnpm vitest run packages/core/agent-loop
 
 这是本仓库跟一般源码分析最不一样的地方，值得讲清楚，因为它决定了你能相信正文到什么程度。
 
-`scripts/verify-anchors.mjs` 做四件事：
+`scripts/verify-anchors.mjs` 做五件事：
 
 1. 扫 `docs/` 下每篇正文，用正则找形如「仓库相对路径 + 冒号 + 行号」的引用（也支持 `起-止` 区间）。**路径必须含至少一个斜杠、且后缀在白名单里**（`.ts` / `.tsx` / `.mjs` / `.js` / `.rs` / `.py` / `.md` / `.yml` / `.yaml` / `.json`）——所以根目录的 `AGENTS.md:103` 这种引用**不会**被自动校验，只能靠人。
 2. **代码块里的行号不算引用**——因为那多半是 `sed -n '19,55p'` 这样的命令参数。
-3. 在锁定的 checkout 里读出那一行（区间取首行）。路径不存在或行号越界，直接失败。
+3. 在锁定的 checkout 里读出那一行（区间取首行）。行号越界直接失败；路径不存在也失败，但**前提是那些 checkout 已经拉下来**——没 bootstrap 过的话这一步整体跳过，由 `sources:verify` 去报。
 4. 如果那一行是空行，往下找 3 行内的第一行非空内容（多行声明和注释块常见这种偏移），仍找不到才算失败。
+
+5. **如果引用后面跟着「原文片段」，还会做一次子串匹配。** 写成 `` `路径:行号`「export function renderPrompt」 `` 时，门禁会把被引区间的空白折叠后找这段文字，找不到就失败。
 
 repo 前缀可以显式写（`codex!codex-rs/core/src/lib.rs:10`），不写就取 frontmatter 里唯一绑定的那个源，还不唯一就默认 `deepseek-harness`。
 
-它保证的是「指到了一个真实存在的行」，**不保证那一行讲的是文章说的那件事**。后者只能人读。但这一条已经把「行号写错也能过 CI」这个漏洞堵上了——旧版校验只确认文件存在，于是「每句话都能追到证据」是句空话。
+不带引文时，它保证的是「指到了一个真实存在的行」，**不保证那一行讲的是文章说的那件事**——「行号对、但指到了相邻的另一个声明」这类错要靠人读，或者靠上面第 5 条把它变成机器可查的。但这一条已经把「行号写错也能过 CI」这个漏洞堵上了——旧版校验只确认文件存在，于是「每句话都能追到证据」是句空话。
 
 想自己跑单步：
 

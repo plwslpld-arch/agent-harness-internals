@@ -7,11 +7,11 @@ status: draft
 
 # 总览：一次请求是怎么拼出来、发出去、记下来的
 
-dsh（DeepSeek Harness）没有一个叫 `main.ts` 的地方把请求拼好发出去。它是一棵 Cordis 插件树，模型每一步收到的字节由几十个互不认识的插件各自贡献一小块，在 `preStep()` 这一个函数里汇合。这一篇给出那条完整路径，把术语在原地讲清楚，再列出上游 49 个包组各管什么、由本系列哪一篇覆盖。
+dsh（DeepSeek Harness）没有一个叫 `main.ts` 的地方把请求拼好发出去。它是一棵 Cordis 插件树——Cordis 是一个 TypeScript 的依赖注入 / 插件框架，上游 fork 了一份自用（为什么要 fork 见 [10](10-cordis-boot-preset.md)）；一棵树上的每个节点是一个插件实例，插件之间靠事件和服务互相找。模型每一步收到的字节就由这几十个互不认识的插件各自贡献一小块，在 `preStep()` 这一个函数里汇合。这一篇给出那条完整路径，把术语在原地讲清楚，再列出上游 49 个包组各管什么、由本系列哪一篇覆盖。
 
 ## 一次 dsh 请求，从进程到落盘
 
-先看骨架。下面每一行的函数名与事件名都是源码里的字面量：
+先看骨架。下面每一行的函数名与事件名都是源码里的字面量；出现的「row（行）」指的是 Cordis 配置文件里的一条插件条目——一行声明装哪个包、给它什么配置：
 
 ```text
 $ dsh web
@@ -19,7 +19,7 @@ $ dsh web
      └─ apps/cli/src/profile-boot.ts   composeProfile(): 把 bundle 补丁叠加到空的 entry 列表
          └─ @deepseek-ai/dsh-app-boot  boot(): 建根 context、装 Loader、挂载 include 树
              ├─ dsh-base    78 个 row：llm / session / tools / sandbox / approval / persistence …
-             ├─ dsh-web-app HTTP 服务 + 27 个 ui-* 浏览器插件；把每-agent 的工具行全部 disabled
+             ├─ dsh-web-app HTTP 服务 + 27 个 ui-* 浏览器插件；把 agent 级的工具行全部 disabled
              └─ agent-presets  standard / code / minimal / cordis 四个会话级组合
 
 用户在 Web 里敲一句话
@@ -41,7 +41,7 @@ $ dsh web
               ├─ system = renderPrompt(assembly)             :337
               ├─ buildRequest(turn, step, assembly.tools, system,
               │               session.deriveMessages(), signal)            :340-342
-              │    ├─ waterfall 'agent/request' → 冻结的 LlmCallConfig      :437-440  (事件名 :439)
+              │    ├─ waterfall 'agent/request' → 整体替换 LlmCallConfig    :438-441  (事件名 :439)
               │    ├─ header = canonicalHeader({config, adapterDefaults, system, tools})  :458
               │    ├─ 首次/变化时 session.append('request/header')          :466 / :469
               │    ├─ 路由变化时 session.append('request/context')          :482
@@ -51,7 +51,7 @@ $ dsh web
                       BlockAssembler 聚合 → assistant/message
                       tool/call → tools/pre-execute → tools/execute → tools/post-execute → tool/result
              session.append('step/end')                      agent.ts:292
-         waterfall 结束 → serial 'agent/turn-stopping' → turn/end
+         step 循环收敛 → serial 'agent/turn-stopping' → turn/end
 ```
 
 三件事值得先记住：
@@ -60,13 +60,13 @@ $ dsh web
 
 **二、`assemble()` 每一步都重跑，但设计目标是字节不变。** `request/header` 事件只在首次或 `headerEquals` 判定变化时才写（`packages/core/agent-loop/src/agent.ts:464-470`），这既是审计记录，也是「前缀有没有断」的可观测量。为什么这条约束值得整套架构围着它转，见 [02 KV-Cache](02-kv-cache.md)。
 
-**三、「模型可见 ⟺ 已记录」是硬不变量。** 任何进入请求的内容都必须先成为一条 session 事件——所以你在 `agent.ts:282-284` 看到的是「先 append 再发」，而不是「发完再记」。上游把这条写进了 `docs/architecture.md:96`，并有运行时断言守着它。展开见 [05 Session](05-session.md)。
+**三、「模型可见 ⟺ 已记录」是硬不变量。** 任何进入请求的内容都必须先成为一条 session 事件——所以你在 `agent.ts:282-284` 看到的是「先 append 再发」，而不是「发完再记」。上游把这条写进了 `docs/architecture.md:96`，还写了一句「a runtime invariant asserts it」。这句话要打个折：那条断言确实存在（`packages/core/agent-loop/src/invariant.ts:39-42`），但它挂在可选的 `dsh-invariants` 服务上，而出厂的 `dsh` 配置**一个 invariant 都不挂**（`.agents/notes/implemented/simplification/2026-08-03-omit-invariants-from-shipped-config.md:13`）。真正一直生效的是写入侧的强制：surface 事件不带 `surfaceOp` 直接抛。展开见 [05 Session](05-session.md)。
 
 ## 术语（就地解释，不用翻附录）
 
 - **surface（表面）**——事件日志的一个子视图：只有 `user/message`、`assistant/message`、`tool/result` 三种事件能进入 surface（`packages/core/session/src/surface.ts:15-19`），`deriveMessages()` 只从 surface 折叠模型历史。压缩改写历史时不是删事件，而是往 surface 上追加一条「替换」事件。
 - **epoch header / `request/header`**——一次请求的「信封」：调用配置 + adapter 默认值标记 + 渲染好的 system 字符串 + 装配好的工具 schema（`packages/core/session/src/request-header.ts:21`）。它是持久事件，所以任何人拿着日志就能逐字节重建当时那个请求。
-- **scope（作用域）**——每-agent 注册的单位。一个工具、一段 prompt、一个变量，要么是全局的（每个 agent 都看得见），要么属于恰好一个 scope key；上游约定「一个活着的 agent 就是自己 scope 的 key」（`docs/glossary.md` 的 agent-scope 条目）。同名注册在更近的 scope 上遮蔽全局的那份——per-agent persona 就是这么实现的。
+- **scope（作用域）**——按 agent 隔离注册的单位。一个工具、一段 prompt、一个变量，要么是全局的（每个 agent 都看得见），要么属于恰好一个 scope key；上游约定「一个活着的 agent 就是自己 scope 的 key」（`docs/glossary.md` 的 agent-scope 条目）。同名注册在更近的 scope 上遮蔽全局的那份——per-agent persona 就是这么实现的。
 - **waterfall（瀑布事件）**——Cordis 的环绕式中间件：监听器必须 `await next()` 才会往下走，返回值权威。`agent/pre-step`、`agent/request`、`llm/stream`、`system-prompt/assemble`、三个 `tools/*` 都是 waterfall（`docs/architecture.md:84`）。这是 dsh 唯一的拦截机制，没有第二套钩子系统。
 - **fiber（纤程）**——Cordis 里一个插件实例的生命周期句柄。所有注册都是 `ctx.effect(...)`，插件卸载时 fiber 一起 dispose，注册自动撤销。所以「装了什么插件」和「模型看到什么」永远是同一件事。
 - **inbox（收件箱）**——agent 的唯一输入队列。`send(message, target, wakeup)` 把消息投进去，`target` 是 `'next-turn'` 或 `'next-step'`，`wakeup` 决定要不要立刻唤醒驱动（`packages/core/agent-loop/src/agent.ts:113-131`）。注入的上下文可以不唤醒，等下一条真消息把它带上车。

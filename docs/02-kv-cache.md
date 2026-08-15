@@ -7,7 +7,7 @@ status: draft
 
 # KV-Cache：没有一行缓存管理代码，为什么还能一直命中
 
-在整个 dsh 仓库里搜 `cache_control`，结果是零。搜 `prompt_cache_key`，也是零。没有 cache breakpoint，没有 TTL 选项，没有任何一处调用「provider 的缓存 API」。
+在整个 dsh 仓库里搜 `cache_control`，结果是零。搜 `prompt_cache_key`，只有一处，还是 Codex 子代理的一份测试 fixture 里抄下来的 OpenAI 响应字段（`packages/subagent/subagent-codex/tests/responses-fixture.ts:70`，值是 `null`）。也就是说：没有 cache breakpoint，没有 TTL 选项，没有任何一处调用「provider 的缓存 API」。
 
 但 dsh 有一个带真实 API key 才会跑的端到端测试，断言**第一次之后的每一次请求，DeepSeek 都必须报告非零的缓存读取**（`packages/core/agent-loop/tests/request-cache.e2e.ts:92`）。同时上游一条真实测量记录写着：在四步连续变更权限策略的过程中，「cache reads were 14,848–15,872 tokens while uncached input was 59–306 tokens per request」（`.agents/notes/implemented/feature/2026-07-30-current-sandbox-policy-context.md:35`）。
 
@@ -62,12 +62,12 @@ export function serializeRequest(
 几个对缓存至关重要的事实直接从这段代码读出来：
 
 - **system prompt 永远是 `messages[0]`**（`serialize.ts:157`），不是什么单独的顶层字段。它一个 token 变，整条消息序列的第一个 token 就变了。
-- **`tools` 是 JSON 顶层字段**，排在 `messages` 之后；空数组不发（`serialize.ts:182` 的展开条件是 `tools.length > 0`）。服务端把工具定义渲染到 chat template 的哪个位置由 provider 决定，仓库里没有说明；但 dsh 的所有设计记录都把 tools 和 system 一起当作「请求头部」处理。
+- **`tools` 是 JSON 顶层字段**，排在 `messages` 之后；空数组不发（`serialize.ts:183` 的展开条件是 `tools.length > 0`）。服务端把工具定义渲染到 chat template 的哪个位置由 provider 决定，仓库里没有说明；但 dsh 的所有设计记录都把 tools 和 system 一起当作「请求头部」处理。
 - **对象字面量的字段顺序是写死的**。`adapter.ts` 拿到这个对象就直接 `JSON.stringify`（`packages/llm/llm-deepseek/src/adapter.ts:279`、`:282`），所以同样的输入必然产生同样的字节串——没有 Map 遍历顺序、没有时间戳、没有随机数。
 
-再看消息本身怎么转。`serializeMessages`（`serialize.ts:112`）有三条容易踩坑但对前缀稳定至关重要的规则：
+再看消息本身怎么转。`serializeMessages`（`serialize.ts:112`）有四条容易踩坑但对前缀稳定至关重要的规则：
 
-**1）assistant 消息的 `content` 永远是字符串，绝不是 `null`。** 源码注释把原因写得很直白（`serialize.ts:86` 起）：
+**1）assistant 消息的 `content` 永远是字符串，绝不是 `null`。** 源码注释把原因写得很直白（`serialize.ts:87` 起）：
 
 ```ts
     // Text-less turns send "" — NEVER null. Pure tool-call turns: the
@@ -215,6 +215,8 @@ dsh 有两个 LLM 适配器。DeepSeek 直连适配器（`llm-deepseek`）如上
 
 ## 四、稳定前缀 vs 每步可变
 
+把一次请求的六个组成部分按「变了会烧掉多少缓存」排一遍，就得到下面这张表。最后一列是重点：同样是「变了」，变在头部和变在尾部的代价差好几个数量级。
+
 | 请求组成 | 谁生成 | 什么时候变 | 变了从哪起失效 |
 | --- | --- | --- | --- |
 | `system` 全文 | `renderPrompt(assembly)`（`packages/core/system-prompt/src/index.ts:212`），section 按 `order` 排序（`:504`）；变量只有 `provider`/`model`/`cwd`（`packages/core/agent-loop/src/index.ts:351`），会话内是常量 | 插件注册/卸载 section、进出 plan 模式、persona 变化 | **第一个 token**，最贵 |
@@ -222,7 +224,7 @@ dsh 有两个 LLM 适配器。DeepSeek 直连适配器（`llm-deepseek`）如上
 | 历史消息 | `Session.deriveMessages()`（`packages/core/session/src/index.ts:726`）逐节点投影 surface | 正常只追加；压缩和剪枝会 `replace` | 追加 → 全命中；replace → 被替换的第一个 token |
 | 运行时上下文快照 | `RuntimeContextProjection.project()`（`packages/core/agent-loop/src/runtime-context.ts:64`），排在本步 claimed 消息**之后**（`agent.ts:238`） | 快照字节变化、被压缩掉、全部清空 | 只影响尾部，前缀完好 |
 | 每步新增 | 用户输入 / steer / 工具结果 / assistant 输出 | 每步 | 纯追加 |
-| 采样标量 | `LlmCallConfig`（`packages/llm/llm/src/call-config.ts:23`） | `agent/request` waterfall 或 adapter 默认值 | 不占 prompt token（见 §11 的诊断陷阱） |
+| 采样标量 | `LlmCallConfig`（`packages/llm/llm/src/call-config.ts:23`） | `agent/request` waterfall 或 adapter 默认值 | 不占 prompt token（见 §十一 的诊断陷阱） |
 
 一句话读法：**头部（system + tools）一动全死，尾部随便加。** dsh 的全部工程努力就是把易变的东西从头部赶到尾部。
 
@@ -326,7 +328,7 @@ function compareToolNames(a: ToolSchema, b: ToolSchema): number {
 
 **工具结果的提交顺序。** 并行工具可以乱序完成，但结果只沿着「连续的模型顺序槽位」提交（`packages/core/agent-loop/src/tool-calls.ts:146`）：`commitReady` 从 `committed` 开始，只要下一个槽位还没有结果就停下来等。于是 `tool/result` 事件永远按模型给出的 call 顺序进日志。
 
-取消也被补齐了：一次取消发生时，那些还没派发的调用会被合成一对 `tool/call` + 错误 `tool/result`（`tool-calls.ts:249`），文本是 `'Error: tool call aborted before dispatch'`，错误码 `TOOL_ABORTED_BEFORE_DISPATCH`。这保证 assistant 的 `tool_calls` 和后面的 `role:'tool'` 消息永远配对完整——否则重放或重试会得到一个形状不同的消息序列。
+取消也被补齐了：一次取消发生时，那些还没派发的调用会被合成一对 `tool/call` + 错误 `tool/result`（`tool-calls.ts:249`），文本是 `'Error: tool call aborted before dispatch'`，错误码 `ABORTED_BEFORE_DISPATCH`（源码里的常量名是 `TOOL_ABORTED_BEFORE_DISPATCH`，`packages/core/tools/src/index.ts:472`）。这保证 assistant 的 `tool_calls` 和后面的 `role:'tool'` 消息永远配对完整——否则重放或重试会得到一个形状不同的消息序列。
 
 **易变状态被赶到尾部。** system prompt 里没有日期、没有 git 状态、没有当前权限模式。这些东西走另一条路：`RuntimeContextProjection`（`packages/core/agent-loop/src/runtime-context.ts:25`）在每步 assemble 之后，把所有活跃的动态上下文渲染成一个完整快照，前面加一句固定的引导语（`packages/core/system-prompt/src/index.ts:239`）：
 
@@ -369,53 +371,17 @@ function compareToolNames(a: ToolSchema, b: ToolSchema): number {
 
 先纠正一个常见误解：**压缩确实会发一次独立的 LLM 请求**。`summarizeWithLlm` 里有一行明明白白的 `ctx.llm.stream(options)`（`packages/compaction/compaction-basic/src/summarizer.ts:164`）。省下来的不是这次请求，是这次请求的 prefill 成本。
 
-关键在于这次请求怎么拼。`buildSummarizationInput`（`region.ts:498`）：
+省法是让这次请求的前缀与主对话**逐字节对齐**：`buildSummarizationInput`（`packages/compaction/compaction-basic/src/region.ts:498`）直接从 `session.requestHeader()` 取 `system` 与 `tools`，被压区间的每个事件走同一个 `deriveEventMessage` 投影，于是得到和上一次路由请求完全相同的消息对象；摘要指令只作为**最后一条 user 消息**追加（`summarizer.ts:146`）。
 
-```ts
-function buildSummarizationInput(
-  session: Session,
-  shadowedSeqs: readonly number[],
-): SummarizationInput {
-  const header = session.requestHeader()
-  const events = session.events
-  const regionMessages = shadowedSeqs
-    .map(seq => session.deriveEventMessage(events[seq]!))
-    .filter((message): message is Message => message !== null)
-  return {
-    ...header?.system === undefined ? {} : { system: header.system },
-    ...header?.tools === undefined ? {} : { tools: header.tools },
-    messages: regionMessages,
-  }
-}
-```
+这个「指令放尾部」是一次专门的 bug 修复（`.agents/notes/implemented/bug-fix/2026-07-21-compaction-summary-prefix-cache-reuse.md:9`），原来的实现用独立的 summarizer system prompt，结果是「Every compaction therefore paid full prompt-processing cost for the whole replayed history twice」。修复里有一个反直觉的细节：**即使摘要器一个工具都不会调，`tools` 也必须带上**，否则 token 序列变短、对不齐（`:17`）。
 
-`system` 和 `tools` 直接取自 `session.requestHeader()`，被压区间的每个 seq 走**同一个** `deriveEventMessage` 投影——得到和上次路由请求逐字节相同的 `Message` 对象。然后 `summarizeWithLlm` 只在末尾追加一条 user 消息（`summarizer.ts:146`）：
-
-```ts
-  const messages: Message[] = [
-    ...input.messages,
-    createUserMessage({
-      content: [{ type: 'text', text: COMPACTION_INSTRUCTION }],
-      source: { kind: 'plugin', plugin: 'dsh-compaction-basic' },
-    }),
-  ]
-```
-
-`COMPACTION_INSTRUCTION`（`summarizer.ts:31`）以「You are now acting as a compaction engine for this AI coding assistant. Condense the conversation ABOVE…」开头，要求输出固定的八节 Markdown。
-
-这个「指令放尾部」的决定有专门的 bug-fix 记录（`.agents/notes/implemented/bug-fix/2026-07-21-compaction-summary-prefix-cache-reuse.md`）。原来的实现用一个独立的 summarizer system prompt 加一段扁平化 transcript，问题描述是（`:9`）：
-
-> A provider caches on the request's leading token sequence, so a first token that differs — a different system prompt — invalidates the entire cached prefix. Every compaction therefore paid full prompt-processing cost for the whole replayed history twice.
-
-修复方案里有一个反直觉的细节（`:17`）：**即使摘要器一个工具都不会调，`tools` 也必须带上**——「dropping them would shorten the token sequence and break alignment with the cached request」。
-
-复用的保证范围也说清楚了（`:25`）：自动压缩永远锚在 surface 头，所以被压区间就是路由请求的真前缀，属于「保证命中」的情形；手动 `compactRegion` 压中段区间、或者配置了不同的 `summarizationProvider`/`summarizationModel`，仍然正确但不复用——那是部署方的显式取舍。
-
-后来改「摘要一律用英文」的需求，也是只改尾部指令、不动前缀（`.agents/notes/implemented/bug-fix/2026-07-31-english-compaction-checkpoints.md`）。这条纪律被自觉遵守着。
+完整的代码、指令原文、以及「哪些情形保证复用、哪些只是正确但不复用」，见 [06 压缩](06-compaction.md)。
 
 ---
 
 ## 八、其它场景逐一
+
+压缩之外，还有八种日常操作会碰到前缀。把它们摊开看，会发现只有前两种是真正的头部改动，其余要么纯追加、要么根本不在主对话的前缀上。
 
 | 场景 | 发生什么 | 缓存后果 |
 | --- | --- | --- |
@@ -428,7 +394,7 @@ function buildSummarizationInput(
 | **session-title 辅助请求** | 独立小请求，`purpose: 'session-title'` 强制 `thinking: disabled`（`packages/llm/llm-deepseek/src/serialize.ts:38`） | 「No main-request invalidation」（`packages/session/session-title-llm/README.md:42`） |
 | **plan 模式进出** | `plan:policy` 是一个**函数式 system section**（`packages/plan/plan-mode/src/index.ts:225`），order 50 | 「entering or leaving changes the system prompt from order 50 onward」（`packages/plan/plan-mode/README.md:62`）——有意接受的失效点 |
 
-fork 那一条值得多说两句，因为它把这套推理用到了极致。设计记录（`.agents/notes/implemented/architecture/2026-08-10-fork-children-stay-one-shot.md:11`）的论证是：fork 相对 spawn 的唯一差别就是「子会话继承了父的历史前缀」，而这份继承的历史**每次子请求都要重发**，它唯一的回报就是 provider 侧的前缀复用；任何加在继承历史**之前**的东西都会把这个回报花光——「reuse stops at the first differing byte」。continuable 子代理正好加了两样东西在头部，于是「pays fork's duplication cost and collects none of its benefit」。
+fork 那一条值得多说两句，因为它把这套推理用到了极致。设计记录（`.agents/notes/implemented/architecture/2026-08-10-fork-children-stay-one-shot.md:9`）的论证是：fork 相对 spawn 的唯一差别就是「子会话继承了父的历史前缀」，而这份继承的历史**每次子请求都要重发**，它唯一的回报就是 provider 侧的前缀复用；任何加在继承历史**之前**的东西都会把这个回报花光——「reuse stops at the first differing byte」。continuable 子代理正好加了两样东西在头部（`report` 工具 schema 和 `tool:report` 段落），于是（`:11`）「pays fork's duplication cost and collects none of its benefit」。
 
 结论不是改代码，而是改组合配置：所有出厂组合把 fork 委派工具绑成 `backgroundMode: one-shot`（`:15`），并在 `prepareContinuable` 上留了一个 `TODO(fork-continuable-prefix-reuse)` 标记（`:25`），重新开放的条件写得很具体：等到子代理的 system prompt 和工具 schema 能和父的逐字节相同。
 
@@ -458,25 +424,19 @@ export function cacheHitPercent(usage: TokenUsageProjection): number | null {
 
 ---
 
-## 十、仓库级的文档纪律（这不是运行时机制）
+## 十、一层容易被误当成机制的东西：文档纪律
 
-到这里为止讲的都是代码。dsh 另外还有一层制度，容易被误当成机制，得说清楚区别。
+到这里为止讲的都是代码。dsh 另外有一层制度：每个模型相关的包 README 必须以 `## Model Experience` 段结尾，其中一个固定小节叫 `KV Cache effect`，要求写清「本包的哪些改动会让已有前缀作废」（`.agents/notes/implemented/process/2026-07-12-package-model-experience-contract.md:15`）。219 个包里 215 个有这一段，剩下 4 个写在校验器的豁免表里并附了理由。
 
-每个模型相关的包 README 必须以 `## Model Experience` 段结尾，每个上下文条目下有三个固定 H4：`What the model sees` / `Token effect` / `KV Cache effect`（`.agents/notes/implemented/process/2026-07-12-package-model-experience-contract.md:15`）。cookbook 对缓存那一段的要求是（`docs/cookbook/adding-a-package.md:105`）：
+有两点要说准确。**第一，它承诺的很有限**：cookbook 的原文是「"Does not invalidate" means the package preserves an already-reusable prefix; provider cache availability and eviction remain outside the package contract」（`docs/cookbook/adding-a-package.md:105`）——只承诺「不主动破坏」，不承诺真的命中。**第二，校验器校的是结构不是分类**：它检查标题层级、字段非空、锚链接这些，那四种缓存情形是写作指引，不是被机器强制的受控词汇表。
 
-> In `KV Cache effect`, distinguish append-only growth, a stable repeated prefix, replacement of earlier request tokens, and an independent model request, then name the package-owned changes that can invalidate reuse. "Does not invalidate" means the package preserves an already-reusable prefix; provider cache availability and eviction remain outside the package contract.
-
-注意最后一句：「Does not invalidate」只承诺「本包不主动破坏一个已经可复用的前缀」，**不承诺 provider 真的会命中**。
-
-覆盖面是可以自己数的：`packages/*/*` 下有 219 个包，其中 215 个 README 带 `## Model Experience` 段，另外 4 个写在校验器的 `NO_MODEL_EXPERIENCE_SECTION` 豁免表里、每条都附了理由（`scripts/verify-package-readme-model-experience.ts:32`）。校验器本身 553 行，在 `doc-sync` 门禁里跑。
-
-但要准确：**校验器校验的是结构，不是分类。** 它检查的是「三种 README 分类、最终段落顺序、H4 标题的层级与顺序、每个字段非空、逐字块的 H5 归属、字面证据、tool-catalog 锚链接」（`.agents/notes/implemented/process/2026-07-12-package-model-experience-contract.md:19`）。上面那四种情形是**写作指引**，不是被机器强制的受控词汇表——把它说成「必须归入四类之一」是夸大。这一层的价值是「哪个包会打断前缀」变得可审计，价值真实，但它是文档纪律，跟运行时一个 token 都没关系。
+这一层的价值真实——「哪个包会打断前缀」变得可审计——但它是文档纪律，跟运行时一个 token 都没关系。这套自证体系（连同 219 个 invariant、测试门禁）见 [13 自证与工程化](13-self-verification.md)。
 
 ---
 
 ## 十一、代价与失效点
 
-**1）没有任何运行时的稳定性断言。** dev 模式下会启用一个不变量（`packages/core/agent-loop/src/invariant.ts:21`），它检查：请求已冻结、带活的 sessionId、日志里有 `step/start` 和 `request/header`、`JSON.stringify(options.messages) === JSON.stringify(session.deriveMessages())`（否则报 log-reconstruction desync）、以及 model/system/temperature/maxTokens/stop/tools 与折叠出来的 header 一致（`invariant.ts:44`）。
+**1）没有任何运行时的稳定性断言。** 仓库里确实有一个不变量（`packages/core/agent-loop/src/invariant.ts:21`），但它挂在可选的 `dsh-invariants` 服务上，出厂的 `dsh` 配置一个都不挂（`.agents/notes/implemented/simplification/2026-08-03-omit-invariants-from-shipped-config.md:13`），只有测试、示例和自建组合才开。它检查：请求已冻结、带活的 sessionId、日志里有 `step/start` 和 `request/header`、`JSON.stringify(options.messages) === JSON.stringify(session.deriveMessages())`（否则报 log-reconstruction desync）、以及 model/system/temperature/maxTokens/stop/tools 与折叠出来的 header 一致（`invariant.ts:44`）。
 
 这证明的是「请求 = 日志」，**不是**「本次请求是上次请求的前缀扩展」。前缀稳定性在运行时没有任何断言，也没有告警——命中率塌了只能事后从 usage 里看出来。这和 note 自己的定性一致：emergent，不是 managed。
 
@@ -508,6 +468,8 @@ export function cacheHitPercent(usage: TokenUsageProjection): number | null {
 
 ## 十二、别人怎么做
 
+第一列决定了后两列：**provider 要不要你显式声明缓存断点**。要（Anthropic 系）就得考虑「写入也要花钱」，于是 pi 那种「隔离辅助请求」的做法才讲得通；不要（DeepSeek 这种自动前缀匹配）就只剩一件事可做——别去碰前缀。Claude Code 一行来自官方公开文档与官方博客，其余读自源码。
+
 | Harness | 缓存模型 | 动态信息放哪 | 辅助请求怎么处理 |
 | --- | --- | --- | --- |
 | **Claude Code** | Anthropic 显式 `cache_control` 断点（最多 4 个），分层排序：静态 system + tools（全局缓存）→ CLAUDE.md（项目内缓存）→ 会话上下文 → 对话消息。订阅账号 1 小时 TTL，API key 默认 5 分钟 | 进 user 消息，用 `<system-reminder>` 标签包裹；plan 模式做成 `EnterPlanMode`/`ExitPlanMode` 两个**工具**而不是换工具集，这样工具定义不变 | `/compact` 复用「完全相同的 system prompt、user context、system context、tool definitions」，只在末尾加一条摘要指令。官方博客说他们「alert on cache breaks and treat them as incidents」 |
@@ -532,8 +494,9 @@ export function cacheHitPercent(usage: TokenUsageProjection): number | null {
 ```sh
 cd sources/checkouts/deepseek-harness
 
-# 1. 确认没有任何显式缓存 API 调用（预期：全部为 0 行输出）
-grep -rn "cache_control\|cacheControl\|prompt_cache_key" packages --include=*.ts | grep -v node_modules
+# 1. 确认没有任何显式缓存 API 调用
+#    预期：非测试代码 0 行；不加 grep -v 会多出一行 Codex 的响应 fixture
+grep -rn "cache_control\|cacheControl\|prompt_cache_key" packages --include=*.ts | grep -v /tests/
 
 # 2. Model Experience 覆盖：219 个包，215 个带段，4 个在豁免表里
 ls packages/*/*/package.json | wc -l
@@ -541,7 +504,7 @@ grep -rl '^## Model Experience' packages --include=README.md | wc -l
 sed -n '32,37p' scripts/verify-package-readme-model-experience.ts   # 豁免表与理由
 
 # 3. 读 serialize.ts 的关键行
-sed -n '151,187p' packages/llm/llm-deepseek/src/serialize.ts   # 完整 wire body
+sed -n '151,188p' packages/llm/llm-deepseek/src/serialize.ts   # 完整 wire body
 sed -n '86,100p'  packages/llm/llm-deepseek/src/serialize.ts   # content:"" 与 reasoning_content 规则
 sed -n '126,138p' packages/llm/llm-deepseek/src/serialize.ts   # tool 消息拆分与 (no output)
 
