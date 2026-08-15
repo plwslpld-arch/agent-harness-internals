@@ -1,56 +1,62 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync } from 'node:fs';
+// 校验 docs/ 下每篇文章的 frontmatter：
+// - sources 里的每个条目必须指向 sources.yml 里存在的仓库、完整 SHA、且与 lock 一致
+// - 声明的路径必须在该 commit 下真实存在
+// - last_verified 必须是日期，status 必须在允许集合内
 import { join } from 'node:path';
 import { analysisFiles, parseFrontmatter } from './analysis-metadata.mjs';
-import { checkoutsDir, fail, git, readManifest, root } from './lib.mjs';
+import { checkoutsDir, fail, git, readManifest } from './lib.mjs';
 
 const { manifest, locks } = readManifest();
 const sourceIds = new Set(manifest.sources.map(({ id }) => id));
-const allowedStatus = new Set(['draft', 'reviewed', 'verified', 'stale']);
-const allowedDepth = new Set(['L0', 'L1', 'L2', 'L3']);
-const allowedEvidence = new Set(['code', 'test', 'runtime', 'official-doc', 'community', 'inference']);
-const stalePath = join(root, 'sources', 'stale-documents.md');
-const staleLedger = existsSync(stalePath) ? readFileSync(stalePath, 'utf8') : '';
+const allowedStatus = new Set(['draft', 'reviewed', 'stale']);
 const errors = [];
+const files = analysisFiles();
 
-for (const file of analysisFiles()) {
+for (const file of files) {
   const { metadata } = parseFrontmatter(file.content);
   if (!metadata) {
-    errors.push(`${file.relativePath}: missing YAML frontmatter`);
+    errors.push(`${file.relativePath}: 缺少 YAML frontmatter`);
     continue;
   }
-  for (const field of ['sources', 'last_verified', 'status', 'depth', 'evidence']) {
-    if (!metadata[field] || (Array.isArray(metadata[field]) && !metadata[field].length)) errors.push(`${file.relativePath}: missing ${field}`);
+  for (const field of ['title', 'sources', 'last_verified', 'status']) {
+    if (!metadata[field] || (Array.isArray(metadata[field]) && !metadata[field].length)) {
+      errors.push(`${file.relativePath}: 缺少 ${field}`);
+    }
   }
-  if (!Array.isArray(metadata.sources) || !metadata.sources.length) continue;
+  if (!/^\d{4}-\d{2}-\d{2}$/u.test(metadata.last_verified ?? '')) {
+    errors.push(`${file.relativePath}: last_verified 必须是 YYYY-MM-DD`);
+  }
+  if (!allowedStatus.has(metadata.status)) {
+    errors.push(`${file.relativePath}: status 非法（允许 ${[...allowedStatus].join(' / ')}）：${metadata.status}`);
+  }
+  if (!Array.isArray(metadata.sources)) continue;
   for (const source of metadata.sources) {
     if (!source || typeof source !== 'object' || !sourceIds.has(source.repo)) {
-      errors.push(`${file.relativePath}: unknown or malformed source binding`);
+      errors.push(`${file.relativePath}: source 条目的 repo 不在 sources.yml 中`);
       continue;
     }
-    if (!/^[0-9a-f]{40}$/u.test(source.commit ?? '')) errors.push(`${file.relativePath}: ${source.repo} commit must be a full SHA`);
+    if (!/^[0-9a-f]{40}$/u.test(source.commit ?? '')) {
+      errors.push(`${file.relativePath}: ${source.repo} 的 commit 必须是完整 SHA`);
+      continue;
+    }
     if (typeof source.path !== 'string' || !source.path || source.path.startsWith('/') || source.path.includes('..')) {
-      errors.push(`${file.relativePath}: ${source.repo} path must be repository-relative`);
+      errors.push(`${file.relativePath}: ${source.repo} 的 path 必须是仓库相对路径`);
+      continue;
     }
     const locked = locks.get(source.repo)?.commit;
     if (source.commit !== locked && metadata.status !== 'stale') {
-      errors.push(`${file.relativePath}: ${source.repo} analysis commit differs from lock; set status: stale or review against ${locked}`);
+      errors.push(`${file.relativePath}: ${source.repo} 绑定的 commit 与 lock 不一致（lock=${locked}）；请复核后更新，或把 status 改为 stale`);
+      continue;
     }
-    if (source.path && source.path !== '.' && source.commit === locked) {
+    if (source.path !== '.' && source.commit === locked) {
       try {
         git(join(checkoutsDir, source.repo), ['cat-file', '-e', `${source.commit}:${source.path}`]);
       } catch {
-        errors.push(`${file.relativePath}: ${source.repo}@${source.commit.slice(0, 12)} has no path ${source.path}`);
+        errors.push(`${file.relativePath}: ${source.repo}@${source.commit.slice(0, 12)} 下没有 ${source.path}`);
       }
     }
   }
-  if (!/^\d{4}-\d{2}-\d{2}$/u.test(metadata.last_verified ?? '')) errors.push(`${file.relativePath}: last_verified must be YYYY-MM-DD`);
-  if (!allowedStatus.has(metadata.status)) errors.push(`${file.relativePath}: invalid status ${metadata.status}`);
-  if (!allowedDepth.has(metadata.depth)) errors.push(`${file.relativePath}: invalid depth ${metadata.depth}`);
-  if (!Array.isArray(metadata.evidence) || metadata.evidence.some((item) => !allowedEvidence.has(item))) errors.push(`${file.relativePath}: invalid evidence list`);
-  if (metadata.status === 'stale' && !staleLedger.includes(`\`${file.relativePath}\``)) {
-    errors.push(`${file.relativePath}: stale analysis is missing from sources/stale-documents.md`);
-  }
 }
 
-if (!fail(errors)) console.log(`verified source binding and review state for ${analysisFiles().length} human analysis documents`);
+if (!fail(errors)) console.log(`已校验 ${files.length} 篇文章的来源绑定与状态`);

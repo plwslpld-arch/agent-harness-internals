@@ -1,299 +1,500 @@
 ---
-sources: [{"repo":"deepseek-harness","path":"packages/core/agent-loop/src/agent.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-harness","path":"packages/core/agent-loop/src/tool-calls.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-harness","path":"packages/core/agent-loop/src/index.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-harness","path":"packages/core/agent-loop/src/constants.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-harness","path":"packages/core/agent-loop/src/runtime-context.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-harness","path":"packages/core/agent/src/inbox.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-harness","path":"packages/core/agent-loop/tests/tool-order.spec.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-harness","path":"packages/workflow","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
-last_verified: 2026-08-14
+title: Agent Loop：一个 turn 里到底发生了什么
+sources: [{"repo":"deepseek-harness","path":"packages/core/agent-loop/src/agent.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/core/agent-loop/src/tool-calls.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/core/agent/src/runtime-types.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
+last_verified: 2026-08-16
 status: draft
-depth: L2
-audience: [engineering]
-evidence: [code, test, official-doc]
 ---
 
-# 03｜Agent Loop：turn、step 与工具调度
+# Agent Loop：一个 turn 里到底发生了什么
 
-> 本文基线 `47f9438`。所有行号对应该 Commit。
+## 先看见：一条真实的会话日志
 
-## 一、产品现象
+dsh 的上游仓库里存了一批端到端快照，每个快照是一次真跑出来的 ACP 会话，产物包括完整的 session 日志。下面是 `parallel-tool-calls` 这个场景的日志，我把每行的 `type` 和关键字段抽出来，把 `assistant/chunk`（两个 step 一共 13 条流式碎片）折叠成了一行：
 
-三个现象，全都来自这一层：
-
-「它说完了，但任务没做完。」 模型输出的最后一个 token 出现，不代表这一轮结束——可能还有工具要跑、还有下一次模型请求要发。
-
-「几个工具明明同时在跑，但结果顺序总是对的。」 并行执行降低了延迟，模型看到的结果顺序却和它请求的顺序一致。
-
-「中途取消，已经开始的操作没有留下半截状态。」 取消不是简单地断流。
-
-这三件事对应 `ReactLoopAgent` 的三个设计决定：turn/step 两层结构、**执行并发但提交有序**、**取消要产生可解释的结算**。
-
-## 二、源码路径
-
-```
-packages/core/agent-loop/src/       1,643 行
-  agent.ts          496   ReactLoopAgent：turn / step 驱动
-  index.ts          713   服务注册、createAgent、config
-  tool-calls.ts     289   工具调度与有序结算
-  runtime-context.ts 76   本 step 的运行时上下文
-  invariant.ts       63
-  constants.ts        6
-
-packages/core/agent/src/            抽象工作入口
-  inbox.ts  dispatch.ts  consumed-work.ts  model-selection.ts
-  index.ts  runtime-types.ts  types.ts  invariant.ts
-
-packages/core/agent-loop/tests/     20 个测试文件
+```text
+session          {"cwd":"…","delegationDepth":0}
+agent/inbox/spliced  seq 0  {"target":"next-turn","start":0,"inserted":[<用户那句话>]}
+turn/start       seq 1  {"turn":1}
+agent/inbox/spliced  seq 2  {"target":"next-turn","start":0,"removedCount":1,"inserted":[]}
+step/start       seq 3  {"turn":1,"step":1}
+user/message     seq 4  "Use the read tool twice in the same assistant message: read a.txt and b.txt. Then reply DONE."
+user/message     seq 5  "Current runtime context. This snapshot supersedes earlier runtime-context snapshots.…"
+session/title    seq 6
+request/header   seq 7  {"header":{"config":{"provider":"deepseek-official","model":"deepseek-v4-flash"},…},"reason":"initial"}
+request/context  seq 8  {"provider":"deepseek-official","model":"deepseek-v4-flash"}
+assistant/chunk  seq 9…16
+assistant/message seq 17 两个 tool-call 块，sourceEventSeqs=[9,…,16]
+tool/call        seq 18 {"callId":"call_read_a","name":"read","arguments":"{\"file_path\":\"a.txt\"}"}
+tool/call        seq 19 {"callId":"call_read_b",…}
+tool/result      seq 20 sourceEventSeqs=[18]
+tool/result      seq 21 sourceEventSeqs=[19]
+step/end         seq 22 {"turn":1,"step":1}
+step/start       seq 23 {"turn":1,"step":2}
+assistant/chunk  seq 24…28
+assistant/message seq 29 纯文本 "DONE"
+step/end         seq 30
+turn/end         seq 31 {"turn":1,"reason":{"kind":"completed"}}
 ```
 
-**20 个测试文件**值得单列，它们就是这一层的行为契约： `evidence: test`
+原文在 `examples/acp-agent/tests/snapshots/parallel-tool-calls/session.jsonl`（快照默认跑在 `danger-full-access` 模式下，所以 seq 5 那条运行时上下文写的是"沙箱不限制文件修改"）。
 
+有几件事值得先记住，后面整篇都在解释它们：
+
+- **turn 和 step 不是一回事。** 一次用户提问开一个 turn（`turn/start` → `turn/end`），turn 内部每次真正打模型 API 开一个 step（`step/start` → `step/end`）。上面这次是 1 个 turn、2 个 step。
+- **用户那句话出现了两次**：一次在 `agent/inbox/spliced`（进队列），一次在 `user/message`（进历史）。中间隔着 `turn/start`——排队和进历史是两个动作，中间有一个可以被插件否决的关口。
+- **多出来的 seq 5** 不是用户写的。它是运行时上下文快照，由系统提示装配器渲染成一条 plugin 来源的 user 消息追加进历史。沙箱模式、审批策略、当前时间这些"会变的策略"都从这里进模型，而不是改 system prompt——这就是 dsh 保住 KV 前缀的手法，见 [02 KV-Cache](02-kv-cache.md)。
+- **`request/header` 只出现了一次**，`reason` 是 `initial`。第二个 step 没有再写。它不是每次请求都记，只在首次和变化时记。
+- **`sourceEventSeqs` 把结果指回原因**：`assistant/message` 指回它的全部 chunk，`tool/result` 指回它的 `tool/call`。
+
+## 文本时序图：一个含工具调用的 turn
+
+下面这张图的每个事件名和方法名都来自源码，不是示意。竖线从左到右是：调用方 → Agent 的 inbox → 驱动器 `ReactLoopAgent` → 插件监听器 → 系统提示装配 → LLM → 工具运行时 → session 日志。
+
+```text
+调用方        inbox          ReactLoopAgent            插件            systemPrompt     LLM     ToolRuntime   日志
+ │ followup(m)  │
+ │────────────►│ splice('next-turn', …)
+ │             │  append agent/inbox/spliced ─────────────────────────────────────────────────────────► [agent/inbox/spliced]
+ │             │  emit agent/inbox/inserted ──────────────► UI
+ │             │  wakeDriver(): idle → setPhase(running) → emit agent/status{running}
+ │             │              │ kick(): while (await this.turn()) {}
+ │             │              │  append turn/start {turn:1} ────────────────────────────────────────► [turn/start]
+ │             │◄─ claim('next-turn', 1)：取走全部 next-step + 一条 next-turn
+ │             │  append agent/inbox/spliced（纯删除） + emit agent/inbox/claimed ────────────────────► [agent/inbox/spliced]
+ │             │              │  systemPrompt.assemble(assembleContextFor(this, signal))
+ │             │              │  renderContextSections(assembly) → runtimeContext.project(...)
+ │             │              │      → 文本与上次保留的快照不同时，才产出一条 plugin 来源 UserMessage
+ │             │              │  waterfall agent/pre-step {messages, turn, step, signal} ──► compaction / hooks / plan-mode / skill …
+ │             │              │◄─ {kind:'enter', messages:[m, ctxSnapshot?]}  或  {kind:'reject'}
+ │             │              │  append step/start {turn:1, step:1} ───────────────────────────────► [step/start]
+ │             │              │  每条 message: append user/message (surfaceOp:'append') ───────────► [user/message]
+ │             │              │  step(): system = renderPrompt(assembly)
+ │             │              │  buildRequest(): waterfall agent/request → llm.prepareCall()
+ │             │              │     append request/header {reason:'initial'|'resume'|'change'}（仅首次/变化）► [request/header]
+ │             │              │     append request/context {provider,model,contextWindow}（仅变化）──► [request/context]
+ │             │              │  preparedCall.stream(request) ─────────────────────────────► LLM
+ │             │              │◄─ chunk*：每个 append assistant/chunk 并记下 seq ─────────────────► [assistant/chunk]*
+ │             │              │  assembler.finish.kind === 'stop' 且含 tool-call
+ │             │              │  append assistant/message (sourceEventSeqs = 全部 chunk seq) ──────► [assistant/message]
+ │             │              │  executeToolCalls(): parseArguments → executionMode() 分组
+ │             │              │     startCall(i): append tool/call {callId,name,arguments 原始串} ──► [tool/call]
+ │             │              │        TOOL_RUNTIME_SCHEDULER.prepare(exec)：pre-execute + guard（按模型顺序串行）
+ │             │              │        TOOL_RUNTIME_SCHEDULER.dispatch(exec)：tools/execute + 工具体（这里才并发）
+ │             │              │     commitReady(): 只提交连续就绪的槽位
+ │             │              │        finalize()/finish() → tools/post-execute → finalizeContent → emit tools/result
+ │             │              │        append tool/result (sourceEventSeqs=[callSeq]) ─────────────► [tool/result]
+ │             │              │        additionalContexts → inbox.splice('next-step', …)
+ │             │              │  step() 返回 null（本 step 没有结束原因）
+ │             │              │  append step/end {turn:1, step:1} ─────────────────────────────────► [step/end]
+ │             │              │  target = 'next-step' → 回到 preStep，开 step 2 …
+ │             │              │  模型纯文本收尾 → step 返回 {kind:'completed'}
+ │             │              │  inbox.nextStep 为空 → serial agent/turn-stopping ──► hooks 的 Stop 可在此 steer 逼出下一步
+ │             │              │  仍为空 → break
+ │             │              │  append turn/end {turn:1, reason:{kind:'completed'}} ───────────────► [turn/end]
+ │             │              │  inbox 无待处理 → kick() 的 finally: setPhase(idle) → emit agent/status{idle}
 ```
-loop.spec.ts              tool-calls.spec.ts     tool-order.spec.ts
-cancel.spec.ts            request-error.spec.ts  resume.spec.ts
-request-reconstruction.spec.ts   contract-regressions.spec.ts
-properties.spec.ts        interception.spec.ts   scope-lifecycle.spec.ts
-invariant.spec.ts         agent-initiator.spec.ts  runtime-context.spec.ts
-settings.spec.ts          coverage-edges.spec.ts   config-session-id.spec.ts
-agent.spec.ts             mock-adapter.ts        request-cache.e2e.ts
-```
 
-注意 `request-cache.e2e.ts`——缓存行为是有 e2e 覆盖的，这条线在文章 06 展开。
+## Phase：只有三种状态，对外只露两种
 
-### 行号锚点
-
-| 位置 | 是什么 |
-| --- | --- |
-| `agent.ts:48` | `type StepEndReason = Extract<TurnEndReason, { kind: 'completed' \| 'max-tokens' }>` |
-| `agent.ts:64` | `export class ReactLoopAgent implements Agent` |
-| `agent.ts:92` | 从日志倒查 `lastTurn` |
-| `agent.ts:246` | `private async turn()` |
-| `agent.ts:285-290` | max-tokens 粘性规则 |
-| `agent.ts:332` | `private async step(assembly)` |
-| `agent.ts:407` | `private async buildRequest(turn, step, ...)` |
-| `tool-calls.ts:59` | `export async function executeToolCalls` |
-| `tool-calls.ts:84-93` | 外层规划循环 |
-| `tool-calls.ts:147` | 有序提交循环 |
-| `tool-calls.ts:199-204` | 有界滚动池与中途重分类 |
-| `constants.ts:6` | `DEFAULT_MAX_PARALLEL_TOOL_CALLS = 10` |
-
-## 三、机制
-
-### turn 与 step
-
-| 概念 | 含义 |
-| --- | --- |
-| **turn** | 一次用户任务周期 |
-| **step** | 一次模型请求与它引出的处理 |
-| tool call | 模型要求执行的动作 |
-| tool result | 工具执行后的模型可见结果 |
-
-一个 turn 可以有多个 step。只要模型继续请求工具，就进入下一 step。
-
-事件写入顺序（`agent.ts`）： `evidence: code`
-
-| 行号 | 事件 |
-| --- | --- |
-| `:255` | `session.append('turn/start', { turn })` |
-| `:279` | `session.append('step/start', { turn, step })` |
-| `:292` | `session.append('step/end', { turn, step })` |
-| `:296` | `dispatch.serial('agent/turn-stopping', { turn, signal })` |
-| `:319` | `session.append('turn/end', { turn, reason: turnEnds })` |
-
-`turn/end` 写在 `finally` 里——失败、取消、被阻塞都必须变成结构化的结束原因，不允许一个 turn 悬空。
-
-### 一次 step 的七步
-
-1. `preStep()` 从 inbox 领取本轮输入，并调用 `systemPrompt.assemble()`
-2. runtime context 渲染成一条附加的 user-role snapshot，放进本 step 的消息
-3. `buildRequest()`（`:407`）解析 provider/model，调用 `llm.prepareCall()`，写入 `request/header` 和 `request/context`
-4. `llm.stream()` 或 `preparedCall.stream()` 返回流式 chunk
-5. `BlockAssembler` 把 chunk 聚合成 assistant message，保留 usage、finish reason、replay state
-6. 没有 tool-call → step 返回 `completed`
-7. 有 tool-call → `executeToolCalls()` 执行工具，把结果塞进下一 step 的 inbox
-
-第 7 步是关键：工具结果不是「返回值」，是下一步的输入债务。 这就是为什么 turn 会继续。
-
-`agent.ts:341` 那行也值得看：
+驱动器的全部状态是一个三元联合（`packages/core/agent-loop/src/agent.ts:38-46`）：
 
 ```ts
-turn, step, assembly.tools, system, this.session.deriveMessages(), signal,
+type Phase =
+  | { kind: 'idle'; lastTurn: number }
+  | {
+    kind: 'maintenance'
+    abort: AbortController
+    lastTurn: number
+    wakeRequested: boolean
+  }
+  | { kind: 'running'; abort: AbortController; turn: number; step: number; wakeRequested: boolean }
 ```
 
-历史是 `deriveMessages()` 从**会话日志**派生出来的，不是从内存里的对话数组。这是文章 01 那条「模型可见 ⟺ 已记录」不变量的执行点。
+对外的 `status` 只有 `idle | running` 两态，`maintenance` 对外报 `idle`（`agent.ts:99-101`）。`maintenance` 是"不属于任何 turn 的后台工作"用的相位——`runMaintenance(job)`（`agent.ts:142-162`）先把相位翻过去，跑完在 `finally` 里翻回 `idle`，并且如果期间有人想唤醒，就在这时补一次 `wakeDriver()`。compaction 之类的整理工作走这条路，见 [06 Compaction](06-compaction.md)。
 
-### 工具调度：有界滚动池 + 屏障
+构造时的 turn 号不是从 0 开始猜的，是从日志里倒查出来的：`session.events.findLast(event => event.type === 'turn/start')?.data.turn ?? 0`（`agent.ts:92`）。所以 resume 一个会话，turn 编号接着数，不会撞号。
 
-`tool-calls.ts:2-3` 的模块注释一句话说清了设计： `evidence: code`
+## 三种输入：`followup`、`steer`、`inject`
 
-> Schedules one assistant step's tool calls. Exclusive calls form barriers; parallel calls use a bounded rolling pool and are **reclassified before start**.
-
-外层规划循环（`:84-93`）：
+三个方法其实是同一个原语的三种参数组合（`agent.ts:113-132`）：
 
 ```ts
-while (next < planned.length) {
-  const mode = ctx.tools.executionMode(first.exec).kind
-  const group = mode === 'parallel' ? planned.slice(next) : [first]
-  const outcome = await runGroup(...)
-  next += outcome.consumed
+  send(message: UserMessage, target: InboxTarget, wakeup: boolean): void {
+    // Waking input cannot join an aborted activity, so it starts the next turn.
+    // Captured before the insertion so a reentrant cancel from a splice observer cannot reclassify it.
+    const wakingAfterAbort = wakeup && this.phase.kind !== 'idle' && this.phase.abort.signal.aborted
+    const resolvedTarget = wakingAfterAbort ? 'next-turn' : target
+    this.inbox.splice(resolvedTarget, Infinity, 0, [message])
+    if (wakeup) this.wakeDriver(wakingAfterAbort)
+  }
+```
+
+| 方法 | target | wakeup | 语义 |
+| --- | --- | --- | --- |
+| `followup(m)` | `next-turn` | `true` | 排一个独立的 turn，并唤醒驱动器 |
+| `steer(m)` | `next-step` | `true` | 塞进最近的 step 边界，并唤醒 |
+| `inject(m)` | `next-step` | `false` | 塞进最近的 step 边界，但**不**唤醒（agent 闲着时就一直躺着，等别的输入把它带走） |
+
+`inject` 的"不唤醒"是有用的：技能目录、AGENTS.md 内容、后台任务完成通知这类东西希望"下次有活干的时候顺带带上"，而不是自己把 agent 叫醒。`tool-jobs` 就按 owner 是否忙来选 `inject` 还是 `followup`。
+
+`send` 里那行 `wakingAfterAbort` 是个容易忽略的细节：一条唤醒型输入如果到达时当前 turn 已经被 abort（但还没收敛完），它会被**改判**成 `next-turn`——不能让新输入加入一个已经被放弃的 turn。而且这个判断在插入 inbox **之前**就算好，防止某个同步的 `session/event` 观察者在插入过程中重入取消，把分类改掉。
+
+`cancel` 默认会清空 inbox（`agent.ts:134-140`）：
+
+```ts
+  cancel(cause: AgentCancelCause, options: CancelOptions = {}): void {
+    if (!options.keepInbox) {
+      this.inbox.clear()
+      if (this.phase.kind !== 'idle') this.phase.wakeRequested = false
+    }
+    if (this.phase.kind !== 'idle') this.phase.abort.abort(cause)
+  }
+```
+
+`keepInbox: true` 是"只打断当前这一 turn，排队的东西留着"——`interrupt_agent` 工具对子 agent 用的就是这个。取消原因 `AgentCancelCause` 是封闭的四种：`user | parent | hook{reason} | disposed`（`packages/core/session/src/types.ts:143-148`）。
+
+`wakeRequested` 是个闩锁（`agent.ts:172-193`）。当唤醒到来时驱动器正在 maintenance、或者当前 turn 已 abort 尚未收敛，唤醒送不进去，就把标志位闩住，等 `kick()` 的 `finally`（`agent.ts:215-222`）或 maintenance 结束时重放。唯一不闩的情况是取消原因为 `disposed`——正在拆卸的 agent 不该被自己叫醒。
+
+每个 turn 结束时会换一个新的 `AbortController`（`agent.ts:325-327`），并顺手把旧闩锁清掉。所以"取消"的粒度天然是一个 turn，工具调用、pre-step、模型请求收到的都是同一个 signal。
+
+## `turn()`：从 `turn/start` 到 `turn/end`
+
+`turn()` 的骨架（`agent.ts:246-330`）是一个 while 循环，每圈跑一个 step：
+
+```ts
+        const decision = await this.preStep(target, { turn, step })
+        if (decision.kind === 'reject') {
+          turnEnds = { kind: 'blocked' }
+          return false
+        }
+        if (turnEnds && decision.messages.length === 0) break
+        // A removed waking message or an enter decision rewritten to empty
+        // still owns the initial turn boundary, but it spends no model call.
+        if (phase.step === 0 && decision.messages.length === 0) {
+          turnEnds = { kind: 'completed' }
+          return false
+        }
+        signal.throwIfAborted()
+        this.session.append('step/start', { turn, step })
+```
+
+几个能观察到的后果：
+
+- `agent/pre-step` 返回 `reject` 会留下一个"有 `turn/start` 紧跟 `turn/end`、中间没有任何 step"的 turn，结束原因是 `blocked`。hooks 的 `UserPromptSubmit` 拒绝就长这样。被领取的消息**不会**退回 inbox，也不会写成 `user/message`——它就到此为止了。
+- 第一个 step 如果领到空消息，直接 `completed`，不花模型调用。
+- `max-tokens` 是粘性的（`agent.ts:287-290`）：一旦某个 step 撞到输出上限，后面正常完成的 step 也不能把 turn 的结局降级回 `completed`。
+- `step/end` 写在 `finally` 里（`agent.ts:291-293`），`turn/end` 也写在 `finally` 里（`agent.ts:316-323`）。不管是抛错还是取消，边界事件都不会悬空。
+
+turn 结束前有一个专门的关口（`agent.ts:295-299`）：
+
+```ts
+        if (turnEnds && this.inbox.nextStep.length === 0) {
+          await this.dispatch.serial('agent/turn-stopping', { turn, signal })
+          signal.throwIfAborted()
+        }
+        if (turnEnds && this.inbox.nextStep.length === 0) break
+```
+
+注意它查了两次 `inbox.nextStep`。`agent/turn-stopping` 是 serial 模式（所有监听器都跑，没有短路），监听器如果不同意结束，就调 `agent.steer(...)` 往 next-step 队列里塞东西，驱动器**再读一次**队列，发现非空就继续下一个 step。Claude Code 方言的 `Stop` hook 就是这么实现的：它 steer 一句 `continue: blocked by Stop hook`。这个设计的好处是"数据说了算"——监听器的注册顺序不影响结果。
+
+`TurnEndReason` 是可合并扩展的联合（`packages/core/session/src/types.ts:155-176`）：`completed | aborted{reason} | blocked | error{error} | max-tokens | interrupted`。最后一个 `interrupted` 循环本身从不产生，它只由持久化后端在重载时给崩溃遗留的半截 turn 补上。
+
+## `preStep()` 与运行时上下文快照
+
+`preStep`（`agent.ts:225-243`）是每个 step 开头做的四件事：领取 inbox、装配系统提示、投影运行时上下文、跑 `agent/pre-step` waterfall。
+
+```ts
+    const claimed = this.inbox.claim(target, position.turn)
+    const assembly = await this.loopCtx.systemPrompt.assemble(assembleContextFor(this, signal))
+    signal.throwIfAborted()
+    const sections = renderContextSections(assembly)
+    const context = this.runtimeContext.project(joinContextSections(sections), sections)
+```
+
+`inbox.claim(target, turn)`（`packages/core/agent/src/inbox.ts:71-77`）拿走**全部** next-step，外加（当 target 是 `next-turn` 时）**一条** next-turn。它写的持久事件是纯删除的 splice，另外对每条消息发 `agent/inbox/claimed`。
+
+**系统提示和工具 schema 是每个 step 重新装配的**，不是每个 turn 一次。这条对缓存影响很大，后面"代价"一节再说。
+
+`runtimeContext.project(...)` 是 dsh 的一个关键手法（`packages/core/agent-loop/src/runtime-context.ts:64-75`）：
+
+```ts
+  project(current: string, sections: readonly ContextSnapshotSection[]): UserMessage | undefined {
+    if (this.retained === undefined && current.length === 0) return
+    const snapshot = current.length === 0 ? CLEARED : current
+    if (this.retained?.text === snapshot) return
+    return createUserMessage({
+      content: [{ type: 'text', text: snapshot }],
+      // The cleared marker has no contributions left to attribute.
+      source: sections.length === 0
+        ? { kind: 'plugin', plugin: SOURCE }
+        : { kind: 'plugin', plugin: SOURCE, form: 'snapshot', sections },
+    })
+  }
+```
+
+只有当渲染出来的文本与"上一条还留在历史表面上的快照"不同，才产生新消息。全部清空时写一句固定的 `Current runtime context: none. Earlier runtime-context snapshots no longer apply.`（`runtime-context.ts:13`）。这个投影的状态不是内存里攒的：构造时从日志倒查，之后订阅 `session/event` 跟随权威事件（`runtime-context.ts:34-56`），所以 resume 后判断依然正确。
+
+它产出的是一条 **user 角色**的消息，`source.kind` 是 `plugin`——既不污染 system prompt 的稳定前缀，也不会被当成用户说的话。合成文本的开头是 `Current runtime context. This snapshot supersedes earlier runtime-context snapshots.`（`packages/core/system-prompt/src/index.ts:236-240`），正是前面日志里 seq 5 的样子。
+
+## `step()`：一次模型调用的全过程
+
+`step()`（`agent.ts:332-401`）是整个循环里唯一会打模型的地方。它的外层是一个 `while (true)`，存在的唯一理由是请求失败重试：
+
+```ts
+      const finish = assembler.finish
+      if (finish.kind === 'error' || finish.kind === 'aborted') {
+        const action = await this.dispatch.waterfall(
+          'agent/request-error', {
+            turn,
+            step,
+            provider: request.provider,
+            failure: finish.failure,
+            retryPolicy: preparedCall?.retryPolicy,
+            signal,
+          },
+          () => Promise.resolve<RequestErrorAction>(undefined),
+        )
+        signal.throwIfAborted()
+        if (action?.kind !== 'retry') {
+          throw new LlmError(finish.failure.message, finish.failure.code, finish.failure)
+        }
+        continue
+      }
+```
+
+**重试是 `continue`，不是新开 step。** 也就是说一个 `step/start`/`step/end` 之间可能有多次 `llm/stream` 调用和多组 `assistant/chunk`；日志里不会因为退避重试而多出 step。`dsh-llm-retry`（退避重试）和 `dsh-compaction-basic`（上下文溢出后压缩再试）都挂在这个 waterfall 上。
+
+流式部分很朴素但有讲究（`agent.ts:347-351`）：
+
+```ts
+      for await (const chunk of stream) {
+        signal.throwIfAborted()
+        chunkSeqs.push(this.session.append('assistant/chunk', { turn, step, chunk }).seq)
+        assembler.push(chunk)
+      }
+```
+
+每个 chunk 都落盘，并记下它的 seq；等 `BlockAssembler` 拼完，一次性写一条 `assistant/message`，`sourceEventSeqs` 就是刚才那一串 chunk seq（`agent.ts:381-390`）。**每次成功的模型调用恰好一个 `assistant/message` 锚点**，包括内容为空的和撞了 max-tokens 的。
+
+收尾三种：
+
+```ts
+      if (finish.kind === 'max-tokens') return { kind: 'max-tokens' }
+
+      const toolCalls = message.content.filter(block => block.type === 'tool-call')
+      if (toolCalls.length === 0) return { kind: 'completed' }
+      const { concluded } = await executeToolCalls(
+        this.loopCtx, turn, step, toolCalls, signal,
+        context => this.inbox.splice('next-step', this.inbox.nextStep.length, 0, [context]),
+      )
+      return concluded ? { kind: 'completed' } : null
+```
+
+第一行值得单独说：**撞到 max-tokens 时，这一步里的工具调用不执行**（`agent.ts:391`）。模型可能已经吐出了半个工具调用块，循环选择不碰它，把结局交给 compaction 或重试插件。
+
+返回 `null` 表示"本 step 没有得出结束原因"，turn 继续开下一个 step。`concluded` 来自工具结果上的 `concludesTurn` 标志——默认组合里只有子 agent 的结构化输出捕获工具会设它。
+
+### 纠正一处旧说法：工具结果不是"下一步的输入债务"
+
+本仓库早先的版本写过"工具结果不是返回值，是下一步的输入债务……塞进下一 step 的 inbox"。这个描述是错的，会把读者对日志的理解带偏。
+
+实际情况看上面那段代码就清楚：`executeToolCalls` 的最后一个参数是 `acceptContext`，它接收的是 `result.additionalContexts`——**只有这些"附加上下文"进 next-step inbox**。工具结果本身走完全不同的路：`appendToolResult`（`packages/core/agent-loop/src/tool-calls.ts:268-289`）把它写成 `tool/result` 事件，带 `surfaceOp: 'append'`，于是它直接成为派生历史的一部分。
+
+派生历史 `session.deriveMessages()`（`packages/core/session/src/index.ts:726`）只认三种表面事件：`user/message | assistant/message | tool/result`（`packages/core/session/src/types.ts:343-346`）。`tool/result` 就在这个名单里。所以下一个 step 的请求里，工具结果是以 tool 消息的身份出现的，位置紧跟在它的 `assistant/message` 后面；而 `additionalContexts`（例如 `repeat-tool-reminder` 的提醒、`spill-policy` 的定位符、`agent-instructions` 发现的工作区说明）是以额外的 `user/message` 身份，在下一个 step 的 `step/start` 之后才写进历史。两者在日志里的位置、角色、写入时机都不同。
+
+## `buildRequest()`：请求怎么拼出来
+
+`buildRequest`（`agent.ts:407-495`）是"模型到底收到什么"的最后一站。
+
+**配置从哪来。** 第一次请求用 agent 自己声明的路由（provider/model/maxTokens），外加一个条件：只有当持久化的 header 路由与本 agent 完全一致、并且那个 `reasoningEffort` 不是适配器默认填的，才继承它（`agent.ts:419-437`）。之后每次都用 `requestProposal(persistedHeader)`——把适配器默认的字段摘掉，让适配器重新物化（`agent.ts:54-61`）。
+
+**`agent/request` 是切模型的唯一入口**（`agent.ts:438-441`）。它是 waterfall，返回值整体替换 `LlmCallConfig`。它明确不能改 messages：模型可见内容必须走有日志的通道。
+
+**`prepareCall` 绑定适配器**（`agent.ts:449`）。如果抛 `NO_ADAPTER`，就保留提案继续走，让中间件接管（`agent.ts:451-455`）——中间件可以服务一个没注册适配器的路由。
+
+**header 与 context 的去重写入**（`agent.ts:458-483`）：
+
+```ts
+    const baseline = this.session.requestHeader()
+    if (!this.requestHeaderLogged) {
+      this.session.append('request/header', { header, reason: baseline === undefined ? 'initial' : 'resume' })
+      this.requestHeaderLogged = true
+    } else if (baseline === undefined || !headerEquals(baseline, header)) {
+      this.session.append('request/header', { header, reason: 'change' })
+    }
+```
+
+三种 `reason` 的含义是精确的：`initial` = 这个 loop 实例第一次写且日志里之前没有 header；`resume` = 这个实例第一次写但日志里已经有（说明是恢复的会话）；`change` = 同一实例内 header 变了。`request/context` 只在 provider/model/contextWindow 三者任一变化时写。这解释了前面日志里"第二个 step 没有 `request/header`"——不是漏了，是没变。
+
+**最后一步是冻结加打标**（`agent.ts:486-493`）：
+
+```ts
+    const request = markAgentLoopRequest(deepFreeze({
+      ...header.config,
+      messages: boundaryMessages,
+      ...header.system !== undefined ? { system: header.system } : {},
+      ...header.tools !== undefined ? { tools: header.tools } : {},
+      sessionId: this.session.id,
+      signal,
+    }))
+```
+
+`markAgentLoopRequest` 不是装饰。agent-loop 包注册了一个不变量companion（`packages/core/agent-loop/src/invariant.ts:19-55`），它以 `prepend + global` 的方式挂在 `llm/stream` 上，对每个带标记的请求核对：对象已冻结、带活的 sessionId、`messages` 数组已冻结、日志里有 `step/start`、有 `request/header`，并且
+
+```ts
+    const expected = session.deriveMessages()
+    if (JSON.stringify(options.messages) !== JSON.stringify(expected)) {
+      fail(`llm request for session "${String(session.id)}" diverges from the dispatch-time durable derivation (log-reconstruction desync)`)
+    }
+```
+
+也就是说"模型看到的 ⟺ 日志里能重建出来的"在 dsh 里是**运行期断言**，不是文档承诺。这也是为什么本文能拿快照日志当"模型看到什么"的证据用。
+
+## 工具调度：屏障、滚动池、按模型顺序提交
+
+`executeToolCalls`（`packages/core/agent-loop/src/tool-calls.ts:59-101`）先把每个 tool-call 块解析成一个 `PlannedCall`，然后按"分组"推进：
+
+```ts
+    const first = planned[next]!
+    const mode = ctx.tools.executionMode(first.exec).kind
+    const group = mode === 'parallel' ? planned.slice(next) : [first]
+```
+
+规则很简单：从当前位置看第一个调用，如果它是 `parallel`，就把**它之后的全部**调用作为候选组交给 `runGroup`；否则它自己单独成组，形成一个屏障。`runGroup` 返回它实际消耗了几个，外层往前推。
+
+分类是 fail-closed 的（`packages/core/tools/src/index.ts:1276-1285`）：只有工具声明了 `isConcurrencySafe(args)` 且返回**恰好 `true`** 才是 parallel；未声明、返回别的、抛异常、工具根本不存在，一律 exclusive。全仓库里 opt-in 的只有 `read`、`read_image`、`web_search`、`web_fetch`、`subagent`（`subagent_fork` 是同一个包的第二个实例），以及可选包里的 session-query 三个只读工具。`bash`、`write`、`edit`、`glob`、`grep`、`todo_write` 都是 exclusive。
+
+组内是**有界滚动池**（`tool-calls.ts:198-213`）：
+
+```ts
+  const fillPool = async (): Promise<void> => {
+    while (!aborted && nextToStart < group.length && inFlight.size < maxParallelToolCalls) {
+      // Re-read later modes after ordered commits so registry changes can create a barrier.
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- bounded by the loop condition
+      const nextCall = group[nextToStart]!
+      if (nextToStart > 0 && mode === 'parallel'
+        && ctx.tools.executionMode(nextCall.exec).kind !== 'parallel') break
+      await startCall(nextToStart)
+      nextToStart++
+      throwSchedulerFailure()
+      await commitReady()
+      throwSchedulerFailure()
+      // Abort may arrive while pre-execute awaits.
+      if (signal.aborted) aborted = true
+    }
+  }
+```
+
+注意中间那个 `break`：**每个调用在启动前都会重新分类一次**。如果前面的工具执行过程中改了注册表（比如某个插件动态注册/限制了工具），后面的调用会当场变成屏障，当前池先排空。上限 `maxParallelToolCalls` 是通过 getter 每组读一次的（`packages/core/agent-loop/src/index.ts:331-333`），默认 10（`packages/core/agent-loop/src/constants.ts:6`），设成 `1` 就是完全串行；改设置只影响下一组，不打扰在飞的这一组。
+
+三阶段拆分是这套调度的核心。`startCall`（`tool-calls.ts:164-196`）先 `appendToolCall`（**`tool/call` 在 pre-execute 之前就落盘**），再 `await scheduler.prepare(exec)`；因为 `startCall` 是被 `fillPool` 顺序 await 的，所以 `tools/pre-execute` 和 guard 是**按模型顺序串行**的。只有 `dispatch` 分支的工具体才进 `inFlight` 并发。
+
+提交同样是模型顺序（`tool-calls.ts:146-160`）：
+
+```ts
+  const commitReady = async (): Promise<void> => {
+    while (committed < group.length) {
+      const slot = slots[committed]
+      if (slot === undefined) break
+      const call = group[committed]
+      const result = slot.needsPost
+        ? await ctx.tools[TOOL_RUNTIME_SCHEDULER].finalize(slot.exec, slot.result)
+        : ctx.tools[TOOL_RUNTIME_SCHEDULER].finish(slot.exec, slot.result)
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- bounded index
+      appendToolResult(session, turn, step, call!.block, result, callSeqs[committed]!)
+      for (const context of result.additionalContexts ?? []) acceptContext(context)
+      concluded ||= result.concludesTurn === true
+      committed++
+    }
+  }
+```
+
+游标只跨越**连续就绪**的槽位。第 2 个调用先跑完也不会先提交，它得等第 1 个。于是 `tools/post-execute` 策略、`tool/result` 落盘顺序、`additionalContexts` 的先后，全都是模型顺序——只有工具体真正重叠。
+
+**取消**（`tool-calls.ts:237-242`、`:249-259`）：abort 后停止补池，等已启动的 settle 并按序提交，然后给每个没启动的调用补写一对合成的 `tool/call` + `tool/result`，内容是 `Error: tool call aborted before dispatch`，错误码 `ABORTED_BEFORE_DISPATCH`。前面日志里的 `cancel-tool-calls` 场景就是活证据：`call_wait` 已经跑起来了，拿到的是 `Error: tool call aborted`（码 `ABORTED`）；`call_skipped` 根本没启动，拿到的是 `Error: tool call aborted before dispatch`（码 `ABORTED_BEFORE_DISPATCH`）。历史因此仍然是"每个 call 都有配对 result"的合法结构，重放不会断。
+
+**调度器自身失败**是另一回事：`schedulerFailure` 一旦置上就停止新派发，`Promise.allSettled(inFlight)` 后原样抛出（`tool-calls.ts:231-235`），**不伪造任何结果**。这可能留下没有 result 的 `tool/call`——上游的取舍是"内部故障宁可留下不完整的日志，也不编造一条模型会当真的工具输出"。
+
+**参数解析失败不会拦住调用**（`tool-calls.ts:104-110`）：
+
+```ts
+function parseArguments(raw: string): unknown {
+  try {
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return raw
+  }
 }
 ```
 
-这不是 `Promise.all(toolCalls)`。 它按模型给出的顺序规划，再根据每个工具声明的执行模式决定能否并发；遇到 exclusive 工具就形成 barrier，只跑它一个。
+解析不了就把原始字符串原样交给工具，由 `defineTool` 的参数校验产出一个正常的工具错误结果。模型于是收到一条能读懂的报错，而不是循环崩溃。另外 `tool/call` 事件里存的 `arguments` 始终是**模型发来的原始字符串**（`tool-calls.ts:262-265`），不是解析后的对象——回放时不会被规范化悄悄改写。
 
-内层是有界滚动池（`:199`）：
+## `agent/*` 事件全表
 
-```ts
-while (!aborted && nextToStart < group.length && inFlight.size < maxParallelToolCalls) {
-```
+全部声明在 `packages/core/agent/src/runtime-types.ts`。模式一栏里，`emit` 是纯通知（返回值被忽略），`serial` 是全部依次 await（无短路），`waterfall` 是可改写、可短路（不调 `next()` 就截断下游）。
 
-默认上限 `DEFAULT_MAX_PARALLEL_TOOL_CALLS = 10`（`constants.ts:6`），可通过 `ctx.agentLoop.config` 配置。
+| 事件 | 行 | 模式 | 何时 | 默认组合里谁在监听 |
+| --- | --- | --- | --- | --- |
+| `agent/created` | `runtime-types.ts:159` | emit | 配置完成、会话已发布 | UI、subagent 管理 |
+| `agent/disposed` | `runtime-types.ts:168` | emit | 离开注册表 | 同上 |
+| `agent/status` | `runtime-types.ts:178` | emit | idle ⇄ running | compaction-basic、goal-round-driver、schedule、apiproxy、sdk/server |
+| `agent/inbox/inserted` | `runtime-types.ts:186` | emit | 消息进 inbox | UI |
+| `agent/inbox/claimed` | `runtime-types.ts:197` | emit | step 边界取走消息 | UI、subagent |
+| `agent/inbox/discarded` | `runtime-types.ts:205` | emit | 消息被丢弃 | UI |
+| `agent/session-start` | `runtime-types.ts:217` | emit | 发布后、首个 turn 前 | goal、goal-round-driver、hooks 两个方言桥 |
+| `agent/pre-step` | `runtime-types.ts:231` | **waterfall** | 每 step 领取消息后 | compaction-basic、agent-instructions、time-context、tmux-context、goal-round-driver、repeat-tool-reminder、plan-mode、session-checkpoint-policy、tool-skill、subagent-in-process-driver、hooks 两个桥 |
+| `agent/request` | `runtime-types.ts:244` | **waterfall** | 每次模型请求前 | tool-cordis（动态包）；产品里的模型切换从这里进 |
+| `agent/request-error` | `runtime-types.ts:260` | **waterfall** | 流以 error/aborted 结束 | llm-retry、compaction-basic |
+| `agent/turn-stopping` | `runtime-types.ts:278` | **serial** | 模型无欠账且 next-step 空 | hooks 两个桥（Stop） |
+| `agent/error` | `runtime-types.ts:290` | emit | turn/step 出错 | goal-round-driver、acp、apiproxy、session-telemetry |
 
-### 一个容易被忽略的细节：中途重分类
+waterfall 有一个必须知道的坑：监听器忘了调 `next()` 就等于关掉了它下游的一切。`agent/pre-step` 上挂着 compaction 和上下文注入，一个写错的插件能静默地把它们全关了。
 
-`tool-calls.ts:200-204` 的注释和代码： `evidence: code`
+## 代价与失效点
 
-```ts
-// Re-read later modes after ordered commits so registry changes can create a barrier.
-if (nextToStart > 0 && mode === 'parallel'
-  && ctx.tools.executionMode(nextCall.exec).kind !== 'parallel') break
-```
+1. **没有内建的 turn 预算。** 上游 README 自己列为已知限制（`packages/core/agent-loop/README.md:134`）："tool calls or steering continue the current turn; a policy that bounds runaway turns must cancel from an existing lifecycle extension point such as `agent/turn-stopping`"。默认组合里唯一的失控保护是 `repeat-tool-reminder`，而它只是发提醒。一个反复调同一个工具的模型可以一直跑下去。
+2. **每个 step 重新装配系统提示和工具 schema。** 只要任一贡献者的文本变了（包括工具描述里嵌的动态字段），请求前缀就变了。`request/header` 的 `change` 只是记录这件事发生过，不是防护。
+3. **max-tokens 直接结束 step 且不执行工具**（`agent.ts:391`）。没有内建的"自动续写"，兜底完全靠插件。
+4. **调度器失败会留下孤儿 `tool/call`。** 这是明确的设计取舍，但意味着日志的"call/result 配对"只在正常路径和取消路径上成立。
+5. **概念密度高。** Phase 三态 + `wakeRequested` 闩锁 + initiator 的 AsyncLocalStorage 传播 + scope 链 + 符号键的三段调度器接口，都是为极端竞态准备的。想读懂"一次工具调用怎么走"，最少要同时打开 `agent.ts`、`tool-calls.ts`、`packages/core/tools/src/index.ts` 三个文件。
 
-在池子跑的过程中，工具注册表可能变化。 比如某个工具执行时挂载了新插件、改变了另一个工具的执行模式。调度器在每次有序提交之后**重新读取后续调用的模式**，一旦发现后面的调用不再是 parallel，就立刻中断当前池子，让它成为下一个 barrier。
+## 别人怎么做
 
-这是「一切皆插件 + 运行时可变」带来的真实复杂度：调度器不能在开头做一次分类就一直用到底。
+| 维度 | dsh | Codex CLI | OpenCode | pi | mini-swe-agent |
+| --- | --- | --- | --- | --- | --- |
+| 循环形态 | `turn()`/`step()` 双层，历史从事件日志派生 | `run_turn` 内 `loop`，每次采样重建 Prompt | `runLoop` 的 `while(true)`，每圈一次 `processor.process` | 外层 `while(true)` + 内层"还有工具调用或待发消息" | `while True: step()`，最后一条消息 `role == "exit"` 就退出 |
+| 工具何时开始跑 | 等完整 assistant 消息，再按组调度 | 边收流边启动：`OutputItemDone` 立刻产出 future 放进 `FuturesOrdered` | 由 AI SDK 在流中并发执行 | 收完消息后按批执行 | 收完消息后逐个 `env.execute` |
+| 并发判定 | 每调用 `isConcurrencySafe(args)`，fail-closed，默认上限 10 | 每个工具运行时声明 `supports_parallel_tool_calls`，并行的拿读锁、串行的拿写锁 | 不区分，全交给 SDK | 默认 parallel；任一工具声明 sequential 则整批串行 | 顺序执行；`swebench.yaml` 才开 `parallel_tool_calls` |
+| 结果顺序 | 提交游标只跨连续就绪槽位，严格模型顺序 | `FuturesOrdered` 按调用顺序回填 | 流事件顺序 | 并发执行后按原顺序生成结果消息 | 天然顺序 |
+| 插队输入 | `steer`（next-step，唤醒）/ `inject`（next-step，不唤醒）/ `followup`（next-turn） | `input_queue.get_pending_input()` 在每圈开头取 steering | 队列里的 subtask/compaction 任务 | `getSteeringMessages` + `getFollowUpMessages`，两个队列各有 `all`/`one-at-a-time` 模式 | 无 |
+| 请求失败 | `agent/request-error` waterfall，返回 retry 就在**同一个 step 内** `continue` | provider 级 `stream_max_retries` 指数退避 | `Effect.retry` 包整条流，尊重 `retry-after` 头，最多 5 次 | 镜像官方 SDK 策略，尊重 `x-should-retry` | tenacity 指数退避 4–60s，默认 10 次 |
+| 输出截断 | `max-tokens` 结束 step 且**不执行**该步工具 | `ContextWindowExceeded` 触发压缩后重来 | `ContextOverflowError` 不重试，走 compaction | `stopReason === "length"` 时**所有**工具调用一律作废，回一句"重发完整参数" | `finish_reason == "length"` 与真正的格式错误给不同的纠正提示 |
+| 失控保护 | 无内建预算，只能从 `agent/turn-stopping` 取消 | 有 token 预算与自动压缩 | 有 `doom_loop` 检测（默认 `ask`） | `maxSteps`/`shouldStopAfterTurn` | `cost_limit` 默认 3 美元，超限进 `exit` |
 
-### 执行重叠，提交有序
+一句话概括差别：Codex 追求延迟（边流边执行），OpenCode 和 pi 把并发交给 SDK 或粗粒度开关，mini-swe-agent 干脆只有一个 `bash` 工具、一个 `while True`；dsh 则把"哪些能并行"下放给每个工具的纯函数分类器，然后用一个提交游标把可观察顺序钉死成模型顺序。代价是调度器本身比别人复杂得多，收益是取消、重放、fork 三种情况下日志都仍然自洽。
 
-`:147` 是有序提交循环：
+## 怎么自己核
 
-```ts
-while (committed < group.length) {
-```
-
-结果和上下文按**模型给出的顺序**提交，而不是按完成顺序。`:220` 的 `while (inFlight.size > 0)` 负责 drain。
-
-产品含义：并行提升延迟，但不牺牲模型可见顺序和审计顺序。 这也是 `tool-order.spec.ts` 单独存在的原因。
-
-### 错误分层
-
-`agent.ts` 里 turn 结束原因分四类： `evidence: code`
-
-| 类别 | 行号 | 行为 |
-| --- | --- | --- |
-| provider 返回错误 finish | — | 进入 `agent/request-error` waterfall，**只有明确返回 retry 才重试** |
-| 非 LLM 错误 | `:308-313` | 展平成 `errorChain(error)` 文本，包在 `UNKNOWN` code 下 |
-| 取消 | `:303-304` | `turnEnds = { kind: 'aborted', reason: signal.reason }` |
-| 被阻塞 | `:268` | `turnEnds = { kind: 'blocked' }` |
-
-工具调度器自身失败时**不伪造成功的工具结果**——不能把不可信状态喂回模型。
-
-### max-tokens 是粘性的
-
-`agent.ts:285-290`，一个很容易写错的细节： `evidence: code`
-
-```ts
-// max-tokens is sticky: once any step hits the ceiling, later steps
-// max-tokens stays sticky: a later completed step must not
-if (turnEnds === null || turnEnds.kind !== 'max-tokens') turnEnds = stepEnd
-```
-
-一旦某个 step 撞到 token 上限，后续 step 即使正常完成，也不能把 turn 的结束原因改回 `completed`。 否则用户会以为任务正常结束，实际上中间被截断过。
-
-`:48` 的类型定义把这件事写进了类型系统：`StepEndReason` 只能是 `completed` 或 `max-tokens` 两种。
-
-### 编排原语：优先最小语义
-
-turn/step 之上还有四种编排原语。选择原则是**优先用最小语义**：
-
-| 原语 | 什么时候用 | 不要误解为 |
-| --- | --- | --- |
-| **Subagent** | 需要上下文隔离 | descriptor 有 parent/seed/depth 元数据，但不证明远程 provider 一定可恢复 |
-| **Job** | 需要后台生命周期 | 要区分「已接受 / 运行中 / 完成 / 结果已收集 / 已停止」五态 |
-| **Schedule** | 需要时间触发 | 是 agent 作用域的 durable 队列，**不是宿主 cron**；要考虑重启、重复执行、错过窗口 |
-| **Workflow** | 需要确定的步骤图 | worker thread 与 `node:vm` **不构成不可信代码的安全隔离** |
-
-每增加一层编排，都要补齐：取消传播、预算、错误归因、结果汇合、观测。
-
-## 四、约束与失效条件
-
-### 「回答完成」不是最后一个文本 chunk
-
-自然停止之前还有 `agent/turn-stopping` 检查点（`:296`，`serial` 分发）。错误、取消、max-tokens、中断各有不同的闭合原因。
-
-产品侧要结合持久 turn 边界与实时 agent 状态判断完成，而不是只看流连接是否结束。
-
-### `agent/pre-step` 是 waterfall，忘了 `next()` 就截断下游
-
-监听器可以改写、拒绝或委托。忽略 `next()` 会意外截断下游策略。 这是 compaction、审批注入等能力的挂载点，短路它等于关掉它们。
-
-一个边界情况：首次领取被拒绝时，仍然会留下一个没有 step 的闭合 turn。 日志里出现 `turn/start` 紧跟 `turn/end` 而中间无 `step/*`，是正常形态，不是数据损坏。
-
-### 「UI 显示已发送」不等于模型已看见
-
-steering、follow-up 和注入上下文各有自己的唤醒与领取语义。消息进了 inbox，要等下一次 `preStep()` 领取才会进入模型请求。
-
-### 取消的两种状态必须分开
-
-- **已开始的工具** → drain，等它收束
-- **未开始的工具** → 生成可解释的合成结算
-
-不能笼统地「全部标记失败」，因为已开始的可能已经产生了副作用。这条在文章 05 的 `TOOL_NOT_STARTED` / `TOOL_OUTCOME_UNKNOWN` 二态里有对应的持久化表达。
-
-### 改这一层，最小回归集
-
-不要只跑一个成功样例。至少覆盖五条：
-
-1. 正常纯文本完成
-2. 模型先请求工具 → 工具成功 → 下一 step 完成
-3. provider 错误进入 `request-error`
-4. 工具被拒绝或失败，仍产生 `tool/result`
-5. cancel 后未开始的工具有合成结果，已开始的完成 drain
-
-对应测试文件：`loop.spec.ts`、`tool-calls.spec.ts`、`tool-order.spec.ts`、`request-error.spec.ts`、`cancel.spec.ts`。 `evidence: test`
-
-## 五、可复核实验
-
-### 实验 1：读调度器的三层循环（无需凭据）
+这些命令在锁定的 checkout 里跑（把 `<checkout>` 换成 `sources/checkouts/deepseek-harness`）：
 
 ```bash
-cd sources/checkouts/deepseek-harness
-sed -n '84,95p'   packages/core/agent-loop/src/tool-calls.ts   # 外层规划
-sed -n '147,152p' packages/core/agent-loop/src/tool-calls.ts   # 有序提交
-sed -n '196,210p' packages/core/agent-loop/src/tool-calls.ts   # 有界池 + 重分类
+# 一个 turn 的事件顺序：把快照日志的 type 抽出来
+cd <checkout>
+cut -d, -f1 examples/acp-agent/tests/snapshots/parallel-tool-calls/session.jsonl
+
+# 取消时两种错误码的差别
+grep -o 'ABORTED[A-Z_]*' examples/acp-agent/tests/snapshots/cancel-tool-calls/session.jsonl
+
+# 哪些工具 opt-in 了并发
+grep -rn "isConcurrencySafe" packages/*/*/src/*.ts
+
+# turn()/step()/buildRequest 三段的确切范围
+sed -n '246,330p;332,401p;407,495p' packages/core/agent-loop/src/agent.ts
+
+# 事件声明与模式（@mode 标注在每段 JSDoc 末尾）
+grep -n "@mode\|^    'agent/" packages/core/agent/src/runtime-types.ts
 ```
 
-回答：为什么 `:200` 要在每次有序提交后重读后续调用的执行模式？ 提示——工具注册表在池子运行期间可能被改。
+想看"模型到底收到什么"，最快的路是读快照目录里的 `session.jsonl`：它就是重建请求的全部输入，而 `packages/core/agent-loop/src/invariant.ts:39-42` 那条断言保证了这一点在运行期成立。
 
-### 实验 2：跑工具顺序的契约测试（无需凭据）
-
-```bash
-cd sources/checkouts/deepseek-harness
-pnpm install
-pnpm vitest run packages/core/agent-loop/tests/tool-order.spec.ts
-pnpm vitest run packages/core/agent-loop/tests/cancel.spec.ts
-```
-
-记录：命令、退出码、用例数。这些测试用 mock adapter，不需要真实 API key。
-
-### 实验 3：观察一次真实 turn 的事件序列（需要凭据）
-
-```bash
-export DEEPSEEK_API_KEY="your-own-key"
-cd sources/checkouts/deepseek-harness
-pnpm dsh --profile headless "读一下 README.md 的前 10 行"
-```
-
-这个任务会触发工具调用，所以能看到完整形态。在会话日志里核对：
-
-```
-turn/start → step/start → request/header → assistant/chunk*
-  → tool/call → tool/result → step/end
-  → step/start → ... → step/end → turn/end
-```
-
-**该得出的结论**：至少两个 step。如果只有一个 step，说明模型没调工具，换个更需要工具的任务重试。
-
-再跑一个负向用例：任务进行中 `Ctrl-C`，检查 `turn/end` 的 `reason.kind` 是否为 `aborted`，以及未开始的工具是否有合成结算。
-
-## 本篇尚未覆盖的源文件
-
-- `packages/core/agent-loop/src/index.ts`（713 行）—— `createAgent()`、服务注册与 config 解析
-- `packages/core/agent/src/{inbox,dispatch,consumed-work,model-selection}.ts` —— 抽象工作入口的完整语义
-- `packages/core/agent-loop/src/runtime-context.ts` —— runtime context 如何渲染成 user-role snapshot
-- `packages/subagent/`、`packages/jobs/`、`packages/schedule/`、`packages/workflow/`、`packages/goal/`、`packages/plan/` —— 五种编排原语的实现
+关于这个循环怎么被组装、agent 怎么被创建与恢复，见 [05 Session](05-session.md) 和 [08 Orchestration](08-orchestration.md)；工具执行流水线的内部（审批、沙箱、guard）见 [07 工具、审批与沙箱](07-tools-approval-sandbox.md)；每 step 重装配对缓存的影响见 [02 KV-Cache](02-kv-cache.md)。

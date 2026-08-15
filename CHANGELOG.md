@@ -1,61 +1,40 @@
 # Changelog
 
-所有重要变化记录在此。版本格式遵循语义化版本，研究基线同时由
-`sources/sources.lock.yml` 独立固定。
+所有重要变化记录在此。研究基线由 `sources/sources.lock.yml` 独立固定。
 
-## [Unreleased]
+## [Unreleased] — 2026-08-16 重构：从「索引 + 制度」转向「机制 + 对照」
 
-### Changed — 重构：从百科索引转向深度解读
+### 为什么重构
 
-- 面向读者收敛为一类：想搞懂 agent harness 内部构造的中文工程读者，不再分设产品/维护者等多条路线。
-- **21 章百科重构为 12 篇深度长文 + 2 个附录**，扁平结构、ASCII slug 文件名、中文标题。
-- **每篇固定五段**：产品现象 → 源码路径（精确到文件行号，绑定锁定 commit）→ 机制 → 约束与失效条件 → 可复核实验。
-- **导航七合一**：删除 `QUICKSTART.md`、`LEARNING_PATH.md`、`docs/README.md`、`docs/00-start-here/`，`README.md` 成为唯一入口。
-- **生成索引移出主干**：`docs/14-file-reference/generated/`（137,046 行）改为本地 `.generated/`（gitignore），由 CI 发布到 `gh-pages` 孤儿分支；`catalogs:verify` 退出 `npm run check` 链。
-- **停用 `inference` 证据标签**（此前 88/88 篇都带它，零区分度）；行内证据标注统一为反引号后缀写法。
-- 仓库更名为 `deepseek-harness-internals`。
-- 清理 `research/` 下 4 个仅含 README 的空壳目录与空的 `.github/ISSUE_TEMPLATE/`。
-
-### Added
-
-- 12 篇正文，其中 4 篇是上游与其它中文内容都不会有的独家：KV-cache 纪律、压缩的前缀复用、Invariant 与 Agent Note、横向对照。
-- 附录 A：实验手册，索引全部 39 个可复核实验（26 个无需凭据）。
-- 附录 B：28 条术语表、证据分级、benchmark 设计、上游维护、许可证边界、论文标注方法。
-
-### Fixed
-
-- 更正 `SandboxEnforcement` 的描述：实际是 `'full' | 'partial'` 两态，`'unavailable'` 属于 `EscalationOutcome`。
-- 更正 Cordis 插件状态机：实际是 `FiberState` 六态（`PENDING`/`LOADING`/`ACTIVE`/`FAILED`/`UNLOADING`/`DISPOSED`），此前图中的 `Declared`/`Waiting`/`Disposing` 是自造名称。
-- 更正事件分发模式数量：实际五种（含 `bail`），此前记为四种。
-
-### Removed（早期条目，已被上述重构取代）
-
-- Added `QUICKSTART.md` and `LEARNING_PATH.md` as clear public entry points.
-- Added role-route index under `docs/00-start-here/paths/`.
-- Added `docs/00-course/` as the primary 12-part course path.
-- Added source evidence cards and minimum experiment prompts to every course lesson.
-- Added stage-by-stage course checklists and FAQ for source reading, plugins, prompt/context and TUI boundaries.
-- Added a sanitized local evidence draft generator for runtime experiments.
-- Added a generated-index navigation page and initial runtime-evidence records.
+上一版有三个结构性问题：文章只给行号锚点、不给模型真实看到的东西；强制五段式导致大量凑段（每篇的"实验"段有 13 个需要凭据的实验从未跑过，"预期结果"全是预测）；根目录治理文件比正文还多，其中 `PROJECT_STATUS.md` 整份是更早一版的残留。
 
 ### Changed
 
-- Expanded the Agent Loop, prompt/context, DeepSeek adapter, tools/approval/sandbox and Session lessons with source-shaped code-block explanations.
-- Reorganized the `00-start-here` entry structure around route, roadmap and workbook layers.
-- Simplified the root README so GitHub visitors start from the right learning path instead of reading every evidence rule on the homepage.
-- Repositioned generated catalogs and research ledgers as reference layers rather than onboarding content.
-- Refreshed the pinned ecosystem baseline for ACP SDK, Claude Agent SDK TS, Codex, Pi, OpenCode, Qwen Code, and SWE-bench.
-- Regenerated source catalogs and reviewed affected source-bound analysis against the new commits.
-
-## [0.1.0] - 2026-08-13
+- **12 篇 + 2 附录 → 16 篇 + 2 附录**，每篇先给「模型/进程真实看到的东西」，再讲机制、设计取舍、失效点，并就地给出与其它 harness 的对照。
+- **横向对照从「数行数」改成「比机制」**：新的 [14 篇](docs/14-comparison.md) 按 prompt 装配、缓存策略、压缩、循环、审批沙箱、会话、扩展七个维度对比 dsh / Claude Code / Codex / OpenCode / pi / mini-swe-agent，每格带文件行号。
+- **frontmatter 简化**为 `title` / `sources` / `last_verified` / `status`；去掉 `depth`、`audience`、`evidence` 三个无信息量的字段，以及全部行内证据标签（推断改为正文明写）。
+- **上游来源从 15 个收敛到 5 个**：只保留真正被逐行引用的 dsh 与四个对照实现。
 
 ### Added
 
-- 产品、工程和维护者三条学习路线。
-- 文件级源码、测试、设计决策和生态索引框架。
-- 上游来源锁定、许可证治理和每 6 小时更新检查设计。
-- 可复现实验、安全研究与社区证据框架。
-- GitHub 首页 Logo、状态徽章、主题标签、更新状态与发布入口。
+- **`check:anchors` 门禁**：抽查正文里每一处 `路径:行号` 是否指向真实存在的行，越界或指向空行即失败。此前 CI 只校验「文件存在」，行号写错也能过。
+- 全新覆盖此前完全空白的部分：[Web 客户端与 host](docs/11-web-client-and-host.md)（39 个包、72k 行，全仓最大）、[Extensions 与 Code Mode](docs/09-extensions-and-code-mode.md)、[自证与工程化](docs/13-self-verification.md)、[设计记录导读](docs/15-agent-notes-guide.md)。
+- [01 System Prompt](docs/01-system-prompt.md) 给出逐字重建的默认首轮请求：完整 system 字符串、工具清单、以及注入到历史里的每一条消息。
+- [02 KV-Cache](docs/02-kv-cache.md) 补齐运行时机制：wire 请求怎么拼、`request/header` 的三种 reason、什么会打断前缀、命中率遥测链。
 
-[Unreleased]: https://github.com/plwslpld-arch/deepseek-harness-internals/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/plwslpld-arch/deepseek-harness-internals/releases/tag/v0.1.0
+### Fixed
+
+- 旧 `docs/10` 有一段**伪代码冒充源码**（`mountFrontendStatic`、`printReadyUrl` 等函数上游根本不存在）；ACP 包路径也写错了。
+- 旧 `docs/03` 说「工具结果塞进下一 step 的 inbox」——实际 `tool/result` 直接写入日志并进入派生历史。
+- 旧 `docs/08` 开篇「改文件前弹窗问你」是错的——默认组合下写文件和跑命令不弹窗。
+- 旧 `docs/06` 把 pi-ai 的 `replayState` 与 KV-cache 混为一谈，二者无关。
+- 旧 `docs/10`、`docs/12` 把 DSML 列为 dsh 的协议面——上游源码 `grep -ri dsml` 零命中，它属于模型侧。
+- `AGENTS.md` 禁用 `inference` 标签而校验脚本仍允许——两边已对齐（标签体系整体取消）。
+
+### Removed
+
+- `PROJECT_STATUS.md`（内容属更早一版）、`ROADMAP.md`（打勾项对应产物已删）、`GOVERNANCE.md` / `MAINTAINERS.md` / `SUPPORT.md` / `CODE_OF_CONDUCT.md` / `CITATION.cff`（单人研究仓库的仪式性文件）。
+- `templates/`、`schemas/`（"file study 时代"的孤儿，已无任何文件使用）。
+- gh-pages 生成索引链路（正则级符号表，读者直接 grep 上游更准）与每 6 小时的上游检查工作流（对锁定单 commit 的深读只会制造 stale 噪音）。
+- `sources/upstream-update.*`、`sources/stale-documents.md`（机器输出，且内容互相矛盾）。
+- 两份把「仓库自身一致」写成运行证据的记录；只保留如实标注「未跑」的那一份。

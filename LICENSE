@@ -1,10 +1,9 @@
-DeepSeek Harness Atlas licensing map
+DeepSeek Harness Internals licensing map
 
 - Original source code and automation are licensed under the MIT License in
   LICENSE-CODE.
-- Original prose, diagrams, and teaching material under docs/, research/, and
-  the Markdown project guides are licensed under CC BY 4.0 as stated in
-  LICENSE-DOCS.
+- Original prose and diagrams under docs/ and research/, and the Markdown
+  project guides, are licensed under CC BY 4.0 as stated in LICENSE-DOCS.
 - Third-party repositories, quotations, names, and linked material are not
   relicensed by this project. Their terms and handling rules are recorded in
   THIRD_PARTY.md and sources/sources.yml.
