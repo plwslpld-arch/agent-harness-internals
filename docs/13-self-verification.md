@@ -9,11 +9,11 @@ status: draft
 
 一个 agent harness 最难验证的地方不是「函数返回值对不对」，而是「模型这一步收到的东西，跟我们记下来的东西是不是同一份」。单元测试断言不了这个：它需要在真实运行中，把即将发出的请求和会话日志重新推导出来的请求逐字节比一遍。
 
-dsh 为这类断言建了一套机制，叫 invariant。下面先看两段真实的断言代码，再讲它什么时候生效、失败时会发生什么、以及它**证明不了**什么。
+dsh 为这类断言建了一套机制，叫 invariant——每个包自带一个 `src/invariant.ts`，在运行时挂上监听器，一旦发现自己负责的那条关系被破坏就当场抛异常。下面先看两段真实的断言代码，再讲它什么时候生效、失败时会发生什么、以及它**证明不了**什么。
 
 ## 一、先看见：请求必须等于日志重建的结果
 
-`packages/core/agent-loop/src/invariant.ts` 全文 63 行，核心是挂在 `llm/stream` 上的一个 waterfall 监听器：
+`packages/core/agent-loop/src/invariant.ts` 全文 63 行，核心是挂在 `llm/stream` 上的一个 waterfall 监听器（waterfall 是 Cordis 的一种派发模式：监听器串成一条链，每一环拿到上一环的结果、必须显式调用 `next()` 才把控制权交下去，所以它既能读也能改）：
 
 ```ts
 const install: InvariantInstaller = Object.assign((ctx: Context, fail: InvariantFailure) => {
@@ -42,7 +42,7 @@ const install: InvariantInstaller = Object.assign((ctx: Context, fail: Invariant
     }
 ```
 
-这段在 `packages/core/agent-loop/src/invariant.ts:19-41`。它做的事情，用一句话说是：**把马上要发给模型的 `options.messages`，和从 append-only 会话日志现场重新折叠出来的 `session.deriveMessages()`，做 JSON 全等比较**；再把请求的 `model`/`system`/`temperature`/`maxTokens`/`stop`/`tools` 和日志里折叠出的 `request/header` 逐项比一遍（`packages/core/agent-loop/src/invariant.ts:44-52`）。任何一项不等，就抛出。
+这段在 `packages/core/agent-loop/src/invariant.ts:19-42`。它做的事情，用一句话说是：**把马上要发给模型的 `options.messages`，和从 append-only 会话日志现场重新折叠出来的 `session.deriveMessages()`，做 JSON 全等比较**；再把请求的 `model`/`system`/`temperature`/`maxTokens`/`stop`/`tools` 和日志里折叠出的 `request/header` 逐项比一遍（`packages/core/agent-loop/src/invariant.ts:44-52`）。任何一项不等，就抛出。
 
 这条断言是[《05 Session》](05-session.md)里「模型可见 ⟺ 已记录」那条原则的运行时执法者。设计记录写得比代码更直白：`.agents/notes/implemented/architecture/2026-07-05-reconstructable-requests.md` 第 17 行说「Anything that reaches a model request must be reconstructable from the session log and the immutable content-addressed objects it references.」——invariant 就是把这句话变成一个会在开发期炸掉的检查。
 
@@ -68,7 +68,7 @@ const install: InvariantInstaller = (ctx, fail) => {
   }
 ```
 
-这是 `packages/core/session/src/invariant.ts:60-62`。同一个文件里还有 turn/step 的配对与嵌套（`packages/core/session/src/invariant.ts:74-102`）、`tool/result` 必须能找到同一步内的 `tool/call`（`packages/core/session/src/invariant.ts:140-142`）、核心执行事件必须被 turn 包住（`packages/core/session/src/invariant.ts:154`）。
+这是 `packages/core/session/src/invariant.ts:60-62`。同一个文件里还有 turn/step 的配对与嵌套（`packages/core/session/src/invariant.ts:74-102`）、`tool/result` 必须能找到同一步内的 `tool/call`（`packages/core/session/src/invariant.ts:139-141`）、核心执行事件必须被 turn 包住（`packages/core/session/src/invariant.ts:154`）。
 
 三段代码的共同点：断言的对象都是**事件流或可变数据之间的关系**，不是某个函数的返回值。这是写在根 `AGENTS.md:103` 里的硬规矩：「Runtime invariants assert owned relationships. Check authoritative event streams or mutable data, not service or method presence, plugin metadata or effects, or fixed pure examples.」
 
@@ -100,7 +100,7 @@ const install: InvariantInstaller = () => {}
 
 **什么时候开启**：默认不开。`.agents/notes/implemented/simplification/2026-08-03-omit-invariants-from-shipped-config.md` 的决定是——发行版 `dsh` 的配置树（`apps/cli/config/` 下的 cordis 组合）既不挂 `@deepseek-ai/dsh-invariants` 服务，也不挂任何包的 `./invariant` 伴生插件；`apps/cli/package.json` 里连这个依赖都没有。笔记里的原话是「Ordinary `dsh` TUI and Web runs install no invariant listeners or trace state and cannot fail through `InvariantError`.」（当时 TUI 还在，后来被 `.agents/notes/implemented/simplification/2026-08-04-remove-tui-package.md` 删掉了）。
 
-开启它的地方是：vitest 拓扑（每个包的测试挂本包的伴生插件，另有一个把全部伴生插件都挂上的穷举拓扑，见 `packages/runtime-diagnostics/invariants/README.md`）、examples 的 bundle、生成的 SDK 组合，以及任何显式开诊断的自定义部署。服务本身有 `enabled` / `package_allowlist` / `package_blocklist` 三个配置项（`packages/runtime-diagnostics/invariants/src/index.ts:15-22`），正则不合法、重复、带空白直接在启动时抛错。
+真正开启它的是 vitest 拓扑：每个包的测试挂本包的伴生插件，另有一个把全部伴生插件都挂上的穷举拓扑，用来验证注册与释放的接线（`packages/runtime-diagnostics/invariants/README.md` 写明了这个安排）。除此之外，那篇笔记说 invariant「remains available for focused tests, example bundles, generated SDK compositions, and custom deployments that opt into diagnostics explicitly」——注意这句话说的是「可用」而不是「已挂」：在锁定的 commit 上，`examples/` 下没有任何一份 `cordis.yml` 挂了这个服务。服务本身有 `enabled` / `package_allowlist` / `package_blocklist` 三个配置项（`packages/runtime-diagnostics/invariants/src/index.ts:15-22`），正则不合法、重复、带空白直接在启动时抛错。
 
 **失败时会发生什么**——旧版分析一字没讲，这里把链路走完。
 
@@ -108,13 +108,13 @@ const install: InvariantInstaller = () => {}
 
 关键在于**没有任何地方 catch 它**——全仓非测试源码里 `InvariantError` 只在定义它的那个文件出现三次。所以它按普通异常向上传播：
 
-1. agent-loop 那条断言挂在 `llm/stream` 上，而 `llm/stream` 是 waterfall。`packages/llm/llm/src/index.ts:907-909` 的文档注释把责任划得很清楚：「Adapter selection, dispatch, and iteration failures become terminal `error` or `aborted` finish chunks; middleware, nested-call, cleanup, and consumer failures remain thrown.」——invariant 是 middleware，所以它**不会**被转换成一个 finish chunk，而是原样抛出。
+1. agent-loop 那条断言挂在 `llm/stream` 上，而 `llm/stream` 是 waterfall。`packages/llm/llm/src/index.ts:906-909` 的文档注释把责任划得很清楚：「Adapter selection, dispatch, and iteration failures become terminal `error` or `aborted` finish chunks; middleware, nested-call, cleanup, and consumer failures remain thrown.」——invariant 是 middleware，所以它**不会**被转换成一个 finish chunk，而是原样抛出。
 2. 异常从 `step()` 冒到 turn 循环的 catch（`packages/core/agent-loop/src/agent.ts:302`）。既然 signal 没 abort，就走 `packages/core/agent-loop/src/agent.ts:309-314`：`turnEnds = { kind: 'error', error: { message: errorChain(error), code: 'UNKNOWN' } }`。`InvariantError` 不是 `LlmError`，所以它被压平成 `UNKNOWN` 码的文本。
 3. `this.throwError(error)`（`packages/core/agent-loop/src/agent.ts:315`）先 `dispatch.emit('agent/error', …)` 再重抛（`packages/core/agent-loop/src/agent.ts:206-207`）。
 4. `finally` 块无论如何都会追加 `turn/end`（`packages/core/agent-loop/src/agent.ts:319`），所以这个 turn 以 `reason.kind === 'error'` 落盘。
-5. 重抛的异常最终被驱动边界吞掉：`kick()` 的 `catch (_error)` 里那句注释写着「Reported failures and cancellation are contained at the driver boundary.」（`packages/core/agent-loop/src/agent.ts:211-214`）。
+5. 重抛的异常最终被驱动边界吞掉：`kick()` 的 `catch (_error)` 里那句注释写着「Reported failures and cancellation are contained at the driver boundary.」（`packages/core/agent-loop/src/agent.ts:211-215`）。
 
-结论：**一次 invariant 违规会杀掉当前 turn，写下一条 `error` 的 `turn/end`，但不会杀掉进程**。而挂在 `session/event` 这种 `emit` 事件上的断言（`packages/core/session/src/invariant.ts:222-231`）传播路径更短——Cordis 的 `emit` 是 `this.dispatch('emit', args).map(cb => cb(...args))`（`vendor/cordis/src/events.ts:194-195`），同步、无 try/catch，所以异常直接从 `session.append()` 的调用点抛出，通常也就是 turn 里的某一步。
+结论：**一次 invariant 违规会杀掉当前 turn，写下一条 `error` 的 `turn/end`，但不会杀掉进程**。而挂在 `session/event` 这种 `emit` 事件上的断言（`packages/core/session/src/invariant.ts:223-231`）传播路径更短——Cordis 的 `emit` 是 `this.dispatch('emit', args).map(cb => cb(...args))`（`vendor/cordis/src/events.ts:194-195`），同步、无 try/catch，所以异常直接从 `session.append()` 的调用点抛出，通常也就是 turn 里的某一步。
 
 ### 它证明什么，不证明什么
 
@@ -148,7 +148,7 @@ const install: InvariantInstaller = () => {}
 | `client-runtime` | jsdom 里的 slot 测试台：真 Cordis `Context` + 生产的 `SlotRegistry` 和 web-react 渲染器 + 类型化的 session/workspace 替身。替身实现的是功能插件通过 ctx 看到的同一批对外面（`TestSessions implements ISessions`），所以生产接口一改，测试台**编译期**就红。 |
 | `loader-smoke` | 通过 Cordis Loader 起一个真子进程跑 app + `cordis.yml`，`resolveExampleLaunch` 在本地 `src` 模式和 CI `lib` 模式之间选。这是「按发布产物的真实入口路径测试」那条规则的载体。 |
 
-它们撑起来的规模：`packages/` 下非测试 TS/TSX 源码 228,300 行，`tests/` 目录下 268,040 行——**测试比源码多 17%**。测试文件 947 个（口径见[附录 B](appendix-b-verification.md)）。而且覆盖率门禁是逐文件 100%：`vitest.config.ts:273-278` 写着 `perFile: true` 加四个 100，注释是「100% or it doesn't merge … Per-file so a well-covered big file can't subsidize a bare one.」（`vitest.config.ts:269-270`）
+它们撑起来的规模：`packages/` 下非测试 TS/TSX 源码 228,300 行，`tests/` 目录下 268,040 行——**测试比源码多 17%**。测试文件 854 个（口径与行数同一套，见[附录 B](appendix-b-verification.md)）。而且覆盖率门禁是逐文件 100%：`vitest.config.ts:273-278` 写着 `perFile: true` 加四个 100，注释是「100% or it doesn't merge … Per-file so a well-covered big file can't subsidize a bare one.」（`vitest.config.ts:269-270`）
 
 `docs/testing.md:10` 还补了一句很清醒的话：「Line coverage is necessary, never sufficient — it proves lines ran, not that the feature works as shipped.」
 
@@ -174,15 +174,17 @@ You are an AI agent powered by DeepSeek Harness.
 You are a coding assistant powered by the deepseek-v4-flash model. Your working directory is {{cwd}}. Your bash tool runs under a file sandbox — a `[sandbox: file access denied …]` result is policy, not a command bug.
 ```
 
-它为什么是最有价值的可读证据？因为**它是 diff 的**。改动任何一个 prompt section、任何一个工具描述、任何一个变量渲染规则，这个文件都会变，PR 里就有一行行的红绿。`docs/testing.md:47` 那条规则是硬的：「Every non-trivial model-, protocol-, or human-visible change adds or updates a keyless scenario in the same PR through a runnable example's owning snapshot suite.」
+它为什么是最有价值的可读证据？因为**它是 diff 的**。改动任何一个 prompt section、任何一个工具描述、任何一个变量渲染规则，这个文件都会变，PR 里就有一行行的红绿。`docs/testing.md:49` 那条规则是硬的：「Every non-trivial model-, protocol-, or human-visible change adds or updates a keyless scenario in the same PR through a runnable example's owning snapshot suite.」
 
-另一个巧思在 `session.jsonl` 里。绝大多数场景的 `request/header` 事件是这样的：
+另一个巧思在 `session.jsonl` 里。所有场景的 `request/header` 事件都长这样，`text-turn` 也不例外：
 
 ```json
 {"type":"request/header","seq":7,"time":1785498761318,"data":{"header":{"config":{"provider":"deepseek-official","model":"deepseek-v4-flash"},"system":"{{system}}","tools":"{{tools}}"},"reason":"initial"}}
 ```
 
-`system` 和 `tools` 被换成了 token。全仓只有 `text-turn` 这一个场景把完整内容 pin 住（`docs/testing.md:12` 说明了这个安排，理由在 `.agents/notes/archived/testing/2026-07-06-pin-request-header-content-in-one-scenario.md`）。这样改一句 prompt，只有一个场景的 diff 会炸，其余 77 个各churn 一行——既保住了「有人在盯着完整内容」，又不至于每次 prompt 微调都要 review 78 份大 diff。
+`system` 和 `tools` 在会话日志里一律被换成 token。完整内容不放在日志里，而是放在旁边的 sidecar 文件（`system-prompt.expected.md` / `tool-schemas.expected.json`）里，且**每一类请求头只由一个场景持有 sidecar**：场景表用 `pinsHeader: true` 标出这个「班长」，同班的其余场景只检查自己重建出来的请求头是否与班长相等（`packages/test-support/acp-snapshot/src/suite.ts:104`）。`examples/acp-agent` 的 78 个场景分成 19 个这样的班，其中 12 个持有 system prompt sidecar、14 个持有 tool schema sidecar（差额来自 `systemPromptSource` / `toolSchemasSource`，允许一个班长复用另一个班长的 sidecar）。
+
+好处是：改一句 prompt，只有受影响那个班的 sidecar 会出 diff；同班其余场景的 fixture 里躺的是常量 token，一个字节都不用动——既保住了「有人在逐字盯着完整内容」，又不至于每次 prompt 微调都要 review 78 份大 diff。`docs/testing.md:12` 用「One ACP scenario (`text-turn`) pins full system-prompt/tool-schema content; other fixtures tokenize it」概括了这个安排（那句话说的是默认那一班），理由在 `.agents/notes/archived/testing/2026-07-06-pin-request-header-content-in-one-scenario.md`。
 
 ## 七、文档不是文档，是有门禁的产物
 
@@ -196,9 +198,9 @@ dsh 有 28 个文档门禁，编在 `scripts/run-gates.ts:581-615` 的 `docSyncL
 
 所以 `grep -l "^#### KV Cache effect" packages/*/*/README.md | wc -l` 得到 215 = 219 − 4。这是一份机器校验过的、逐包的「我对 prompt / token / KV-cache 有什么影响」清单，**可以直接当索引用**：想知道哪些包会动缓存前缀，grep 这个小标题然后读下面那句话就行。
 
-**Agent Note 有格式门禁。** `scripts/verify-agent-note-format.ts` 强制：第 1 行必须是 `# Agent Note: <title>`、第 2 行空、第 3 行是对应 lifecycle 的 `Status:` 语法（`scripts/verify-agent-note-format.ts:22-26`）、第 4 行空；第一个 `##` 必须是 `## Problem`；proposed 必须有 Proposal/Acceptance criteria/Risks，implemented 必须有 Decision/Consequences（`scripts/verify-agent-note-format.ts:29-33`）；implemented 里出现 `## Proposal` / `## Plan` / `## Migration plan` / `## Acceptance criteria` 一律拒绝——理由写在错误信息里：「an implemented Agent Note states what is」（`scripts/verify-agent-note-format.ts:74`）。`## Alternatives considered` 强制，2026-07-05 之前的老笔记可以用一行豁免注释代替，之后的不行（`scripts/verify-agent-note-format.ts:14-16`、`:82`）。
+**Agent Note 有格式门禁。** `scripts/verify-agent-note-format.ts` 强制：第 1 行必须是 `# Agent Note: <title>`、第 2 行空、第 3 行是对应 lifecycle 的 `Status:` 语法（`scripts/verify-agent-note-format.ts:22-26`）、第 4 行空；第一个 `##` 必须是 `## Problem`；proposed 必须有 Proposal/Acceptance criteria/Risks，implemented 必须有 Decision/Consequences（`scripts/verify-agent-note-format.ts:29-33`）；implemented 里出现 `## Proposal` / `## Plan` / `## Migration plan` / `## Acceptance criteria` 一律拒绝——理由写在错误信息里：「an implemented Agent Note states what is」（`scripts/verify-agent-note-format.ts:74`）。`## Alternatives considered` 强制，2026-07-05 之前的老笔记可以用一行豁免注释代替，之后的不行（`scripts/verify-agent-note-format.ts:13-16`、`:82`）。
 
-**doc-sync 里一半是「生成物新鲜度」检查。** `verify-cordis-catalog`、`verify-tool-catalog`、`verify-config-catalog`、`verify-persistence-catalog`、`verify-doc-graphs`、`verify-module-graph` 都是 `gen-*.ts --check`：重新生成一遍，跟仓库里的字节不一致就失败。其中 `docs/tool-catalog.md` 的生成器不是静态分析——它**真的把每个工具插件启动起来**读 `ctx.tools.schemas()`，因为工具 schema 静态不可知（枚举是运行时展开的、描述是拼接的、MCP 工具是裸 JSON Schema）。
+**28 条里有 8 条是「生成物新鲜度」检查。** `verify-cordis-catalog`、`verify-client-catalog`、`verify-tool-catalog`、`verify-config-catalog`、`verify-persistence-catalog`、`verify-doc-graphs`、`verify-scoped-events`、`verify-module-graph` 都是 `gen-*.ts --check`：重新生成一遍，跟仓库里的字节不一致就失败。其中 `docs/tool-catalog.md` 的生成器不是静态分析——它**真的把每个工具插件启动起来**读 `ctx.tools.schemas()`，因为工具 schema 静态不可知（枚举是运行时展开的、描述是拼接的、MCP 工具是裸 JSON Schema）。
 
 **双语是三元组。** 每篇文档/笔记是 `x.md` + `x.zh.md` + `x.i18n.yaml`。sidecar 里存的是两侧最近一次「确认一致」时的 git blob hash：
 
@@ -221,11 +223,11 @@ dsh 有 28 个文档门禁，编在 `scripts/run-gates.ts:581-615` 的 `docSyncL
 
 ## 九、失效点：100% 覆盖率骗过的那一次
 
-上面这些机制加起来仍然会漏，而且漏过一次很典型的。`docs/postmortem/0001-acp-default-export-drops-inject.md:14` 记着：ACP 服务器在真实编辑器（Zed）连上的瞬间就崩，第一个 `session/new` 返回 `cannot get property "agents" without inject`——「despite 178 green unit tests and 100% line coverage」。
+上面这些机制加起来仍然会漏，而且漏过一次很典型的。`docs/postmortem/0001-acp-default-export-drops-inject.md:13` 记着：ACP 服务器在真实编辑器（Zed）连上的瞬间就崩，第一个 `session/new` 返回 `cannot get property "agents" without inject`——「despite 178 green unit tests and 100% line coverage」。
 
 两个独立 bug 藏在同一句报错后面：`export default` 让 Loader 丢掉了插件的 `inject` 声明；另一个是带 trace 的可选服务查找跨 shadow 边界失败。测试全绿的原因是同一个——**每个测试都用 `ctx.plugin(...)` 手动挂载，没有一个走 Loader 的真实加载路径**。逐文件 100% 覆盖率在这里一点用都没有：那些行确实都跑了，只是没按发布产物的方式跑。
 
-修复不是补几个用例，而是加了两条规则：产品可见插件必须有一个「真组合」测试（把测试用的 `cordis.yml` 通过 Loader 和 app 进程启起来），以及 `docs/testing.md:33` 那条更刁的补充——「A guard only guards if the regression actually fails it」：对没有 `inject` 的组合型插件，Loader smoke 在默认导出替换掉具名导出时**依然会绿**，所以要显式断言 `expect('default' in mod).toBe(false)`，并且要真的把回归引进来、看它红、再回滚。
+修复不是补几个用例，而是加了两条规则：产品可见插件必须有一个「真组合」测试（把测试用的 `cordis.yml` 通过 Loader 和 app 进程启起来），以及 `docs/testing.md:34` 那条更刁的补充——「A guard only guards if the regression actually fails it」：对没有 `inject` 的组合型插件，Loader smoke 在默认导出替换掉具名导出时**依然会绿**，所以要显式断言 `expect('default' in mod).toBe(false)`，并且要真的把回归引进来、看它红、再回滚。
 
 四篇 postmortem 沉淀出的通用规则收在 `docs/defensive-patterns.md`，7 条，每条都是真出过的缺陷类别：正交结果各自独立上报（`docs/defensive-patterns.md:9`）、公共契约两侧都要守（`docs/defensive-patterns.md:13`，正是本文第三节引的那条「middleware and consumer defects remain thrown」的另一面）、异步状态不是同步状态、dispose 必须到静默而不只是发出请求、在派发器里包住回调异常、不给不可信输出环境变量与可预测路径、unlink 形似链接的路径。
 
@@ -233,15 +235,7 @@ dsh 有 28 个文档门禁，编在 `scripts/run-gates.ts:581-615` 的 `docSyncL
 
 ## 十、这套自证要花多少钱
 
-诚实地列一下账：
-
-- **268,040 行测试**，比源码多；逐文件 100% 覆盖率意味着每一个 `if` 分支都得有测试或者一条带理由的 `v8 ignore`。
-- **219 个 `invariant.ts`**，其中 184 个是纯仪式——为了让「有没有可断言关系」成为一个必须回答的问题，而不是可以跳过的问题。
-- **28 个文档门禁**，改一句 README 可能要同步改 `.zh.md`、重录 sidecar、重新生成三份目录。
-- **683 篇 Agent Note × 3 个文件 = 2,049 个文件**，加上「每个非平凡改动必须在同一 PR 增改至少一篇笔记」的规则（`.agents/notes/README.md:46`）。
-- **78 个 ACP 快照场景**，改一句 prompt 就要 review 一批 fixture diff。
-
-这套成本只有在一个前提下划算：**主要贡献者是 agent，而 agent 不会记得上下文**。11 个 `.agents/skills/` 技能（评审、找简化、归档笔记、推送前选测试集…）也说明了同一件事。人类团队大概率负担不起这个比例；但如果每个 PR 的作者都是新来的，把「为什么这么定」和「怎么证明没坏」写成机器可校验的产物，就不再是洁癖。
+前面几节的数字（测试行数见 §五、invariant 的 219/184 见 §二、文档门禁的 28 条见 §七、快照场景数见 §六）不必再列一遍，值得单独记一笔的是它们换算成的**日常摩擦**：改一句 README 可能连带改 `.zh.md`、重录 sidecar、重新生成三份目录；改一句 prompt 要 review 一批 fixture diff；每一个新 `if` 分支要么有测试要么有一条带理由的 `v8 ignore`；而且每个非平凡改动都必须在同一个 PR 里增改至少一篇 Agent Note（`.agents/notes/README.md:46`），那批笔记连同它们的 `.zh.md` 与索引一起，是仓库里文件数最多的一类产物。这套成本只有在一个前提下划算：**主要贡献者是 agent，而 agent 不会记得上下文**。11 个 `.agents/skills/` 技能（评审、找简化、归档笔记、推送前选测试集…）指向的是同一个前提。人类团队大概率负担不起这个比例；但如果每个 PR 的作者都是新来的，把「为什么这么定」和「怎么证明没坏」写成机器可校验的产物，就不再是洁癖。
 
 ## 十一、别人怎么做
 
@@ -250,7 +244,7 @@ dsh 有 28 个文档门禁，编在 `scripts/run-gates.ts:581-615` 的 `docSyncL
 | | 结构化决策记录 | 运行时不变量 | 快照证据 | CHANGELOG |
 | --- | --- | --- | --- | --- |
 | dsh | `.agents/notes/` 683 篇，路径即状态，三个门禁脚本 | 219 个 `invariant.ts`，35 个可执行 | 93 个 keyless 场景，含逐字 system prompt | 无（tag + 笔记） |
-| Codex | 无（`docs/` 15 篇用户文档，无 ADR 树） | 无 | 715 个 insta `.snap`，1,022 个测试 `.rs` | 有 |
+| Codex | 无（`docs/` 15 篇用户文档，无 ADR 树） | 无 | 715 个 insta `.snap`，1,023 个路径含 `tests` 的 `.rs` | 有 |
 | OpenCode | 无 | 无（唯一同名文件是 e2e 视觉稳定性工具） | 3 个 `__snapshots__` 目录 | 无 |
 | pi | 无 | 无 | 无 | 无 |
 | mini-swe-agent | 无 | 无 | 无 | 无 |
@@ -275,8 +269,12 @@ grep -l "^#### KV Cache effect" packages/*/*/README.md | wc -l
 # 模型第一眼看到的全部文字
 cat examples/acp-agent/tests/snapshots/text-turn/system-prompt.expected.md
 
-# 哪些场景把请求头 pin 住了（只有一个）
-grep -L '"system":"{{system}}"' examples/acp-agent/tests/snapshots/*/session.jsonl
+# 哪些场景持有完整内容的 sidecar（12 个 prompt / 14 个 schema）
+ls examples/acp-agent/tests/snapshots/*/system-prompt.expected.md
+ls examples/acp-agent/tests/snapshots/*/tool-schemas.expected.json
+
+# 场景表里有多少个「班长」（19）
+grep -c 'pinsHeader: true' examples/acp-agent/tests/acp.snapshot.ts
 
 # 断言失败后的传播路径，逐段读
 sed -n '19,55p'   packages/core/agent-loop/src/invariant.ts

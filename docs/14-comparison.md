@@ -22,17 +22,19 @@ status: draft
 
 Claude Code 不开源，所以它在下面每张表里都标注了文档出处而不是文件行号。本篇不使用任何泄露的 prompt 转储。
 
+**这一篇和前面十几篇的分工**：dsh 自己怎么做，01–13 每篇都讲透了，这里不重讲——凡是涉及 dsh 机制的地方，一律只给结论加一个指针。本篇的产出是那张七维矩阵，以及从矩阵里读出来的**跨维度模式与分歧**：哪些做法六家不约而同（通常说明背后有个共同的硬约束），哪些是真正的分歧（通常说明背后是产品判断而不是技术判断）。矩阵每一格都是可核的事实，段落只讲矩阵横着读、竖着读能看出什么。
+
 ---
 
 ## 维度一：system prompt 怎么拼出来
 
-这是差异最大的一维。六家分成了三派。
+这是差异最大的一维。五家能核源码的分成两派，分界线不在「提示词写得好不好」，在**提示词这份资产归谁所有**。（Claude Code 闭源，无法判断它的 system prompt 怎么组织，本篇不给它归派。）
 
-**「没有中心 prompt 文件」派——只有 dsh。** 模型看到的 system 字符串是运行时由插件各自贡献的 section 按 `order` 拼起来的（`packages/core/system-prompt/src/index.ts:212`），装一个插件就多一段，卸掉就少一段。默认 Web 组合下大约 19 段，每段一两句话。细节见 [01 System Prompt](01-system-prompt.md)。
+**「没有中心 prompt 文件」派——只有 dsh。** system 字符串是运行时由插件各自贡献的 section 按 `order` 拼出来的，装一个插件就多一段。机制、逐段 order 表、每段归哪个包，全在 [01 System Prompt](01-system-prompt.md)，这里不重复。
 
-**「中心 prompt 模板」派——Codex、OpenCode、pi、mini-swe-agent。**
+**「中心 prompt 模板」派——Codex、OpenCode、pi、mini-swe-agent 四家。** 但这四家内部还有一条更有意思的分线：模板存在哪。
 
-- Codex 更进一步：system prompt（Responses API 的 `instructions` 字段）**是模型元数据的一部分**，由 `/models` 下发模板，客户端只填 personality 占位符，本地 `prompt.md` 只是兜底。提示词升级不需要发新版客户端。
+- Codex 走到了另一个极端：system prompt（Responses API 的 `instructions` 字段）**是模型元数据的一部分**，由 `/models` 下发模板，客户端只填 personality 占位符，本地 `prompt.md` 只是兜底。提示词升级不需要发新版客户端。它和 dsh 在光谱上其实是邻居——两家都拒绝「提示词是客户端源码里的一个常量」，只是一个把所有权交给了插件，一个交给了服务端。
 - OpenCode 按模型家族分发不同的主提示（`packages/opencode/src/session/system.ts:27`）：Claude 系用 `anthropic.txt`，GPT-4/o1/o3 用 `beast.txt`，Gemini、Kimi、Meta 各有各的。承认「同一段提示词在不同模型上效果不同」。
 - pi 只有一份极简 prompt（`packages/coding-agent/src/core/system-prompt.ts:121`），项目可以用 `SYSTEM.md` 整体替换、`APPEND_SYSTEM.md` 追加。
 - mini-swe-agent 就两段 Jinja 模板：一句话的 `system_template` + 带任务和示例的 `instance_template`。
@@ -54,9 +56,9 @@ OpenCode 把日期放进 system 是这里唯一明显的缓存漏洞：跨天的
 
 | 项目 | 发现规则 | 注入位置 |
 | --- | --- | --- |
-| dsh | `$DSH_HOME/AGENTS.md` + 项目根到 cwd 的整条目录链，同目录里 `AGENTS.md`/`CLAUDE.md` 都加载，之后按内容去重；65536 字节预算，超了先丢最宽的 | user 消息里的 `<system-reminder>`，只有 fs 工具动过文件才刷新 |
+| dsh | `$DSH_HOME/AGENTS.md` + 项目根到 cwd 的整条目录链，同目录里 `AGENTS.md`/`CLAUDE.md` 都加载，之后按内容去重；65536 字节预算（是组合里配的值，schema 没有默认，`packages/bundle/base/cordis.patch.yml:232-235`），超了先丢最宽的 | user 消息里的 `<system-reminder>`，只有 fs 工具动过文件才刷新 |
 | Claude Code | 目录树向上全量拼接，子目录惰性加载，`@import` 最多 4 跳，另有 `.claude/rules` 可按 `paths:` 限定作用域 | user 消息（官方文档明确说是为了保住 system 缓存） |
-| Codex | 项目根到 cwd 逐级找 `AGENTS.override.md`/`AGENTS.md`，32 KiB 预算 | `input` 数组头部的 developer 消息 |
+| Codex | 项目根到 cwd 逐级找 `AGENTS.override.md`/`AGENTS.md`，32 KiB 预算（`codex!codex-rs/core/src/config/mod.rs:210`） | `input` 数组头部的 developer 消息 |
 | OpenCode | 从 cwd 向上 `findUp`，**第一个命中的文件名类别为准**（不堆叠所有祖先）；支持 http(s) 远程 URL | system 段；另有懒加载——模型 read 某个子目录文件时，才把沿途未加载的 AGENTS.md 作为工具结果附件注入 |
 | pi | 全局 + 完整祖先链的 `AGENTS.override`/`AGENTS`/`CLAUDE.md` | system 里的 `<project_context>` |
 | mini-swe-agent | 不支持 | — |
@@ -78,31 +80,33 @@ OpenCode 的「懒加载嵌套 AGENTS.md」是这一维里最聪明的设计：�
 | --- | --- | --- |
 | **dsh** | 没有任何缓存 API 调用。让 `请求 = f(事件日志)`，日志只追加，投影是纯函数，于是每次请求天然是上次的字节级扩展 | `deriveMessages()` + `EpochHeader` 按值比较，见 [02 KV-Cache](02-kv-cache.md) |
 | **Claude Code** | 显式断点分四层：静态 system+tools（全局缓存）→ CLAUDE.md（项目内）→ 会话上下文 → 对话消息。切模式用工具（`EnterPlanMode`）而不是换工具集；压缩请求复用父会话完全相同的 system/tools | 官方文档 [prompt-caching](https://code.claude.com/docs/en/prompt-caching) |
-| **Codex** | `prompt_cache_key = session_id`，子 agent 共享同一个 key；`store: false` 全量重放历史 + 加密 reasoning 内容 | `codex-rs/core/src/client.rs:484`、`codex-rs/core/src/client.rs:921` |
+| **Codex** | `prompt_cache_key = session_id`，子 agent 共享同一个 key；`store: false` 全量重放历史 + 加密 reasoning 内容 | `codex!codex-rs/core/src/client.rs:484`（key 取 session_id）、`:921`（挂进请求）、`:931`（`store: false`） |
 | **OpenCode** | AI-SDK 路径给**前 2 条 system + 末 2 条消息**打 ephemeral；OpenAI 家族用 sessionID 当 `promptCacheKey`；工具按名字排序保证顺序稳定 | `packages/opencode/src/provider/transform.ts:359` |
-| **pi** | 三锚点：system 块、最后一个工具、最后一条用户消息，可选 1 小时保留；**摘要请求刻意用 `cacheRetention: "none"` + 新 sessionId**，避免污染主会话的缓存分片 | `packages/ai/src/api/anthropic-messages.ts` |
+| **pi** | 三锚点：system 块、最后一个工具、最后一条用户消息，可选 1 小时保留；**摘要请求刻意用 `cacheRetention: "none"` + 新 sessionId**，避免污染主会话的缓存分片 | `pi!packages/coding-agent/src/core/compaction/compaction.ts:573` |
 | **mini-swe-agent** | 只给最后一条消息打 ephemeral，工具恒为一个 bash | `src/minisweagent/models/utils/cache_control.py:49` |
 
-**三个值得单独说的点：**
+横着读这张表，有三条结论：
 
-1. **Claude Code 把缓存断裂当事故处理。** 官方博客原话是「We alert on cache breaks and treat them as incidents」。这不是技术细节，是工程文化——dsh 用另一种方式表达了同一件事：每个包的 README 必须声明自己对 KV-cache 的影响，由 CI 校验（见 [13 自证](13-self-verification.md)）。
+1. **缓存纪律靠的是流程而不是代码。** 六家的缓存实现都不复杂，难的是「别人改了一行就把前缀弄脏」这件事没法靠类型系统挡住。Claude Code 的答案是把缓存断裂当事故（官方博客原话「We alert on cache breaks and treat them as incidents」），dsh 的答案是 CI 门禁（每个包 README 必须声明自己对 KV-cache 的影响，见 [13 自证](13-self-verification.md)）。两条路都不是技术方案，是工程流程。
 
-2. **pi 的「旁路请求隔离缓存」是六家里唯一想到这一层的。** 摘要、起标题这类请求如果和主会话共用缓存分片，会把主会话的热前缀挤掉。pi 显式给它们换 sessionId 并禁止写缓存。dsh 走的是相反的路——让摘要请求**复用**主会话的热前缀（system/tools 原样带上，指令放在尾部 user 消息），少付一次全量 prefill。两种思路针对的是不同的 provider 语义，都成立。
+2. **旁路请求怎么处理，是这一维唯一的真分歧。** 摘要、起标题这类请求如果和主会话共用缓存分片，会把主会话的热前缀挤掉。pi 的答案是**隔离**：换 sessionId 并禁止写缓存。dsh 的答案是**复用**：摘要请求原样带上主会话的 system/tools，指令放尾部（见 [02 KV-Cache](02-kv-cache.md)、[06 压缩](06-compaction.md)）。两者不是谁对谁错——隔离针对的是显式断点语义（断点数量有限，得省着用），复用针对的是自动前缀缓存（前缀越长越划算）。剩下四家没有对这个问题表态，等于默认让旁路请求去挤主会话。
 
-3. **压缩之后主对话必然全 miss，六家都没有真正解决。** Claude Code 有 `/rewind`（回到已缓存前缀，比压缩便宜）算是绕过；dsh 的上游在 `.agents/notes/proposed/` 里有一份 `recallable-compaction` 提案，明确自评「the head checkpoint is rewritten every pass, so the request prefix takes a full prompt-cache miss each time」，状态还是 proposed。
+3. **压缩之后主对话必然全 miss，六家都没有解决。** Claude Code 的 `/rewind`（回到一个已缓存的前缀，比压缩便宜）是绕过而不是解决；dsh 的上游把这个缺陷写进了一份还没实现的提案里，自评见 [15 设计记录导读](15-agent-notes-guide.md)。这是全篇唯一一处六家一致的**失败**，说明它大概率不是工程投入不够，而是「摘要既要冻结又要可改写」这个矛盾本身还没有好解法。
 
 ---
 
 ## 维度三：上下文压缩
 
+压缩要回答三个问题：什么时候动手、保住哪一段、摘要那次请求怎么发。前两列是前两个问题，第三列是各家的分歧点。[06 压缩](06-compaction.md) 篇末有更细的版本（多一列「摘要怎么发」）。
+
 | 项目 | 触发阈值 | 保留什么 | 特别之处 |
 | --- | --- | --- | --- |
 | **dsh** | 上下文压力超过配置比例，或 `CONTEXT_WINDOW_EXCEEDED` 溢出后恢复 | 从 surface 头开始压，保留尾部一段，不拆 tool 配对 | 摘要请求逐字复用主会话的 system/tools，指令放尾部；压缩前先跑工具结果剪枝 |
 | **Claude Code** | 默认到模型上限（可 `/autocompact` 调），**先清旧工具输出，再摘要** | 明确的幸存清单：CLAUDE.md 和 auto memory 从磁盘重注入、已调用 skill 正文重注入（单个 5k、总计 25k tokens 上限） | 有防抖动：单个大输出导致压完立刻又满时，几次后停止自动压缩并报错，而不是死循环 |
-| **Codex** | `context_window * 0.9`（可配） | 保留 ≤20k tokens 的用户消息 + 摘要 | 三种实现回退链（远程 v2 → 远程 v1 → 本地）；还有一种「不摘要，直接开新窗口 + 让模型自管预算」的模式；摘要注入位置刻意对齐训练分布 |
-| **OpenCode** | 可用额度 = 输入上限 − 约 20k | 尾部 25% 预算（2k–15k），可在 turn 内切分 | 用一个**专用的、没有工具的 compaction agent** 做摘要；可选清空旧工具输出为 `"[Old tool result content cleared]"` |
-| **pi** | `contextTokens > window − 16384` | 保留最近 20k，**绝不在工具结果处切** | 摘要作为 `CompactionEntry` 追加进 JSONL 会话树；跨 turn 时做 split-turn 双摘要 |
-| **mini-swe-agent** | **没有压缩** | — | 唯一保护是 observation 超 10k 字符做 head/tail 截断；撞上窗口直接终止任务 |
+| **Codex** | `(context_window * 9) / 10`，配置只能往低调不能往高调（`codex!codex-rs/protocol/src/openai_models.rs:482-493`） | 保留 ≤20k tokens 的用户消息（`codex!codex-rs/core/src/compact.rs:57`）+ 摘要 | 三种实现回退链（远程 v2 → 远程 v1 → 本地）；还有一种「不摘要，直接开新窗口 + 让模型自管预算」的模式；摘要注入位置刻意对齐训练分布 |
+| **OpenCode** | 可用额度 = 输入上限 − reserved，reserved 默认取 20,000 与该模型 maxOutputTokens 的**较小值**（`opencode!packages/opencode/src/session/overflow.ts:8-19`） | 尾部 25% 预算，夹在 2k–15k 之间（`opencode!packages/opencode/src/session/compaction.ts:118`），可在 turn 内切分 | 用一个**专用的、没有工具的 compaction agent** 做摘要；可选清空旧工具输出为 `"[Old tool result content cleared]"` |
+| **pi** | 给「提示词 + 模型回复」预留 16,384 token，用不下了就压（`pi!packages/coding-agent/src/core/compaction/compaction.ts:134`） | 保留最近 20,000 token（`:135`），**绝不在工具结果处切** | 摘要作为 `CompactionEntry` 追加进 JSONL 会话树；跨 turn 时做 split-turn 双摘要 |
+| **mini-swe-agent** | **没有压缩** | — | 唯一保护是 observation 超 10,000 字符做 head/tail 截断（`mini-swe-agent!src/minisweagent/config/mini.yaml:113-124`）；撞上窗口直接终止任务 |
 
 OpenCode 和 pi 的摘要模板高度相似（目标 / 约束 / 进度 / 决策 / 下一步 / 涉及文件），而且都会把上一次的摘要合并进新摘要。dsh 的摘要指令则更强调「你现在是压缩引擎，压缩上面的对话」。
 
@@ -112,16 +116,22 @@ mini-swe-agent 没有压缩不是缺陷，是立场：它主张 harness 应该�
 
 ## 维度四：agent 循环与工具执行
 
+循环本身六家都差不多——发请求、拿工具调用、执行、再发。真正拉开差距的是**出岔子时怎么办**：模型死循环了、回复被截断了、工具列表中途变了。第四列收的就是这些。
+
 | 项目 | 循环形态 | 并行工具 | 有意思的细节 |
 | --- | --- | --- | --- |
 | **dsh** | turn / step 状态机，每步先写日志再派生请求 | exclusive 工具形成屏障，parallel 工具进有界滚动池，结果按**模型给出的顺序**提交 | 取消时给未派发的调用合成 `ABORTED_BEFORE_DISPATCH` 结果，保证 tool_calls 与结果配对完整 |
 | **Claude Code** | 全量重发 + 缓存；并行工具批次 | 是 | 超时命令自动转后台；用户可以在模型跑的时候排队补充消息 |
 | **Codex** | ThreadManager → Session → Task → `run_turn` → 采样请求 | 是，`FuturesOrdered`，**边流边执行**（`OutputItemDone` 一到就启动工具 future） | `StepContext` 快照：一次采样内的上下文、工具列表、工具执行共享同一份快照，避免「工具列表变了但历史里的调用对不上」 |
-| **OpenCode** | `runLoop` 每步一次 `streamText` | 是 | **doom-loop 检测**：同一个调用连续 3 次就转成权限询问；`invalid` 工具调用会尝试修复 |
-| **pi** | 手写显式循环 + steering / follow-up 消息队列 | 默认并行，单个工具可声明 `executionMode: "sequential"` | `stopReason === "length"` 时**作废本轮所有工具调用**——截断的工具调用参数可能是残缺 JSON，执行它很危险 |
+| **OpenCode** | `runLoop` 每步一次 `streamText` | 是 | **doom-loop 检测**：末尾 3 个 part 全是同名同参的工具调用（`DOOM_LOOP_THRESHOLD = 3`，`opencode!packages/opencode/src/session/processor.ts:29`）就转成一次权限询问；`invalid` 工具调用会尝试修复 |
+| **pi** | 手写显式循环 + steering / follow-up 消息队列 | 默认并行，单个工具可声明 `executionMode: "sequential"` | `stopReason === "length"` 时**作废本轮所有工具调用**（`pi!packages/coding-agent/src/core/agent-session.ts:665`）——截断的工具调用参数可能是残缺 JSON，执行它很危险 |
 | **mini-swe-agent** | `while True: execute_actions(query())` | 否，顺序 | 每个动作起一个新 subshell（`cd`、环境变量都不保留）；用一个哨兵字符串判断任务完成 |
 
-pi 的 `length` 保护和 OpenCode 的 doom-loop 检测都是 dsh 目前没有的（这是我读源码后的判断，不是上游的说法）。Codex 的 `StepContext` 快照解决的问题 dsh 用另一种方式解决了——它的请求本来就是从日志派生的不可变对象。
+竖着读第四列，出现了一个反复的模式：**同一个失效模式，各家的判据往往一样，分歧在处置力度**。
+
+- **重复调用**：OpenCode 与 dsh 的判据一字不差——末尾若干次工具调用同名同参就算死循环。区别只在处置：OpenCode 拦截（转成一次权限询问），dsh 只提醒（`repeat-tool-reminder`，见 [08 编排层](08-orchestration.md)），循环本身不停。换句话说这不是「谁想到了」的差别，是「愿不愿意打断模型」的产品判断。
+- **`length` 截断保护**：pi 在 `stopReason === "length"` 时作废本轮全部工具调用，理由是截断的参数可能是残缺 JSON。这是六家里唯一一处有人做、其余五家都没做的保护，dsh 也没有（这是我读源码后的判断，不是上游的说法）。
+- **上下文漂移**：Codex 用 `StepContext` 显式冻结一次采样看到的上下文与工具列表；dsh 不需要这个东西，因为它的请求本来就是不可变对象（[03 Agent 循环](03-agent-loop.md)）。同一个问题，一家靠加机制解决，一家靠数据结构让问题不成立——这是全篇最能说明「架构选择会决定你需要写多少防御代码」的一格。
 
 ---
 
@@ -146,6 +156,8 @@ pi 的「不做权限」也是一个完整的论点：一个进程内的权限�
 
 ## 维度六：会话持久化
 
+存储结构决定了能力上限：存成一条线就只能续跑，存成树才有分支，存成事件日志才能把「模型看到的」和「实际发生的」分开。
+
 | 项目 | 存储 | 能力 |
 | --- | --- | --- |
 | **dsh** | append-only 事件日志，JSONL 或 SQLite 两种后端可换 | 事件溯源：模型看到的历史是日志的投影，不是日志本身；崩溃后可修复 |
@@ -161,18 +173,20 @@ pi 的 JSONL 树是这里最优雅的：分支不是事后加的功能，是存�
 
 ## 维度七：扩展模型
 
+第二列是「能加什么」，第三列是那个真正的分水岭：**核心循环本身算不算一个可替换的东西**。只有 dsh 回答「算」。
+
 | 项目 | 怎么扩展 | 能不能替换核心循环 |
 | --- | --- | --- |
 | **dsh** | Cordis 插件树，**连 agent loop 本身都是插件**；还能让模型在运行时增删插件（见 [09 Extensions](09-extensions-and-code-mode.md)） | 能 |
 | **Claude Code** | subagents（frontmatter 定义）、30+ 事件的 hooks、skills、plugins、MCP | 不能 |
 | **Codex** | 内置 explorer / worker 角色的子 agent、mailbox 通信、11 个 hook 事件、skills fragments、MCP、extension-api | 不能 |
-| **OpenCode** | 四个内置 agent（build/plan/general/explore）、可 resume 的 task 子代理、npm 插件（约 14 个钩子）、完整 MCP | 不能 |
-| **pi** | 约 30 个生命周期事件 + `registerTool/Command/Provider`；**没有 MCP、没有子代理、没有 plan 模式、没有 todo** | 不能 |
-| **mini-swe-agent** | Python 子类覆写 + yaml/Jinja | 不适用（总共 190 行） |
+| **OpenCode** | 四个内置 agent（build/plan/general/explore）、可 resume 的 task 子代理、npm 插件（`Hooks` 接口 21 个键，`opencode!packages/plugin/src/index.ts:222-334`）、完整 MCP | 不能 |
+| **pi** | `ExtensionAPI` 上 33 个 `on(event, …)` 生命周期事件（`pi!packages/coding-agent/src/core/extensions/types.ts:1198`）+ `registerTool`/`registerCommand`/`registerProvider`/`registerShortcut`/`registerFlag`；**没有 MCP、没有子代理、没有 plan 模式、没有 todo** | 不能 |
+| **mini-swe-agent** | Python 子类覆写 + yaml/Jinja | 不适用（`DefaultAgent` 总共 190 行，`mini-swe-agent!src/minisweagent/agents/default.py:38`） |
 
-dsh 的插件化是它 22 万行源码的主要来源：为了让一切可替换，每个能力都要拆成服务定义 / 提供方 / 消费方三个角色。代价很直接——**要改一个行为，先得判断是改插件、改配置、改 preset，还是真要动核心**。
+这一列的答案基本决定了各家的源码规模：五家「不能」的，扩展点是有限枚举出来的事件与配置项，核心可以写得很紧；dsh 那个「能」是它 22 万行的主要来源，因为每个能力都得拆成服务定义 / 提供方 / 消费方三个角色才能被替换（[09 Extensions](09-extensions-and-code-mode.md)、[10 Cordis 与 preset](10-cordis-boot-preset.md) 讲了这套代价怎么摊开）。
 
-反过来，dsh 能把 Claude Code 和 Codex 当成子代理来驱动，也能兼容它们的 hook 协议（`packages/subagent/subagent-claude-code`、`packages/hooks/hooks-claude-code`），这是插件化换来的直接好处，其它五家都做不到。
+值得注意的是这个选择在**别处**换来了什么：正因为「一个 agent 后端」只是一行插件，dsh 才能把 Claude Code、Codex 和任意 ACP agent 当成子代理驱动（[08 编排层](08-orchestration.md)），也才能兼容它们的 hook 协议。其它五家不是想不到，是它们的 agent 循环没有留出这个接缝。反方向也成立：Codex 发 `codex-mcp-server`、OpenCode 发 `opencode acp`，走的都是「把整个 agent 包成一个标准协议端点」这条更省事的路，代价是被驱动方只能作为黑盒使用（[12 表面与协议](12-surfaces-and-protocols.md)）。
 
 ---
 
@@ -184,7 +198,7 @@ dsh 的插件化是它 22 万行源码的主要来源：为了让一切可替换
 | **Claude Code** | 把缓存断裂当事故；模式切换用工具而不是换工具集 |
 | **Codex** | system prompt 作为模型元数据下发，提示词与客户端发布解耦 |
 | **OpenCode** | 懒加载嵌套 AGENTS.md；用 LLM 生成命令 arity 表来做前缀放行 |
-| **pi** | 旁路请求（摘要、标题）隔离缓存分片；`length` 截断时作废所有工具调用 |
+| **pi** | 旁路请求（摘要、标题）隔离缓存分片；`length` 截断时作废所有工具调用（dsh 没有对应保护） |
 | **mini-swe-agent** | 190 行就能跑通一个 SWE agent——这本身就是对「harness 必须很厚」的反驳 |
 
 ---

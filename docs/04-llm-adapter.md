@@ -75,13 +75,13 @@ export const textEvents = [
 
 每条消息带一个 `source`（`packages/llm/llm/src/message.ts:100-105`）：`user` / `plugin` / `model` / `tool`。插件源可以再声明一个语义化的 `form`——`instructions`、`catalog`、`snapshot`、`notice`、`relay`、`recall`（`packages/llm/llm/src/message.ts:48-60`）。这个词汇刻意只说「这是什么」，不说「长什么样」；注释里写得很直白：颜色、图标、排序、默认折叠都是消费者的事，不许进这个联合类型。
 
-`TokenUsage` 的计数是**不相交**的（`packages/llm/llm/src/types.ts:127-141`）：`inputTokens` 只含未命中缓存的输入，缓存读写另算，计费输入 = 三者之和；`reasoningTokens` 已经含在 `outputTokens` 里。DeepSeek 的 `prompt_tokens` 是含缓存命中的，所以适配器要减出来（下文 `mapUsage`）。
+`TokenUsage` 的计数是**不相交**的（`packages/llm/llm/src/types.ts:127-141`）：`inputTokens` 只含未命中缓存的输入，缓存读写另算，计费输入 = 三者之和。`reasoningTokens` 是个例外——它不是第五个桶，而是 `outputTokens` 的明细拆分，汇总时不能再加一遍（口径写在 `packages/llm/token-meter/src/index.ts:43`：「without double-counting reasoning output」）。DeepSeek 的 `prompt_tokens` 是含缓存命中的，所以适配器要减出来（下文 `mapUsage`）。
 
 失败事实用 `LlmFailure` 表达（`packages/llm/llm/src/types.ts:39-51`）：`{message, code, status?, providerRetryAfterMs?, requestId?}`，可序列化，**不带任何策略字段**——没有 `retryable`、没有 `partialOutput`。要不要重试是上层的判断，不是失败本身的属性。
 
 ### `LlmCallConfig`：请求头部的可变部分
 
-`LlmCallConfig`（`packages/llm/llm/src/call-config.ts:23-30`）只有六个字段：`provider`、`model`、`reasoningEffort`、`temperature`、`maxTokens`、`stop`。它是 session 日志里 `EpochHeader.config` 的内容，也是唯一允许插件在 `agent/request` waterfall 上替换的东西。`callConfigEquals` 逐字段比较，`stop` 数组按元素比（`packages/llm/llm/src/call-config.ts:48-58`）。
+`LlmCallConfig`（`packages/llm/llm/src/call-config.ts:23-30`）只有六个字段：`provider`、`model`、`reasoningEffort`、`temperature`、`maxTokens`、`stop`。它是 session 日志里 `EpochHeader.config` 的内容，也是唯一允许插件在 `agent/request` waterfall 上替换的东西。`callConfigEquals` 逐字段比较，`stop` 数组按元素比（`packages/llm/llm/src/call-config.ts:49-59`）。
 
 文件顶上留着一条自认的 TODO：哪些字段真的属于「epoch 级、影响缓存复用」还没定论（`packages/llm/llm/src/call-config.ts:15-16`）。这条 TODO 的后果在 [02 KV-Cache](02-kv-cache.md) 里会再碰到——改一次 `temperature` 也会写一条 header 变更事件，但它并不改变 prompt token。
 
@@ -89,7 +89,7 @@ export const textEvents = [
 
 ### `LlmRuntime`：注册、绑定、归一
 
-适配器注册是 all-or-nothing 的：`registerAdapter(providers, adapter)` 先在 `prepareRoutes` 里全量校验，任何一条 route 重复就抛 `DUPLICATE_ADAPTER`，注册表一个字节都不改（`packages/llm/llm/src/index.ts:338-397`）。返回的 handle 带一个 `replace(providers)`，在一个同步段里先删后加（`commitRoutes`，`packages/llm/llm/src/index.ts:405-417`），观察者看不到「这个 provider 消失了又回来」的空档。
+适配器注册是 all-or-nothing 的：`registerAdapter(providers, adapter)` 先在 `prepareRoutes` 里全量校验，任何一条 route 重复就抛 `DUPLICATE_ADAPTER`，注册表一个字节都不改（`packages/llm/llm/src/index.ts:338-397`）。返回的 handle 带一个 `replace(providers)`，在一个同步段里先删后加（`commitRoutes`，`packages/llm/llm/src/index.ts:405-413`），观察者看不到「这个 provider 消失了又回来」的空档。
 
 **每条 route 在注册时捕获 `providerRetryPolicy()`**（`packages/llm/llm/src/index.ts:387-388`）。这是全流程里唯一一个「注册期确定、请求期刷新不了」的事实——`llm-deepseek` 因此在配置里的 `retryPolicy` 变化时要调 `registration.replace([PROVIDER])` 原地重注册（`packages/llm/llm-deepseek/src/index.ts:258-268`）。
 
@@ -97,7 +97,7 @@ export const textEvents = [
 
 `prepareCall(config, signal)`（`packages/llm/llm/src/index.ts:779-813`）把「解析后的 config + 那次注册 + retryPolicy + context + adapterDefaults」一次性打包成 `PreparedLlmCall`（接口在 `packages/llm/llm/src/index.ts:155-172`）。返回的 `stream()` 只能调一次，而且传进去的 call-config 必须与 prepared 的一致，否则抛 `INVALID_PREPARED_CALL`。目的写在 JSDoc 里：HMR（热更新）时不能拿 A 适配器的能力探测结果去 dispatch 到 B 适配器。
 
-`stream()` 本身只有一行——它是一个 waterfall（`packages/llm/llm/src/index.ts:913-927`）：
+`stream()` 本身只有一行（`packages/llm/llm/src/index.ts:913-915`），转手交给私有的 `streamWithRegistration`；后者也只做一件事——把请求交给 `llm/stream` 这个 waterfall（`packages/llm/llm/src/index.ts:921-926`）：
 
 ```ts
     return this.ctx.waterfall(
@@ -108,6 +108,8 @@ export const textEvents = [
     )
 ```
 
+分两层是因为 `prepareCall()` 拿到的那个一次性 `stream()` 也走 `streamWithRegistration`，只是多带一个已绑定的 registration。
+
 `adapterStream`（`packages/llm/llm/src/index.ts:843-900`）是**终点边界**。适配器选择、dispatch、迭代过程中抛出的任何东西，都被 `normalizeLlmFailure` 变成一条终止 `finish` chunk（`adapterFailureChunk`，`packages/llm/llm/src/index.ts:931-939`）；signal 已 abort 或 code 是 `ABORTED` 就归为 `{kind:'aborted'}`，否则 `{kind:'error'}`。而中间件和消费者抛的异常照常抛出——生成器里 `yield item.value` 特意挪到 try 之外，注释说得很清楚：「consumer/middleware failures resumed into this generator must remain thrown」。
 
 `forAdapter`（`packages/llm/llm/src/index.ts:823-836`）处理跨适配器污染：历史 assistant 消息上的 `source.replayState`（适配器私有的回放状态，见 `packages/llm/llm/src/message.ts:18`）只在「当前拥有该历史 provider 的适配器实例 === 目标适配器实例」时才透传，否则整条 source 被重建、`replayState` 剥掉。
@@ -116,7 +118,7 @@ export const textEvents = [
 
 规范码是常量：`CONTEXT_WINDOW_EXCEEDED`、`QUOTA`、`EMPTY_RESPONSE`、`INVALID_CREDENTIAL`（`packages/llm/llm/src/error.ts:25, 28, 39, 48`）。判断「是不是上下文溢出」靠一组正则匹配 provider 的英文文案（`packages/llm/llm/src/error.ts:80-86`），配额同理（`:94-100`）。这是全仓唯一一处集中的文案解析，两个适配器共用——也是这套设计最脆的一环，后面「代价」一节再说。
 
-`normalizeLlmFailure`（`packages/llm/llm/src/adapter-failure.ts:16-27`）有个细节值得记：跨包拷贝的 error 会丢掉 class identity，所以它只信任「own-property 上的 `failure` 且 `failure.code === error 自己的 code`」这种情况，否则一律降级成 `UNKNOWN`。
+`normalizeLlmFailure`（`packages/llm/llm/src/adapter-failure.ts:16-28`）有个细节值得记：跨包拷贝的 error 会丢掉 class identity，所以它只在「own-property 上的 `failure` 存在，且 `failure.code === error 自己的 code`」时才整份采信那条 failure。不满足时它并不直接判 `UNKNOWN`，而是退回 `harnessErrorCode(error)`（`:102-104`）：还是 `HarnessError` 就保留它自己的 `code`，只有连这都不是（第三方 SDK 的错误、随手 throw 的字符串）才落到 `UNKNOWN`。理由写在函数注释里——第三方 SDK 的错误码不属于 harness 的分类体系，不能冒充。
 
 ### `BlockAssembler` 与归因头
 
@@ -133,7 +135,7 @@ export const textEvents = [
 
 被输出上限截断的工具调用参数可能是半截 JSON，执行它不安全，所以直接丢掉。副作用是：`max-tokens` 那一步会产生一条内容为空、只承载 usage 的 `assistant/message`——[05 Session](05-session.md) 里的 `deriveEventMessage` 会跳过这种消息。
 
-每个适配器每次请求必须带归因头（`packages/llm/llm/src/attribution.ts:40-44, 52-54`）：`User-Agent: deepseek-harness/<version> (+https://github.com/deepseek-ai/deepseek-harness)`，版本从 package.json 读，不许手抄。这条是仓库制度，出处是 `.agents/notes/implemented/architecture/2026-06-21-mandatory-app-attribution-headers.md`。
+每个适配器每次请求必须带归因头（`packages/llm/llm/src/attribution.ts:40-44、:53-55`）：`User-Agent: deepseek-harness/<version> (+https://github.com/deepseek-ai/deepseek-harness)`，版本从 package.json 读，不许手抄。这条是仓库制度，出处是 `.agents/notes/implemented/architecture/2026-06-21-mandatory-app-attribution-headers.md`。
 
 ## `llm-deepseek`：直连 fetch 的适配器
 
@@ -143,11 +145,13 @@ export const textEvents = [
 
 配置里 `thinking: 'disabled'` 时只允许 `reasoningEffort: 'off'`，其它组合在解析期就抛（`packages/llm/llm-deepseek/src/index.ts:161-166`）。`baseURL` 的回退链是「配置 → 受信启动环境的 `$DEEPSEEK_BASE_URL` → 公共端点」（`packages/llm/llm-deepseek/src/index.ts:185-187`）。
 
-配置是**每次操作重新解析**的：闭包比较 raw 引用，变了才重新算；解析失败时保留上一次的好值并打一次错误日志（`packages/llm/llm-deepseek/src/index.ts:203-221`）。凭据优先走 `ctx.credentials.resolve(ref)`，没有 credentials seam 才读启动环境，都没有就抛 `MISSING_CREDENTIAL`（`packages/llm/llm-deepseek/src/index.ts:225-246`）；拿到的 key 还要过 `assertUsableApiKey`，空白或含非 ByteString 字符直接拒（`packages/llm/llm/src/index.ts:137-152`）。
+配置是**每次操作重新解析**的：闭包比较 raw 引用，变了才重新算；解析失败时保留上一次的好值并打一次错误日志（`packages/llm/llm-deepseek/src/index.ts:204-222`）。凭据优先走 `ctx.credentials.resolve(ref)`，没有 credentials seam 才读启动环境，都没有就抛 `MISSING_CREDENTIAL`（`packages/llm/llm-deepseek/src/index.ts:225-246`）；拿到的 key 还要过 `assertUsableApiKey`，空白或含非 ByteString 字符直接拒（`packages/llm/llm/src/index.ts:137-152`）。
 
 `resolveModel`（`packages/llm/llm-deepseek/src/adapter.ts:175-212`）对没登记在 catalog 里的模型也声明 `inputModalities: ['text']`。注释解释了为什么不写「unknown」：那会让宿主接受并持久化图片，然后在序列化时才拒绝。
 
 ### `serializeRequest` 完整字段表
+
+wire body 上可能出现的字段就这九类，一个不多。注意「规则」一列里反复出现的「缺省即不发」——这不是省事，是把「用 provider 的默认值」和「显式设成某个值」区分开。
 
 | wire 字段 | 来源 | 规则 |
 | --- | --- | --- |
@@ -165,13 +169,14 @@ export const textEvents = [
 
 `resolveThinking`（`packages/llm/llm-deepseek/src/serialize.ts:37-53`）的判定顺序：
 
-1. `purpose === 'session-title'` → 强制 `thinking: disabled`。理由在调用处的注释里（`packages/llm/llm-deepseek/src/serialize.ts:169-170`）：短标题必须产出可见文本，思维链会把预算吃光。
-2. 请求 effort（缺省则用配置默认）为 `off` → `thinking: disabled`。
-3. effort 为 `high` / `max` → `thinking: enabled` + 对应 `reasoning_effort`。
-4. 都没有 → 只发配置里的 `thinking`（若有）。
-5. 部署配置是 `thinking:'disabled'` 而 effort 非 `off` → 抛 `UNSUPPORTED_REASONING_EFFORT`。
+1. `purpose === 'session-title'` → 直接返回 `thinking: disabled`，后面全不看（`:38`）。理由在调用处的注释里（`packages/llm/llm-deepseek/src/serialize.ts:169-170`）：短标题必须产出可见文本，思维链会把预算吃光。
+2. 解析出本次的 effort：请求里给了就用请求的，没给就用配置默认（`:39-41`）。
+3. **部署配置是 `thinking:'disabled'` 而这个 effort 既存在又不是 `off` → 当场抛 `UNSUPPORTED_REASONING_EFFORT`（`:42-47`）。** 这一步在下面两步**之前**——所以在一个禁用了思维链的部署上传 `effort: 'high'`，得到的是异常，不是悄悄开启思维链。
+4. effort 为 `off` → `thinking: disabled`（`:48`）。
+5. effort 为 `high` / `max` → `thinking: enabled` + 对应 `reasoning_effort`（`:49-51`）。
+6. 以上都不是（effort 压根没定）→ 只发配置里的 `thinking`（若有）（`:52`）。
 
-消息转换的三条规则（`packages/llm/llm-deepseek/src/serialize.ts:112-141`）：
+每种内部消息转成什么 wire 消息（`packages/llm/llm-deepseek/src/serialize.ts:112-141`）：
 
 | 内部 Message | wire |
 | --- | --- |
@@ -286,8 +291,8 @@ DeepSeek 不报 cache-write 指标，所以这里没有 `cacheWriteTokens`——
 
 - **可手动声明的协议只有三个**（`packages/llm/llm-pi-ai/src/provider.ts:47-51`）：`openai-completions`、`openai-responses`、`anthropic-messages`。Bedrock/Vertex/Azure/OAuth 类不能手动声明——注释解释了原因：这些的鉴权形态没法用「key + URL」表达，给出去只会得到一个认证不了的 provider。catalog 里自带的 route 仍可用其自身实现。
 - **catalog 来自依赖**：内置 provider 列表由 `@earendil-works/pi-ai` 的版本决定，本仓库不硬编码。
-- **思维链方言**：`compat.thinkingFormat` 可选 `openai`、`deepseek`、`openrouter`、`together`、`zai`、`qwen`、`string-thinking`、`ant-ling`（`packages/llm/llm-pi-ai/src/catalog.ts:99-111`）。这张 `Record` 是一个「漂移门」：pi-ai 升级新增格式时编译会失败，逼人显式分类。reasoning 等级同理，七档 `off/minimal/low/medium/high/xhigh/max`（`packages/llm/llm-pi-ai/src/catalog.ts:69-80`）。
-- **缓存语义不同**：profile 可以声明 `cacheRetention`（`packages/llm/llm-pi-ai/src/adapter.ts:92`），并且映射 `cacheWriteTokens`（`packages/llm/llm-pi-ai/src/stream.ts:24-31`）。这是 Anthropic 那类**显式断点**缓存模型；DeepSeek 路径没有任何等价物。
+- **思维链方言**：`compat.thinkingFormat` 可选 `openai`、`deepseek`、`openrouter`、`together`、`zai`、`qwen`、`string-thinking`、`ant-ling`（`packages/llm/llm-pi-ai/src/catalog.ts:100-109`）。这张 `Record` 是一个「漂移门」：pi-ai 升级新增格式时编译会失败，逼人显式分类。reasoning 等级同理，七档 `off/minimal/low/medium/high/xhigh/max`（`packages/llm/llm-pi-ai/src/catalog.ts:69-80`）。
+- **缓存语义不同**：profile 可以声明 `cacheRetention`（`packages/llm/llm-pi-ai/src/adapter.ts:92`），并且映射 `cacheWriteTokens`（`packages/llm/llm-pi-ai/src/stream.ts:27`）。这是 Anthropic 那类**显式断点**缓存模型；DeepSeek 路径没有任何等价物。
 - **`maxRetries: 0`**（`packages/llm/llm-pi-ai/src/adapter.ts:96-97`），注释直白：「agent 恢复层拥有可见的重试次数，一次 adapter 调用 = 一次 SDK 尝试」。
 - **replayState**：`PiAiReplayState`（`packages/llm/llm-pi-ai/src/replay.ts:20-32`）记录 api/provider/model/responseId/stopReason 以及每个块的签名（`thinkingSignature`、`textSignature`、`thoughtSignature`）。Anthropic、OpenAI-responses 这类协议要求把签名回传才能延续推理，这就是 `forAdapter` 那道过滤保护的东西。
 - **支持图像**：通过 `ctx.attachments.readImage` 读出字节转 base64（`packages/llm/llm-pi-ai/src/context.ts:39-46`）；直连适配器直接拒绝。
@@ -328,17 +333,17 @@ const DEFAULT_RETRYABLE_CODES = Object.freeze([
 
 与压缩的关系在 [06 压缩](06-compaction.md) 展开：`compaction-basic` 也挂在 `agent/request-error` 上，专门处理 `CONTEXT_WINDOW_EXCEEDED`。这个码不在默认 `retryableCodes` 里，所以 `normal` 模式的 llm-retry 会直接放行给下游。
 
-## `token-meter`：4 字符一个 token 的回放式计量
+## `token-meter`：4 字符一个 token 的增量式计量
 
 没有真正的 tokenizer。估算器是固定密度启发式（`packages/llm/token-meter/src/estimate.ts:12-19`）：`CHARS_PER_TOKEN = 4`，每个块 `+4` 结构开销，每条消息再 `+4` role 开销。tool-call 按 name 加 arguments 的长度算（`:34-38`）；system 按 `length/4 + 4`（`:65-68`）；tools 按 `JSON.stringify(header.tools).length/4 + 4`（`:75-78`）。
 
-`measure(session, requestHeader?)`（`packages/llm/token-meter/src/index.ts:113-146`）不是每次重算全量，而是「锚点 + 增量」：
+`measure(session, requestHeader?)`（`packages/llm/token-meter/src/index.ts:116-147`）不是每次重算全量，而是「锚点 + 增量」：
 
 ```ts
     if (anchor !== undefined && optionalHeaderEquals(anchor.header, header)) {
       baseline = anchor.baseline
       surfaceDeltaTokens = state.surfaceTokens - anchor.surfaceTokens
-    }
+    } else if (…) {          // 空日志走零基线，否则整体估算
 ```
 
 锚点在折叠 `assistant/message` 时建立（`packages/llm/token-meter/src/index.ts:225-255`）。有 usage 且有 header 时，锚点基线取 provider 报的真实用量之和（`usageTokens`，`:44-49`：input + cacheRead + cacheWrite + output）——**但仅当它不小于同一时刻的完整启发式估算**，否则退回估算值。注释说明了原因：带符号的启发式增量只有从「至少和全量估算一样大」的锚点出发才保持保守。
@@ -372,7 +377,7 @@ agent loop 每一步的组装（`packages/core/agent-loop/src/agent.ts:340-345`�
 
 流结束后如果 finish 是 `error` 或 `aborted`，就走 `agent/request-error` waterfall；只有拿到 `{kind:'retry'}` 才 `continue` 重来，否则把失败抛成 `LlmError`（`packages/core/agent-loop/src/agent.ts:355-372`）。重来时重新 `buildRequest`——日志没变，所以请求字节相同。
 
-另外有一道纪律：`session-checkpoint-policy` 挂在 `llm/stream` 上，先 `ctx.sessions.flush(session)` 再放行下游（`packages/session/session-checkpoint-policy/src/index.ts:64-68`）。也就是说**请求前缀落盘之后才 dispatch**。
+另外有一道纪律：`session-checkpoint-policy` 挂在 `llm/stream` 上（注册在 `packages/session/session-checkpoint-policy/src/index.ts:64-68`），把下游包进一个生成器，生成器第一件事就是 `await ctx.sessions.flush(session)`，flush 完才 `yield* next()`（`:29-38`，flush 在 `:35`）。也就是说**请求前缀落盘之后才 dispatch**。
 
 ## 代价与失效点
 
@@ -387,6 +392,8 @@ agent loop 每一步的组装（`packages/core/agent-loop/src/agent.ts:340-345`�
 9. **retryPolicy 是注册期捕获的**（`packages/llm/llm/src/index.ts:387-388`）。这是唯一一处「改配置不能靠下一次请求生效」的事实，适配器必须自己记得 `replace`，忘了就静默沿用旧策略。
 
 ## 别人怎么做
+
+各家都读自源码。真正的分野在第一列：**是自己写协议，还是套一个现成 SDK**——这决定了后面三列有多少东西是自己能控制的。
 
 | harness | provider 层 | 重试 | 思维链回传 | 缓存字段 |
 | --- | --- | --- | --- | --- |

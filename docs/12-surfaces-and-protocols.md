@@ -34,7 +34,7 @@ status: draft
 
 而 `headless` 只是一个**随发行版自带模板的 profile 名**——`PROFILE_TEMPLATES` 里只有 `web` 和 `headless` 两条（`packages/boot/app-boot/src/profile.ts:114-117`），别的名字得用 `dsh plugin` 自己建。所以准确的说法是：**两个自动初始化的 profile（web / headless）+ 一个 plugin 子命令 + 两个 dump 开关**。
 
-顺带一个考古发现：launcher 的帮助文本里还留着三处 `tui`（`apps/cli/src/args.ts:68`、`:69`、`:71`），但它们已经被改写成「随便一个自定义 profile」的举例了——`:68` 那行的说明文字是 `boot a custom profile with one extra overlay`。TUI 的 bundle 早就不存在，`packages/bundle/` 下只有 `base`、`headless`、`web-app` 三个。
+顺带一个考古发现：launcher 里还留着四处 `tui`——模块注释 `apps/cli/src/args.ts:10` 和帮助文本 `:68`、`:69`、`:71`。它们已经被**部分**改写：`:68` 那行的说明文字改成了 `boot a custom profile with one extra overlay`，`tui` 在这里只是「随便一个自定义 profile 名」的占位；但 `:71` 仍写着 `install a plugin into the tui profile`，`:10` 仍写着 `boots the tui profile`，读起来还像 TUI 是个真实存在的形态。事实上 TUI 的 bundle 早就不存在，`packages/bundle/` 下只有 `base`、`headless`、`web-app` 三个。
 
 ---
 
@@ -85,7 +85,7 @@ async function run(ctx: Context, task: string, io: HeadlessIo): Promise<void> {
 
 **`tools.mode` 由环境变量决定。** `mode: !!js process.env.DSH_TOOLS_MODE`（`packages/bundle/headless/cordis.patch.yml:20`）——Code Mode 的进程级开关，和 Web 面用的是同一个临时方案（`:19` 的注释：`Keep the same temporary process-wide Code Mode opt-in as the Web surface.`）。
 
-**flush 在 summarize 之前**（`packages/bundle/headless/src/index.ts:127` 在 `:128` 之前）。持久化是 write-behind 的，如果先汇总再退出，最后几个事件可能没落盘。
+**flush 在 summarize 之前**（`packages/bundle/headless/src/index.ts:127` 在 `:128` 之前）。持久化是 write-behind 的——事件先进内存、后台再批量落盘——所以如果先汇总再退出，最后几个事件可能还没写下去。
 
 **退出码是二值的**：
 
@@ -162,7 +162,7 @@ function validateSessionParams(params: NewSessionRequest): void {
 
 （`packages/acp/acp/src/index.ts:331`）理由在上一行注释：token 上限不是 prompt 级的停止原因。**所以 `end_turn` 不代表这个 turn 正常完成**——它可能是 aborted、blocked、error 或撞了 token 上限。跟 headless 那个严格的退出码语义对比一下就知道，同一个 `TurnEndReason` 在两个面上被投影成了完全不同的粒度。
 
-**审批是 dsh 向客户端发起的**（`:215-229`）：拦 `approval/request` waterfall，转成 `conn.requestPermission`，只提供两个一次性选项（`allow-once` / `reject-once`），**永不产生持久授权**（`:213-214` 的注释）。
+**审批是 dsh 向客户端发起的**（`:215-229`）：拦 `approval/request` waterfall——waterfall 是 cordis 的一种事件形式，多个监听者排队接手，谁先给出答案就用谁的，都不接就走默认值——转成 `conn.requestPermission`，只提供两个一次性选项（`allow-once` / `reject-once`），**永不产生持久授权**（`:213-214` 的注释）。顺带一个对照：整条 waterfall 没人应答时的默认值是 `'unavailable'`（`packages/interaction/user-approval/src/index.ts:320`），也就是 fail-closed。
 
 ### 作为 client：`packages/subagent/subagent-acp`
 
@@ -217,7 +217,7 @@ export function publicToolName(serverName: string, rawName: string): string {
 
 两种传输在同一个 schema union 里（`packages/mcp/mcp-client/src/index.ts:107-128`）：`stdio`（command/args/env/cwd）与 `streamable-http`（url/headers），共享 `toolCallTimeoutMs`、`failOnStartupError` 和一组重连参数。
 
-全仓搜 `McpServer`，唯一的构造出现在测试 fixture（`packages/mcp/mcp-client/tests/fixture-server.ts:12`）。这与 ACP 面拒绝 `mcpServers` 是同一个立场：**dsh 消费 MCP 工具，不对外暴露 MCP 服务**。
+全仓搜 `McpServer`，只在测试里出现两处构造（`packages/mcp/mcp-client/tests/fixture-server.ts:12` 与 `packages/mcp/mcp-client/tests/mcp-client.e2e.ts:434`），都是给 client 当对手用的假 server；`src/` 下零命中。这与 ACP 面拒绝 `mcpServers` 是同一个立场：**dsh 消费 MCP 工具，不对外暴露 MCP 服务**。
 
 ---
 
@@ -225,7 +225,7 @@ export function publicToolName(serverName: string, rawName: string): string {
 
 `packages/sdk` 三个包：`protocol`（线格式与类型）、`server`（跑在 dsh 里的插件）、`client`（TypeScript 客户端）。
 
-**分帧**是最朴素的 NDJSON：
+**分帧**是最朴素的 NDJSON（newline-delimited JSON：一行一个完整 JSON 对象，换行就是帧边界）：
 
 ```ts
   private drainLines(): void {
@@ -337,9 +337,9 @@ class RunResult:
 Follow [Get started with the Python SDK](docs/user/guide/python-sdk.md) to install the SDK and run the `jsonrpc-agent` minimal variant. Use separate workspaces and session IDs for independent benchmark tasks.
 ```
 
-**上游不发布分数，也没有内置的评分器或任务集。** 「benchmark」在 dsh 的语境里就是：用 Python SDK 驱动一个 minimal 组合跑任务、收 JSONL。所有「dsh 自带 SWE-bench 跑分」的说法都不成立。
+**上游不发布分数，也没有内置的评分器或任务集。** 「benchmark」在 dsh 的语境里就是：用 Python SDK 驱动一个 minimal 组合跑任务、收 JSONL。全仓搜 `swe-bench`/`swebench` 只有一处命中，是一个 e2e 冒烟测试的注释里说自己「swebench-style」（`examples/headless-agent/tests/coding-task.e2e.ts:12`）——没有数据集加载器，没有 patch 评分，没有结果表。所以「dsh 自带 SWE-bench 跑分」的说法不成立。
 
-它指向的组合是 `examples/jsonrpc-agent/minimal.cordis.yml`，83 行的**完整独立配置**（不是补丁），13 行插件。文件头（`:1-4`）：
+它指向的组合是 `examples/jsonrpc-agent/minimal.cordis.yml`，82 行的**完整独立配置**（不是补丁，也就是说它不叠在 `dsh-base` 上，整棵树就这些），12 行插件。文件头（`:1-4`）：
 
 > Complete unattended minimal-agent composition for the Python SDK. The model sees one deployment-selected system prompt and only the owner-scoped persistent Bash and string-replace editor tools. Runtime-context injection and context compaction are absent.
 
@@ -389,6 +389,8 @@ DSML 属于 **DeepSeek V4 模型仓库**（`encoding_dsv4.py`），是模型侧�
 
 ## 九、六个面的矩阵
 
+前面几节各讲各的，这里横过来对一遍。最值得盯的是第三列「dsh 的角色」和最后一列「权限怎么结算」——同一套 agent 内核，在六个面上被摆成了 server / client / 无协议三种姿势，而审批这件事在其中两个面上根本没有通道。
+
 | 面 | 入口文件 | dsh 的角色 | 传输 | 消息形状 | 会话生命周期 | 权限怎么结算 |
 |---|---|---|---|---|---|---|
 | Web | `packages/bundle/web-app/` | server | HTTP POST 上行 + 两条 WebSocket 下行 | `POST /api/<ns>/<method>` `{args}`；下行 mux/host 帧 | 浏览器 `session.create`，长命 | 浏览器弹审批面板；配置面钉死回环 |
@@ -414,24 +416,28 @@ DSML 属于 **DeepSeek V4 模型仓库**（`encoding_dsv4.py`），是模型侧�
 
 **ACP 面拒绝 `mcpServers` 和 `additionalDirectories`。** 一个通用 ACP 客户端按标准发过来会被 `invalidParams` 拒掉。上游把这个包定位成「automation-only」（`:2`），不是通用 ACP 实现。
 
-**没有版本协商。** SDK 握手只带 `serverInfo.version: '0.0.1'` 且客户端不校验；ACP 的 `initialize` 只声明 baseline prompt 能力。这是 pre-release 的姿态，没有兼容承诺。
+**两个协议面都不做版本协商，但不做的方式不同。** SDK 这边是**真的没有**：server 握手回一个 `serverInfo: { name, version: '0.0.1' }`（`packages/sdk/server/src/server.ts:124`），client 收到后只检查这两个字段是不是字符串（`packages/sdk/client/src/client.ts:270-274`），从不比对版本号——协议演进时两端对不上也没人会报错。ACP 这边不一样：`initialize` 是**返回** `protocolVersion` 的（`packages/acp/acp/src/index.ts:238`），只是这个实现刻意只支持一个版本，源码注释把这个选择写明了（`packages/acp/acp/src/index.ts:235`「Single-version agent」，接着说 ACP 规范里「支持就回同一版本，否则回自己支持的最新版本」这两条分支在这里都落到同一个值上）。也就是说 ACP 面是「协商机制在、可选项只有一个」，客户端能从回包里发现不匹配；SDK 面是「连发现的手段都没有」。两者都属于 pre-release 姿态，没有兼容承诺，但排查成本差一个量级。
 
 ---
 
 ## 十一、别人怎么做
 
+最后一列是这一篇的主题：**谁允许别的程序反过来驱动自己**。
+
 | harness | 交互入口 | 程序化入口 | MCP | 对外提供 agent 协议 |
 |---|---|---|---|---|
 | dsh | Web（唯一；TUI 已删） | headless CLI、SDK JSON-RPC (stdio)、Python SDK | client only | ACP server |
 | Claude Code | CLI、桌面端、Web、IDE 扩展 | Agent SDK | client（含 deferred 工具加载） | 无公开 agent 协议；有 hooks/skills/plugins |
-| Codex | Rust CLI，可选 UI | app server、Extension API | client | 无（有 exec-server 跑远程执行） |
-| OpenCode | TUI | server（HTTP）、SDK | client（tools/resources/OAuth/instructions） | 无 |
+| Codex | Rust CLI，可选 UI | app server、Extension API | client **+ server**（`codex!codex-rs/mcp-server/src/codex_tool_config.rs:106`：把 codex 自己包成一个名叫 `codex` 的 MCP 工具） | 经由上面那个 MCP server |
+| OpenCode | TUI | server（HTTP）、SDK | client（tools/resources/OAuth/instructions） | **ACP server**（`opencode acp`，`opencode!packages/opencode/src/cli/cmd/acp.ts:58`，和 dsh 用同一个 `@agentclientprotocol/sdk`） |
 | pi | 自定义 TUI | `-p` print/JSON、RPC、SDK、`packages/server` | **无**（可用扩展自建） | 无 |
 | mini-swe-agent | CLI | 作为 Python 库 | 无 | 无 |
 
-两个观察：
+三个观察：
 
-**只有 dsh 把「被别的 agent 驱动」做成了一等入口。** 别家都是「我驱动别人」（MCP client、subagent）多、「别人驱动我」少。dsh 的 ACP server 有一半原因是给自己的子代理机制用——`packages/acp/acp/src/index.ts:213` 直接点名 `dsh-subagent-acp`——但它确实是一个可以被任何 ACP 客户端调用的入口。
+**「被别的 agent 驱动」不是 dsh 独有的，但三家的做法不一样。** OpenCode 走的是和 dsh 同一条路——同一个 `@agentclientprotocol/sdk`、同样的 `AgentSideConnection`，`opencode acp` 就是一个完整的 ACP agent。Codex 走的是另一条：不做 ACP，而是发一个 `codex-mcp-server` 二进制，把整个 agent 包成一个名叫 `codex` 的 MCP 工具，让上游 agent 用 MCP 这条既有通道调它。pi 和 mini-swe-agent 两条都没有。
+
+dsh 的特点在**定位**而不是有无：它的 ACP 面被明写成 `Automation-only`（`packages/acp/acp/src/index.ts:2`），拒绝 `mcpServers` 和 `additionalDirectories`，只发已提交的 assistant 文本，而且 `:213` 的注释直接点名首要客户端是 `dsh-subagent-acp`——也就是 dsh 自己的子代理机制。它是一个可以被任何 ACP 客户端调用的入口，但它是照着「给程序用」而不是「给编辑器插件用」设计的。
 
 **dsh 的交互面最窄。** 别家至少两种（CLI + TUI，或 CLI + IDE），dsh 只有浏览器。这是 2026-08-04 主动收窄的结果，代价是没有终端形态；收益是不用为两套前端各维护一遍 slot 体系、命令面板、审批交互。
 

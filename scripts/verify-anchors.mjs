@@ -75,6 +75,18 @@ for (const file of files) {
       const window = source.slice(start - 1, Math.min(source.length, start - 1 + TOLERANCE + 1));
       if (!window.some((text) => text.trim().length > 0)) {
         errors.push(`${where}: ${path}:${startRaw} 指向空行（其后 ${TOLERANCE} 行也为空），行号可能已经漂移`);
+        continue;
+      }
+      // 可选的强校验：引用后面紧跟「原文片段」时，要求它真的出现在被引区间里。
+      // 行号对、语义错（指到了相邻的另一个声明）是纯行号校验挡不住的一类错误，
+      // 写作时多复制几个词就能让 CI 替你挡住。
+      const quoted = /^`?[\s（(]*「([^」]{4,})」/u.exec(line.slice(match.index + match[0].length));
+      if (quoted) {
+        const region = source.slice(start - 1, end).join('\n').replace(/\s+/gu, ' ');
+        const needle = quoted[1].replace(/\s+/gu, ' ').trim();
+        if (!region.includes(needle)) {
+          errors.push(`${where}: ${path}:${startRaw}${endRaw ? `-${endRaw}` : ''} 的引文「${needle}」在该区间里找不到`);
+        }
       }
     }
   });

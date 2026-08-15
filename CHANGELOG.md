@@ -18,6 +18,7 @@
 ### Added
 
 - **`check:anchors` 门禁**：抽查正文里每一处 `路径:行号` 是否指向真实存在的行，越界或指向空行即失败。此前 CI 只校验「文件存在」，行号写错也能过。
+  引用后面跟「原文片段」时还会做子串匹配，把「行号对、但指到了相邻的另一个声明」这类错也挡在 CI 里。
 - 全新覆盖此前完全空白的部分：[Web 客户端与 host](docs/11-web-client-and-host.md)（39 个包、72k 行，全仓最大）、[Extensions 与 Code Mode](docs/09-extensions-and-code-mode.md)、[自证与工程化](docs/13-self-verification.md)、[设计记录导读](docs/15-agent-notes-guide.md)。
 - [01 System Prompt](docs/01-system-prompt.md) 给出逐字重建的默认首轮请求：完整 system 字符串、工具清单、以及注入到历史里的每一条消息。
 - [02 KV-Cache](docs/02-kv-cache.md) 补齐运行时机制：wire 请求怎么拼、`request/header` 的三种 reason、什么会打断前缀、命中率遥测链。

@@ -27,6 +27,14 @@ npm run check       # 全部门禁
 
 `npm run check` 里 `check:anchors` 会抽查正文中每一处 `文件:行号` 引用是否指向真实存在的行——行号写错、上游漂移都会在这里失败。这是本仓库对「结论可追溯」的唯一硬保证，请不要绕过它。
 
+想让校验更严一点，把被引内容的前几个词跟在后面：
+
+```markdown
+`packages/core/system-prompt/src/index.ts:212`「export function renderPrompt」
+```
+
+门禁会在那个行号区间里做子串匹配，于是「行号对、但指到了相邻的另一个声明」这类错也会被挡住。
+
 ## 提交流程
 
 1. 从 `main` 建分支；

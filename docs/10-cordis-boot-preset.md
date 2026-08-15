@@ -135,6 +135,8 @@ constructor() {
 
 - `extend(meta)`（`:99-107`）：原型继承一个子 context，`meta` 的自有属性遮蔽继承来的。
 - `isolate(name, label?)`（`:121-125`）：给某个服务名换一个作用域标签。「在这个子树下面，`terminals` 这个服务名解析到另一个实例」——`minimal` preset 里的 `isolate: { terminals: true }` 就是这个。`label` 省略时是一个新的 unique symbol，即「entry-local realm」；传相同 label 则两个 isolate 汇合成同一个 realm。
+
+  这里出现的 **realm（域）** 后文会反复用到，先定义清楚：一个 realm 就是「服务名 → 实例」这张查找表的一个命名空间。同一个名字 `terminals` 在根 realm 里解析到 A，在某个 isolate realm 里解析到 B，互不干扰；不在任何 isolate 里的行都发布到**根 realm**，也就是进程全局。preset 的全部 realm 规则都是这句话的推论。
 - `intercept(name, config)`（`:141-145`）：给子树下加载的插件注入某个服务的额外配置。
 
 ### FiberState 六态
@@ -353,7 +355,9 @@ export function loadLayeredEnv(
 
 ---
 
-## 五、三层 bundle 各装什么
+## 五、底下那层 base 装什么
+
+上面两节已经把 headless 的 35 行和 web-app 的三段逐行读完了，剩下没读的只有它们共同踩着的那一层：base。这一节只讲 base，末尾用两句话交代另两层相对它的增量。
 
 一个 bundle 就是一个声明了 `dsh.bundle.patch` 的 npm 包，本体是一份 `cordis.patch.yml`（`packages/bundle/base/package.json` 的 `dsh.bundle.patch` 字段）。shipped 的模板只有两个：
 
@@ -366,16 +370,17 @@ export const PROFILE_TEMPLATES: Record<string, readonly string[]> = {
 
 （`packages/boot/app-boot/src/profile.ts:114-117`）自己新建的 profile 默认只有 base（`:125`）。
 
-### base（451 行）：一次 insert，约 75 行 row
+### base（451 行）：一次 insert，78 行 row
 
-`packages/bundle/base/cordis.patch.yml:15` 一个 `- insert:`，下面是整个 harness 的骨架。按功能分组看：
+`packages/bundle/base/cordis.patch.yml:15` 一个 `- insert:`，下面是整个 harness 的骨架，78 条 `- id:` 行（`grep -c '^    - id:'` 数得出来）。按文件里的先后顺序分组看：
 
 | 组 | 行 | 装了什么 |
 |---|---|---|
 | 框架 | `:16-22` | `timer`、`hmr` |
-| 模型与会话 | `:24-68` | `llm`、`session`、`agent`、session-title（含 LLM 起标题）、`agent-default-model`（默认 `deepseek-official` / `deepseek-v4-flash`） |
+| 模型与会话 | `:24-29` | `llm`、`session` |
 | 类型与网关 | `:30-37` | `typert` 注册表 + loader + api-gateway |
-| 配置与凭据 | `:75-96` | `settings-file`、`credentials-local`、`llm-pi-ai`（默认「休眠」挂载，无 provider 配置时零路由） |
+| 会话周边 | `:39-74` | session-title（含 LLM 起标题）、`user-questions`、`agent`、`agent-default-model`（默认 `deepseek-official` / `deepseek-v4-flash`）、`jobs`、`llm-retry` |
+| 配置与凭据 | `:75-96` | `settings`、`credentials`、`llm-pi-ai`（默认「休眠」挂载，无 provider 配置时零路由） |
 | 持久化 | `:98-128` | JSONL 会话日志（落在 `dshHomePath('sessions')`）、附件内容寻址存储、session-query（`openAt: never`）、projection 注册表 |
 | 遥测 | `:129-161` | OTLP，默认 `DISABLED`，且有一整段注释解释 shutdown drain 的时间预算 |
 | 沙箱与审批 | `:163-205` | subprocess、sandbox-local、sandbox-policy（默认 `workspace-write`）、按平台互斥的 bash/pwsh 沙箱、user-approval、三档 permission-preset |
@@ -390,11 +395,11 @@ export const PROFILE_TEMPLATES: Record<string, readonly string[]> = {
 
 最后那组「留白行」是 base 的一个刻意设计。文件头（`:6-10`）写明：补丁**整块替换**目标行的 `config` 而不是深合并，所以一个「按模式取不同值」的行不能把值写在 base 里，否则上层要重述全部键。base 只放共享的插件身份和中性默认，具体值由每个模式的 bundle 补齐。这也是 `persona: ''` 和 `agents: []` 看起来像占位符的原因——它们就是占位符。
 
-### web-app（424 行）与 headless（35 行）
+### 另两层相对 base 的增量
 
-已经在第一、二节讲完。一句话对比：headless 在 base 上**加三行**，web-app 在 base 上**加约 60 行、关约 22 行**。
+全文已经在第一节（headless，35 行）和第二节（web-app，424 行）逐行读过，这里只记两个可复算的数：headless 在这 78 行上**加三行**；web-app 加约 60 行、**关掉 24 行**（`grep -c 'disabled: true'` 数得出来）。
 
-`disabled: true` 的意义再强调一次：它保留行的存在与 id，只是不激活。因此 (a) `--dump-config` 里能看到这一行确实被某一层关掉了，(b) 用户在自己的 `cordis.patch.yml` 里写一句 `- id: tool-bash` / `disabled: false` 就能把它开回来，(c) 组合顺序变化时它不会因为「不在名单里」而悄悄复活。
+`disabled` 与「删掉这一行」的区别第一节已经讲过，只补一条那里没说的实际后果：因为行还在树里，用户在自己的 `cordis.patch.yml` 里写一句 `- id: tool-bash` / `disabled: false` 就能把 web 上被关掉的能力开回来，不需要重述整行的 `name` 与 `config`。
 
 ---
 
@@ -474,7 +479,7 @@ Run commands in a bash shell
 
 上面 YAML 里出现过、但很容易被当成噪音的几行，实际承担了这套组合能工作的前提。
 
-**`packages/typert`（8,430 行源码，全仓第三大）** 分三个包：`registry`（`ctx.typert`，运行时的包反射与 schema 存储）、`loader`（扫描 Loader entry，把生成的 host 契约注册进去）、`generator`（构建期从源码类型生成产物）（`packages/typert/README.md:5-11`）。它在 base 里是三行（`packages/bundle/base/cordis.patch.yml:30-37`），加上 `api-gateway`。它解决的问题是：浏览器要调 host 上某个服务的方法，谁来保证两端签名一致？答案是从 TypeScript 源码类型生成 Remote 契约，而不是手写 DTO。详见 [11 Web 客户端与 host](11-web-client-and-host.md)。
+**`packages/typert`（8,430 行非测试源码，在 49 个包组里排第六）** 组 README 列了三个包（`packages/typert/README.md:5-11`）：`registry`（`ctx.typert`，运行时的包反射与 schema 存储）、`loader`（扫描 Loader entry，把生成的 host 契约注册进去）、`generator`（构建期从源码类型生成产物）；目录下还有第四个 `protocol`——它只放两端共享的声明（Remote 基类、装饰器、编解码器、协议映射表），不做类型分析也不注册 Cordis 服务，所以组 README 的表里没列它。它在 base 里是三行（`packages/bundle/base/cordis.patch.yml:30-37`），加上 `api-gateway`。它解决的问题是：浏览器要调 host 上某个服务的方法，谁来保证两端签名一致？答案是从 TypeScript 源码类型生成 Remote 契约，而不是手写 DTO。详见 [11 Web 客户端与 host](11-web-client-and-host.md)。
 
 **`settings`**：`ctx.settings` 是「命名空间 + schema」的注册表，解析分三层——schema 默认值 → 注册者所在组合的 `base`（它自己的 cordis.yml entry config 子集）→ 用户文档里的那一段（`packages/settings/settings/README.md:5`）。所以 base 里 `llm-deepseek` 那一行不内联 key 和 endpoint（`packages/bundle/base/cordis.patch.yml:446-449` 的注释），它们每次请求从 `llm-deepseek:` 设置段解析。**没挂 provider 时消费者退回只读 entry config**，组合照常工作。
 
@@ -492,7 +497,7 @@ Run commands in a bash shell
 
 `vendor/README.md:29-50` 列了 18 条本地修改，要求「每一处与上游的分歧都必须列出」。按「dsh 为什么需要」归类，是四类：
 
-### 生命周期加固（第 6、7 项）
+### 生命周期加固（第 6 项）
 
 第 6 项（`vendor/README.md:38`）是最长的一条，全是重入式卸载的坑：effect 的 owner-list wrapper 在 setup 体运行**之前**注册，所以从 setup 内部发起的卸载会等 setup 和它收集的每个 cleanup；同步 setup 失败会移除 wrapper 并回滚已收集的 cleanup；`UNLOADING` 状态下拒绝创建新 effect（`PENDING` 和 `LOADING` 仍合法）——防止 cleanup 期间注册的东西逃出卸载快照；子 fiber 在 `internal/plugin` 发布**之前**就拿到父持有的 disposer；teardown 通知的失败按观察者隔离，一个回调不能饿死同僚。
 
@@ -520,7 +525,7 @@ Run commands in a bash shell
 
 同一条还修了上游的一个真 bug：`applyEntryPatches` 在每个 entry 被 insert 时就为它建索引，因此同一个列表里靠后的补丁可以配置或禁用靠前补丁插入的行；上游只在补丁循环之前建一次 id 索引，被插入的行永远打不上补丁。这对 dsh 是致命的——dsh 把空 profile 根、每个 bundle 的补丁层、profile 和 home 的 `cordis.patch.yml`、`--patch` 叠加层全部当作**同一个 include 层级上的兄弟补丁列表**，而补丁不跨 include 边界。没有这个修复，「用户在自己的 patch 里关掉 web-app 插入的某一行」根本做不到。
 
-其余几项是工程性的：包名 rescope 到 `@deepseek-ai`（第 17 项，避免占用上游 npm 名字）、package.json/tsconfig 重生成（第 2、3 项）、显式 `.ts` 说明符（第 4 项）、Node 原生 TypeScript 转换所需的 type-only import 标注（第 10 项）、JSDoc 补全（第 7 项，纯注释，为了 API 文档生成器）、hmr 去 i18n（第 1 项）、精确配置文件监听（第 9 项）、两处类型与发布清单修正（第 13、16 项）。
+其余几项是工程性的：包名 rescope 到 `@deepseek-ai`（第 17 项，避免占用上游 npm 名字）、package.json/tsconfig 重生成（第 2、3 项）、两个自写的 `tsdown.config.ts` 构建形态覆盖（第 5 项）、显式 `.ts` 说明符（第 4 项）、Node 原生 TypeScript 转换所需的 type-only import 标注（第 10 项）、JSDoc 补全（第 7 项，纯注释，为了 API 文档生成器）、hmr 去 i18n（第 1 项）、精确配置文件监听（第 9 项）、两处类型与发布清单修正（第 13、16 项）。
 
 ---
 
@@ -540,14 +545,16 @@ Run commands in a bash shell
 
 ## 十、别人怎么做
 
+同一个问题——「这个 harness 跑起来到底装了什么，谁说了算」——六家给的答案在同一条轴上，从「编译期写死」滑到「每次启动由 YAML 叠出来」：
+
 | harness | 「装了什么」由谁决定 | 能不能按会话换一套 | 第三方能插进来吗 |
 |---|---|---|---|
-| dsh | 若干层 `cordis.patch.yml` 补丁，每行一个 npm 包 | 能：agent preset 是一个目录一个 YAML，`$DSH_HOME/.agent-presets/` 下用户自己写 | 能：`dsh plugin --profile <name> add <package>` 装进 profile 的 node_modules，再在 patch 里加一行 |
+| dsh | 若干层 `cordis.patch.yml` 补丁，每行一个 npm 包 | 能：agent preset 是一个目录一个 YAML，`$DSH_HOME/.agent-presets/` 下用户自己写 | 能：`dsh plugin --profile <name> add <package>`（把参数原样转给 profile 目录里的 pnpm，`apps/cli/src/args.ts:171-179`），再在 patch 里加一行 |
 | Claude Code | 内置工具集固定，配置项 + MCP + hooks + subagents 定义文件 | 部分：subagent 定义可换模型与工具子集 | MCP server、hooks、skills、plugins |
-| Codex | Rust 内建工具集，`config.toml` 配置项 + agent role 的 toml | 部分：agent role 可带模型、reasoning effort 与 developer instructions | MCP、hooks（11 个事件）、Extension API 的 `context_contributors()` |
-| OpenCode | TypeScript 内建工具 + `agent/agent.ts` 里的 agent 定义 | 能：agent 配置可定制工具与权限 | npm/本地插件，14 个钩子；MCP |
-| pi | 内建 7 个工具 | 部分：扩展可在 `before_agent_start` 里换 systemPrompt | Extension API（30+ 事件、`registerTool`/`registerCommand`/`registerProvider`）、Packages；无 MCP |
-| mini-swe-agent | `mini.yaml` 151 行 + `DefaultAgent` 190 行，只有一个 bash 工具 | 换 yaml 就是换一切 | 不适用 |
+| Codex | Rust 内建工具集，`config.toml` 配置项 + agent role 的 toml | 部分：agent role 可带模型、reasoning effort 与 developer instructions | MCP（作为 client）、hooks（11 个事件，`codex!codex-rs/app-server-protocol/src/protocol/v2/hook.rs:20`）、Extension API 的 `context_contributors()`；反方向 Codex 自己还发一个 `codex-mcp-server` 二进制，把整个 agent 包成一个名叫 `codex` 的 MCP 工具（`codex!codex-rs/mcp-server/src/codex_tool_config.rs:106`），细节见 [12](12-surfaces-and-protocols.md) |
+| OpenCode | TypeScript 内建工具 + `agent/agent.ts` 里的 agent 定义 | 能：agent 配置可定制工具与权限 | npm/本地插件，`Hooks` 接口 21 个键（`opencode!packages/plugin/src/index.ts:222-334`）；MCP |
+| pi | 内建 7 个工具（`bash`/`edit`/`find`/`grep`/`ls`/`read`/`write`，`pi!packages/coding-agent/src/core/tools/bash.ts:331`） | 部分：扩展可在 `before_agent_start` 里换 systemPrompt | Extension API（33 个事件、`registerTool`/`registerCommand`/`registerProvider`）、Packages；无 MCP |
+| mini-swe-agent | `mini.yaml` 151 行 + `DefaultAgent` 190 行（`mini-swe-agent!src/minisweagent/agents/default.py:38`），只有一个 bash 工具 | 换 yaml 就是换一切 | 不适用 |
 
 差别不在「能不能扩展」——每一家都有扩展点。差别在于**核心自己是不是用同一套扩展机制拼出来的**。Codex 的 `ToolRouter` 是 Rust 里的一个结构体，扩展通过 Extension API 往里加东西；dsh 的 `tools` 注册表本身就是补丁里的一行（`packages/bundle/base/cordis.patch.yml:424-425`），和一个第三方工具包在机制上没有区别。代价也从这里来：dsh 的 219 个包大部分是这个决定的直接后果，而 mini-swe-agent 用 341 行做到了一个能跑 SWE-bench 的 agent。
 

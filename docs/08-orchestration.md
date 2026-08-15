@@ -9,7 +9,12 @@ status: draft
 
 [03 Agent Loop](03-agent-loop.md) 讲的循环只有四百多行，里面找不到「子代理」「计划模式」「待办清单」这些词。它们全部在外面，是挂在循环事件上的插件。本篇逐个讲清楚三件事：**它是什么 / 挂在循环的哪个事件 / 模型实际看到什么文本**。
 
-一个统一的观察先放在前面：dsh 里这些能力全部通过两条通道之一到达模型——要么是一个 **system prompt section**（有 `order`，进前缀，改了就掉缓存），要么是一条 **user-role 消息**（`agent.inject()` / `followup()` / `steer()` / `additionalContexts`，追加在历史末尾，不动前缀）。哪条通道是刻意选的，本篇会逐个点出来。
+一个统一的观察先放在前面：dsh 里这些能力全部通过两条通道之一到达模型。
+
+- **system prompt section**：带一个 `order` 数字，装配时按 order 排成 system prompt。它落在**请求前缀**里——所谓前缀，就是每次请求都原样重发、因而能被服务端 KV-Cache 命中的开头那一段（见 [02 KV-Cache](02-kv-cache.md)）。改动一个 section，它自己和它之后的所有内容都要重新预填。
+- **user-role 消息**：`agent.inject()` / `followup()` / `steer()` / `additionalContexts` 追加到对话历史末尾。前缀一个字节不动，只是多了一条新消息。
+
+哪条通道是刻意选的，本篇会逐个点出来。
 
 ---
 
@@ -19,7 +24,14 @@ status: draft
 
 > Delegate a self-contained task to a subagent (a separate agent that works in its own context) to offload focused, independent work — research, a scoped implementation, an analysis — so it does not consume this conversation's context. The subagent returns its result, not its intermediate steps. Give it a complete, standalone prompt: it does not see this conversation. **This call waits for the subagent and returns its result.**
 
-而进程内的 `subagent`，前面几句一字不差，只有最后那句收尾不同——它配的是 continuable 后台模式，所以收的是「This tool runs in the background by default, immediately returns a durable subagent id, and keeps the child conversation available for later turns. …」两个产品实例配了 `enableRunInBackground: false`，于是拿到「等结果」那一版。`subagent_fork` 是唯一换了整段基底的（它继承父对话，见 §2.4）。
+而进程内的 `subagent`，前面几句一字不差，只有最后那句收尾不同——它配的是 **continuable** 模式，所以收的是「This tool runs in the background by default, immediately returns a durable subagent id, and keeps the child conversation available for later turns. …」
+
+这里先把 dsh 全篇都要用的一对词说清楚：
+
+- **one-shot**：委派出去、等它跑完、拿走结果，子会话随即作废。调用方阻塞等待。
+- **continuable**：委派出去立刻返回一个持久的子代理 id，子会话留在那里；父可以用 `send_message` 继续跟它对话，子跑完时运行时反过来通知父。
+
+两个产品实例配了 `enableRunInBackground: false`，于是拿到「等结果」那一版。`subagent_fork` 是唯一换了整段基底的（它继承父对话，见 §2.4）。
 
 也就是说：**模型完全不知道自己委派给了谁。** 它看到的是同一份委派契约，背后可能是一个进程内的 dsh 子会话，也可能是一个真的 `claude` 进程，也可能是 `codex app-server`。这是 dsh 子代理接缝最有意思的地方。
 
@@ -67,7 +79,7 @@ approvalPolicy: parent.ctx.get('approval') === undefined ? undefined : 'never',
 
 ### 2.3 continuable：子代理结算怎么回到父
 
-`packages/subagent/subagent/src/continuation.ts`（1400+ 行）是另一条路径：一个持久子 Session + 至多一个进程内 Activation。状态三态（`:159`）：`running`（子在跑，或者还有未消费的消息）、`waiting`（它自己也在等它启动的孙代）、`settled`。
+`packages/subagent/subagent/src/continuation.ts`（1400+ 行）是另一条路径：一个持久子 Session，加上至多一个进程内 **Activation**——「Activation」指这个子会话当前那个活着的、正在内存里跑的 Agent 实例。子会话本身是磁盘上的持久事件流，可以没有 Activation（关掉了，随时能重开）；有 Activation 时最多一个，不会出现两个实例同时写一个子会话。Activation 三态（`:159`）：`running`（子在跑，或者还有未消费的消息）、`waiting`（它自己也在等它启动的孙代）、`settled`。
 
 模型真正会读到的是**结算通知**。文本由 `settlementSummary`（`packages/subagent/subagent/src/continuation.ts:291-312`）按停止原因选一句：
 
@@ -95,7 +107,9 @@ approvalPolicy: parent.ctx.get('approval') === undefined ? undefined : 'never',
 
 ### 2.4 fork：种子父前缀，以及它为什么被绑成 one-shot
 
-fork provider 只有一个函数是核心（`packages/subagent/subagent-fork-in-process/src/index.ts:48-54`）：
+fork 与前面几种委派的区别只有一句话：子会话不是空的，而是拿父会话已完成的那段历史当开头。源码把这段拷过去的事件叫 **seed**（种子）——子会话创建时先把这些事件原样写进去，模型一睁眼就已经「记得」父这边发生过什么。
+
+挑哪一段当种子，是 fork provider 唯一的核心函数（`packages/subagent/subagent-fork-in-process/src/index.ts:48-54`）：
 
 ```ts
 function completedTurnPrefix(parent: Agent): SessionEvent[] {
@@ -184,7 +198,9 @@ fork 是唯一 `inheritsParentContext = true` 的 provider（`packages/subagent/
 
 ## 三、plan-mode：一个刻意接受的缓存失效点
 
-`packages/plan/plan-mode` 只有一个 log-only 事件 `plan/mode { active }`（`packages/plan/plan-mode/src/index.ts:46-55`，最后一条胜出），一个 order 50 的提示段，一个始终注册的工具。
+`packages/plan/plan-mode` 的全部家当是三样：一个 **log-only** 事件 `plan/mode { active }`（`packages/plan/plan-mode/src/index.ts:46-55`，最后一条胜出），一个 order 50 的提示段，一个始终注册的工具。
+
+「log-only」是 dsh 对 session 事件的一种分类：这条事件只写进会话日志、供本地折叠出当前状态，**不会被投影成任何模型能看到的消息**。所以进出 plan mode 这件事本身，模型不是从事件里知道的，而是从下面那段 system prompt 段落有没有内容知道的。
 
 **进出如何改 system prompt**：section 的 text 是个函数（`packages/plan/plan-mode/src/index.ts:226-231`），active 时返回部署配置的整段文本，inactive 时返回空串（空段被装配丢弃，零 token）。order 50 落在 persona（0）之后、所有 `tool:*` 指导段（100+）之前——这个位置让段落里那句「These plan-mode rules override any later tool description」在字面上成立。
 
@@ -284,7 +300,13 @@ The goal is marked complete and this autonomous run is ending. Write the closing
 
 ### 六个映射点
 
-`hooks-claude-code` 支持 7 个 Claude Code 事件（`packages/hooks/hooks-claude-code/src/config.ts:11-19`），映射表见 `packages/hooks/hooks-claude-code/README.md:37-45`：
+`hooks-claude-code` 支持 7 个 Claude Code 事件（`packages/hooks/hooks-claude-code/src/config.ts:11-19`），映射表见 `packages/hooks/hooks-claude-code/README.md:37-45`。
+
+表里第二列括号中的 `emit` / `waterfall` / `serial` 是 dsh 扩展点的三种形态，决定了 hook 能不能改变结果：
+
+- **emit**：广播，谁都不等它的返回值。挂在这里的 hook 只能观察或追加上下文，**无法阻断**。
+- **waterfall**：责任链，每个监听器拿到 `next()`，可以先看下游的决定再改写，也可以直接返回自己的决定。能 deny、能 ask、能替换结果。
+- **serial**：按注册顺序逐个 await，第一个给出返回值的胜出并终止后续（`agent/turn-stopping` 就走这条，`packages/core/agent-loop/src/agent.ts:296`）。能阻断，但看不到别人的决定。
 
 | 外部 hook | dsh 挂点 | 映射 |
 |---|---|---|
@@ -301,7 +323,7 @@ The goal is marked complete and this autonomous run is ending. Write the closing
 
 | 维度 | `hooks-claude-code` | `hooks-codex` |
 |---|---|---|
-| 支持事件数 | 7（CC 共约 30，其余在解析阶段丢弃） | 5（Codex 共 10；`PermissionRequest`/`PreCompact`/`PostCompact`/`SubagentStart`/`SubagentStop` 不支持） |
+| 支持事件数 | 7（CC 共约 30，其余在解析阶段丢弃） | 5（不支持的是 `PermissionRequest`/`PreCompact`/`PostCompact`/`SessionEnd`/`SubagentStart`/`SubagentStop`，见下方注） |
 | matcher | 字面量快路径（`A|B` 精确分支）或正则 | **永远按正则**（`packages/hooks/hooks-codex/src/index.ts:131`） |
 | `ask` 决策 | 支持（`packages/hooks/hooks-claude-code/src/index.ts:242`） | **不支持**，只能 `deny`（`packages/hooks/hooks-codex/src/index.ts:229`） |
 | stdin 尾随换行 | 有 | 无 |
@@ -311,7 +333,9 @@ The goal is marked complete and this autonomous run is ending. Write the closing
 | `async` hook | 不适用 | 跳过，只跑同步 command hook |
 | 配置发现 | 必须显式给 `configPath`，**没有** `.claude/settings.json` 自动发现，进程级读一次 | 同样是显式 `configPath` |
 
-`packages/hooks/hooks-codex/README.md:7` 自己把这件事定性成「a deliberate subset」。有两个字段是**解析了但不执行**的：CC 的 `updatedInput` 与 `systemMessage` 会记 warning 但不生效；`{"continue": false}` 只被记录，源码里留着 `TODO(hook-continue-false): merged.stop is logged but needs a run-level halt mechanism`（`packages/hooks/hooks-claude-code/src/index.ts:189`）。
+`packages/hooks/hooks-codex/README.md:7` 自己把这件事定性成「a deliberate subset」，措辞是「Five of ten hook points」。这句在基线上已经旧了：锁定的 codex commit 里 `HookEventName` 列了 **11** 个（`codex!codex-rs/app-server-protocol/src/protocol/v2/hook.rs:20`），dsh 支持的仍是那 5 个，只是没覆盖的是 6 个而不是 5 个。
+
+有两个字段是**解析了但不执行**的：CC 的 `updatedInput` 与 `systemMessage` 会记 warning 但不生效；`{"continue": false}` 只被记录，源码里留着 `TODO(hook-continue-false): merged.stop is logged but needs a run-level halt mechanism`（`packages/hooks/hooks-claude-code/src/index.ts:189`）。
 
 结论：这两个桥是 Agent Note 里说的「兼容适配器而非强力工具」（`.agents/notes/implemented/feature/2026-06-30-hook-bridges.md`）。你现成的 `hooks.json` 里那部分事件能跑起来，但不要指望它是完整实现。
 
@@ -522,22 +546,36 @@ const SKILL_GESTURE = /(^|\s)\/([a-z0-9]+(?:-[a-z0-9]+)*)(?=\s|$)/g
 
 ## 十一、别人怎么做
 
+本篇讲的每一件事，其他 harness 都有对应物，但落点差别很大。总的格局是：dsh 一律是可拆卸的插件行，Claude Code 多在配置文件与内置工具，Codex 在 Rust 里写死角色，OpenCode 在 config 的 `agent` 字段，pi 则大多**选择不做**。下面按三个主题分表看。
+
+**（1）委派本身：子代理从哪来、能不能续、能不能驱动别家。** 这四行回答的是「一个 agent 怎么把活派给另一个 agent」。最后一行是分歧最大的一格——只有 dsh 把「驱动别家 agent」做成产品能力。
+
 | 维度 | dsh | Claude Code | Codex | OpenCode | pi |
 |---|---|---|---|---|---|
-| **子代理定义方式** | Cordis 插件行（provider）+ 工具行（`tool-subagent` 的多个实例） | `.claude/agents/*.md` frontmatter（`name`/`description`/`tools`/`model`/`permissionMode`/`maxTurns`/`skills`/`memory`/`isolation` 等）、`--agents` JSON、plugin | 内置角色 toml（`default`/`explorer`/`worker`），role 可带模型与 developer_instructions | `config.agent.<name>`：model/prompt/mode/permission/steps；`generate` 能力让模型生成新 agent 定义 | **无**（只有 `examples/extensions/subagent/` 示例，「Each subagent runs in a separate `pi` process」） |
+| **子代理定义方式** | Cordis 插件行（provider）+ 工具行（`tool-subagent` 的多个实例） | `.claude/agents/*.md` frontmatter（`name`/`description`/`tools`/`model`/`permissionMode`/`maxTurns`/`skills`/`memory`/`isolation` 等）、`--agents` JSON、plugin | 内置角色 toml（`default`/`explorer`/`worker`），role 可带模型与 developer_instructions | `config.agent.<name>`：model/prompt/mode/permission/steps；`generate` 能力让模型生成新 agent 定义 | **无**（只有 `pi!packages/coding-agent/examples/extensions/subagent/README.md:7` 这个示例扩展，「Each subagent runs in a separate `pi` process」） |
 | **内置角色** | 无角色概念，只有 provider（spawn/fork/acp/codex/claude-code/dsh-sdk） | Explore（只读）、Plan（只读）、general-purpose | explorer（「fast and authoritative」，鼓励并行多开）、worker（明确 ownership、告知「你不是唯一在改代码的人」） | build / plan（primary）、general / explore（subagent），另有 compaction/title/summary 隐藏角色 | — |
 | **子代理续跑** | `send_message` 续 continuable 子会话；`list_agents` 列目录 | `SendMessage` 可恢复已完成子代理 | mailbox + `send_message`/`followup_task`/`wait_agent` | `task` 工具带 `task_id` 可 resume 同一子会话 | — |
 | **驱动别家 agent** | **有**：Claude Code（官方 SDK）、Codex（app-server stdio）、任意 ACP agent、另一个 dsh（SDK） | 无 | 无 | 无 | 无（tmux 起 pi 实例是推荐做法） |
-| **hooks** | 通过两个兼容桥支持 CC 的 7 个事件 / Codex 的 5 个事件；原生扩展 = Cordis 插件 | 原生 30+ 事件、5 种 handler 类型（command/http/mcp_tool/prompt/agent） | 原生 11 个事件 | npm 插件约 14 个钩子（`chat.params`、`tool.execute.before/after`、`permission.ask`…），多数标 experimental | Extension API 约 30 个生命周期事件 |
+
+**（2）编排与上下文卫生：模型自己怎么管一次长任务。** 这四行回答的是「模型手里有哪些管理自己的工具」。pi 在前两行是明确的「刻意没有」，理由写在它的 Philosophy 一节里。
+
+| 维度 | dsh | Claude Code | Codex | OpenCode | pi |
+|---|---|---|---|---|---|
 | **plan mode** | 插件：一个 log-only 事件 + 一段 order 50 提示 + 始终注册的 `exit_plan_mode` | 权限模式之一，用 `EnterPlanMode`/`ExitPlanMode` 工具实现，**不改工具集** | `CollaborationModeState` 分节 | `plan` agent：`edit` 权限 deny 到只剩 `.opencode/plans/*.md` | **刻意没有**（「Write plans to files」） |
 | **todo** | `todo_write`，整表替换，`turn/start` 清空 | `TaskCreate` 等任务清单工具 | `update_plan` | `todowrite`（`general` 子代理里 deny） | **刻意没有**（「They confuse models. Use a TODO.md file」） |
 | **持久目标 / 外层循环** | goal（同会话续轮，idle 检查点 + flush 屏障）与 ralph（fresh-agent，丢弃上下文）两种 | 会话恢复时保留活动 goal | `ext/goal` 扩展 | 无 | 无 |
 | **skills** | 目录以 user 消息注入（可替换），`skill` 工具按需加载全文；`/name` 显式调用 | 启动只加载描述，正文在调用点作为 user message 注入；压缩后正文重注入（每个 5k、总 25k 上限） | `SKILL.md` 目录，`$skill` 提及或隐式匹配注入 `<skill>` 片段；技能目录是 `host_skills` 世界状态分节 | 目录扫描 SKILL.md，system 中列出，`skill` 工具加载 | SKILL.md 目录扫描，system 里列出，模型用 `read` 读 |
+
+**（3）外部扩展接缝：别人怎么插进来。** 这两行回答的是「第三方代码在哪个口子上接」。dsh 这两格都是「兼容桥」而非原生面，原生扩展路子是写 Cordis 插件（[09](09-extensions-and-code-mode.md)）。
+
+| 维度 | dsh | Claude Code | Codex | OpenCode | pi |
+|---|---|---|---|---|---|
+| **hooks** | 通过两个兼容桥支持 CC 的 7 个事件 / Codex 的 5 个事件；原生扩展 = Cordis 插件 | 原生 30+ 事件、5 种 handler 类型（command/http/mcp_tool/prompt/agent） | 原生 11 个事件（`codex!codex-rs/app-server-protocol/src/protocol/v2/hook.rs:20`） | npm 插件的 `Hooks` 接口共 21 个键（`opencode!packages/plugin/src/index.ts:222-334`），其中 15 个是点号命名的事件钩子（`chat.params`、`tool.execute.before/after`、`permission.ask`…），6 个带 `experimental.` 前缀 | Extension API 33 个生命周期事件（`pi!packages/coding-agent/src/core/extensions/types.ts:1198`） |
 | **MCP** | `mcp-client`，只桥接 tools | 有，工具默认 deferred | 有 | 有（含 OAuth、resources 三工具） | **刻意没有**（「Build CLI tools with READMEs, or build an extension that adds MCP support」） |
 
 对照下来最值得说的三点：
 
-**一、pi 是刻意什么都不做的那一极。** 它的 README 里有一节直接叫 Philosophy，逐条列出「No MCP. No sub-agents. No permission popups. No plan mode. No built-in to-dos. No background bash.」——但它给出了最全的扩展 API（约 30 个生命周期事件 + `registerTool`/`registerCommand`/`registerProvider`/`registerShortcut`/`registerFlag`）。它的立场是：核心保持最小，这些能力你自己按需要装。dsh 是完全相反的一极：全都有，但每一项都是可拆卸的插件行，默认组装里还有一大半是 `disabled: true`。
+**一、pi 是刻意什么都不做的那一极。** `pi!packages/coding-agent/README.md:494` 起有一节直接叫 Philosophy，逐条列出「No MCP. No sub-agents. No permission popups. No plan mode. No built-in to-dos. No background bash.」——但它给出了最全的扩展 API：`ExtensionAPI` 上挂着 33 个 `on(event, …)` 生命周期事件（`pi!packages/coding-agent/src/core/extensions/types.ts:1198`），外加 `registerTool`/`registerCommand`/`registerShortcut`/`registerFlag`/`registerProvider`/`registerMessageRenderer`。它的立场是：核心保持最小，这些能力你自己按需要装。dsh 是完全相反的一极：全都有，但每一项都是可拆卸的插件行，默认组装里还有一大半是 `disabled: true`。
 
 **二、Codex 的内置角色文案是「教父代理怎么委派」。** explorer 的描述鼓励并行多开、复用结果；worker 明确 ownership 并告知「你不是唯一在改代码的人」。dsh 没有角色概念——它把这件事推到了 provider 和 preset 层：委派的**语义**由部署写在 preset 里，模型只看到一个统一的委派契约（§一）。两种做法各有代价：Codex 的角色文案对模型更直接，dsh 的做法让同一份工具描述能同时代表六种完全不同的后端。
 

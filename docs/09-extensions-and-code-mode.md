@@ -10,7 +10,7 @@ status: draft
 dsh 有两件事是别家 harness 基本没有的：
 
 - **Code Mode**——把「模型看到的工具表」整体折叠成一个 `run_code`，其余工具变成系统提示里的一段 TypeScript（或 Python）SDK 声明；模型不再一次调一个工具，而是写一段程序，在程序里调工具、循环、分支、汇总，最后只把它想留下的东西返回给自己。
-- **Extensions**（`packages/extensions/`，约 16k 行）——给模型一组 `cordis_*` 工具，让它在**当前这个进程里**定义、启动、停止、删除 Cordis 插件。也就是说，agent 可以在运行期给自己加一个新工具、加一个浏览器 UI 面板，然后继续干活。
+- **Extensions**（`packages/extensions/`，16,096 行非测试源码，仅次于 `client` 组，见 [00 总览](00-overview.md)的包组表）——给模型一组 `cordis_*` 工具，让它在**当前这个进程里**定义、启动、停止、删除 Cordis 插件。也就是说，agent 可以在运行期给自己加一个新工具、加一个浏览器 UI 面板，然后继续干活。
 
 两者都不是默认开启的。它们是 dsh「万物皆插件」这条路线走到尽头时长出来的东西：既然工具注册表是一个可替换的服务，那「工具怎么呈现给模型」就是它的一个配置项；既然整个 harness 是一棵 Cordis 插件树，那「往树上再插一个节点」也可以是一个工具。
 
@@ -24,7 +24,7 @@ dsh 有两件事是别家 harness 基本没有的：
 
 ### 1.1 工具表里只剩一个工具
 
-`examples/acp-agent/tests/snapshots/code-mode-turn/tool-schemas.expected.json` 是这次请求的 `tools` 字段快照，全文只有一个条目：
+`examples/acp-agent/tests/snapshots/code-mode-turn/tool-schemas.expected.json` 是这次请求的 `tools` 字段快照。文件有两个键：`initial`（首次请求发出的工具表）和 `changes`（后续请求里工具表的变更，本例为空数组）。`initial` 全文只有一个条目：
 
 ```json
 {
@@ -150,7 +150,11 @@ captured output
 CODE_ONE+CODE_TWO
 ```
 
-**两次 bash、一次模型往返、33 个字符进上下文。** native 模式下这是两次往返，两条完整 `tool/result`（各自带 `[exit code: 0]` 和输出），中间还要模型自己写一句「现在我把它们拼起来」。子调用的完整结果并没有丢——它们躺在 `tool/code-dispatch` 事件里，UI 和持久化能读，只是不进模型历史。这是 dsh「model-visible ⟺ durably referenced」原则的一个反向应用：durably referenced 的东西不一定 model-visible。
+**两次 bash、一次模型往返、33 个字符进上下文。** native 模式下这是两次往返，两条完整 `tool/result`（各自带 `[exit code: 0]` 和输出），中间还要模型自己写一句「现在我把它们拼起来」。
+
+子调用的完整结果并没有丢——它们躺在 `tool/code-dispatch` 事件里，UI 和持久化能读，只是不进模型历史。
+
+上游有一条被反复引用的硬纪律，写成 `Model-visible ⟺ durably referenced`（`.agents/notes/implemented/architecture/2026-07-05-reconstructable-requests.md:17`），大白话是：**凡是进过模型请求的东西，必须能从会话日志（加上它引用的不可变对象）里逐字节重建出来**。这条纪律约束的是「进过模型的必须在日志里」这个方向；反过来不成立——日志里有的东西不一定进过模型。Code Mode 就是这个反方向最极端的例子：`tool/code-dispatch` 里躺着完整的子调用参数和结果，可审计、可回放，但模型只看到最后那 33 个字符。
 
 ---
 
@@ -164,7 +168,7 @@ CODE_ONE+CODE_TWO
 export type ToolPresentationMode = 'native' | 'code' | 'both'
 ```
 
-配置项自己的 JSDoc 把三态说得很干净（`packages/core/tools/src/index.ts:666-676`）：
+配置项自己的 JSDoc 把三态说得很干净（`packages/core/tools/src/index.ts:655-664`）：
 
 > Model presentation. `native` (default) sends every visible schema; `code` sends only `run_code` plus a generated SDK prompt and collapses the executor to the same surface (a model-direct call may only name `run_code`; `run_code` SDK sub-dispatches keep every visible tool); `both` sends both forms. Code modes require a `ctx.codeRuntime` whose `language` has a registered SDK renderer (TypeScript or Python) and fail prompt assembly when it is absent or has no renderer. Under `code`, native names in `toolOrder` are invalid.
 
@@ -469,6 +473,8 @@ Host 与 Client 之间的往返被记成六个 `cordis/*` 事件（`docs/subsyst
 
 ### 4.6 风险与护栏，逐条
 
+这套东西让模型往活着的进程里塞代码，所以它的护栏值得逐条摊开看。下表的第三列是**上游自己承认还没堵上的**——每一条都能在源码或笔记里找到原话。
+
 | 风险 | 现有护栏 | 缺口 |
 |---|---|---|
 | 模型代码拿到真运行时 | `node:vm` 新 realm、白名单 `ctx` façade、拒绝返回 Context 的服务、`inject` 声明才能读服务 | 源码自陈「is not containment: host-realm helper functions remain an escape route」（`packages/extensions/cordis-host-runner/src/sandbox.ts:6-7`） |
@@ -485,12 +491,14 @@ Host 与 Client 之间的往返被记成六个 `cordis/*` 事件（`docs/subsyst
 
 ## 五、别人怎么做
 
+本节要回答的是两个不同的问题：**「模型写程序而不是发工具调用」这件事谁在做**（前三行），以及**「运行时能不能被改」谁开了口子、开给谁**（后四行）。
+
 | | dsh | Codex | Claude Code | OpenCode | pi |
 |---|---|---|---|---|---|
-| **Code mode** | `tools.mode: native/code/both`，per-agent-preset 可选；`run_code` + 生成的 `.d.ts`（TS/Python 两种渲染器）；子调用重入完整工具流水线 | 有：新模型 `tool_mode: code_mode_only` 只暴露一个 freeform `exec`，模型写 JavaScript，在 V8 isolate 里通过全局 `tools.<name>(...)` 调工具；配 `wait` 续接长脚本 | 无 | `experimentalCodeMode` 开关下 MCP 工具不直接暴露、走 code-mode | 无 |
-| **code mode 的语言与运行时** | 类型剥离后的 TypeScript，Node worker thread（新 worker/次，`env: {}`，四个预算）；接缝允许换成 Python 或容器后端 | JavaScript，V8 isolate | — | — | — |
+| **Code mode** | `tools.mode: native/code/both`，per-agent-preset 可选；`run_code` + 生成的 `.d.ts`（TS/Python 两种渲染器）；子调用重入完整工具流水线 | 有：模型元数据带 `tool_mode: code_mode_only` 时只暴露一个 freeform `exec`，模型写 JavaScript，在 V8 isolate 里通过全局 `tools.<name>(...)` 调工具；配 `wait` 续接长脚本（`codex!codex-rs/code-mode-protocol/src/description.rs:22-45`） | 无 | `experimentalCodeMode` 开关（环境变量 `OPENCODE_EXPERIMENTAL_CODE_MODE`，`opencode!packages/opencode/src/effect/runtime-flags.ts:48`）下走 code-mode 工具 | 无 |
+| **code mode 的语言与运行时** | 类型剥离后的 TypeScript，Node worker thread（新 worker/次，`env: {}`，四个预算）；接缝允许换成 Python 或容器后端 | JavaScript，V8 isolate，自陈「no Node, no file system, no network access, no console」 | — | — | — |
 | **code mode 里的类型信息** | 参数表 **和** 返回值表都生成（`ToolArgsMap` + `ToolOutputMap`），加 `ToolCallError` | 描述模板里给 `text()/image()/store()/load()/notify()/yield_control()/ALL_TOOLS` 等原语与 `// @exec:` pragma | — | — | — |
-| **运行期改自己的运行时** | `cordis_*` 七工具：定义/启动/停止/删除进程内 Cordis 插件，可注册新的模型可见工具与浏览器 UI；host 半在 `node:vm` | Extension API：`context_contributors()` 贡献上下文片段与 WorldState 分节（`ext/memories`、`ext/goal` 等都这样挂）——但那是**开发者写的扩展**，不是模型运行期生成的 | plugins / skills / MCP：打包 skills、commands、agents、hooks、MCP、LSP，**不改运行时**，装卸是会话外的动作 | npm/本地插件，`plugin/loader.ts` 按需 `import()`，约 14 个钩子；MCP 客户端 | Extensions：TS 模块 `export default function (pi: ExtensionAPI)`，`registerTool` / `registerCommand` / `registerProvider` / `registerShortcut` / `registerFlag` + `ctx.ui.*`；`/reload` 热重载；Packages 从 npm/git 装 |
+| **运行期改自己的运行时** | `cordis_*` 七工具：定义/启动/停止/删除进程内 Cordis 插件，可注册新的模型可见工具与浏览器 UI；host 半在 `node:vm` | Extension API：`context_contributors()` 贡献上下文片段与 WorldState 分节（`ext/memories`、`ext/goal` 等都这样挂）——但那是**开发者写的扩展**，不是模型运行期生成的 | plugins / skills / MCP：打包 skills、commands、agents、hooks、MCP、LSP，**不改运行时**，装卸是会话外的动作 | npm/本地插件，`plugin/loader.ts` 按需 `import()`，`Hooks` 接口 21 个键（`opencode!packages/plugin/src/index.ts:222-334`）；MCP 客户端 | Extensions：TS 模块 `export default function (pi: ExtensionAPI)`，`registerTool` / `registerCommand` / `registerProvider` / `registerShortcut` / `registerFlag` + `ctx.ui.*`；`/reload` 热重载；Packages 从 npm/git 装 |
 | **扩展的作者是谁** | **模型自己**（运行期），或人写 preset | 人（编译期/配置期） | 人（plugin 包） | 人（npm 包） | 人（TS 文件），但 system prompt 内嵌 pi 自身 README/docs 绝对路径，**鼓励让 pi 给自己写扩展** |
 | **扩展存活期** | 只到进程结束 | 进程/配置生命周期 | 安装即持久 | 安装即持久 | 文件即持久，`/reload` 生效 |
 | **工具集能否会话中途变** | 能（跑着的动态包可再注册工具），变化记进 changed request header | MCP 服务器上下线、deferred 工具加载会改 `tools` 并失效缓存 | MCP 服务器连断、按名 deny 工具会移除定义并失效缓存 | 插件 `tool.definition` 钩子 | `setActiveTools` |
@@ -501,7 +509,7 @@ Host 与 Client 之间的往返被记成六个 `cordis/*` 事件（`docs/subsyst
 
 **Claude Code 的 plugins/skills 是另一条路子。** 它扩展的是「模型能读到什么、什么时候被触发」，不改运行时本身：skill 正文在调用点作为 user message 注入，plugin 打包 skills/commands/agents/hooks/MCP/LSP。装卸是会话外的动作，装完这套东西对模型是静态的。dsh 的 Extensions 是模型在**这一轮**里写一段 JS、下一轮就多出一个工具。
 
-**pi 走到了另一个极端。** 它的哲学明说「No MCP. No sub-agents. No permission popups. No plan mode. No built-in to-dos.」——但它给的是最全的扩展 API（约 30 个生命周期事件 + `registerTool/Command/Provider`），并且在 system prompt 里内嵌自己的文档路径，鼓励「让 pi 给自己写扩展」。差别在**谁来写、什么时候写**：pi 让模型写一个磁盘上的 `.ts` 再 `/reload`，可审计可持久；dsh 让模型直接在活着的进程里 define + run，更快但只活一轮进程。
+**pi 走到了另一个极端。** 它的哲学明说「No MCP. No sub-agents. No permission popups. No plan mode. No built-in to-dos.」（`pi!packages/coding-agent/README.md:494`）——但它给的是最全的扩展 API（`ExtensionAPI` 上 33 个 `on(event, …)` + `registerTool`/`registerCommand`/`registerProvider` 等，`pi!packages/coding-agent/src/core/extensions/types.ts:1198`），并且在 system prompt 里内嵌自己的文档路径，鼓励「让 pi 给自己写扩展」。差别在**谁来写、什么时候写**：pi 让模型写一个磁盘上的 `.ts` 再 `/reload`，可审计可持久；dsh 让模型直接在活着的进程里 define + run，更快但只活一轮进程。
 
 ---
 
