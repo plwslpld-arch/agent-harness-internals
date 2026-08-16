@@ -520,7 +520,9 @@ sed -n '145,163p' packages/compaction/compaction-basic/src/summarizer.ts
 
 不需要 key 的自动化断言里，`packages/core/agent-loop/tests/loop.spec.ts:357` 那个用例最有说服力：它用 mock 适配器跑五次请求，断言五次的 `system` 字段完全相同、`request/header` 事件只有一条，同时运行时上下文快照按变化次数出现三条。这证明的是「追加扩展」这个形状。
 
-需要 key 的只有一个：`packages/core/agent-loop/tests/request-cache.e2e.ts`，用 `describe.skipIf(!process.env.DEEPSEEK_API_KEY)` 门控（`:71`），跑 `deepseek-v4-flash`，一个含工具调用的 turn 加一个后续 turn，断言除第一次外每次请求的 `cacheReadTokens > 0`（`:92`）。它存在的意义在文件头注释里写着：mock 测试确立的是「append-extension」这个结构性质，这个测试确立的是「provider 真的命中了」。本文没有跑过它，所以不写它的输出数字。
+需要 key 的只有一个：`packages/core/agent-loop/tests/request-cache.e2e.ts`，用 `describe.skipIf(!process.env.DEEPSEEK_API_KEY)` 门控（`:71`），跑 `deepseek-v4-flash`，一个含工具调用的 turn 加一个后续 turn，断言除第一次外每次请求的 `cacheReadTokens > 0`（`:92`）。它存在的意义在文件头注释里写着：mock 测试确立的是「append-extension」这个结构性质，这个测试确立的是「provider 真的命中了」。
+
+**这个测试我们跑过了，通过**（Node 22，`deepseek-v4-flash`，2.03 秒真实 API 调用；把 key 从环境里去掉再跑，结果是 `1 skipped`，说明上一次是真跑）。完整命令与输出见 [research/runtime-evidence](../research/runtime-evidence/2026-08-16-deepseek-cache-probe.md)。
 
 真跑起来之后的诊断法就是前面说的那条：逐 step 看 `cacheReadTokens`，掉到接近 0 的那一步，往前找最近的 `request/header{reason:'change'}` 或 `compaction/*` 事件——记得先排除掉那些只改了 `temperature` 之类采样标量的假阳性。
 
