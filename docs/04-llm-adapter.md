@@ -7,6 +7,10 @@ status: draft
 
 # LLM 层：从 Message 到 SSE 帧，再到重试
 
+*这一篇讲给要接一个新 provider、要查「请求为什么发不出去」、或者想知道界面上那些 token 数字从哪来的人。读完你能回答：wire 上那个 JSON 每个字段是谁填的、一次失败之后由谁决定重试、usage 里的几个数为什么不能直接相加。*
+
+「适配器」听起来像最没内容的一层：把内部消息转成 provider 要的 JSON，发出去，把回来的流转回来。真动手写才会卡在几个没想过的问题上：assistant 的历史消息里 `content` 能不能是 `null`？工具返回了空字符串，wire 上该发什么？模型一个字都没说，算成功还是算失败？这三个问题在 dsh 里都有一个写死的答案，而且每答错一个，代价都不止于这一次请求。
+
 dsh 把「跟模型说话」这件事拆成四层：一套提供商无关的消息词汇（`packages/llm/llm`）、两个内部实现完全不同的适配器（`llm-deepseek` 直连 fetch，`llm-pi-ai` 走第三方 SDK）、一个挂在失败点上的重试插件（`llm-retry`），以及一个用于估算上下文压力的计量器（`token-meter`）。这篇文章沿着一次真实请求走一遍：JSON body 是怎么拼出来的、SSE 帧是怎么变回结构化 chunk 的、失败之后谁决定重试。
 
 ## 先看见：一次请求的 body 与一段 SSE 帧
@@ -30,6 +34,8 @@ DeepSeek 适配器最终发出去的 JSON 由 `serializeRequest` 一次性拼好
   }
 ```
 
+这段里每个 `...x !== undefined ? { … } : {}` 都是一次「缺省就不发」的判断：`thinking`、`reasoning_effort`、`tools`、`temperature`、`max_tokens`、`stop` 只有真的被设定过才会出现在 body 里。前四个字段（`model`、`messages`、`stream`、`stream_options`）无条件写死，位置也固定，所以同一个会话连着发的两次请求，body 的开头是逐字节一样的。
+
 一个最小请求长这样（单元测试里的实际断言，`packages/llm/llm-deepseek/tests/serialize.spec.ts:165-171`）：
 
 ```ts
@@ -41,7 +47,9 @@ DeepSeek 适配器最终发出去的 JSON 由 `serializeRequest` 一次性拼好
     })
 ```
 
-回来的是 SSE。测试用的最小完整帧序列（`packages/llm/llm-deepseek/tests/mock-server.ts:28-33`）保留了真实响应的形状，注意第一帧的 `content: null` 和空字符串 `reasoning_content`：
+这就是「缺省即不发」的实际效果：没设 `temperature`、没给工具、没开思维链时，wire 上只剩四个字段。
+
+回来的是 **SSE（Server-Sent Events）**，服务端按行往下推、客户端按空行切事件的单向流协议。测试用的最小完整帧序列（`packages/llm/llm-deepseek/tests/mock-server.ts:28-33`）保留了真实响应的形状，注意第一帧的 `content: null` 和空字符串 `reasoning_content`（reasoning content 是模型的思维链通道，与正文 `content` 分开推）：
 
 ```ts
 export const textEvents = [
@@ -52,6 +60,8 @@ export const textEvents = [
 ]
 ```
 
+三帧加一个 `[DONE]`：第一帧只声明 `role`，正文是 `null`、思维链是空字符串，什么内容都没有；第二帧才带真正的文本增量；第三帧的 `delta.content` 又是空字符串，但它捎上了 `finish_reason` 和 `usage`。适配器必须能吃下这些空值，它们是 DeepSeek 真实响应的形状，不是测试凑出来的。
+
 带工具调用时，参数是逐片流回来的（`packages/llm/llm-deepseek/tests/translate.spec.ts:104-108` 的输入，注释标明是 live capture 的形状）：
 
 ```ts
@@ -61,7 +71,9 @@ export const textEvents = [
       { choices: [{ delta: { content: '' }, finish_reason: 'tool_calls' }], usage: { prompt_tokens: 28, completion_tokens: 6 } },
 ```
 
-翻译之后得到的 chunk 序列（同文件 `:112-123` 的断言）依次是 `block-start` → 三个 `tool-call-delta` → `block-end`（携带拼好的完整 `arguments`）→ `usage` → `finish`。**usage 一定在 finish 之前，finish 之后没有任何 chunk**。这是流协议的硬约定，写在 `packages/llm/llm/src/types.ts:283-290` 的类型注释里。
+工具参数不是一次给全的：`arguments` 被切成 `''`、`'{"city"'`、`': "Paris"}'` 三片，靠 `index: 0` 认领同一个调用，只有第一片带 `id`、`type` 和函数名。拼回完整 JSON 是消费侧的活，所以后面才需要 `BlockAssembler`。
+
+**chunk（流片段）** 是 dsh 内部的流词汇，一个 provider 无关的联合类型；SSE 帧被翻译成 chunk 之后，上层再也见不到 provider 的字段名。翻译之后得到的 chunk 序列（同文件 `:112-123` 的断言）依次是 `block-start` → 三个 `tool-call-delta` → `block-end`（携带拼好的完整 `arguments`）→ `usage` → `finish`。**usage 一定在 finish 之前，finish 之后没有任何 chunk**。这是流协议的硬约定，写在 `packages/llm/llm/src/types.ts:283-290` 的类型注释里。
 
 下面把这条路径拆开讲。
 
@@ -75,13 +87,13 @@ export const textEvents = [
 
 每条消息带一个 `source`（`packages/llm/llm/src/message.ts:100-105`）：`user` / `plugin` / `model` / `tool`。插件源可以再声明一个语义化的 `form`：`instructions`、`catalog`、`snapshot`、`notice`、`relay`、`recall`（`packages/llm/llm/src/message.ts:48-60`）。这个词汇刻意只说「这是什么」，不说「长什么样」；注释里写得很直白：颜色、图标、排序、默认折叠都是消费者的事，不许进这个联合类型。
 
-`TokenUsage` 的计数是**不相交**的（`packages/llm/llm/src/types.ts:127-141`）：`inputTokens` 只含未命中缓存的输入，缓存读写另算，计费输入 = 三者之和。`reasoningTokens` 是个例外：它不是第五个桶，而是 `outputTokens` 的明细拆分，汇总时不能再加一遍（口径写在 `packages/llm/token-meter/src/index.ts:43`：「without double-counting reasoning output」）。DeepSeek 的 `prompt_tokens` 是含缓存命中的，所以适配器要减出来（下文 `mapUsage`）。
+`TokenUsage` 的计数是**不相交**的（`packages/llm/llm/src/types.ts:127-141`）：`inputTokens` 只含未命中缓存的输入，缓存读写另算，计费输入 = 三者之和。`reasoningTokens` 是个例外：它不是第五个桶，而是 `outputTokens` 的明细拆分，汇总时不能再加一遍（口径写在 `packages/llm/token-meter/src/index.ts:43`：「without double-counting reasoning output」，意思是把几个不相交的桶加起来求总量，别把 reasoning 那部分再算第二遍）。DeepSeek 的 `prompt_tokens` 是含缓存命中的，所以适配器要减出来（下文 `mapUsage`）。
 
 失败事实用 `LlmFailure` 表达（`packages/llm/llm/src/types.ts:39-51`）：`{message, code, status?, providerRetryAfterMs?, requestId?}`，可序列化，**不带任何策略字段**：没有 `retryable`、没有 `partialOutput`。要不要重试是上层的判断，不是失败本身的属性。
 
 ### `LlmCallConfig`：请求头部的可变部分
 
-`LlmCallConfig`（`packages/llm/llm/src/call-config.ts:23-30`）只有六个字段：`provider`、`model`、`reasoningEffort`、`temperature`、`maxTokens`、`stop`。它是 session 日志里 `EpochHeader.config` 的内容，也是唯一允许插件在 `agent/request` waterfall 上替换的东西。`callConfigEquals` 逐字段比较，`stop` 数组按元素比（`packages/llm/llm/src/call-config.ts:49-59`）。
+`LlmCallConfig`（`packages/llm/llm/src/call-config.ts:23-30`）只有六个字段：`provider`、`model`、`reasoningEffort`、`temperature`、`maxTokens`、`stop`。它是 session 日志里 `EpochHeader.config` 的内容（**epoch header** 是一次请求的信封：调用配置、适配器默认值、渲染好的 system 字符串、装配好的工具 schema，只有它变了才写一条新事件），也是唯一允许插件在 `agent/request` 这个 waterfall 上替换的东西。**waterfall（瀑布事件）** 是 Cordis 的环绕式中间件：监听器必须 `await next()` 才轮到下一个，返回值权威。`callConfigEquals` 逐字段比较，`stop` 数组按元素比（`packages/llm/llm/src/call-config.ts:49-59`）。
 
 文件顶上留着一条自认的 TODO：哪些字段真的属于「epoch 级、影响缓存复用」还没定论（`packages/llm/llm/src/call-config.ts:15-16`）。这条 TODO 的后果在 [02 KV-Cache](02-kv-cache.md) 里会再碰到：改一次 `temperature` 也会写一条 header 变更事件，但它并不改变 prompt token。
 
@@ -95,7 +107,7 @@ export const textEvents = [
 
 `resolveCallFor`（`packages/llm/llm/src/index.ts:734-768`）做两件事：`maxTokens` 缺省时物化适配器的 `defaultMaxTokens`；`reasoningEffort` 缺省时物化 `defaultEffort`。显式传了一个模型不支持的 effort 会抛 `UNSUPPORTED_REASONING_EFFORT`，**不做 clamp**，不猜用户想要什么。
 
-`prepareCall(config, signal)`（`packages/llm/llm/src/index.ts:779-813`）把「解析后的 config + 那次注册 + retryPolicy + context + adapterDefaults」一次性打包成 `PreparedLlmCall`（接口在 `packages/llm/llm/src/index.ts:155-172`）。返回的 `stream()` 只能调一次，而且传进去的 call-config 必须与 prepared 的一致，否则抛 `INVALID_PREPARED_CALL`。目的写在 JSDoc 里：HMR（热更新）时不能拿 A 适配器的能力探测结果去 dispatch 到 B 适配器。
+`prepareCall(config, signal)`（`packages/llm/llm/src/index.ts:779-813`）把「解析后的 config + 那次注册 + retryPolicy + context + adapterDefaults」一次性打包成 `PreparedLlmCall`（接口在 `packages/llm/llm/src/index.ts:155-172`）。其中 `adapterDefaults` 是这次被物化出来的适配器默认值（比如调用方没传、由适配器补上的 `maxTokens` 和 `reasoningEffort`），它要进 header，因为它同样决定 wire 上到底发了什么。返回的 `stream()` 只能调一次，而且传进去的 call-config 必须与 prepared 的一致，否则抛 `INVALID_PREPARED_CALL`。目的写在 JSDoc 里：HMR（热更新）时不能拿 A 适配器的能力探测结果去 dispatch 到 B 适配器。
 
 `stream()` 本身只有一行（`packages/llm/llm/src/index.ts:913-915`），转手交给私有的 `streamWithRegistration`；后者也只做一件事，就是把请求交给 `llm/stream` 这个 waterfall（`packages/llm/llm/src/index.ts:921-926`）：
 
@@ -108,9 +120,11 @@ export const textEvents = [
     )
 ```
 
+`waterfall` 的四个参数依次是：发起者、事件名、往下传的载荷、以及所有监听器都放行之后才执行的兜底动作。监听器可以改 `options`、可以把返回的流整个包起来、也可以干脆不调 `next()`，用自己的流替掉真实请求。录制回放和落盘纪律都挂在这个点上。
+
 分两层是因为 `prepareCall()` 拿到的那个一次性 `stream()` 也走 `streamWithRegistration`，只是多带一个已绑定的 registration。
 
-`adapterStream`（`packages/llm/llm/src/index.ts:843-900`）是**终点边界**。适配器选择、dispatch、迭代过程中抛出的任何东西，都被 `normalizeLlmFailure` 变成一条终止 `finish` chunk（`adapterFailureChunk`，`packages/llm/llm/src/index.ts:931-939`）；signal 已 abort 或 code 是 `ABORTED` 就归为 `{kind:'aborted'}`，否则 `{kind:'error'}`。而中间件和消费者抛的异常照常抛出：生成器里 `yield item.value` 特意挪到 try 之外，注释说得很清楚：「consumer/middleware failures resumed into this generator must remain thrown」。
+`adapterStream`（`packages/llm/llm/src/index.ts:843-900`）是**终点边界**。适配器选择、dispatch、迭代过程中抛出的任何东西，都被 `normalizeLlmFailure` 变成一条终止 `finish` chunk（`adapterFailureChunk`，`packages/llm/llm/src/index.ts:931-939`）；signal 已 abort 或 code 是 `ABORTED` 就归为 `{kind:'aborted'}`，否则 `{kind:'error'}`。而中间件和消费者抛的异常照常抛出：生成器里 `yield item.value` 特意挪到 try 之外，注释说得很清楚：「consumer/middleware failures resumed into this generator must remain thrown」（被 resume 回这个生成器里的消费者与中间件异常，必须继续往外抛）。翻译成人话就是：适配器自己坏了要变成一条 finish chunk 记进日志，好让循环有机会重试；但读流的人或者中间件抛的错吞掉就等于把调用方的 bug 藏起来，那种错必须原样炸出去。
 
 `forAdapter`（`packages/llm/llm/src/index.ts:823-836`）处理跨适配器污染：历史 assistant 消息上的 `source.replayState`（适配器私有的回放状态，见 `packages/llm/llm/src/message.ts:18`）只在「当前拥有该历史 provider 的适配器实例 === 目标适配器实例」时才透传，否则整条 source 被重建、`replayState` 剥掉。
 
@@ -122,7 +136,7 @@ export const textEvents = [
 
 ### `BlockAssembler` 与归因头
 
-`BlockAssembler`（`packages/llm/llm/src/assembler.ts:36-164`）按 index 累积 partial，`block-end` 带的 block 是权威值，之后到达的同 index delta 直接忽略。`blocks()` 有一条安全规则（`packages/llm/llm/src/assembler.ts:134-138`）：
+**`BlockAssembler`（块装配器）** 负责把零碎的 delta 拼回完整的内容块。它（`packages/llm/llm/src/assembler.ts:36-164`）按 index 累积 partial，`block-end` 带的 block 是权威值，之后到达的同 index delta 直接忽略。`blocks()` 有一条安全规则（`packages/llm/llm/src/assembler.ts:134-138`）：
 
 ```ts
   blocks(): ContentBlock[] {
@@ -133,7 +147,7 @@ export const textEvents = [
   }
 ```
 
-被输出上限截断的工具调用参数可能是半截 JSON，执行它不安全，所以直接丢掉。副作用是：`max-tokens` 那一步会产生一条内容为空、只承载 usage 的 `assistant/message`，[05 Session](05-session.md) 里的 `deriveEventMessage` 会跳过这种消息。
+`this.order` 记的是块的开启顺序，`assemble()` 把累积到一半的 partial 折成成品块。整段的重点在最后那个三元判断：被输出上限截断的工具调用参数可能是半截 JSON，执行它不安全，所以直接丢掉。副作用是：`max-tokens` 那一步会产生一条内容为空、只承载 usage 的 `assistant/message`，[05 Session](05-session.md) 里的 `deriveEventMessage` 会跳过这种消息。
 
 每个适配器每次请求必须带归因头（`packages/llm/llm/src/attribution.ts:40-44、:53-55`）：`User-Agent: deepseek-harness/<version> (+https://github.com/deepseek-ai/deepseek-harness)`，版本从 package.json 读，不许手抄。这条是仓库制度，出处是 `.agents/notes/implemented/architecture/2026-06-21-mandatory-app-attribution-headers.md`。
 
@@ -145,9 +159,9 @@ export const textEvents = [
 
 配置里 `thinking: 'disabled'` 时只允许 `reasoningEffort: 'off'`，其它组合在解析期就抛（`packages/llm/llm-deepseek/src/index.ts:161-166`）。`baseURL` 的回退链是「配置 → 受信启动环境的 `$DEEPSEEK_BASE_URL` → 公共端点」（`packages/llm/llm-deepseek/src/index.ts:185-187`）。
 
-配置是**每次操作重新解析**的：闭包比较 raw 引用，变了才重新算；解析失败时保留上一次的好值并打一次错误日志（`packages/llm/llm-deepseek/src/index.ts:204-222`）。凭据优先走 `ctx.credentials.resolve(ref)`，没有 credentials seam 才读启动环境，都没有就抛 `MISSING_CREDENTIAL`（`packages/llm/llm-deepseek/src/index.ts:225-246`）；拿到的 key 还要过 `assertUsableApiKey`，空白或含非 ByteString 字符直接拒（`packages/llm/llm/src/index.ts:137-152`）。
+配置是**每次操作重新解析**的：闭包比较 raw 引用，变了才重新算；解析失败时保留上一次的好值并打一次错误日志（`packages/llm/llm-deepseek/src/index.ts:204-222`）。凭据优先走 `ctx.credentials.resolve(ref)`，没有 credentials seam 才读启动环境（**seam（能力接缝）** 指一个可替换能力的接缝：一份抽象定义、若干 provider、以及消费者三个角色，换掉 provider 就换掉整块行为），都没有就抛 `MISSING_CREDENTIAL`（`packages/llm/llm-deepseek/src/index.ts:225-246`）；拿到的 key 还要过 `assertUsableApiKey`，空白或含非 ByteString 字符直接拒（`packages/llm/llm/src/index.ts:137-152`）。
 
-`resolveModel`（`packages/llm/llm-deepseek/src/adapter.ts:175-212`）对没登记在 catalog 里的模型也声明 `inputModalities: ['text']`。注释解释了为什么不写「unknown」：那会让宿主接受并持久化图片，然后在序列化时才拒绝。
+`resolveModel`（`packages/llm/llm-deepseek/src/adapter.ts:175-212`）对没登记在 catalog 里的模型也声明 `inputModalities: ['text']`。注释解释了为什么不写「unknown」（「不知道支不支持」）：那会让宿主接受并持久化图片，然后在序列化时才拒绝。
 
 ### `serializeRequest` 完整字段表
 
@@ -199,7 +213,9 @@ wire body 上可能出现的字段就这九类，一个不多。注意「规则�
     content: text,
 ```
 
-（`packages/llm/llm-deepseek/src/serialize.ts:87-95`）。assistant 的 `content` 永远是字符串，绝不是 `null`。因为这条消息会永久留在日志里，一个 `null` 会把整个会话砖化。
+（`packages/llm/llm-deepseek/src/serialize.ts:87-95`）。这段注释一口气交代了三种情况。没有文本的回合发空字符串，永远不发 `null`。纯工具调用的回合，官方示例是把 `message.content` 原样回放（那就是空字符串），而且有的网关直接拒收 `null`。只有思维链的回合（模型可以整段都在 reasoning 通道里作答，比如 v4-flash 打个招呼）线上 API 会用 400 拒掉「既没有 content 又没有 tool_calls」的 assistant 消息。
+
+翻译成人话就是：这条消息会永久留在会话日志里，写进去一个 `null`，之后这个会话的每一轮都发不出去。所以 assistant 的 `content` 永远是字符串。
 
 ```ts
     // Official passback rule (guides/thinking_mode.mdx): reasoning_content
@@ -208,7 +224,7 @@ wire body 上可能出现的字段就这九类，一个不多。注意「规则�
     ...toolCalls.length > 0 && reasoning.length > 0 ? { reasoning_content: reasoning } : {},
 ```
 
-（`packages/llm/llm-deepseek/src/serialize.ts:96-99`）。`reasoning_content` 只在带 tool_calls 的 assistant 历史消息上回传。
+（`packages/llm/llm-deepseek/src/serialize.ts:96-99`）。注释引的是官方 `guides/thinking_mode.mdx` 里的回传规则：工具调用的回合必须把 `reasoning_content` 传回去，普通回合传了也会被忽略，所以这里干脆不传，省 token。落到代码上就是那个条件：`reasoning_content` 只出现在带 `tool_calls` 的 assistant 历史消息上。
 
 空工具输出会被替换成 `'(no output)'`（`packages/llm/llm-deepseek/src/serialize.ts:135-136`），注释理由是「空输出在 wire 上仍然需要 SOME content」。
 
@@ -216,7 +232,7 @@ wire body 上可能出现的字段就这九类，一个不多。注意「规则�
 
 请求头一共七类（`packages/llm/llm-deepseek/src/adapter.ts:283-295`）：`authorization`、`content-type`、`accept: text/event-stream`、归因 `user-agent`、`x-deepseek-harness-user-id`（匿名 id）、`x-deepseek-harness-session-id`（有 sessionId 时）、`x-deepseek-harness-compact: 1`（`purpose === 'compaction'` 时）。这些是传输元数据，不进 body。
 
-`POST ${baseURL}/chat/completions` 用的是原生 `fetch`，**不走 Cordis 的 HTTP 服务**，源码里挂着 `TODO(http)` 说明理由是运行时依赖权衡（`packages/llm/llm-deepseek/src/adapter.ts:297-306`）。这意味着统一代理、统一拦截在这条路径上不生效。
+`POST ${baseURL}/chat/completions`（chat-completions 是 OpenAI 定义、后来被大量 provider 沿用的那套请求格式）用的是原生 `fetch`，**不走 Cordis 的 HTTP 服务**，源码里挂着 `TODO(http)` 说明理由是运行时依赖权衡（`packages/llm/llm-deepseek/src/adapter.ts:297-306`）。这意味着统一代理、统一拦截在这条路径上不生效。
 
 `stream()` 开头一次性冻结连接事实和凭据（`packages/llm/llm-deepseek/src/adapter.ts:220-227`）：
 
@@ -230,6 +246,8 @@ wire body 上可能出现的字段就这九类，一个不多。注意「规则�
       : AbortSignal.any([options.signal, consumer.signal])
     using watchdog = idleWatchdog(upstream, connection.streamIdleTimeoutMs, STREAM_IDLE_TIMEOUT_CODE)
 ```
+
+这几行把一次请求要用的外部事实一次钉死：`connection` 是配置快照，`apiKey` 从这个快照里解析，`userId` 是匿名 id。`AbortSignal.any` 把调用方的取消信号和适配器自己的 `consumer` 合成一个，任一触发都能中断流；`using` 声明让看门狗在函数退出时自动释放。
 
 key 从 `connection` 这个快照里解析，而不是重新读配置；注释说明目的是「一个请求永远不可能把某一代的 URL 配上另一代的密钥」。空闲看门狗每收到一个 SSE 注释或事件就 pulse；超时映射成 `TIMEOUT`，调用方 abort 映射成 `ABORTED`，其它一律 `TRANSPORT`（`packages/llm/llm-deepseek/src/adapter.ts:246-258`）。
 
@@ -251,6 +269,8 @@ export function httpErrorCode(status: number, error?: WireError['error']): strin
   return `HTTP_${status}`
 }
 ```
+
+`detail` 把 provider 返回的 `code`、`type`、`message` 三段拼成一个字符串，再交给两个正则去匹配，所以除了 401/403 之外的判定用的都是文案，不是状态码。
 
 注意 quota 判定在 429 之前：一个带配额文案的 429 归 `QUOTA`（不可重试）而不是 `RATE_LIMIT`（可重试）。这一行顺序直接决定了会不会在余额耗尽时空转重试。
 
@@ -281,6 +301,8 @@ export function mapUsage(usage: WireUsage): TokenUsage {
 }
 ```
 
+两个 `??` 在兼容 DeepSeek 的新旧两种字段名（`prompt_tokens_details.cached_tokens` 与 `prompt_cache_hit_tokens`）。真正的关键是 `inputTokens` 那一行做了减法：DeepSeek 的 `prompt_tokens` 是含缓存命中的，减掉之后剩下的才是「这次真的重新算了一遍」的部分，与 `cacheReadTokens` 不重叠。上面说的「不相交计数」就落在这一行。
+
 DeepSeek 不报 cache-write 指标，所以这里没有 `cacheWriteTokens`，包 README 里明说了这一点（`packages/llm/llm-deepseek/README.md:73`）。
 
 ## `llm-pi-ai`：设计验证用的孪生适配器
@@ -289,7 +311,7 @@ DeepSeek 不报 cache-write 指标，所以这里没有 `cacheWriteTokens`，包
 
 与直连适配器的差别：
 
-- **可手动声明的协议只有三个**（`packages/llm/llm-pi-ai/src/provider.ts:47-51`）：`openai-completions`、`openai-responses`、`anthropic-messages`。Bedrock/Vertex/Azure/OAuth 类不能手动声明，注释解释了原因：这些的鉴权形态没法用「key + URL」表达，给出去只会得到一个认证不了的 provider。catalog 里自带的 route 仍可用其自身实现。
+- **可手动声明的协议只有三个**（`packages/llm/llm-pi-ai/src/provider.ts:47-51`）：`openai-completions`、`openai-responses`、`anthropic-messages`。Bedrock/Vertex/Azure/OAuth 类不能手动声明，注释解释了原因：这些的鉴权形态没法用「key + URL」（一个密钥加一个地址）这种配置形状表达，给出去只会得到一个认证不了的 provider。catalog 里自带的 route 仍可用其自身实现。
 - **catalog 来自依赖**：内置 provider 列表由 `@earendil-works/pi-ai` 的版本决定，本仓库不硬编码。
 - **思维链方言**：`compat.thinkingFormat` 可选 `openai`、`deepseek`、`openrouter`、`together`、`zai`、`qwen`、`string-thinking`、`ant-ling`（`packages/llm/llm-pi-ai/src/catalog.ts:100-109`）。这张 `Record` 是一个「漂移门」：pi-ai 升级新增格式时编译会失败，逼人显式分类。reasoning 等级同理，七档 `off/minimal/low/medium/high/xhigh/max`（`packages/llm/llm-pi-ai/src/catalog.ts:69-80`）。
 - **缓存语义不同**：profile 可以声明 `cacheRetention`（`packages/llm/llm-pi-ai/src/adapter.ts:92`），并且映射 `cacheWriteTokens`（`packages/llm/llm-pi-ai/src/stream.ts:27`）。这是 Anthropic 那类**显式断点**缓存模型；DeepSeek 路径没有任何等价物。
@@ -317,6 +339,8 @@ const DEFAULT_RETRYABLE_CODES = Object.freeze([
 ])
 ```
 
+五个默认值连起来是一句话：最多重试 2 次，第一次等 500 毫秒，之后翻倍但不超过 10 秒，每次再乘一个 ±10% 的随机抖动（抖动是为了避免一堆客户端在同一毫秒一起重来）。可重试的码只有列出的那五个，`AUTH`、`QUOTA`、`INVALID_REQUEST`、`CONTEXT_WINDOW_EXCEEDED` 都不在里面：这些错重试多少次结果都一样。
+
 两种模式：`normal`（只重试列表里的码，有次数上限）和 `always`（无上限重试所有失败，`packages/llm/llm/src/retry-policy.ts:48-54`）。
 
 `recover()` 的判定（`packages/llm/llm-retry/src/index.ts:156-208`）：
@@ -327,7 +351,7 @@ const DEFAULT_RETRYABLE_CODES = Object.freeze([
 4. 延迟计算（`:193-205`）：如果 provider 给了有效的 `Retry-After` 且不超过 `maxDelayMs`，**精确采用，不加抖动**；超过 `maxDelayMs` 时 `normal` 直接放弃（不违背 provider 的指示去抢），`always` 退回本地退避。否则本地退避 `min(min(initial · 2^(retry-1), max) · U[1-j, 1+j], max)`（`:58-63`）。
 5. `backoff()`（`:111-154`）先 `append('llm/retry', ...)` 把这次重试写进日志，再做可取消的等待，等待成功后 `append('llm/retry-started', ...)`，最后返回 `{kind:'retry'}`。
 
-事件形状在 `packages/llm/llm-retry/src/types.ts:16-46`：`normal` 事件带 `maxRetries`，`always` 事件不带（UI 因此渲染无穷）。两个事件都是 log-only，不上 surface；**失败的那一步的 `assistant/chunk` 也不进 surface**，所以重试请求与失败请求的消息完全相同，错误文本永远不进模型上下文。
+事件形状在 `packages/llm/llm-retry/src/types.ts:16-46`：`normal` 事件带 `maxRetries`，`always` 事件不带（UI 因此渲染无穷）。两个事件都是 log-only，不上 surface（**surface（表面）** 是事件日志的一个子视图，只有 `user/message`、`assistant/message`、`tool/result` 三种事件能进去，模型历史只从这个子视图折叠出来）；**失败的那一步的 `assistant/chunk` 也不进 surface**，所以重试请求与失败请求的消息完全相同，错误文本永远不进模型上下文。
 
 插件销毁时会 abort 所有等待并 drain（`packages/llm/llm-retry/src/index.ts:221-225`）。
 
@@ -346,6 +370,8 @@ const DEFAULT_RETRYABLE_CODES = Object.freeze([
     } else if (…) {          // 空日志走零基线，否则整体估算
 ```
 
+这几行是增量的入口：只有锚点存在、而且锚点记下的 header 与本次 header 相等时，才敢拿「当前 surface token 数减去锚点当时的 surface token 数」当增量用。header 一变就得整体重估，因为 system 段落和工具 schema 都可能换了。
+
 锚点在折叠 `assistant/message` 时建立（`packages/llm/token-meter/src/index.ts:225-255`）。有 usage 且有 header 时，锚点基线取 provider 报的真实用量之和（`usageTokens`，`:44-49`：input + cacheRead + cacheWrite + output），**但仅当它不小于同一时刻的完整启发式估算**，否则退回估算值。注释说明了原因：带符号的启发式增量只有从「至少和全量估算一样大」的锚点出发才保持保守。
 
 header 变了或者压根没有锚点，就整体估算。这也意味着：压缩把 surface 改了以后，下一次 measure 拿到的仍是相对同一锚点的增量，直到下一条带 usage 的 `assistant/message` 重新落锚。
@@ -358,7 +384,7 @@ const pressureFrom = (usage: TokenUsage): number =>
   usage.inputTokens + (usage.cacheReadTokens ?? 0) + (usage.cacheWriteTokens ?? 0)
 ```
 
-这里只算 prompt 侧，不含输出。
+那行英文注释的意思是：一次请求的压力只看 prompt 侧，等于未命中输入加上缓存读写的流量，输出不计。所以这里只算 prompt 侧，不含输出。
 
 ## 循环怎么把这些拼起来
 
@@ -372,6 +398,8 @@ agent loop 每一步的组装（`packages/core/agent-loop/src/agent.ts:340-345`�
       const chunkSeqs: number[] = []
       const stream = preparedCall?.stream(request) ?? this.loopCtx.llm.stream(request)
 ```
+
+`buildRequest` 返回 `request` 和一个可选的 `preparedCall`：拿到了 prepared 就用它那个一次性的 `stream()`，没拿到才回落到 `llm.stream()`。`assembler` 和 `chunkSeqs` 留给下面的循环，一边把 chunk 写进日志，一边把它们折成成品消息。
 
 `buildRequest` 里先 `prepareCall`（`packages/core/agent-loop/src/agent.ts:449`），再把 header 与日志里的基线比较、变了才写 `request/header`（`packages/core/agent-loop/src/agent.ts:464-470`），最后组装并深冻结请求（`packages/core/agent-loop/src/agent.ts:486-493`）。每个 chunk 都会先 `append('assistant/chunk', ...)` 再喂给 assembler（`packages/core/agent-loop/src/agent.ts:349-350`）：日志先行。
 
@@ -425,3 +453,19 @@ grep -o '"usage":{[^}]*}' examples/acp-agent/tests/snapshots/bash-tool-turn/sess
 ```
 
 相关阅读：请求前缀为什么稳定见 [02 KV-Cache](02-kv-cache.md)；请求是怎么从日志里重建出来的见 [05 Session](05-session.md)；`CONTEXT_WINDOW_EXCEEDED` 之后发生什么见 [06 压缩](06-compaction.md)；`llm/stream` 这类扩展点的机制见 [12 表面与协议](12-surfaces-and-protocols.md)；术语见 [附录 A 词汇表](appendix-a-glossary.md)。
+
+## 自检
+
+**1. 适配器补上的默认值（比如 `defaultMaxTokens`、`defaultEffort`）为什么要跟着调用配置一起进 epoch header，而不是「反正是默认值，不记也行」？**
+
+因为 header 的用途是让人拿着日志逐字节重建当时那个请求，而这些默认值真的上了 wire。`resolveCallFor`（`packages/llm/llm/src/index.ts:734-768`）在 `maxTokens` 或 `reasoningEffort` 缺省时会把适配器的默认值物化出来，物化之后它们就跟显式传入的值一样出现在 body 里。只记 `LlmCallConfig` 的六个字段，日志里就会缺一块：换个适配器版本、默认输出上限从 256,000 改成别的值，重建出来的请求和当初发的就不是同一个了。同理，它们变了也应该被看作 header 变更，因为 wire 上的字节确实变了。
+
+**2. 哪类失败重试是安全的，哪类不是？为什么 `QUOTA` 的判定要排在 429 之前？**
+
+默认可重试的只有五个码：`EMPTY_RESPONSE`、`RATE_LIMIT`、`SERVER`、`TIMEOUT`、`TRANSPORT`（`packages/llm/llm/src/retry-policy.ts:14-24`）。共同点是「同样的请求再发一次，结果可能不同」：限流会过去、服务端 5xx 可能是偶发、传输层断了可以重连。`AUTH`、`QUOTA`、`INVALID_REQUEST` 不在列，因为请求字节没变，再发一百次也是同一个答案。
+
+429 这个状态码本身两种情况都可能：临时限速，或者余额耗尽。`httpErrorCode`（`packages/llm/llm-deepseek/src/adapter.ts:138-149`）先用文案匹配 quota，匹配上就归 `QUOTA`（不可重试），匹配不上才落到 `RATE_LIMIT`（可重试）。这一行顺序颠倒过来，余额用完时就会变成按退避策略空转重试。代价也在这里：判定靠正则匹配 provider 的英文文案（`packages/llm/llm/src/error.ts:94-100`），provider 改一句话，分类就会退化。
+
+**3. SSE 流跑到一半断了，前面已经 `append` 进日志的 `assistant/chunk` 会怎样？重试的那次请求发出去的字节和失败那次一样吗？**
+
+chunk 是先落盘再喂给 assembler 的（`packages/core/agent-loop/src/agent.ts:349-350`），所以断流之前收到的每一片都已经在日志里了，事后能看到模型当时说到哪一句。但它们**不进 surface**，`llm/retry` 与 `llm/retry-started` 两个事件也是 log-only（`packages/llm/llm-retry/src/types.ts:16-46`）。`deriveMessages()` 只从 surface 折叠模型历史，于是重试时 `buildRequest` 拿到的消息数组与失败那次完全相同，请求字节也相同，前缀缓存照样命中。这条设计还有个附带效果：错误文本和半截回答永远不会进入模型的上下文，模型看不到自己刚才失败过。

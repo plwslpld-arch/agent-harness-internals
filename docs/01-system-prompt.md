@@ -7,7 +7,9 @@ status: draft
 
 # System Prompt：模型第一眼看到的到底是什么
 
-dsh 里没有 `prompts.ts`。你 grep 不到一个把 system prompt 写在一起的文件，因为它压根不存在。模型看到的那段文字是十几个互不认识的插件各贡献一两句话，先由 `assemble()` 按 `order` 排好序，再由 `renderPrompt()` 这四行代码插值、丢空、用空行拼起来。
+*这一篇讲给想改 prompt 或调 agent 行为的人。读完你能回答：模型第一眼看到的那段文字逐字长什么样、里面每一句话由哪个包贡献、你想改的那句该去哪个文件改。*
+
+想读 dsh 的 system prompt，你大概会去 grep `prompts.ts`，或者找一个塞满英文的常量文件。**一个都没有。** 模型看到的那段文字在磁盘上不以完整形态存在于任何地方：它由十几个互不认识的插件各贡献一两句话，先由 `assemble()` 按 `order` 排好序，再由 `renderPrompt()` 这四行代码插值、丢空、用空行拼起来。所以「改一句 prompt」在 dsh 里的第一步，是先搞清楚那句话归谁管。
 
 这一篇先把默认组合下模型真实收到的东西逐字贴出来，再回过头讲它是怎么来的。
 
@@ -17,9 +19,11 @@ dsh 里没有 `prompts.ts`。你 grep 不到一个把 system prompt 写在一起
 
 场景：`dsh web`，默认 `standard` preset，Linux/macOS，沙箱模式 `workspace-write`（`packages/bundle/base/cordis.patch.yml:175` 的默认值），审批策略 `ask`（`packages/bundle/base/cordis.patch.yml:191`），项目里有一个 `AGENTS.md`，用户输入「帮我看看 README」。
 
+**preset（agent preset）**是会话级的一份插件组合，一个目录里一份 `agent.cordis.yml`，决定这个会话装哪些工具、挂哪段 persona。Web 下模型能看到什么，几乎全由它决定，展开在 §七。
+
 ### 1.1 `messages[0]`：system 字符串
 
-下面这 18 段是按源码逐字重建的（`{{model}}` / `{{cwd}}` / 路径已代入示例值；段与段之间的空行由 `'\n\n'` 的 join 产生）。**每一句英文都是源码里的字符串字面量**，出处见 §三的贡献者表。
+下面这 18 段是按源码逐字重建的（`{{model}}` / `{{cwd}}` / 路径已代入示例值；段与段之间的空行由 `'\n\n'` 的 join 产生）。**每一句英文都是源码里的字符串字面量**，出处见 §三的贡献者表。中文大意跟在代码块后面，不懂英文可以先跳到那张表再回头看。
 
 ```text
 You are an AI agent powered by DeepSeek Harness.
@@ -59,11 +63,38 @@ Use subagent_fork in the background by default. Start independent delegations to
 When you successfully create or modify files, mention the primary outputs in your final response. To make those and any other changed-file references clickable in Web, format them as Markdown inline code using the exact file-tool path, or a basename when unique among the files changed in that turn.
 ```
 
+这 18 段逐段的中文大意如下。第 1 到 4 段是身份与环境，第 5 段往后每一段对应一个工具：
+
+| # | 开头几个词 | 中文大意 |
+| ---: | --- | --- |
+| 1 | `You are an AI agent powered by…` | 你是一个跑在 DeepSeek Harness 上的 AI agent。 |
+| 2 | `The DeepSeek Harness implementation checkout…` | dsh 自己的源码 checkout 在 `/opt/dsh`。这个路径和当前工作目录是两个不同的值，可能不一样，绝对不要从它推断工作目录；要工作目录就跑 `pwd`。这份 checkout 只用来查看或扩展 dsh 自身。 |
+| 3 | `You are interacting with the user through…` | 用户是在 `http://127.0.0.1:3080` 这个 Web GUI 里跟你对话。用户说「这个页面」「这个 GUI」「这个 app」而没点名别的目标时，指的就是它。浏览器不会隐式提供 DOM、路由或截图上下文。客户端插件的热更新接收端是开着的，但只有当同一份 checkout 里还跑着 `pnpm run dev:web` 重新构建产物时，客户端插件的改动才免刷新生效，承诺自动更新之前先确认那个 watcher 在跑。其它任何改动都要重新构建受影响的 Web 产物，并在刷新页面后到这个已有 URL 上验证。另起一个服务器不会更新这个 GUI。`apps/web` 的 Vite 入口只构建外壳，它不是能独立跑的应用，因为只有 `dsh web` 会注入 `window.__DSH_BOOT__`。除非用户要求，否则不要另起一个替代服务器；真需要就用受管的后台任务，并核实它的确切 URL。 |
+| 4 | `You are a coding agent powered by…` | 你是一个 coding agent，用的模型是 `deepseek-v4-flash`，工作目录是 `/work/demo`。（这一段就是 persona，Web 与 headless 的默认值。） |
+| 5 | `Use the read tool…` | 查看文本文件用 `read` 工具，别用 `cat` 之类的 shell 命令。结果里带行号。文件大就用 `offset` 和 `limit` 接着读。 |
+| 6 | `Use the write tool…` | 建文件或整体替换文件内容用 `write`。已存在的文件会被覆盖，所以先 `read`（默认的 fs 观察策略要求这么做），能做定点修改就优先用 `edit`。 |
+| 7 | `Use the edit tool…` | 对已有的 UTF-8 文本文件做定点修改用 `edit`。它把字面量 `old_string` 换成 `new_string`；默认要求 `old_string` 恰好出现一次。出现多次就把 `old_string` 写得更具体，或者把 `replace_all` 设成 true。先 `read` 那个文件（同样是默认 fs 观察策略要求的），除非这个会话里刚创建或刚编辑过它。 |
+| 8 | `Use the glob tool…` | 按路径模式找文件用 `glob`，别用 shell 的 `find`。模式里不带 `/` 就是在任意深度匹配文件名，所以 `"*"` 匹配整棵树里的每个文件，而不是只匹配顶层。结果只有文件、绝不含目录，并且包含隐藏文件和被忽略的文件：结果量装得下就按修改时间返回，装不下就保留按修改时间排序的头部。 |
+| 9 | `Use the grep tool…` | 搜文件内容用 `grep` 工具，别用 shell 的 `grep` 或 `rg`。需要看命中处周围的上下文时，对命中的文件用 `read`。 |
+| 10 | `Check the [exit code: N] marker…` | 每条 bash 结果都要看 `[exit code: N]` 这个标记；出错了先查清再往下走。 |
+| 11 | `Track every background job id…` | 你起的每个后台任务 id 都要记住。任务结束时运行时会在会话里通知你，所以不要轮询、不要 sleep 等它；接着做互不依赖的事，也不要重复一个正在跑的任务已经在做的活。给出最终答复之前，用 `job_output` 把每个还相关的任务收一遍（只有真的被它卡住了才设 `wait: true`），已经无所谓的任务用 `job_kill` 杀掉。 |
+| 12 | `Use the web_search tool…` | 查网上的最新信息用 `web_search`。它返回一个可选的答案外加一串来源 URL。有来源摘录就用摘录，并把相关 URL 以 markdown 链接的形式引出来。 |
+| 13 | `Use goal tools…` | 当前会话里有一个长期要完成的目标时才用 goal 那组工具。`create_goal` 可以从人类的直接请求里推断目标意图，语言不限；例行的单轮活儿不要建 goal。调 `update_goal` 之前先调 `get_goal`，把它给的 `goal_id` 和 `revision` 原样抄过去。会话 resume 或 fork 之后，活跃的 goal 会被解除武装：人类用任何措辞、任何语言要求继续或恢复时，用 `update_goal` 的 `resume` 动作重新武装它。目标真的达成了才标 complete。同一个阻塞条件连续持续 3 个 goal 轮次之后才能标 blocked，并且要在 `blocked_reason` 里写清那个具体条件；难、不确定、还有活要干，都不算 blocked。 |
+| 14 | `Use the workflow tool ONLY when…` | 只有用户明确要 workflow，或者明确要大规模多 agent 编排时才用 `workflow` 工具：你写一段 JavaScript 脚本（确切格式在工具的 description 里），把活按阶段扇出给很多子代理并收结构化结果。只委派一两次的话，直接用普通的 subagent 调用。 |
+| 15 | `Use the ralph tool ONLY when…` | 只有直接跟你说话的人类明确要 Ralph 循环、或者要「每轮换一个全新 agent」的迭代执行时，才用 `ralph`。每一轮 Ralph 都起一个没有对话种子的全新子进程，靠共享工作区当持久记忆。完成与否、卡在哪，都是 worker 自己的汇报，不是独立评估。普通的长期目标用同会话的 goal 工具，有边界的委派和扇出用普通子代理或 workflow。 |
+| 16 | `Use subagent in the background…` | `subagent` 默认放后台跑。互不依赖的委派放在同一条 assistant 消息里一起发起，然后趁它们跑的时候接着干别的。只有当你的下一步动作依赖某个子代理的结果时，才把它的 `run_in_background` 设成 `false`。后台运行结束时，运行时会给你发一条通知，里面带着结果和它最后那条 assistant 消息。 |
+| 17 | `Use subagent_fork in the background…` | 同上，只是换成 `subagent_fork`。这两段文字由同一个模板生成，工具名不同。 |
+| 18 | `When you successfully create or modify files…` | 成功创建或修改文件之后，在最终回复里提一下主要产物。想让这些以及其它「改动过的文件」引用在 Web 里可点击，就用 Markdown 行内代码的形式写出来，路径用文件工具给的那个确切路径；如果这个 turn 里改过的文件中该文件名唯一，也可以只写文件名。 |
+
+有两处值得对着中文再看一眼。**第 5 到 18 段讲的全是「跨调用的习惯」，不是「这个工具怎么调」。** 「参数叫什么、什么时候该用它」写在工具 schema 的 `description` 里，模型看 `tools[]` 时就能看到；「每次结果都要看 exit code」「别 busy-poll」这种每次调用都成立、又不该在每条 description 里重复一遍的纪律，才会占用一段 system prompt。这条分工规则是上游写死的，见 §六。
+
+**第 2、3 段是纯防误解的。** 它们存在的原因是模型很容易把「我能读到 harness 源码」当成「我就在 harness 目录里干活」，把「页面是我的产物」当成「我可以随便再起一个服务器」。这两段只在 Web 且 `surfaceContext: true` 时出现。
+
 就这些。没有「回答要简洁」、没有代码风格、没有安全守则、没有 markdown 排版要求。默认 dsh 的 system prompt 只有一句身份、一句 persona、每个工具一句跨调用习惯，以及 Web 特有的三段环境说明。这是个刻意的设计判断，代价在 §九。
 
 有几段**不在**上面：`plan:policy`（order 50）在未进入 plan 模式时 provider 返回 `''`，被 `renderPrompt` 的 `.filter(text => text.length > 0)` 丢掉；`tools:code-only`（99）与 `tools:sdk`（150）在默认的 `native` 呈现模式下同样渲染为空。
 
-**上游 fixture 可以直接对照**。`apps/web/tests/snapshots/fresh-round-trip/system-prompt.expected.md` 是 Web 的真实录制结果，逐字是这样的。注意 `{{sourceRoot}}` / `{{webUrl}}` / `{{cwd}}` 这三个都**不是**源码里的 prompt 变量，而是录制器为了让快照跨机器稳定而替进去的归一化 token：`{{cwd}}` 由通用的快照工具产生（`packages/test-support/acp-snapshot/README.md`），前两个由 Web 那套回放测试自己替（`apps/web/tests/replay-round-trip.e2e.ts:89`、`:91`）。
+**上游 fixture 可以直接对照**。**fixture（测试夹具）/ snapshot（快照）**在这个仓库里指的是上游测试跑一遍真实流程、把产物原样录下来存成文件，之后每次测试都拿新产物跟它逐字节比对；它不是手写的示例，所以可以当证据用。`apps/web/tests/snapshots/fresh-round-trip/system-prompt.expected.md` 是 Web 的真实录制结果，逐字是这样的。注意 `{{sourceRoot}}` / `{{webUrl}}` / `{{cwd}}` 这三个都**不是**源码里的 prompt 变量，而是录制器为了让快照跨机器稳定而替进去的归一化 token：`{{cwd}}` 由通用的快照工具产生（`packages/test-support/acp-snapshot/README.md`），前两个由 Web 那套回放测试自己替（`apps/web/tests/replay-round-trip.e2e.ts:89`、`:91`）。
 
 ```text
 You are an AI agent powered by DeepSeek Harness.
@@ -75,11 +106,13 @@ You are interacting with the user through the DeepSeek Harness Web GUI at {{webU
 You are a coding agent powered by the deepseek-v4-flash model. Your working directory is {{cwd}}.
 ```
 
+这四段跟上表的第 1 到 4 段是同一批文字，`…` 是本文为省版面做的省略。
+
 它只有四段，因为那个测试场景没挂 preset 的工具行。挂满工具的版本看 `examples/acp-agent/tests/snapshots/text-turn/system-prompt.expected.md`（3,466 字节，11 段；那个组合没装 fs-search 和 web，persona 也不同）。数段落的时候小心：那份文件里空行分隔的自然段有 12 个，因为 ACP 那份 persona 一段里自己带了个空行。
 
 ### 1.2 `tools[]`：字典序的 24 个 schema
 
-工具 schema **不在 system 字符串里**，它们是请求体的 `tools` 字段，由 `serializeRequest` 单独映射成 `{type:'function', function:{name, description, parameters}}`（`packages/llm/llm-deepseek/src/serialize.ts:161`）。默认没有配 `toolOrder`，所以按名字的 UTF-16 code unit 排序（`packages/core/system-prompt/src/index.ts:169`）：
+**schema（工具描述）**指一个工具在请求里的完整声明：名字、给模型看的自然语言 `description`、以及参数的 JSON Schema。工具 schema **不在 system 字符串里**，它们是请求体的 `tools` 字段，由 `serializeRequest` 单独映射成 `{type:'function', function:{name, description, parameters}}`（`packages/llm/llm-deepseek/src/serialize.ts:161`）。默认没有配 `toolOrder`，所以按名字的 UTF-16 code unit 排序（`packages/core/system-prompt/src/index.ts:169`）：
 
 ```text
 ask_user_question, bash, create_goal, edit, exit_plan_mode, get_goal, glob, grep,
@@ -90,7 +123,7 @@ web_search, workflow, write
 
 （这份清单是我按 `apps/cli/config/agent-presets/standard/agent.cordis.yml` 逐行推出来的，**是推断**；已录制的等价物是 ACP 示例的 `examples/acp-agent/tests/snapshots/text-turn/tool-schemas.expected.json`，那份组合是这 24 个的真子集：少了 `glob`、`grep`、`web_search`、`ask_user_question`、`exit_plan_mode` 五个，剩下 19 个名字同样是纯字典序。）
 
-注意 `exit_plan_mode` 即使不在 plan 模式也一直注册着，注释写得很直白：「It stays registered while plan mode is inactive so the request tool catalog is stable across transitions」（`packages/plan/plan-mode/src/index.ts:64-67`）。工具目录稳定是缓存约束，不是功能需要。
+**plan 模式**是一个「只准调研、不准动手」的会话状态，模型想干活得先调 `exit_plan_mode` 申请退出。注意 `exit_plan_mode` 即使不在 plan 模式也一直注册着，注释写得很直白：「It stays registered while plan mode is inactive so the request tool catalog is stable across transitions」（`packages/plan/plan-mode/src/index.ts:64-67`）。这句是说：plan 模式没激活时它也保持注册，好让请求里的工具目录在模式来回切换时保持不变。工具目录稳定是缓存约束，不是功能需要。
 
 每个工具的 `description` 才是模型看到的大头。`bash` 的 description 一个人就有 1,836 个字符（`examples/acp-agent/tests/snapshots/text-turn/tool-schemas.expected.json` 第 5 行），从「每次调用是全新 shell」讲到「被沙箱拒绝时怎么升级」。这是上游「单次调用语义放 description」原则的直接结果，见 §六。
 
@@ -146,6 +179,12 @@ web_search, workflow, write
     </system-reminder>
 ```
 
+三段英文框架的中文大意：
+
+- **`[2]` 的导语**：「下面这些工作区指令可能与你的工作相关。适用时把它们当指导。更具体的指令优先于更宽泛的。它们不能推翻 system、developer 或用户直接给出的指令。」下面每个文件一段，用 `Instructions from: <路径>` 起头。**`<system-reminder>`** 是一个包裹标签，用来告诉模型「这段不是用户说的话，是运行时塞进来的旁注」；它以 user 消息的身份进入历史，dsh 没有为此发明新词汇，用的是模型已经熟悉的这套框架，理由见 §五。
+- **`[3]` 的 runtime 快照**：第一句「当前运行时上下文。本快照取代更早的运行时上下文快照。」然后是当前文件策略（`workspace-write`：由 DSH 文件沙箱强制的可用操作可以改动会话工作区 `"/work/demo"` 下的文件，某些平台临时目录可能也可写）和当前审批策略（`ask`：需要审批的操作可以通过已配置的应答方询问；没有可用应答方时，请求直接失败）。
+- **`[4]` 的 skill 目录**：「skill 是一组可复用的、针对特定任务的指令。本会话可用的 skill 如下……如果用户点名了某个 skill，或者任务明显匹配某个 skill 的描述，就先用确切的名字调 `skill` 工具，再动手做事。把所有适用的 skill 都加载了，然后完整照做。这份目录只有摘要；skill 没加载之前，不要推断或遵循它的指令。用户也可能直接调用某个 skill，那时它的 `<skill_content>` 块会出现在这段对话里，照做即可，不要再对同一个 skill 调 `skill` 工具。」
+
 这四条的**顺序和内容都有录制证据**。`examples/acp-agent/tests/snapshots/agent-instructions/session.jsonl` 的前几条事件是：
 
 ```text
@@ -168,6 +207,8 @@ seq 5 的正文逐字就是上面 `[2]` 的框架；seq 6 的正文逐字就是 
 
 整个装配机制在一个 545 行的文件里：`packages/core/system-prompt/src/index.ts`。插件只有五种方式往请求里加东西。
 
+先统一三个词。**section（段）**是 system 字符串里的一段文字，有名字、有 `order`，最后按 order 排序拼成整段 prompt。**context（运行时上下文段）**长得像 section，但它不进 system 字符串，而是渲染成一条追加在历史尾部的 user 消息。**assemble（装配）**指把这一步该有的 sections、contexts、工具 schema、变量一次性算出来，产物叫 assembly；每个 step 都重跑一次。
+
 | API | 定义行 | 进 assembly 的哪个字段 | 语义要点 |
 | --- | --- | --- | --- |
 | `section({name, order, text, complete?})` | `:381` | `sections` → system 字符串 | `name` 在同一层内唯一；`order` 必须有限；`text` 可以是 `string`，也可以是 `(AssembleContext) => string`，每次装配重新求值 |
@@ -176,7 +217,9 @@ seq 5 的正文逐字就是上面 `[2]` 的框架；seq 6 的正文逐字就是 
 | `variable(name, provider)` | `:446` | `variables` | 名字必须匹配 `/^[a-z][a-z0-9_]*$/`（`:134`）；provider 可以返回 `undefined`，但被引用时渲染抛错 |
 | `suppressRuntimeContext()` | `:415` | 让 `contexts = []` | 匿名条目，可注册多个各自 dispose |
 
-五个方法都走 `this.layers.effect(this.ctx, ...)`，**注册即 Cordis effect**：谁调用就属于谁的 fiber，插件卸载时注册自动撤销，同时 `emit('system-prompt/change')`。落到哪一层取决于调用方 context 有没有 scope：没有就是全局层，有就是那个 scope 的 `PromptLayer`。
+五个方法都走 `this.layers.effect(this.ctx, ...)`，**注册即 Cordis effect**：谁调用就属于谁的 fiber，插件卸载时注册自动撤销，同时 `emit('system-prompt/change')`。**fiber（纤程）**是 Cordis 给一个插件实例的生命周期句柄，插件被卸载时它一起销毁，挂在它上面的注册跟着撤销。所以「装了哪些插件」和「模型看到什么」在 dsh 里永远是同一件事，不存在插件卸了、prompt 里那句话还留着的情况。
+
+落到哪一层取决于调用方 context 有没有 scope。**scope（作用域）**是按 agent 隔离注册的单位：一个 section、一个变量、一个工具，要么是全局的（每个 agent 都看得见），要么属于恰好一个 agent。同名注册在更近的 scope 上遮蔽全局那份，per-agent 的 persona 就是这么来的。没 scope 就是全局层，有就是那个 scope 的 `PromptLayer`。
 
 同名重复注册直接抛错，而且错误信息会顺手教你怎么办（`:316-318`）：
 
@@ -185,9 +228,11 @@ prompt section "deployment:persona" is already registered
 (for a per-agent override, register through that agent's `agent.ctx` instead)
 ```
 
+（这段报错是说：名叫 `deployment:persona` 的 section 已经注册过了；想给某个 agent 单独换一份，请改用那个 agent 的 `agent.ctx` 去注册。）
+
 服务自己在构造时就注册了两段（`:353-370`）：`harness:identity`（order −100，文本固定为 `You are an AI agent powered by DeepSeek Harness.`）和 `deployment:persona`（order 0，文本取自配置，默认 `''`）。配置里 `includeHarnessIdentity`（`:340`）关掉第一段，`includeRuntimeContext: false`（`:341`）等价于全局调一次 `suppressRuntimeContext()`。
 
-`toolOrder` 的 schema 特意写成 `.default(undefined as unknown as string[])`（`:344`），注释解释了原因：「Preserve omission because an explicit empty order lacks the rest marker」，也就是必须能区分「没配」和「配了个空数组」。
+`toolOrder` 的 schema 特意写成 `.default(undefined as unknown as string[])`（`:344`），注释解释了原因：「Preserve omission because an explicit empty order lacks the rest marker」。这句是说：要把「压根没配」这个状态保住，因为一个显式写出来的空顺序里没有那个「其余工具放这里」的标记（后面会讲到，合法的 `toolOrder` 必须恰好含一个 `'<unlisted-tools>'`）。也就是必须能区分「没配」和「配了个空数组」。
 
 ### `assemble()` 做了什么
 
@@ -198,12 +243,12 @@ prompt section "deployment:persona" is already registered
 3. 变量：先铺全局 provider 的结果，再按链从远到近覆盖，**最近的 scope 赢**（`:473-482`）。
 4. sections 与 contexts 用 `layers.merge(scope, …)` 合并（`:484`）：全局 Map 打底，链上同名覆盖。这就是 per-agent persona 的实现方式。
 5. 工具 provider 是**并集不是遮蔽**（`:486-503`）：全局层加链上所有层的 provider 全部调用，结果累加。每个 schema 的 `parameters` 走 `structuredClone`（`:498`），保证后面的 waterfall 改不脏注册表。
-6. sections 按 `order` 升序稳定排序（`:504`）。同 order 的按 Map 插入顺序，也就是插件注册顺序；上游 README 自己承认这是「a plugin-load artifact」。
+6. sections 按 `order` 升序稳定排序（`:504`）。同 order 的按 Map 插入顺序，也就是插件注册顺序；上游 README 自己承认这是「a plugin-load artifact」（意思是：这个先后只是插件加载过程留下的副产品，没人特意设计过）。
 7. `complete === true` 的 section 超过一个就抛错（`:505-508`）。
 8. 求值每段文本（函数就调用），顺手记下 complete 的那一份（`:510-518`）。
 9. contexts：被抑制就是 `[]`，否则按 order 排序求值（`:521-528`）。
 10. `orderTools(collected, this.toolOrder, knownNames)`（`:529`）。
-11. 把装好的 assembly 交给 `system-prompt/assemble` 这个 waterfall 走一圈（`:532-535`）。第一个参数 `scopeTarget(this, scope)` 的作用是「只分发给挂在这个 scope 或它祖先上的监听器」，别的 agent 的监听器收不到。监听器的返回值**权威**，它可以整体改写 assembly。
+11. 把装好的 assembly 交给 `system-prompt/assemble` 这个 waterfall 走一圈（`:532-535`）。**waterfall（瀑布事件）**是 Cordis 的环绕式中间件：监听器拿到数据后必须 `await next()` 才轮到下一个，而且它的返回值权威，可以整体替换掉传下去的东西。dsh 的所有拦截点都是这个形状，没有第二套钩子系统。第一个参数 `scopeTarget(this, scope)` 的作用是「只分发给挂在这个 scope 或它祖先上的监听器」，别的 agent 的监听器收不到。
 12. 事后强制（`:536-541`）：有 complete section 就把 `sections` 换成只有那一段；有抑制就把 `contexts` 清空，**连 waterfall 里加进来的也丢**。
 
 全仓库只有三个 `system-prompt/assemble` 监听器：`packages/core/agent/src/model-selection.ts:40` 把 UI 选中的 provider/model 覆写进 `variables`（让 `{{model}}` 与真正路由一致），加上两个纯校验用的 invariant（`packages/core/system-prompt/src/invariant.ts:47`、`packages/preset/agent-presets/src/invariant.ts:60`）。这个拦截点很强，但上游自己几乎不用。
@@ -227,11 +272,11 @@ export function renderPrompt(assembly: PromptAssembly): string {
 
 `interpolate` 在 `:258-295`，逐个扫描 `{{`：
 
-1. **未知或无值即抛错。** 名字用 `Object.hasOwn(variables, name)` 查（`:283`），所以 `{{constructor}}` 算未知而不是解析到 `Object.prototype`；provider 返回 `undefined` 时抛 `has no value for this assembly`。抛错发生在**每步渲染时**，后果是这个 turn 以 error 结束、loop 存活，不是启动失败。
+1. **未知或无值即抛错。** 名字用 `Object.hasOwn(variables, name)` 查（`:283`），所以 `{{constructor}}` 算未知而不是解析到 `Object.prototype`；provider 返回 `undefined` 时抛 `has no value for this assembly`（意思是「这个变量在本次装配里没有值」）。抛错发生在**每步渲染时**，后果是这个 turn 以 error 结束、loop 存活，不是启动失败。
 2. **不完整的引用要么是错误、要么是散文。** 匹配 `/^\{\{([^{}]*)\}\}/` 失败时，如果后面还有 `}}` 就抛 malformed（`{{{model}}}` 会中招），否则孤立的 `{{` 原样输出（`:268-276`）。
 3. **替换值不再扫描**（`:291`）。变量值里如果碰巧有 `{{…}}`（比如 cwd 里有），不会被二次展开。
 
-没有转义语法。想在 persona 里写一个字面的 `{{x}}` 目前做不到，上游 README 的「Known Limitations」明确记着这一条。
+没有转义语法。想在 persona 里写一个字面的 `{{x}}` 目前做不到，上游 README 的「Known Limitations」（已知限制）一节明确记着这一条。
 
 ### `complete` section：一个硬边界
 
@@ -246,13 +291,13 @@ export function renderPrompt(assembly: PromptAssembly): string {
     includeRuntimeContext: false
 ```
 
-于是 `harness:identity`、`harness:source`、`app:web-surface`、所有 `tool:*` 段落**全部消失**，模型只看到那一句。上游给这个 preset 的定位是「Claude SWE 兼容的 RL 契约」组合（`.agents/notes/implemented/feature/2026-07-29-persistent-bash-str-replace-editor.md:21`）：要的正是「system prompt 完全由部署固定、其它包一句话都插不进来」。
+配置里那句 persona 的中文是「你是一个乐于助人的软件工程师助手」。于是 `harness:identity`、`harness:source`、`app:web-surface`、所有 `tool:*` 段落**全部消失**，模型只看到那一句。上游给这个 preset 的定位是「Claude SWE 兼容的 RL 契约」组合（`.agents/notes/implemented/feature/2026-07-29-persistent-bash-str-replace-editor.md:21`）：要的正是「system prompt 完全由部署固定、其它包一句话都插不进来」。
 
 ### `toolOrder` 与字典序
 
 `orderTools` 在 `:164-178`：
 
-- 没配 ⇒ `tools.sort(compareToolNames)`（`:169`），纯 code-unit 比较，注释写明「locale-independent, so the order is identical on every machine」（`:180`）。
+- 没配 ⇒ `tools.sort(compareToolNames)`（`:169`），纯 code-unit 比较，注释写明「locale-independent, so the order is identical on every machine」（`:180`）。这句是说：比较不受语言环境影响，所以在任何机器上排出来的顺序都完全一样。这一点对缓存很要紧，工具顺序变了请求字节就变了。
 - 配了 ⇒ 加载时校验必须恰好含一次 `'<unlisted-tools>'`、不许重复（`:146-157`）；装配时校验列出的名字都在 `knownNames` 里（`:170-173`），所以配错名字是**第一个 turn** 炸，不是启动炸。未列出的按字典序插到 rest 位置。
 
 为什么要多这一层？`.agents/notes/implemented/feature/2026-07-06-explicit-tool-order.md` 记着：工具顺序影响请求字节、缓存和持久 header，而注册顺序受并发 import 影响，CI 出现过快照漂移。解法是「在列表诞生的地方规范化」，让无序列表不可表示。
@@ -294,6 +339,19 @@ export function renderPrompt(assembly: PromptAssembly): string {
 | 190 | `ui:deliverable-file-references` | `packages/client/ui-deliverables/src/index.ts:23`（文本 `:15`） | `When you successfully create or modify files, mention the primary outputs in your final response. …` | Web bundle |
 | 190 | `tool:structured_output` | `packages/subagent/subagent-in-process-driver/src/structured.ts:99`（文本 `:26`） | `` When you have your final answer, you MUST report it by calling the `structured_output` tool … `` | 仅结构化输出子代理 scope |
 
+表里的英文文本，默认组合下会出现的那些已经在 §1.1 逐段给过中文。剩下几段默认不出现，中文大意是：
+
+- `plan:policy`（50）：「你正处在 plan 模式。在 `exit_plan_mode` 成功之前一直待在 plan 模式……」后面还有五段，是 plan 模式下的行为约束。
+- `tools:code-only`（99）：「`run_code` 是你唯一能直接调用的工具，一次点名其它工具的调用会失败。SDK 在下面声明的每个工具，都要从程序内部去够。」
+- `tool:pwsh`（105，Windows 版的 `tool:bash`）：「非零退出会以 `[exit code: N]` 标记的形式报出来……」
+- `tool:pty`（106）：「只有当工作需要持久的终端状态或交互式 stdin 时，才用终端会话。」
+- `tool:web_fetch`（111）：「取某个具体 HTTP(S) URL 的内容用 `web_fetch` 工具。」
+- `tool:lsp`（112）：「普通的浏览用 search/read。文本匹配有歧义时才用 `lsp`。」
+- `tool:session-query`（113）：「想找以前会话里的相关工作，用 `session_search`。」
+- `tool:cordis`（115）：以 `# Dynamic Cordis Plugins`（动态 Cordis 插件）开头的一大段 markdown，全仓最长的一段 prompt。
+- `tool:report`（117，只在子代理里）：「结束之前用 `report` 工具交付你的结果：调一次，给一个能独立看懂的答复。」
+- `tool:structured_output`（190，只在结构化输出的子代理里）：「有了最终答案之后，你**必须**通过调用 `structured_output` 工具把它报上来。」
+
 order 的分段约定写在 `.agents/notes/implemented/architecture/2026-07-05-prompt-variables-and-tool-guidance-ownership.md`：identity −100、persona 0、工具指导 100–199。
 
 变量提供者全仓只有三个，都在 agent-loop 里（`packages/core/agent-loop/src/index.ts:351-353`）：
@@ -308,7 +366,7 @@ ctx.systemPrompt.variable('cwd', context => context.agent?.session.header.cwd)
 
 ### runtime-context 的三个贡献者
 
-`systemPrompt.context(` 的调用点全仓只有三处：
+**runtime context（运行时上下文）**指那些会中途变的事实：现在是什么沙箱模式、审批策略是什么、你是不是一个被委派的子代理。它们不进 system 字符串，而是渲染成一条追加在历史尾部的 user 消息。`systemPrompt.context(` 的调用点全仓只有三处：
 
 | order | name | owner | 文本 |
 | ---: | --- | --- | --- |
@@ -316,12 +374,22 @@ ctx.systemPrompt.variable('cwd', context => context.agent?.session.header.cwd)
 | 115 | `approval:policy` | `packages/interaction/user-approval/src/index.ts:205`（文本 `:100-102`） | `ask` ⇒ `Approval policy: ask. Operations that require approval may ask through the configured answerers; without an available answerer, the request fails closed.`；`never` ⇒ `` Approval prompts are disabled in this session: actions that require approval are rejected automatically — do not request sandbox escalation (do not set `sandbox_permissions`). `` |
 | 120 | `subagent:delegation` | `packages/subagent/subagent/src/child-agent.ts:170`（文本 `:135-139`） | `You are a delegated subagent: your permission scope was fixed when you were started and cannot be widened from inside this session — operations that require approval are rejected automatically. When the task needs access beyond that scope, do not retry the denied operation; state the limitation in your reply so the delegating agent can handle it.` | 仅子代理 scope |
 
+这三段文本的中文大意：
+
+- **`sandbox:policy`** 三选一。`read-only`：「当前 DSH 文件策略是只读。由 DSH 文件沙箱强制的可用操作在当前模式下不能改动文件。不要单凭这条策略就拒绝一个必要的修改：照常试一个可用工具，然后按它返回的拒绝说明和升级指引走。」`workspace-write`：「……可以改动会话工作区 `"<root>"` 下的文件。某些平台临时目录可能也可写。」`danger-full-access`：「……不对可用操作的文件修改作任何限制。」
+- **`approval:policy`** 两选一。`ask`：「审批策略是 ask。需要审批的操作可以通过已配置的应答方询问；没有可用应答方时，请求直接失败（fail closed）。」`never`：「本会话禁用了审批询问：需要审批的动作会被自动拒绝，所以不要请求沙箱升级（不要设 `sandbox_permissions`）。」
+- **`subagent:delegation`**：「你是一个被委派的子代理：你的权限范围在启动时就定死了，从这个会话内部无法放宽，需要审批的操作会被自动拒绝。任务需要超出该范围的访问时，不要重试被拒的操作；把这个限制写进你的回复，让委派方去处理。」
+
+第一条那句「不要单凭策略就拒绝」很关键：它防的是模型看到 `read-only` 就自己脑补「我什么都干不了」然后直接放弃，而不去试那个可能有升级通道的工具。
+
 `user-approval` 的注释把设计意图直接写在了注册点上方（`packages/interaction/user-approval/src/index.ts:202-203`）：
 
 ```
 // The complete current value travels after retained history, so switching
 // policy does not rewrite the stable system-prompt cache prefix.
 ```
+
+（注释是说：完整的当前值跟在保留下来的历史后面走，所以切换策略不会重写掉 system prompt 那段稳定的缓存前缀。）
 
 ---
 
@@ -341,7 +409,7 @@ export function joinContextSections(sections: readonly ContextSnapshotSection[])
 }
 ```
 
-「supersedes earlier」这半句是整套设计的关键：历史里会累积多条快照，靠这句话让模型忽略旧的。
+那句固定导语的中文是「当前运行时上下文。本快照取代更早的运行时上下文快照。」「supersedes earlier」这半句是整套设计的关键：历史里会累积多条快照，靠这句话让模型忽略旧的。
 
 ### 只在变化时才追加
 
@@ -360,7 +428,7 @@ project(current: string, sections: readonly ContextSnapshotSection[]): UserMessa
 }
 ```
 
-`CLEARED` 是 `'Current runtime context: none. Earlier runtime-context snapshots no longer apply.'`（`:13`）。最后一条 context 消失时要发一条「清空」快照，而不是什么都不发。
+`CLEARED` 是 `'Current runtime context: none. Earlier runtime-context snapshots no longer apply.'`（`:13`），中文是「当前运行时上下文：无。更早的运行时上下文快照不再适用。」最后一条 context 消失时要发一条「清空」快照，而不是什么都不发。
 
 `retained` 的三种取值（`undefined` = 从来没发过、`null` = 发过但已经不在 surface 上、有值 = 现在还留着）是整个逻辑的核心：从没发过 + 当前为空 ⇒ 什么都不做；发过但被压缩掉了 ⇒ 即使内容一个字没变也要重发一遍。
 
@@ -372,13 +440,17 @@ project(current: string, sections: readonly ContextSnapshotSection[]): UserMessa
 
 > The first `danger-full-access` and `workspace-write` requests each reported only 256 cache-read tokens against 14,691 and 14,782 uncached input tokens.
 
+（切到 `danger-full-access` 和切到 `workspace-write` 之后的第一次请求，各自只报了 256 个缓存命中 token，而未命中的输入分别是 14,691 和 14,782 个 token。）
+
 也就是说，用户切一次权限模式，整个前缀作废，一万四千多 token 全价重付。
 
 改造后（尾部 user 快照）：
 
 > Across the permission switches and four mutation steps, cache reads were 14,848–15,872 tokens while uncached input was 59–306 tokens per request.
 
-未命中从 14,691 降到 59–306。笔记里「Alternatives considered」一节否掉了四个方案，第三个正是「Put current policy in a dynamic system section」，理由写得很干脆：「DeepSeek matches complete prefixes; changing the first wire message prevents reuse of the longer system-plus-history prefix.」
+（跨越那几次权限切换和四个修改步骤，每次请求的缓存命中都在 14,848 到 15,872 个 token 之间，未命中的输入只有 59 到 306 个 token。）
+
+未命中从 14,691 降到 59–306。笔记里「Alternatives considered」（考虑过的替代方案）一节否掉了四个方案，第三个正是「Put current policy in a dynamic system section」（把当前策略放进一段会变的 system section 里），理由写得很干脆：「DeepSeek matches complete prefixes; changing the first wire message prevents reuse of the longer system-plus-history prefix.」这句是说：DeepSeek 匹配的是完整前缀，改动 wire 上的第一条消息，就用不上「system 加历史」那个更长的前缀了。翻译成人话就是：缓存是从第一个 token 开始逐字节比的，system 排在最前面，动它一下，后面所有已经暖好的历史跟着一起作废。
 
 ### 录制证据
 
@@ -408,7 +480,7 @@ project(current: string, sections: readonly ContextSnapshotSection[]): UserMessa
 | `dsh-tool-skill` 目录 | `packages/skill/tool-skill/src/index.ts:213` | `[...decision.messages, catalog]`（`:248`），追加到尾 | `<system-reminder>` + `<available_skills>` |
 | `dsh-tool-skill` 用户显式调用 | `packages/skill/tool-skill/src/index.ts:177` | 目录之后（注册在目录监听器之前，所以是更外层，改得更晚，见 `:166-170` 的注释） | `<skill_content>` 块 |
 | `dsh-plan-mode` 叙述 | `packages/plan/plan-mode/src/index.ts:205` | 追加到尾（`:221`） | 切换 plan 模式的通知 |
-| `dsh-time-context` | `packages/context/time-context/src/index.ts:170` | `{prepend: true}`（`:208`）⇒ 最外层，最后追加到尾（`:200-206`） | `Time sampled while preparing turn …` 三行读数；**opt-in，默认不装** |
+| `dsh-time-context` | `packages/context/time-context/src/index.ts:170` | `{prepend: true}`（`:208`）⇒ 最外层，最后追加到尾（`:200-206`） | `Time sampled while preparing turn …`（「准备本轮时采到的时间」）三行读数；**opt-in，默认不装** |
 | `dsh-tmux-context` | `packages/context/tmux-context/src/index.ts:218` | `{prepend: true}`（`:246`），仅 `step === 1`（`:223`），前置到最前（`:238-244`） | tmux 位置读数；opt-in |
 
 `agent-instructions` 那行 splice 的注释把顺序意图讲清了（`packages/context/agent-instructions/src/index.ts:343-344`）：
@@ -417,6 +489,8 @@ project(current: string, sections: readonly ContextSnapshotSection[]): UserMessa
 // Fold the context right after the claimed batch, so the direct prompt
 // precedes it and the driver-appended runtime context follows it.
 ```
+
+（注释是说：把这段上下文折进「本步领取的那批消息」正后面，这样用户的直接输入排在它前面，驱动追加的 runtime 上下文排在它后面。也就是上面 §1.3 那四条消息的顺序，`[1]` 用户、`[2]` AGENTS.md、`[3]` runtime 快照。）
 
 ### AGENTS.md / CLAUDE.md 到底怎么被发现
 
@@ -439,6 +513,8 @@ applicable. More specific instructions take precedence over broader ones. They d
 system, developer, or direct user instructions.
 ```
 
+（导语是说：下面这些工作区指令可能与你的工作相关，适用时把它们当指导；更具体的指令优先于更宽泛的；它们不能推翻 system、developer 或用户直接给出的指令。最后一句把 AGENTS.md 的效力钉在 system 与用户指令之下，和下面那条「文件内容是不可信输入」是同一个取向。）
+
 每个文件一段 `Instructions from: <displayPath>\n\n<content>`（`:86`）。整体包在 `<system-reminder>…</system-reminder>` 里，正文中出现的字面 `</system-reminder>` 被转义成 `<\/system-reminder>`（`:81-83`）。文件内容是不可信输入，不能让它伪造框架边界。
 
 预算是 `maxBytes`，必填，Web 的 `standard` preset 配 65536（`apps/cli/config/agent-presets/standard/agent.cordis.yml:33`）。超预算的处理顺序（`packages/context/agent-instructions/src/render.ts:284-300`）：
@@ -446,7 +522,7 @@ system, developer, or direct user instructions.
 1. 全文能装下就直接用；
 2. 装不下就从**最宽的那一侧**（项目根方向）整文件往下丢，每丢一个再试；
 3. 只剩最具体的那份还是超，就对它做二分截断（`:249-273`）；
-4. 前置一条通知（`:224`）：`Workspace instruction budget 65536 bytes: omitted <…>; truncated <…> from A to B bytes`。
+4. 前置一条通知（`:224`）：`Workspace instruction budget 65536 bytes: omitted <…>; truncated <…> from A to B bytes`，意思是「工作区指令预算 65536 字节：省略了某某；把某某从 A 字节截到了 B 字节」。模型因此知道自己看到的指令是残缺的，而不是以为项目根本没写。
 
 ### 什么时候刷新
 
@@ -456,11 +532,15 @@ system, developer, or direct user instructions.
 const FILE_TOUCH_TOOL_NAMES = new Set(['read', 'write', 'edit'])
 ```
 
-**没有文件 watcher，shell 命令不算 touch。** 你在 bash 里 `echo >> AGENTS.md`，模型这一轮看不见。resume 时对比 `baselineIdentity` 决定是复用还是发一条「This complete workspace instruction baseline replaces all earlier workspace instruction baselines.」（`packages/context/agent-instructions/src/render.ts:15-16`）；压缩把基线挡住之后，下一个 step 重发完整基线。
+**没有文件 watcher，shell 命令不算 touch。** 你在 bash 里 `echo >> AGENTS.md`，模型这一轮看不见。resume 时对比 `baselineIdentity` 决定是复用还是发一条「This complete workspace instruction baseline replaces all earlier workspace instruction baselines.」（`packages/context/agent-instructions/src/render.ts:15-16`），这句是说「这份完整的工作区指令基线取代此前所有的工作区指令基线」，和 runtime 快照那句 supersedes 是同一个套路：不删旧的，只声明旧的作废。压缩把基线挡住之后，下一个 step 重发完整基线。
 
 为什么不进 system prompt？`.agents/notes/implemented/feature/2026-06-24-workspace-context.md:9` 给的第一个理由是隔离：
 
 > a global system-prompt section leaks one workspace's files into another live ACP session
+
+（一个全局的 system-prompt section 会把某个工作区的文件泄漏进另一个正活着的 ACP 会话。）
+
+翻译成人话就是：section 注册是全局的，同一个进程里同时开着两个工作区时，A 项目的 AGENTS.md 会出现在 B 项目的会话里。
 
 第二个理由在 `:37`：user-role `<system-reminder>` 是模型熟悉的框架，避免发明一套 harness 专用的 XML 词汇。缓存友好是顺带的好处：改 AGENTS.md 不动 header。
 
@@ -480,11 +560,15 @@ ctx.systemPrompt.tools(context => this.wireSchemas(context.scope))
 3. **`wireSchemas(scope)`**（`packages/core/tools/src/index.ts:980-1000`）按呈现模式分支：`native` 返回该 scope 可见的全部 schema 加 `knownNames`；`code` 只暴露 `run_code`，`knownNames` 也只有它；`both` 全部加 `run_code`。`knownNames` 是「限制之前」的名字全集，用来区分「`toolOrder` 里写错了名字」和「这个 scope 被 `restrict()` 挡住了」。
 4. **`orderTools`** 规范化顺序，见 §二。
 
-代码模式下还多两段 prompt，`tools:code-only`（99）在所有 `tool:*`（100–199）之前，`tools:sdk`（150）在它们之后。为什么这么排，注释解释得很清楚（`packages/core/tools/src/index.ts:843-850`）：
+**code mode（代码模式）**是另一种把工具交给模型的方式：请求里只暴露一个 `run_code` 工具，其余工具变成一份 TypeScript 声明，模型写一段程序去调它们。代码模式下还多两段 prompt，`tools:code-only`（99）在所有 `tool:*`（100–199）之前，`tools:sdk`（150）在它们之后。为什么这么排，注释解释得很清楚（`packages/core/tools/src/index.ts:843-850`）：
 
 > Every tool contributes its own guidance section naming its tool, none of them qualify how that tool is reached … Without this the model reads a catalog of tools it is told to use and no statement that only `run_code` may be called, so it emits a native call, receives `UNKNOWN_TOOL` for a tool the prompt just declared, and concludes the deployment is inconsistent.
 
-`code-mode-turn` 的 fixture 里可以看到实际效果：`examples/acp-agent/tests/snapshots/code-mode-turn/system-prompt.expected.md` 有 28 KB，第 7 行就是那句 `` `run_code` is the only tool you can call directly ``，后面跟着生成的 TypeScript 声明块。
+（每个工具都贡献一段点名自己的指导，但没有一段说明该怎么够到这个工具……少了这条规则，模型读到的就是一份「让你用这些工具」的目录，却没有任何一句说明只有 `run_code` 能调用，于是它发出一次原生调用，对一个 prompt 刚刚声明过的工具收到 `UNKNOWN_TOOL`，然后得出结论：这个部署本身是坏的。）
+
+翻译成人话就是：order 排错一步的后果不是「模型少看一句话」，而是模型会认定这套系统前后矛盾，进而不信任 prompt 里的其它内容。所以 `tools:code-only` 必须排在所有工具指导的**前面**，先立规矩再给目录。
+
+`code-mode-turn` 的 fixture 里可以看到实际效果：`examples/acp-agent/tests/snapshots/code-mode-turn/system-prompt.expected.md` 有 28 KB，第 7 行就是那句 `` `run_code` is the only tool you can call directly ``（`run_code` 是你唯一能直接调用的工具），后面跟着生成的 TypeScript 声明块。
 
 ### 「一个事实一个 owner」
 
@@ -492,9 +576,11 @@ ctx.systemPrompt.tools(context => this.wireSchemas(context.scope))
 
 > **One principle: every fact in the prompt has exactly one owner.** … Per-tool semantics and when-to-use → the tool's `description`. Cross-call habits a description cannot carry → the tool package's prompt section. The product name and SDK identity line → the static `harness:identity` section. Deployment role and behavior → the deployment's persona.
 
+（**一条原则：prompt 里的每个事实恰好有一个 owner。**……单个工具的语义和「什么时候用它」归工具自己的 `description`。description 装不下的跨调用习惯归这个工具包的 prompt section。产品名和 SDK 身份那句归静态的 `harness:identity` section。部署的角色与行为归这个部署的 persona。）
+
 按这条规则，`todo_write`、`ask_user_question`、`skill` 都**没有** section，它们的 description 已经写全了契约。而 `bash` 需要一段 section，因为「每次结果都要看 exit code」是跨调用的习惯，塞进 description 里每次都要重复。
 
-同一篇笔记还记着这套规则解决的具体问题：以前 shell/subagent/todo 的用法指导是手写在 coding-agent 和 ACP 两份 persona 字符串里的，「two drifting copies (the ACP one was already abridged)」，装一个插件要去改每个部署的 YAML。
+同一篇笔记还记着这套规则解决的具体问题：以前 shell/subagent/todo 的用法指导是手写在 coding-agent 和 ACP 两份 persona 字符串里的，「two drifting copies (the ACP one was already abridged)」（两份各自漂移的副本，其中 ACP 那份已经被删减过了），装一个插件要去改每个部署的 YAML。
 
 ---
 
@@ -509,7 +595,7 @@ this.ctx = this.scope.ctx.extend({ agent: this })
 
 任何用 `agent.ctx` 调 `systemPrompt.*` 的注册都落在这一层。
 
-**preset** 是中间一层。`apps/cli/config/agent-presets/<name>/agent.cordis.yml` 每进程挂载一次到一个 standing scope，session 通过 scope 父链加入，于是链是 `agent → preset → global`。Web bundle 把 base 里所有 agent 级的工具行全部 `disabled: true`，改由 preset 挂，所以 **Web 下模型看到的工具和段落几乎完全由 preset 决定**。`packages/bundle/web-app/cordis.patch.yml` 里每一段禁用都带着注释解释 host 平面与 agent 平面的判据。
+**preset** 是中间一层。`apps/cli/config/agent-presets/<name>/agent.cordis.yml` 每进程挂载一次到一个 standing scope（**standing scope** 指一个不随会话生灭、进程活着它就一直在的 scope），session 通过 scope 父链加入，于是链是 `agent → preset → global`。Web bundle 把 base 里所有 agent 级的工具行全部 `disabled: true`，改由 preset 挂，所以 **Web 下模型看到的工具和段落几乎完全由 preset 决定**。`packages/bundle/web-app/cordis.patch.yml` 里每一段禁用都带着注释解释 host 平面与 agent 平面的判据。
 
 **子代理**走 `applyChildComposition`（`packages/subagent/subagent/src/child-agent.ts:163-175`）：
 
@@ -523,7 +609,9 @@ if (composition.persona !== undefined) {
 if (composition.toolFilter !== undefined) childCtx.tools.restrict(composition.toolFilter)
 ```
 
-先加入父的 preset，再装自己那几样，全部落在 child scope 上，父和兄弟看不见。driver 还会额外装 `tool:report`（117）或 `tool:structured_output`（190）。对照 `examples/acp-agent/tests/snapshots/subagent-report/system-prompt.1.expected.md` 与父的版本，差别就是末尾多了一段 `Deliver your result with the report tool…`。
+代码里那行英文注释是说：order 用 120，排在 `sandbox:policy`（110）和 `approval:policy`（115）两句之后。三段运行时上下文的先后就是这么定死的。
+
+先加入父的 preset，再装自己那几样，全部落在 child scope 上，父和兄弟看不见。driver 还会额外装 `tool:report`（117）或 `tool:structured_output`（190）。对照 `examples/acp-agent/tests/snapshots/subagent-report/system-prompt.1.expected.md` 与父的版本，差别就是末尾多了一段 `Deliver your result with the report tool…`（结束之前用 `report` 工具交付你的结果）。
 
 **persona 的替换机制就是同名遮蔽**，所以 `PERSONA_SECTION` 这个常量被导出（`packages/core/system-prompt/src/index.ts:128`）：preset 行、子代理、系统默认三处都必须用完全相同的字符串 `'deployment:persona'`，写错一个字就会变成两段 persona 并存。`dsh-persona` 这个 row 只能在 scope 里挂，全局挂会跟服务自己的注册撞名而 fail loud；模块头注释把这个约束当成了这个包存在的理由（`packages/preset/persona/src/index.ts:4-12`）。
 
@@ -552,7 +640,7 @@ if (composition.toolFilter !== undefined) childCtx.tools.restrict(composition.to
 
 1. **默认 prompt 极简，没有通用行为规范。** 一句身份 + 一句 persona + 每个工具一句话，没有 Claude Code 那种「简洁作答 / 安全 / 代码风格 / 不要过度承诺」的行为章节。可以理解为「harness 不替部署做产品决策」，但默认体验偏薄，行为质量高度依赖模型自身和用户的 AGENTS.md。
 2. **18 段一句话散文平铺，没有标题。** `join('\n\n')` 就是全部结构。唯一自带 markdown 标题的是 `tool:cordis`。同 order 的 tie-break 依赖注册顺序，上游 README 自己承认这是 plugin-load artifact。
-3. **`plan:policy` 和 `{{model}}` 是两个「稳定 system」的例外。** 进入 plan 模式会让 order 50 从空变成六段文字，整个前缀作废；UI 切模型会让 `{{model}}` 变，persona 那一段跟着变。plan-mode 的配置注释显式接受了这个代价：「The tool catalog stays the same across modes for request-cache stability」：保住工具目录，牺牲 system 字符串。
+3. **`plan:policy` 和 `{{model}}` 是两个「稳定 system」的例外。** 进入 plan 模式会让 order 50 从空变成六段文字，整个前缀作废；UI 切模型会让 `{{model}}` 变，persona 那一段跟着变。plan-mode 的配置注释显式接受了这个代价：「The tool catalog stays the same across modes for request-cache stability」（为了请求缓存的稳定，工具目录在各模式之间保持不变）：保住工具目录，牺牲 system 字符串。
 4. **没有转义语法。** persona 里写不了字面 `{{x}}`。
 5. **runtime 快照是完整重发不是 diff。** 任一 context 变化就重发全部三段。好处是原子、可比对；代价是历史里累积多份快照，靠导语让模型忽略旧的。
 6. **每个 step 都重新 `assemble()`。** provider 都是同步函数，通常够快；但 `app:web-surface` 这种函数型 section 每步求值，如果某个插件在 provider 里做重活，会拖慢每一步。
@@ -568,11 +656,11 @@ Claude Code 闭源，下表关于它的内容全部来自官方公开文档（`c
 | harness | system prompt 从哪来 | 动态上下文放哪 | 指令文件 |
 | --- | --- | --- | --- |
 | **dsh** | 插件注册的 section 按 order 拼接，无中心文件；`renderPrompt` 四行 | user-role 快照追加到历史尾部，仅变化时追加 | AGENTS.md/CLAUDE.md → user-role `<system-reminder>` 基线，fs 工具 touch 触发增量 |
-| **Claude Code** | 中心大 prompt（官方 context-window 页给的示例数据约 4.2k token，标注为 illustrative）+ 工具定义 + output style，分层排序保缓存 | `<system-reminder>` 注入 user 消息；`excludeDynamicSections` 可把环境块也移出 system | CLAUDE.md **作为 user message 交付**，官方文档明说「delivered as a user message after the system prompt, not as part of the system prompt itself」；沿目录树向上全量拼接，子目录惰性加载 |
+| **Claude Code** | 中心大 prompt（官方 context-window 页给的示例数据约 4.2k token，标注为 illustrative）+ 工具定义 + output style，分层排序保缓存 | `<system-reminder>` 注入 user 消息；`excludeDynamicSections` 可把环境块也移出 system | CLAUDE.md **作为 user message 交付**，官方文档明说「delivered as a user message after the system prompt, not as part of the system prompt itself」（作为 system prompt 之后的一条 user 消息交付，而不是 system prompt 本身的一部分）；沿目录树向上全量拼接，子目录惰性加载 |
 | **Codex** | `instructions` 来自 `ModelInfo.instructions_template`，**模型元数据的一部分，可由 `/models` 端点服务端下发**，客户端只填 `{{ personality }}` | `WorldState` 分节，developer/user role，首轮全量、之后只发 diff，merge-patch 持久化 | `AgentsMdState` 是 user role，渲染成 `# AGENTS.md instructions for {dir}\n\n<INSTRUCTIONS>…</INSTRUCTIONS>` |
 | **OpenCode** | 按模型族选主提示文件（`anthropic.txt` / `gpt.txt` / `codex.txt` / `gemini.txt` …），再 join env + 指令 + MCP + skills 成**一条 system 消息** | `<env>` 段在 system 里（含 `Today's date`）；plan-mode reminder 走 user part | 全局 `~/.config/opencode/AGENTS.md`，项目侧 `findUp` 首个命中的文件名类别为准（明确避免堆叠所有祖先） |
 | **pi** | 一段默认文本（可被 `.pi/SYSTEM.md` 整体替换）+ `APPEND_SYSTEM.md` + `<project_context>` + skills + `Current working directory` | 基本没有：system 里无日期、无平台、无 git 状态，cwd 是唯一环境变量 | `AGENTS.override.md` → `AGENTS.md` → `CLAUDE.md`，每目录取第一个存在的，从 cwd 一路向上到文件系统根 |
-| **mini-swe-agent** | 两段 Jinja2 模板：`system_template`（默认只有一句 `You are a helpful assistant that can interact with a computer.`）+ `instance_template`（任务 + 规则 + 环境 + 示例） | 环境信息 `{{system}} {{release}} …` 在 **instance（user）消息**里 | 无 |
+| **mini-swe-agent** | 两段 Jinja2 模板：`system_template`（默认只有一句 `You are a helpful assistant that can interact with a computer.`，即「你是一个能操作电脑的助手」）+ `instance_template`（任务 + 规则 + 环境 + 示例） | 环境信息 `{{system}} {{release}} …` 在 **instance（user）消息**里 | 无 |
 
 几个观察：
 
@@ -607,9 +695,25 @@ node -e "const j=require('./examples/acp-agent/tests/snapshots/text-turn/tool-sc
 node -e "const fs=require('fs');const L=fs.readFileSync('apps/web/tests/snapshots/permission-policy-context/session.jsonl','utf8').trim().split('\n');const c={};for(const l of L){const e=JSON.parse(l);c[e.type]=(c[e.type]||0)+1}console.log(c)"
 ```
 
-单元测试是最好的规则说明书：`packages/core/system-prompt/tests/system-prompt.spec.ts`（582 行，覆盖插值规则、`complete`、waterfall、change 事件回滚）、`scoped.spec.ts`（226 行，scope 遮蔽）、`tool-order.spec.ts`（115 行）。runtime 快照那套逻辑在 `packages/core/agent-loop/tests/loop.spec.ts:357` 起的几个用例里，用例名字本身就是规格：「materializes changed runtime context at the history tail without rewriting the system header」。
+单元测试是最好的规则说明书：`packages/core/system-prompt/tests/system-prompt.spec.ts`（582 行，覆盖插值规则、`complete`、waterfall、change 事件回滚）、`scoped.spec.ts`（226 行，scope 遮蔽）、`tool-order.spec.ts`（115 行）。runtime 快照那套逻辑在 `packages/core/agent-loop/tests/loop.spec.ts:357` 起的几个用例里，用例名字本身就是规格：「materializes changed runtime context at the history tail without rewriting the system header」，意思是「把变化了的运行时上下文落在历史尾部，同时不重写 system header」。
 
 带 `DEEPSEEK_API_KEY` 的缓存端到端在 `packages/core/agent-loop/tests/request-cache.e2e.ts`，本系列**跑过了**，通过（记录见 [research/runtime-evidence](../research/runtime-evidence/2026-08-16-deepseek-cache-probe.md)）。上面引用的 256 / 14.7k 那组数字仍然来自上游笔记，但「策略进 system 会把命中打到只剩 256 token」这个结论我们自己也独立测出来了，见 [02 KV-Cache](02-kv-cache.md)。
+
+---
+
+## 自检
+
+**1. 「当前沙箱策略是 workspace-write」这句话，为什么要作为一条 user 消息追加在历史尾部，而不是写成 system prompt 里的一段 section？**
+
+因为 provider 的前缀缓存是从第一个 token 开始逐字节比的，system 字符串排在整个请求最前面，改动它一个字节，后面所有已经暖好的历史一起作废。上游两种做法都实测过：策略写在 system section 里时，用户切一次权限模式，之后第一次请求只有 256 个 token 命中缓存，14,691 和 14,782 个 token 全价重付；改成尾部 user 快照之后，同样跨越权限切换加四步修改，命中稳定在 14,848 到 15,872 个 token，未命中只剩 59 到 306 个。代价是历史里会累积多份快照，靠「This snapshot supersedes earlier runtime-context snapshots.」那句导语让模型忽略旧的。
+
+**2. 同一个工具的说明为什么要拆到两个地方写？拿到一句话，你怎么判断它该进 `description` 还是进 prompt section？**
+
+判据是「这句话是不是每次调用都成立」。参数怎么填、什么时候该用这个工具，属于单次调用语义，进 `defineTool({description})`，模型看 `tools[]` 时就读到了；「每条 bash 结果都要看 `[exit code: N]`」「别 busy-poll 后台任务」这种每次都成立、又不该在每条 description 里重复的纪律，进工具包自己的 `ctx.systemPrompt.section({name: 'tool:xxx', order: 100-199})`。背后是上游那条「prompt 里每个事实恰好一个 owner」。按这条规则，`todo_write`、`ask_user_question`、`skill` 干脆没有 section，它们的 description 已经写全了契约。这条规则解决的是真实问题：以前这些指导手写在 coding-agent 和 ACP 两份 persona 字符串里，成了两份互相漂移的副本，装一个插件要去改每个部署的 YAML。
+
+**3. 默认配置下，哪些操作会让「system 字符串一个字节都不变」这个前提失效？**
+
+至少三个。一是进出 plan 模式：`plan:policy`（order 50）从 `''` 变成六段文字。上游接受了这个代价，换来的是工具目录不变，`exit_plan_mode` 即使不在 plan 模式也一直注册着。二是在 UI 里换模型：`{{model}}` 的值变了，order 0 的 persona 那段跟着变，位置比 order 50 还靠前，作废得更狠。三是 `app:web-surface` 的 `text` 是个函数，每次装配现读端口，端口变了这一段也会变。真正稳的是「切权限模式」和「改 AGENTS.md」这两类，它们走的都是 header 之外的路。`apps/web/tests/snapshots/permission-policy-context/session.jsonl` 里七个 step、四次权限切换只有一条 `request/header`，`reason` 是 `initial`，就是这件事的直接证据。
 
 ---
 

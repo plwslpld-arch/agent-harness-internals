@@ -7,6 +7,14 @@ status: draft
 
 # 自证与工程化：一个仓库如何证明自己没坏
 
+*写给想给自己项目加运行时断言、又不确定该断言什么的工程师。读完你能回答：invariant 拦得住哪类错、拦不住哪类错，以及为什么它默认根本不在发行版里跑。*
+
+先回答一个问题：假如有个插件在每一步都悄悄改写 system prompt，把 KV-cache 全线打穿，你希望哪道防线报警？
+
+dsh 有 219 个包、219 个运行时断言文件（其中 35 个真装了检查）、26.8 万行测试、28 个文档门禁。这道题它一个都答不上来。会话日志会如实记下那份被改写的 prompt，于是请求和日志仍然逐字节相等，断言看不出任何异常。
+
+这篇讲的就是这套自证机制究竟在证明什么、证明不了什么，以及它已经漏过的那一次。
+
 一个 agent harness 最难验证的地方不是「函数返回值对不对」，而是「模型这一步收到的东西，跟我们记下来的东西是不是同一份」。单元测试断言不了这个：它需要在真实运行中，把即将发出的请求和会话日志重新推导出来的请求逐字节比一遍。
 
 dsh 为这类断言建了一套机制，叫 invariant：每个包自带一个 `src/invariant.ts`，在运行时挂上监听器，一旦发现自己负责的那条关系被破坏就当场抛异常。下面先看两段真实的断言代码，再讲它什么时候生效、失败时会发生什么、以及它**证明不了**什么。
@@ -42,9 +50,11 @@ const install: InvariantInstaller = Object.assign((ctx: Context, fail: Invariant
     }
 ```
 
+代码里那行英文注释 `Prepend prevents a short-circuiting replay listener from silencing the check.` 的意思是：把这个监听器插到链条最前面，免得某个提前 `return` 的回放监听器把检查整个短路掉。几条 `fail(...)` 里的英文依次在说：loop 构造出来的请求必须是冻结的（frozen，改不动了）、必须带 session id、那个 id 必须指向一个还活着的会话、`messages` 数组同样必须冻结、日志里必须有 `step/start`、必须有 `request/header`。
+
 这段在 `packages/core/agent-loop/src/invariant.ts:19-42`。它做的事情是：**把马上要发给模型的 `options.messages`，和从 append-only 会话日志现场重新折叠出来的 `session.deriveMessages()`，做 JSON 全等比较**；再把请求的 `model`/`system`/`temperature`/`maxTokens`/`stop`/`tools` 和日志里折叠出的 `request/header` 逐项比一遍（`packages/core/agent-loop/src/invariant.ts:44-52`）。任何一项不等，就抛出。
 
-这条断言是[《05 Session》](05-session.md)里「模型可见 ⟺ 已记录」那条原则的运行时执法者。设计记录写得比代码更直白：`.agents/notes/implemented/architecture/2026-07-05-reconstructable-requests.md` 第 17 行说「Anything that reaches a model request must be reconstructable from the session log and the immutable content-addressed objects it references.」。invariant 就是把这句话变成一个会在开发期炸掉的检查。
+这条断言是[《05 Session》](05-session.md)里「模型可见 ⟺ 已记录」那条原则的运行时执法者。设计记录写得比代码更直白：`.agents/notes/implemented/architecture/2026-07-05-reconstructable-requests.md` 第 17 行说「Anything that reaches a model request must be reconstructable from the session log and the immutable content-addressed objects it references.」（凡是能进到模型请求里的东西，都必须可以从会话日志、以及日志引用的那些不可变的内容寻址对象里重新推导出来。「内容寻址」指用内容哈希当 key 存的对象，日志里只留一个 hash 指针）。invariant 就是把这句话变成一个会在开发期炸掉的检查。
 
 第二段是 prompt 装配的结构校验，`packages/core/system-prompt/src/invariant.ts:46-52`：
 
@@ -70,11 +80,11 @@ const install: InvariantInstaller = (ctx, fail) => {
 
 这是 `packages/core/session/src/invariant.ts:60-62`。同一个文件里还有 turn/step 的配对与嵌套（`packages/core/session/src/invariant.ts:74-102`）、`tool/result` 必须能找到同一步内的 `tool/call`（`packages/core/session/src/invariant.ts:139-141`）、核心执行事件必须被 turn 包住（`packages/core/session/src/invariant.ts:154`）。
 
-三段代码的共同点：断言的对象都是**事件流或可变数据之间的关系**，不是某个函数的返回值。这是写在根 `AGENTS.md:103` 里的硬规矩：「Runtime invariants assert owned relationships. Check authoritative event streams or mutable data, not service or method presence, plugin metadata or effects, or fixed pure examples.」
+三段代码的共同点：断言的对象都是**事件流或可变数据之间的关系**，不是某个函数的返回值。这是写在根 `AGENTS.md:103` 里的硬规矩：「Runtime invariants assert owned relationships. Check authoritative event streams or mutable data, not service or method presence, plugin metadata or effects, or fixed pure examples.」（运行时不变量只断言自己拥有的那层关系。要查的是权威事件流或可变数据，不要去查某个服务或方法在不在、插件的元数据或副作用是什么、几个写死的纯函数样例算得对不对。）翻译成人话就是：别把 invariant 当单元测试写，单元测试该干的活它不干。
 
 ## 二、219 个包，219 个 `invariant.ts`
 
-`packages/AGENTS.md:18` 写着「Every package owns `./invariant`」。这是字面意义上的：
+`packages/AGENTS.md:18` 写着「Every package owns `./invariant`」（每个包都拥有自己的 `./invariant`）。这是字面意义上的：
 
 ```bash
 ls -d packages/*/*/ | wc -l                                  # 219
@@ -92,15 +102,17 @@ grep -rl "No runtime invariant:" packages --include=invariant.ts | wc -l   # 184
 const install: InvariantInstaller = () => {}
 ```
 
+那段英文注释说的是：这个包既没有独立的事件序列，也没有超出「它所属的那道接缝（seam，两个组件交接、由其中一方负责守约的地方）已经保证的契约」之外的可变数据关系，所以这里没有可断言的东西。
+
 写成空的是被门禁强制的表态，不是偷懒。`scripts/verify-package-invariants.ts` 会用 TypeScript AST 解析每个 `invariant.ts`：空的 `install` 函数体，如果它的声明语句里没有 `No runtime invariant:` 这个字符串，直接失败（`scripts/package-invariants.ts:265-275`）；非空的 `install`，如果第二个参数（那个 `fail` 报告器）不存在、或者存在但函数体里从没被引用，也失败（`scripts/package-invariants.ts:278-285`）。**你不能写一个看起来在检查、实际上永远不会报错的 invariant**。
 
 ## 三、它什么时候开启，失败时会发生什么
 
 这两个问题比「有多少个」重要得多。
 
-**什么时候开启**：默认不开。`.agents/notes/implemented/simplification/2026-08-03-omit-invariants-from-shipped-config.md` 的决定是：发行版 `dsh` 的配置树（`apps/cli/config/` 下的 cordis 组合）既不挂 `@deepseek-ai/dsh-invariants` 服务，也不挂任何包的 `./invariant` 伴生插件；`apps/cli/package.json` 里连这个依赖都没有。笔记里的原话是「Ordinary `dsh` TUI and Web runs install no invariant listeners or trace state and cannot fail through `InvariantError`.」（当时 TUI 还在，后来被 `.agents/notes/implemented/simplification/2026-08-04-remove-tui-package.md` 删掉了）。
+**什么时候开启**：默认不开。`.agents/notes/implemented/simplification/2026-08-03-omit-invariants-from-shipped-config.md` 的决定是：发行版 `dsh` 的配置树（`apps/cli/config/` 下的 cordis 组合）既不挂 `@deepseek-ai/dsh-invariants` 服务，也不挂任何包的 `./invariant` 伴生插件；`apps/cli/package.json` 里连这个依赖都没有。笔记里的原话是「Ordinary `dsh` TUI and Web runs install no invariant listeners or trace state and cannot fail through `InvariantError`.」（普通的 `dsh` TUI 和 Web 运行不会装任何不变量监听器，也不维护 trace 状态，所以根本不可能因为 `InvariantError` 而失败。当时 TUI 还在，后来被 `.agents/notes/implemented/simplification/2026-08-04-remove-tui-package.md` 删掉了）。
 
-真正开启它的是 vitest 拓扑：每个包的测试挂本包的伴生插件，另有一个把全部伴生插件都挂上的穷举拓扑，用来验证注册与释放的接线（`packages/runtime-diagnostics/invariants/README.md` 写明了这个安排）。除此之外，那篇笔记说 invariant「remains available for focused tests, example bundles, generated SDK compositions, and custom deployments that opt into diagnostics explicitly」。这句话说的是「可用」而不是「已挂」：在锁定的 commit 上，`examples/` 下没有任何一份 `cordis.yml` 挂了这个服务。服务本身有 `enabled` / `package_allowlist` / `package_blocklist` 三个配置项（`packages/runtime-diagnostics/invariants/src/index.ts:15-22`），正则不合法、重复、带空白直接在启动时抛错。
+真正开启它的是 vitest 拓扑：每个包的测试挂本包的伴生插件，另有一个把全部伴生插件都挂上的穷举拓扑，用来验证注册与释放的接线（`packages/runtime-diagnostics/invariants/README.md` 写明了这个安排）。除此之外，那篇笔记说 invariant「remains available for focused tests, example bundles, generated SDK compositions, and custom deployments that opt into diagnostics explicitly」（对于专项测试、示例 bundle、生成出来的 SDK 组合、以及那些明确选择打开诊断的自定义部署，它仍然可用）。这句话说的是「可用」而不是「已挂」：在锁定的 commit 上，`examples/` 下没有任何一份 `cordis.yml` 挂了这个服务。服务本身有 `enabled` / `package_allowlist` / `package_blocklist` 三个配置项（`packages/runtime-diagnostics/invariants/src/index.ts:15-22`），正则不合法、重复、带空白直接在启动时抛错。
 
 **失败时会发生什么**：旧版分析一字没讲，这里把链路走完。
 
@@ -108,11 +120,11 @@ const install: InvariantInstaller = () => {}
 
 **没有任何地方 catch 它**：全仓非测试源码里 `InvariantError` 只在定义它的那个文件出现三次。所以它按普通异常向上传播：
 
-1. agent-loop 那条断言挂在 `llm/stream` 上，而 `llm/stream` 是 waterfall。`packages/llm/llm/src/index.ts:906-909` 的文档注释把责任划得很清楚：「Adapter selection, dispatch, and iteration failures become terminal `error` or `aborted` finish chunks; middleware, nested-call, cleanup, and consumer failures remain thrown.」。invariant 是 middleware，所以它**不会**被转换成一个 finish chunk，而是原样抛出。
+1. agent-loop 那条断言挂在 `llm/stream` 上，而 `llm/stream` 是 waterfall。`packages/llm/llm/src/index.ts:906-909` 的文档注释把责任划得很清楚：「Adapter selection, dispatch, and iteration failures become terminal `error` or `aborted` finish chunks; middleware, nested-call, cleanup, and consumer failures remain thrown.」（适配器选择、派发、迭代这三类失败，会被转换成一个终止性的 `error` 或 `aborted` finish chunk 送进流里；中间件、嵌套调用、清理和消费方的失败，则保持原样往外抛。）invariant 是 middleware，所以它**不会**被转换成一个 finish chunk，而是原样抛出。
 2. 异常从 `step()` 冒到 turn 循环的 catch（`packages/core/agent-loop/src/agent.ts:302`）。既然 signal 没 abort，就走 `packages/core/agent-loop/src/agent.ts:309-314`：`turnEnds = { kind: 'error', error: { message: errorChain(error), code: 'UNKNOWN' } }`。`InvariantError` 不是 `LlmError`，所以它被压平成 `UNKNOWN` 码的文本。
 3. `this.throwError(error)`（`packages/core/agent-loop/src/agent.ts:315`）先 `dispatch.emit('agent/error', …)` 再重抛（`packages/core/agent-loop/src/agent.ts:206-207`）。
 4. `finally` 块无论如何都会追加 `turn/end`（`packages/core/agent-loop/src/agent.ts:319`），所以这个 turn 以 `reason.kind === 'error'` 落盘。
-5. 重抛的异常最终被驱动边界吞掉：`kick()` 的 `catch (_error)` 里那句注释写着「Reported failures and cancellation are contained at the driver boundary.」（`packages/core/agent-loop/src/agent.ts:211-215`）。
+5. 重抛的异常最终被驱动边界吞掉：`kick()` 的 `catch (_error)` 里那句注释写着「Reported failures and cancellation are contained at the driver boundary.」（已经上报过的失败和取消，到驱动这一层就兜住，不再继续往外传）（`packages/core/agent-loop/src/agent.ts:211-215`）。
 
 结论：**一次 invariant 违规会杀掉当前 turn，写下一条 `error` 的 `turn/end`，但不会杀掉进程**。而挂在 `session/event` 这种 `emit` 事件上的断言（`packages/core/session/src/invariant.ts:223-231`）传播路径更短：Cordis 的 `emit` 是 `this.dispatch('emit', args).map(cb => cb(...args))`（`vendor/cordis/src/events.ts:194-195`），同步、无 try/catch，所以异常直接从 `session.append()` 的调用点抛出，通常也就是 turn 里的某一步。
 
@@ -129,7 +141,7 @@ const install: InvariantInstaller = () => {}
 
 ## 四、`packages/runtime-diagnostics/invariants` 只有 200 行
 
-这个服务包自己不含任何产品检查，也不 import 任何产品包。它做四件事：选择（正则允许/阻断名单）、名字预留、子 fiber 生命周期、以及带包名归属的失败上报。
+这个服务包自己不含任何产品检查，也不 import 任何产品包。它做四件事：选择（正则允许/阻断名单）、名字预留、子 fiber 生命周期（fiber 是 Cordis 里插件实例的运行单元，有自己的生命周期，把它 dispose 掉，这个插件装上去的监听器和服务会一起撤干净）、以及带包名归属的失败上报。
 
 `register(packageName, installer)` 的实现（`packages/runtime-diagnostics/invariants/src/index.ts:136-197`）值得看一眼：包名先进 `registrations` 集合占位（重名直接抛错，两个插件不可能悄悄争抢同一个包名），然后在 `ctx.effect(...)` 里判断过滤器；被过滤掉就只留占位、不装检查；没被过滤就 `ctx.plugin(...)` 起一个子 fiber 跑 installer（`packages/runtime-diagnostics/invariants/src/index.ts:166-168`），installer 的 `inject` 声明决定这个子 fiber 能拿到哪些服务。installer 失败会 dispose 子 fiber 并释放占位，两件事原子完成。
 
@@ -148,9 +160,9 @@ const install: InvariantInstaller = () => {}
 | `client-runtime` | jsdom 里的 slot 测试台：真 Cordis `Context` + 生产的 `SlotRegistry` 和 web-react 渲染器 + 类型化的 session/workspace 替身。替身实现的是功能插件通过 ctx 看到的同一批对外面（`TestSessions implements ISessions`），所以生产接口一改，测试台**编译期**就红。 |
 | `loader-smoke` | 通过 Cordis Loader 起一个真子进程跑 app + `cordis.yml`，`resolveExampleLaunch` 在本地 `src` 模式和 CI `lib` 模式之间选。这是「按发布产物的真实入口路径测试」那条规则的载体。 |
 
-它们撑起来的规模：`packages/` 下非测试 TS/TSX 源码 228,300 行，`tests/` 目录下 268,040 行，**测试比源码多 17%**。测试文件 854 个（口径与行数同一套，见[附录 B](appendix-b-verification.md)）。而且覆盖率门禁是逐文件 100%：`vitest.config.ts:273-278` 写着 `perFile: true` 加四个 100，注释是「100% or it doesn't merge … Per-file so a well-covered big file can't subsidize a bare one.」（`vitest.config.ts:269-270`）
+它们撑起来的规模：`packages/` 下非测试 TS/TSX 源码 228,300 行，`tests/` 目录下 268,040 行，**测试比源码多 17%**。测试文件 854 个（口径与行数同一套，见[附录 B](appendix-b-verification.md)）。而且覆盖率门禁是逐文件 100%：`vitest.config.ts:273-278` 写着 `perFile: true` 加四个 100，注释是「100% or it doesn't merge … Per-file so a well-covered big file can't subsidize a bare one.」（不到 100% 就别想合进主干；按文件逐个算，免得一个覆盖得很好的大文件替一个几乎没测的小文件把数字补上去）（`vitest.config.ts:269-270`）
 
-`docs/testing.md:10` 还补了一句很清醒的话：「Line coverage is necessary, never sufficient — it proves lines ran, not that the feature works as shipped.」
+`docs/testing.md:10` 还补了一句很清醒的话：「Line coverage is necessary, never sufficient — it proves lines ran, not that the feature works as shipped.」（行覆盖率是必要条件，永远不是充分条件：它能证明的只是这些行跑过了，证明不了功能按发布出去的那个样子还能用。）
 
 ## 六、最值得读的证据：快照 fixture
 
@@ -174,7 +186,9 @@ You are an AI agent powered by DeepSeek Harness.
 You are a coding assistant powered by the deepseek-v4-flash model. Your working directory is {{cwd}}. Your bash tool runs under a file sandbox — a `[sandbox: file access denied …]` result is policy, not a command bug.
 ```
 
-它是最有价值的可读证据，因为**它是 diff 的**。改动任何一个 prompt section、任何一个工具描述、任何一个变量渲染规则，这个文件都会变，PR 里就有一行行的红绿。`docs/testing.md:49` 那条规则是硬的：「Every non-trivial model-, protocol-, or human-visible change adds or updates a keyless scenario in the same PR through a runnable example's owning snapshot suite.」
+这三句话对模型说的是：你是一个跑在 DeepSeek Harness 上的 agent；你是由 deepseek-v4-flash 驱动的编码助手，工作目录是 `{{cwd}}`；你的 bash 工具跑在文件沙箱里，看到 `[sandbox: file access denied …]` 这种结果说明是策略拦了你，不是命令本身有 bug。最后半句是在提前堵一类误判：沙箱拒绝和命令写错长得很像，不说清楚，模型容易把策略拦截当成自己的命令有问题，然后反复改命令重试（这是推断）。
+
+它是最有价值的可读证据，因为**它是 diff 的**。改动任何一个 prompt section、任何一个工具描述、任何一个变量渲染规则，这个文件都会变，PR 里就有一行行的红绿。`docs/testing.md:49` 那条规则是硬的：「Every non-trivial model-, protocol-, or human-visible change adds or updates a keyless scenario in the same PR through a runnable example's owning snapshot suite.」（凡是模型可见、协议可见或人可见的非琐碎改动，都要在同一个 PR 里，通过某个可运行示例所属的快照套件，新增或更新一个无需 API key 就能跑的场景。）
 
 另一个巧思在 `session.jsonl` 里。所有场景的 `request/header` 事件都长这样，`text-turn` 也不例外：
 
@@ -184,7 +198,7 @@ You are a coding assistant powered by the deepseek-v4-flash model. Your working 
 
 `system` 和 `tools` 在会话日志里一律被换成 token。完整内容不放在日志里，而是放在旁边的 sidecar 文件（`system-prompt.expected.md` / `tool-schemas.expected.json`）里，且**每一类请求头只由一个场景持有 sidecar**：场景表用 `pinsHeader: true` 标出这个「班长」，同班的其余场景只检查自己重建出来的请求头是否与班长相等（`packages/test-support/acp-snapshot/src/suite.ts:104`）。`examples/acp-agent` 的 78 个场景分成 19 个这样的班，其中 12 个持有 system prompt sidecar、14 个持有 tool schema sidecar（差额来自 `systemPromptSource` / `toolSchemasSource`，允许一个班长复用另一个班长的 sidecar）。
 
-好处是：改一句 prompt，只有受影响那个班的 sidecar 会出 diff；同班其余场景的 fixture 里躺的是常量 token，一个字节都不用动。既保住了「有人在逐字盯着完整内容」，又不至于每次 prompt 微调都要 review 78 份大 diff。`docs/testing.md:12` 用「One ACP scenario (`text-turn`) pins full system-prompt/tool-schema content; other fixtures tokenize it」概括了这个安排（那句话说的是默认那一班），理由在 `.agents/notes/archived/testing/2026-07-06-pin-request-header-content-in-one-scenario.md`。
+好处是：改一句 prompt，只有受影响那个班的 sidecar 会出 diff；同班其余场景的 fixture 里躺的是常量 token，一个字节都不用动。既保住了「有人在逐字盯着完整内容」，又不至于每次 prompt 微调都要 review 78 份大 diff。`docs/testing.md:12` 用「One ACP scenario (`text-turn`) pins full system-prompt/tool-schema content; other fixtures tokenize it」概括了这个安排（那句英文的意思是：由一个 ACP 场景 `text-turn` 钉住完整的 system prompt 与工具 schema 内容，其余 fixture 把这两块换成 token；它说的是默认那一班），理由在 `.agents/notes/archived/testing/2026-07-06-pin-request-header-content-in-one-scenario.md`。
 
 ## 七、文档不是文档，是有门禁的产物
 
@@ -192,13 +206,13 @@ dsh 有 28 个文档门禁，编在 `scripts/run-gates.ts:581-615` 的 `docSyncL
 
 **每个包 README 必须有 `## Model Experience`。** 这是 `.agents/notes/implemented/process/2026-07-12-package-model-experience-contract.md` 定的，脚本是 `scripts/verify-package-readme-model-experience.ts`。它把 219 个包分成四类：
 
-- **4 个豁免包**，列在 `scripts/verify-package-readme-model-experience.ts:32-37` 的 `NO_MODEL_EXPERIENCE_SECTION` 表里，每个带一句审计理由：`packages/core/scope`（模型无关的注册与生命周期原语）、`packages/util/brand`（编译期擦除的类型原语）、`packages/util/home-paths`、`packages/util/launch-environment`（只解析宿主路径/环境值）。这四个包**必须没有**这个小节，写了反而失败。注释里写得很清楚：理由留在这里作为可复查的审计证据，「so an absent section cannot be mistaken for forgotten documentation」。
-- **121 个「一句话」包**，在 `SENTENCE_MODEL_EXPERIENCE` 表里（`scripts/verify-package-readme-model-experience.ts:44-165`），又分 `indirect`（55 个，模型可见效果由别的包渲染，如 `packages/shell/shell` → 「delegates all model rendering to dsh-tool-bash」）和 `none`（66 个，压根不面向模型，如浏览器端 UI 层）。
+- **4 个豁免包**，列在 `scripts/verify-package-readme-model-experience.ts:32-37` 的 `NO_MODEL_EXPERIENCE_SECTION` 表里，每个带一句审计理由：`packages/core/scope`（模型无关的注册与生命周期原语）、`packages/util/brand`（编译期擦除的类型原语）、`packages/util/home-paths`、`packages/util/launch-environment`（只解析宿主路径/环境值）。这四个包**必须没有**这个小节，写了反而失败。注释里写得很清楚：理由留在这里作为可复查的审计证据，「so an absent section cannot be mistaken for forgotten documentation」（这样一来，「这里没有这一节」就不会被误读成「文档写漏了」）。
+- **121 个「一句话」包**，在 `SENTENCE_MODEL_EXPERIENCE` 表里（`scripts/verify-package-readme-model-experience.ts:44-165`），又分 `indirect`（55 个，模型可见效果由别的包渲染，如 `packages/shell/shell` → 「delegates all model rendering to dsh-tool-bash」，意思是模型看到的东西全部交给 dsh-tool-bash 去渲染）和 `none`（66 个，压根不面向模型，如浏览器端 UI 层）。
 - **其余 94 个包**必须写完整的三段：`#### What the model sees` / `#### Token effect` / `#### KV Cache effect`（三个小标题定义在 `scripts/verify-package-readme-model-experience.ts:15-17`）。
 
 所以 `grep -l "^#### KV Cache effect" packages/*/*/README.md | wc -l` 得到 215 = 219 − 4。这是一份机器校验过的、逐包的「我对 prompt / token / KV-cache 有什么影响」清单，**可以直接当索引用**：想知道哪些包会动缓存前缀，grep 这个小标题然后读下面那句话就行。
 
-**Agent Note 有格式门禁。** `scripts/verify-agent-note-format.ts` 强制：第 1 行必须是 `# Agent Note: <title>`、第 2 行空、第 3 行是对应 lifecycle 的 `Status:` 语法（`scripts/verify-agent-note-format.ts:22-26`）、第 4 行空；第一个 `##` 必须是 `## Problem`；proposed 必须有 Proposal/Acceptance criteria/Risks，implemented 必须有 Decision/Consequences（`scripts/verify-agent-note-format.ts:29-33`）；implemented 里出现 `## Proposal` / `## Plan` / `## Migration plan` / `## Acceptance criteria` 一律拒绝，理由写在错误信息里：「an implemented Agent Note states what is」（`scripts/verify-agent-note-format.ts:74`）。`## Alternatives considered` 强制，2026-07-05 之前的老笔记可以用一行豁免注释代替，之后的不行（`scripts/verify-agent-note-format.ts:13-16`、`:82`）。
+**Agent Note 有格式门禁。** `scripts/verify-agent-note-format.ts` 强制：第 1 行必须是 `# Agent Note: <title>`、第 2 行空、第 3 行是对应 lifecycle 的 `Status:` 语法（`scripts/verify-agent-note-format.ts:22-26`）、第 4 行空；第一个 `##` 必须是 `## Problem`；proposed 必须有 Proposal/Acceptance criteria/Risks，implemented 必须有 Decision/Consequences（`scripts/verify-agent-note-format.ts:29-33`）；implemented 里出现 `## Proposal` / `## Plan` / `## Migration plan` / `## Acceptance criteria` 一律拒绝，理由写在错误信息里：「an implemented Agent Note states what is」（一篇 implemented 状态的 Agent Note 说的是「现在是什么样」，不是「打算怎么做」）（`scripts/verify-agent-note-format.ts:74`）。`## Alternatives considered` 强制，2026-07-05 之前的老笔记可以用一行豁免注释代替，之后的不行（`scripts/verify-agent-note-format.ts:13-16`、`:82`）。
 
 **28 条里有 8 条是「生成物新鲜度」检查。** `verify-cordis-catalog`、`verify-client-catalog`、`verify-tool-catalog`、`verify-config-catalog`、`verify-persistence-catalog`、`verify-doc-graphs`、`verify-scoped-events`、`verify-module-graph` 都是 `gen-*.ts --check`：重新生成一遍，跟仓库里的字节不一致就失败。其中 `docs/tool-catalog.md` 的生成器不做静态分析，而是**真的把每个工具插件启动起来**读 `ctx.tools.schemas()`，因为工具 schema 静态不可知（枚举是运行时展开的、描述是拼接的、MCP 工具是裸 JSON Schema）。
 
@@ -219,19 +233,19 @@ dsh 有 28 个文档门禁，编在 `scripts/run-gates.ts:581-615` 的 `docSyncL
 - **版本**：`packages/*/*` 219 个 `package.json` 全是 `0.1.0-rc.5`，跟根 `package.json:3` 一致。
 - **没有 CHANGELOG**。仓库里根本没有这个文件。变更史靠 git tag（`dsh-v*` / `vendor-<pkg>-v*` / `landlock-run-v*`）加 683 篇 Agent Note，三条独立发布序列见 `.agents/notes/implemented/process/2026-08-10-npm-release-sequences.md`。
 - **Python SDK 打成单文件可执行**：`scripts/build-exe-for-python-sdk.ts:25` 固定 `@yao-pkg/pkg@6.21.0`，走 `--sea` 路线（`scripts/build-exe-for-python-sdk.ts:390`），产出 `dsh-jsonrpc-agent-pkg-<platform>-<arch>` 装进平台 wheel。理由在 `.agents/notes/implemented/architecture/2026-07-10-single-file-executable-sdk-runtime-distribution.md`。
-- **native landlock**：`native/landlock-run/` 是一个约 300 行 C11、静态链接 musl 的「先自限再 exec」启动器，发成 entry 包 + 两个平台包，靠 npm 的 `os`/`cpu` 字段分发。它 fail-closed：内核不支持就不跑命令。
+- **native landlock**：`native/landlock-run/` 是一个约 300 行 C11、静态链接 musl 的「先自限再 exec」启动器，发成 entry 包 + 两个平台包，靠 npm 的 `os`/`cpu` 字段分发。它 fail-closed（失败时往「关」的方向倒）：内核不支持就不跑命令。
 
 ## 九、失效点：100% 覆盖率骗过的那一次
 
-上面这些机制加起来仍然会漏，而且漏过一次很典型的。`docs/postmortem/0001-acp-default-export-drops-inject.md:13` 记着：ACP 服务器在真实编辑器（Zed）连上的瞬间就崩，第一个 `session/new` 返回 `cannot get property "agents" without inject`。复盘里的原话是「despite 178 green unit tests and 100% line coverage」。
+上面这些机制加起来仍然会漏，而且漏过一次很典型的。`docs/postmortem/0001-acp-default-export-drops-inject.md:13` 记着：ACP 服务器在真实编辑器（Zed）连上的瞬间就崩，第一个 `session/new` 返回 `cannot get property "agents" without inject`。复盘里的原话是「despite 178 green unit tests and 100% line coverage」（尽管有 178 个全绿的单元测试和 100% 的行覆盖率）。
 
 两个独立 bug 藏在同一句报错后面：`export default` 让 Loader 丢掉了插件的 `inject` 声明；另一个是带 trace 的可选服务查找跨 shadow 边界失败。测试全绿的原因是同一个：**每个测试都用 `ctx.plugin(...)` 手动挂载，没有一个走 Loader 的真实加载路径**。逐文件 100% 覆盖率在这里一点用都没有：那些行确实都跑了，只是没按发布产物的方式跑。
 
-修复不是补几个用例，而是加了两条规则：产品可见插件必须有一个「真组合」测试（把测试用的 `cordis.yml` 通过 Loader 和 app 进程启起来），以及 `docs/testing.md:34` 那条更刁的补充：「A guard only guards if the regression actually fails it」。对没有 `inject` 的组合型插件，Loader smoke 在默认导出替换掉具名导出时**依然会绿**，所以要显式断言 `expect('default' in mod).toBe(false)`，并且要真的把回归引进来、看它红、再回滚。
+修复不是补几个用例，而是加了两条规则：产品可见插件必须有一个「真组合」测试（把测试用的 `cordis.yml` 通过 Loader 和 app 进程启起来），以及 `docs/testing.md:34` 那条更刁的补充：「A guard only guards if the regression actually fails it」（一道防线，只有在它要防的那个回归真能把它弄红的时候，才算防线）。对没有 `inject` 的组合型插件，Loader smoke 在默认导出替换掉具名导出时**依然会绿**，所以要显式断言 `expect('default' in mod).toBe(false)`，并且要真的把回归引进来、看它红、再回滚。
 
 四篇 postmortem 沉淀出的通用规则收在 `docs/defensive-patterns.md`，7 条，每条都是真出过的缺陷类别：正交结果各自独立上报（`docs/defensive-patterns.md:9`）、公共契约两侧都要守（`docs/defensive-patterns.md:13`，正是本文第三节引的那条「middleware and consumer defects remain thrown」的另一面）、异步状态不是同步状态、dispose 必须到静默而不只是发出请求、在派发器里包住回调异常、不给不可信输出环境变量与可预测路径、unlink 形似链接的路径。
 
-**门禁能证明的东西是有边界的**。219 个 invariant、268k 行测试、28 个文档门禁，合起来仍然挡不住「测试和产品走了两条不同的加载路径」这类错误；只有把真实入口路径本身变成被测对象才行。
+**门禁能证明的东西是有边界的**。35 个真装了检查的 invariant、26.8 万行测试、28 个文档门禁，合起来仍然挡不住「测试和产品走了两条不同的加载路径」这类错误；只有把真实入口路径本身变成被测对象才行。
 
 ## 十、这套自证要花多少钱
 
@@ -283,3 +297,17 @@ sed -n '300,322p' packages/core/agent-loop/src/agent.ts
 ```
 
 要看 invariant 真的会炸，装一个开着诊断的组合跑上游单测最省事：`packages/core/system-prompt/tests/invariant.spec.ts` 与 `packages/preset/agent-presets/tests/invariant.spec.ts` 都是现成的正反例。运行它们需要先 `pnpm install`（本仓库的 checkout 是不带 `node_modules` 的裸 clone）。
+
+## 自检
+
+**1. 一次 invariant 违规为什么只杀掉当前 turn，不杀进程？谁决定了这个边界？**
+
+答：`fail()` 抛出的 `InvariantError` 全仓没人 catch，所以它按普通异常一路往上冒。挂在 `llm/stream` 上的断言属于 middleware，而 `llm/stream` 的契约明确说 middleware 的失败保持抛出、不转成 finish chunk，于是它冒到 turn 循环的 catch，被压成 `UNKNOWN` 码写进 `turn/end`，最后在驱动边界的 `catch (_error)` 里被吞掉。是驱动边界这一层决定了「turn 死、进程活」。
+
+**2. 断言把「即将发出的请求」和「从日志重建的请求」比得逐字节相等，为什么这挡不住 KV-cache 被打穿？**
+
+答：它比的是「本次请求 vs 本次日志」，从来不比「本次请求 vs 上次请求」。一个每步都重写 system prompt 的插件，会让日志同样记下那份改写后的 header，两边照样相等，断言一声不吭。缓存前缀的稳定性靠的是设计约束和快照 fixture，不是 invariant。想抓这类问题，你得引入一个跨请求的比较对象，而这套机制里没有。
+
+**3. 184 个包写的是空 invariant，为什么这不叫覆盖率漏洞？门禁怎么防止有人用空实现糊弄过去？**
+
+答：这些包（纯工具库、薄实现、组合包、二进制入口、持久化适配器）本来就没有自己拥有的事件序列或可变数据关系，能断言的东西都在它所属的那道接缝上，由别的包守。门禁的做法是让「没有」也变成一次表态：空的 `install` 必须在声明里写上 `No runtime invariant:` 加理由，否则 AST 检查直接失败；非空的 `install` 如果拿了 `fail` 参数却从不引用，同样失败。糊弄不过去的原因是，写一个永远不会报错的检查比写空实现更难过关。

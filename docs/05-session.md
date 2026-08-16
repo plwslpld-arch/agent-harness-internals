@@ -7,11 +7,17 @@ status: draft
 
 # Session：事件溯源、surface 与持久化
 
+*这一篇讲给要做会话存储、崩溃恢复或历史改写的人。读完你能回答：模型看到的历史到底从哪来、什么时候一定落盘、压缩改写历史时日志里发生了什么。*
+
+你大概会先去找那个存 message 数组的地方。找不到，还会撞上两件反直觉的事：压缩把一大段历史换成一句摘要之后，日志一行没少，反而更长了；模型吐出来的每个 token 都以 `assistant/chunk` 记在日志里，而模型自己一条都看不到。
+
+日志和模型看到的历史是两样东西，中间隔着一次**投影（projection）**：把事件日志按固定规则折叠成模型历史的纯函数。
+
 dsh 的会话不是「一个消息数组」，而是一条只追加的事件日志。模型看到的历史是从这条日志上投影出来的，请求头（system prompt、工具 schema、模型路由）也在日志里，连崩溃修复和压缩都是往日志上追加事件。这篇讲清楚：日志里都有什么、模型能看到其中哪一部分、什么时候一定落盘、以及派生服务是怎么从这条日志上长出来的。
 
 ## 先看见：一段真实的 JSONL 会话日志
 
-下面是上游 e2e 快照里的一整个会话（`examples/acp-agent/tests/snapshots/bash-tool-turn/session.jsonl`，共 35 行，为了排版截去了每行的长尾）。这是一次「让模型跑 `echo TERMINAL_OK` 然后回 DONE」的完整交互：
+JSONL 就是「每行一个独立 JSON 对象」的文本格式，一行读完就能解析一条，不用等整个文件。下面是上游 e2e 快照里的一整个会话（`examples/acp-agent/tests/snapshots/bash-tool-turn/session.jsonl`，共 35 行，为了排版截去了每行的长尾）。这是一次「让模型跑 `echo TERMINAL_OK` 然后回 DONE」的完整交互：
 
 ```jsonl
 {"type":"session","version":0,"id":"e128dda9-…","createdAt":1783352050748,"cwd":"{{cwd}}","delegationDepth":0}
@@ -43,6 +49,8 @@ dsh 的会话不是「一个消息数组」，而是一条只追加的事件日�
 {"type":"step/end","seq":100,…}
 {"type":"turn/end","seq":101,…,"data":{"turn":1,"reason":{"kind":"completed"}}}
 ```
+
+每行的英文字段名含义固定：`type` 是事件类型，`seq` 是会话内单调递增的序号，`time` 是 Unix 毫秒时间戳，`data` 是这个类型专属的载荷，`surfaceOp` 说明这条事件是怎么进入 surface 的。**surface（表面）**是事件日志的一个子视图，模型能看到的历史只从它上面折叠出来；**`surfaceOp`** 记的是「怎么进的」，取值只有「追加」和「替换某一段」两种。这些行全部由 harness 写，模型只在 `data` 里出现过（自己吐的消息、自己发的工具调用参数），信封长什么样它说了不算。
 
 几处事实先说清楚：
 
@@ -80,6 +88,8 @@ export type SessionEvent<T extends SessionEventType = SessionEventType> = {
 
 （为了看清结构，上面两处长 JSDoc 用 `…` 折叠了，其余逐字。）
 
+块里三条短注释的意思：`seq` 是「会话内单调递增的序号」，`time` 是「Unix 纪元毫秒」，`surfaceOp` 是「这条事件以什么方式进入了 surface；非 surface 事件上没有这个字段」。最后一句是类型层面的承诺，不是提醒：这个字段的类型只长在三种 surface 事件的变体上。
+
 这是一个真正的可辨识联合：`switch (event.type)` 会直接把 `event.data` 收窄，不需要断言。`surfaceOp` 和 `sourceEventSeqs` 两个字段**只存在于三种 surface 事件的变体上**，编译期就挡住了「给 `turn/start` 加 surfaceOp」这种写法。
 
 `ignorable` 的缺省语义是「必需」。注释（`packages/core/session/src/types.ts:412-422`）把理由写全了：读到一个不认识、又没有这个标记的事件类型，必须**拒绝重建整个会话**，因为一个不认识的必需事件可能改变后面整条日志的解释方式；漏标 `ignorable` 只会导致过度拒绝（不方便），漏判则会静默恢复出一个被掏空的会话（灾难）。
@@ -108,7 +118,7 @@ export type SessionEvent<T extends SessionEventType = SessionEventType> = {
 
 `TurnEndReason` 有六种（`packages/core/session/src/types.ts:155-174`）：`completed`、`aborted{reason}`、`blocked`、`error{error: LlmFailure}`、`max-tokens`、`interrupted`。最后一种循环永远不会写，它是持久化后端在重载时给崩溃遗留的开放 turn 补上的标记。
 
-`RequestHeaderReason` 三种（`packages/core/session/src/types.ts:222-228`）：`initial`（日志的第一条 header，全新会话）、`resume`（一个 loop 实例在已有 header 的日志上发的第一个请求，即进程重启或 fork 种子）、`change`（后来的请求换了 header）。**日志里出现 `request/header{reason:'change'}` 就是前缀被改动的确定性证据**。
+`RequestHeaderReason` 三种（`packages/core/session/src/types.ts:222-228`）：`initial`（日志的第一条 header，全新会话）、`resume`（一个 loop 实例在已有 header 的日志上发的第一个请求，即进程重启或 fork 种子；**fork（分叉）**是把一段日志前缀拷给一个新会话当开局，细节见本篇最后一节）、`change`（后来的请求换了 header）。**日志里出现 `request/header{reason:'change'}` 就是前缀被改动的确定性证据**。
 
 上面 13 个只是核心的。插件可以用 TypeScript 的声明合并（declaration merging，别的包往同一个接口里加字段的机制）往 `SessionEventMap` 里加自己的事件类型，全部加起来是 44 个，写在一个生成文件里（`packages/core/session/src/known-event-types.ts:19-64`）：从 `agent-preset/selected` 到 `web/deepseek-search-llm-request`。这个集合是持久化读路径的门禁。文件头注释直说，这里的意图是「新版 harness 写的日志被旧版读到时，宁可拒绝也不要静默跳过」。
 
@@ -181,7 +191,9 @@ export type SurfaceOp =
 
 > The tool call was interrupted after it was recorded, but no result was durably recorded. Its outcome is unknown. Decide whether to retry from the tool semantics: retry only if the operation is read-only or idempotent; if it may have side effects, first verify external state or ask the user. Do not retry blindly.
 
-这段话是给模型的行为指令，不是给人看的错误信息：它把「不知道刚才那个 `rm` 到底跑没跑」这个事实和处理原则一起交给模型。合成的顺序也有讲究（`packages/core/session/src/repair.ts:89-90, 126-129`）：先关工具调用（provider 会拒绝悬空的 assistant tool call），再关 step，最后关 turn。这个函数只对冷日志跑；活跃会话不做静默修复。
+（这次工具调用在被记录之后中断了，但结果没有可靠落盘，所以它的结局未知。要不要重试，你自己按这个工具的语义判断：只有只读或幂等的操作才能直接重试；可能有副作用的，先去核对外部状态，或者问用户。不要盲目重试。）
+
+这段话是给模型的行为指令，不是给人看的错误信息：它把「不知道刚才那个 `rm` 到底跑没跑」这个事实和处理原则一起交给模型。合成的顺序也有讲究（`packages/core/session/src/repair.ts:89-90, 126-129`）：先关工具调用（provider 会拒绝悬空的 assistant tool call），再关 step，最后关 turn。这个函数只对**冷日志**（从存储里读回来、没有任何进程正在往里写的那种）跑；活跃会话不做静默修复。
 
 ## 持久化：什么时候一定落盘
 
@@ -193,7 +205,7 @@ export type SurfaceOp =
 
 ### 三个语义检查点
 
-「什么时候一定落盘」的真正答案不在协调器里，而在 `session-checkpoint-policy`（`packages/session/session-checkpoint-policy/src/index.ts:63-83`）。整个插件只有三个监听：
+**检查点（checkpoint）**在这里指一个「过了这条线，前面的事件必须已经在磁盘上」的语义边界，和数据库里的检查点是同一个意思。「什么时候一定落盘」的真正答案不在协调器里，而在 `session-checkpoint-policy`（`packages/session/session-checkpoint-policy/src/index.ts:63-83`）。整个插件只有三个监听：
 
 ```ts
 export function apply(ctx: Context): void {
@@ -219,6 +231,8 @@ export function apply(ctx: Context): void {
 }
 ```
 
+块里那行英文注释说的是：每次请求之前，把上一步已提交的东西全部落盘；第一步的这次调用除了收一下 prompt 之外，故意什么都不做。
+
 翻译成三句话：**发请求前，请求前缀必须已落盘**；**跑顶层工具体之前，那条 `tool/call` 必须已落盘**（如果这期间被取消，返回一个 `TOOL_ABORTED_BEFORE_DISPATCH` 结果而不是真去执行）；**开始下一步之前，上一步产生的一切必须已落盘**。检查点失败是 fail-closed 的：下游适配器和工具体都不会被调用（`packages/session/session-checkpoint-policy/src/index.ts:58-59` 的注释）。嵌套工具调用复用外层已经落盘的那次（`:71` 的 `exec.parent !== undefined` 分支）。
 
 ### JSONL 后端
@@ -227,7 +241,7 @@ export function apply(ctx: Context): void {
 
 第一行是会话头行（`HeaderLine`，`packages/session/session-persistence-jsonl/src/format.ts:33-44`），带 `type:'session'` 标签好和事件行区分。之后每行要么是一个事件，要么是一个**打包行**。
 
-打包的逻辑在 `packages/core/session/src/chunk-rows.ts`。模块注释给出了动机和实测数字：provider 流回来的是 token 级的 delta，日志里会有几百行 JSON 信封比载荷还大的事件，实测「~56×」。连续至少 3 个（`MIN_RUN = 3`，`packages/core/session/src/chunk-rows.ts:77`）同块的 delta chunk 打成一行 `text-chunks` / `reasoning-chunks` / `tool-call-chunks`（`packages/core/session/src/chunk-rows.ts:65-67`），时间戳存成差值数组 `dt`。README 与配置注释里给的收益是「~60% smaller logs measured on a real session」（`packages/session/session-persistence-jsonl/src/index.ts:71-76`）。编码器只对完全识别的形状打包，认不出的原样存：「unknown fields or future chunk variants lose compression, never data」。读是无条件解包的，日志的可读性不依赖写入时的开关。
+打包的逻辑在 `packages/core/session/src/chunk-rows.ts`。模块注释给出了动机和实测数字：provider 流回来的是 token 级的 delta，日志里会有几百行 JSON 信封比载荷还大的事件，实测「~56×」（信封大约是载荷的 56 倍，数字实测自一次真实的 DeepSeek 会话）。连续至少 3 个（`MIN_RUN = 3`，`packages/core/session/src/chunk-rows.ts:77`）同块的 delta chunk 打成一行 `text-chunks` / `reasoning-chunks` / `tool-call-chunks`（`packages/core/session/src/chunk-rows.ts:65-67`），时间戳存成差值数组 `dt`。README 与配置注释里给的收益是「~60% smaller logs measured on a real session」（`packages/session/session-persistence-jsonl/src/index.ts:71-76`）（在一次真实会话上实测，日志小了约 60%）。编码器只对完全识别的形状打包，认不出的原样存：「unknown fields or future chunk variants lose compression, never data」（不认识的字段、或者将来才会有的 chunk 变体，丢的是压缩率，绝不会丢数据）。翻译成人话就是：这个优化被设计成永远不会成为「读不回来」的原因，代价最多是文件大一点。读是无条件解包的，日志的可读性不依赖写入时的开关。
 
 压缩默认是 zstd（`packages/session/session-persistence-jsonl/src/index.ts:37-38`），文件名后缀因此是 `.jsonl.zstd`（`packages/session/session-persistence-jsonl/src/format.ts:24-25`）。首帧单独放 header 行（列表页只解首帧就够），之后每个 append 批一帧。一个 root 只允许一种编码。写入时首次物化走「fsync 临时文件 → hard link 发布」，Windows 上走 `MoveFileExW WRITE_THROUGH`（`packages/session/session-persistence-jsonl/src/win32.ts`）。
 
@@ -253,7 +267,7 @@ export function apply(ctx: Context): void {
 
 **`session-stats`**：全日志折叠出八个数字（`packages/session/session-stats/src/types.ts:22-40`）：`turns` / `steps` / `llmMs` / `toolMs` / `ttftMs` / `ttftSteps` / `decodeMs` / `decodeTokens`。定义都很具体，例如 `turns` 只数「至少有一个已关闭 step」的 turn，被拒绝或空的 turn 不算。
 
-**`session-telemetry`**（含 `-otel`）是捕获侧；`session-telemetry/record` 是一个 waterfall（`packages/session/session-telemetry/src/index.ts:43`），作为脱敏扩展点，默认没有任何规则。
+**`session-telemetry`**（含 `-otel`）是捕获侧；`session-telemetry/record` 是一个 **waterfall（瀑布事件）**，也就是 Cordis 的环绕式中间件：每个监听器都要 `await next()` 才轮到下一个，返回值权威（`packages/session/session-telemetry/src/index.ts:43`）。它在这里作为脱敏扩展点，默认没有任何规则。
 
 **`session-title`**：`session/title` 事件带 `{title, messageSeqs, source}`，source 三种（`packages/session/session-title/src/index.ts:48-58`）：`fallback`（截取第一条人类消息，就是上面快照 `seq 6` 那条）、`provider`（模型生成）、`user`（手动改名）。三个策略包分别是：`session-title-llm` 定义共享的 LLM 起名机制（把辅助请求全文记进 `session/title-llm-request` 事件，并用 `purpose: 'session-title'` 让 DeepSeek 适配器关掉 thinking，`packages/session/session-title-llm/src/index.ts:259-262`）、`session-title-first-prompt-llm` 只用第一条人类消息、`session-title-all-prompts-llm` 用全部。
 
@@ -271,7 +285,7 @@ resume 时会发生什么：日志被完整读回（含解包 chunk 行、格式
 
 ## 代价与失效点
 
-1. **`SESSION_FORMAT_VERSION` 一直停在 0，所以升级链从没被真正演练过**（`packages/core/session/src/types.ts:56`）。机制齐全，但零条版本步骤跑在生产日志上；第一次 bump 会是这套代码的首考。判断「什么算结构性变更、该不该 bump」目前完全靠人，注释里那句「When in doubt, bump」就是承认这一点。
+1. **`SESSION_FORMAT_VERSION` 一直停在 0，所以升级链从没被真正演练过**（`packages/core/session/src/types.ts:56`）。机制齐全，但零条版本步骤跑在生产日志上；第一次 bump 会是这套代码的首考。判断「什么算结构性变更、该不该 bump」目前完全靠人，注释里那句「When in doubt, bump」（拿不准就往上加）就是承认这一点。它给的理由是：多加一步几乎等价的升级步骤，成本近乎为零；漏加一次，旧 runtime 会把新日志**读错，而且不报错**。
 2. **未知事件类型一律拒绝**是安全的默认，代价是：装了插件 A 写的日志，在没装 A 的组合里打不开，除非 A 记得给自己的事件打 `ignorable`。
 3. **200ms 写窗口 + 三个检查点**给的是「语义边界处一定持久」，不是「每个事件立刻持久」。在两个检查点之间崩溃，最近一批事件可能丢失，靠 `repair.ts` 补齐一致性，而不是靠数据完整。
 4. **`replace` 会遮蔽历史**。surface 是模型视角，不是人的视角；任何直接拿 surface 当 transcript 渲染的消费者，在一次压缩之后就会让用户看见的对话凭空消失。上游的应对是提供 `isAppendSurfaceEvent`（`packages/core/session/src/surface.ts:51-54`），但这是约定，不是强制。
@@ -322,3 +336,17 @@ sed -n '20,23p'   packages/session/session-persistence-sqlite/src/schema.ts
 ```
 
 相关阅读：请求是怎么从 header + surface 拼出来的见 [04 LLM 层](04-llm-adapter.md)；为什么只追加就自然保住前缀缓存见 [02 KV-Cache](02-kv-cache.md)；`replace` 的两个使用者见 [06 压缩](06-compaction.md)；turn/step 的边界语义见 [03 Agent 循环](03-agent-loop.md)；扩展点机制见 [12 表面与协议](12-surfaces-and-protocols.md)；术语见 [附录 A 词汇表](appendix-a-glossary.md)。
+
+## 自检
+
+**一、压缩要把一大段历史换成一句摘要，为什么做法是往 surface 上追加一条 `replace` 事件，而不是把被压掉的事件删掉？**
+
+因为「模型可见 ⟺ 已记录」是硬不变量：任何进入模型上下文的东西都必须能从日志重建出来。删事件会同时毁掉两样东西。一是离线重建能力，「最新 header + surface 派生消息」这条路走不通了，[02 KV-Cache](02-kv-cache.md) 里那套稳定性论证的地基也跟着塌。二是人的视角，用户已经看过的对话会凭空消失。追加 `replace` 只动模型视角，日志里那些被遮蔽的节点还在，`isAppendSurfaceEvent`（`packages/core/session/src/surface.ts:51-54`）能筛出 append 起源的事件把人看的 transcript 还原出来。代价在失效点第 4、5 条：这只是约定不是强制，谁直接拿 surface 当 transcript 渲染，谁就会在第一次压缩后掉对话；而且 `deriveMessages()` 在 replace 之后要整体重建一次。
+
+**二、崩溃修复为什么必须按「先关工具调用、再关 step、最后关 turn」的顺序？换个顺序会怎样？**
+
+顺序写在 `packages/core/session/src/repair.ts:89-90, 126-129`。真正的约束来自 provider：assistant 消息里声明了一个 tool call，历史里却找不到对应的 tool result，这个消息序列本身就是非法的，发出去直接被拒。所以必须先给每个未配对的调用补上一条错误 `tool/result`，这段历史才重新变成能发的输入；`step/end` 和 `turn/end` 只是结构标记，晚补无所谓。同一条道理解释了 fork 为什么禁止把边界切在开放的 turn 里（`packages/core/session/src/index.ts:1081-1095`）：那样分叉出来的子会话，开局第一个请求就会被 provider 拒绝。
+
+**三、200 毫秒的写窗口意味着崩溃时最近一批事件可能没落盘。为什么这不算数据丢失事故？它在什么情况下会真的咬人？**
+
+因为落盘承诺给的粒度是语义边界，从来没承诺过每个事件都立刻持久。三个检查点（`packages/session/session-checkpoint-policy/src/index.ts:63-83`）卡的是：发请求前请求前缀已落盘、跑顶层工具体之前那条 `tool/call` 已落盘、开始下一步之前上一步产生的一切已落盘。窗口里能丢的只有两个边界之间的过程性事件，绝大多数是 `assistant/chunk`，丢了不影响会话能不能接着跑。咬人的地方是失效点第 3 条说的那句：补回来的是一致性，不是数据。工具真跑完了、结果还没落盘就断电，恢复后模型收到的是 `TOOL_OUTCOME_UNKNOWN`，那个 `rm` 到底执行没执行，日志里没有答案，只能靠模型按上面那段指令去外部核对。
