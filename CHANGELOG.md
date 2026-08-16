@@ -19,7 +19,7 @@
 
 - **`check:anchors` 门禁**：抽查正文里每一处 `路径:行号` 是否指向真实存在的行，越界或指向空行即失败。此前 CI 只校验「文件存在」，行号写错也能过。
   引用后面跟「原文片段」时还会做子串匹配，把「行号对、但指到了相邻的另一个声明」这类错也挡在 CI 里。
-- 全新覆盖此前完全空白的部分：[Web 客户端与 host](docs/11-web-client-and-host.md)（39 个包、72k 行，全仓最大）、[Extensions 与 Code Mode](docs/09-extensions-and-code-mode.md)、[自证与工程化](docs/13-self-verification.md)、[设计记录导读](docs/15-agent-notes-guide.md)。
+- 全新覆盖此前完全空白的部分：[Web 客户端与 host](docs/11-web-client-and-host.md)（39 个包、7.2 万行，全仓最大）、[Extensions 与 Code Mode](docs/09-extensions-and-code-mode.md)、[自证与工程化](docs/13-self-verification.md)、[设计记录导读](docs/15-agent-notes-guide.md)。
 - [01 System Prompt](docs/01-system-prompt.md) 给出逐字重建的默认首轮请求：完整 system 字符串、工具清单、以及注入到历史里的每一条消息。
 - [02 KV-Cache](docs/02-kv-cache.md) 补齐运行时机制：wire 请求怎么拼、`request/header` 的三种 reason、什么会打断前缀、命中率遥测链。
 
@@ -46,6 +46,23 @@
 - 改写全程不动 protected spans：1033 处 `路径:行号` 引用一处未少，frontmatter、代码块、上游英文原文引文逐字节未变；三批改写的删除清单都是空的，没有删句或并句。
 - `AGENTS.md` 记下这套文风标准与 skill 的安装方式，后续改文档照此执行。
 - `.claude/` 加入 `.gitignore` 与门禁忽略目录：本地 agent 配置不属于仓库内容，也不参与文件扫描。
+
+### Changed — 教学化改造与三篇非研发入口（2026-08-16）
+
+- **新增 3 篇不需要读代码的入口**：[概念入门](docs/concepts.md)（模型与 harness 各管什么、为什么长对话贵、为什么会忘事）、[产品视角](docs/for-product.md)（14 个用户可观察的现象各自对应哪条机制）、[成本、部署与风险](docs/for-ops.md)（账单杠杆、部署形态、风险边界、上线前验证清单）。**18 篇 → 21 篇**，README 顶部改成按角色分流的入口表。
+- **18 篇正文按四条教学标准返工**：顶部读者提示、开篇钩子、结尾 `## 自检`（考理解不考记忆）、英文引文一律就地给中文翻译。标准写进 [AGENTS.md](AGENTS.md)，后续新文照此执行。
+- `check:anchors` 覆盖从 18 篇扩到 21 篇，锚点 1033 → **1059** 处。
+
+### Fixed — 全仓一致性复核（2026-08-16）
+
+- 三篇新入口在转述正文时丢掉的限定词补回：dsh 沙箱在 Windows 上只兑现一部分、`write`/`edit` 走的是进程内路径围栏而非内核沙箱、沙箱完全不管网络、Claude Code 一列依据官方公开文档无法从源码核实、hook 桥只覆盖 Claude Code 30 多个事件里的 7 个。
+- 数字与单位订正：术语表 54 条 → **60 条**；测试文件数 950 → **854**（与附录 B 的命令输出对齐）；`bash` 工具描述 1,600 多字符 → **1,836**；Codex / pi 的压缩保留量「2 万字」→ **2 万 token**；策略进 system 后残余命中的「256 个字符」→ **256 个 token**。
+- 「四个平台」的口误统一成「**三个平台、四个沙箱后端**」（Linux 有 bwrap 与 Landlock 两条路），涉及 `07` 与 `for-ops`。
+- 说反或无出处的对照订正：OpenCode 会话「能分叉」→ 实为只能撤销到某条消息；pi「不做插件市场」→ 实为不接 MCP（pi 有 33 个事件的扩展 API）；Claude Code「改 CLAUDE.md 要等 `/clear` 或重启」正文无出处，改写为有据的部分；`for-product` 的会话存储表补回漏掉的 OpenCode 一行。
+- 过度放大的说法收回：plan 模式改的是 system 中段，作废的是那一段往后的内容，不是「整段缓存作废」；缓存一折是 provider 公开定价而非本仓库实测；`request/header{change}` 会被采样参数触发，不能单独当缓存断裂的判据。
+- `for-ops` 的命令行入口表按 `12` 的权威表订正（`dsh --profile headless "job"` 带位置参数、`dsh plugin --profile <名字> <pnpm 参数>`、profile 名没有白名单）。
+- 补 `07` 工具表里 5 条只有英文没有中文的描述（`pwsh`、`read_image`、`str_replace_editor`、`skill`、`workflow`）；`appendix-a` 补上缺失的 `## 自检`；`concepts` / `for-product` / `for-ops` 补上缺失的钩子；`10` 开篇那句 `run_in_background` 在正文里无对应，改掉。
+- `00` 的目录表把 `14` 写成「六个维度」，与 `14` 自述的七维不一致，已改。
 
 ### Removed
 

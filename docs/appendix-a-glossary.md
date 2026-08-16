@@ -7,6 +7,10 @@ status: draft
 
 # 附录 A：术语表
 
+*写给正文读到一半被某个词卡住的人。这里不讲机制，只回答「这个词到底指什么、定义写在哪一行、哪一篇把它讲开了」。*
+
+回想一下你在前面十几篇里卡过的地方：section 和 context 差在哪，为什么要分成两个词？turn 和 step 谁装着谁？spawn 出去的子代理看不见父对话，fork 出去的就看得见，那中间那段历史叫什么？说「压缩」和说「剪枝」是不是同一件事？这些词大多在正文里第一次出现时只解释了一句，隔几篇再遇到就容易串。这一节按它们各自属于哪一层排好，卡住了回来查一条就走。
+
 每条给三样东西：一句话解释、**源码或官方文档里的定义处**（`路径:行号`，指向 dsh 锁定 commit）、以及本仓库哪篇文章把它讲开。路径为 dsh 仓库相对路径。
 
 上游自己有一份术语表 `docs/glossary.md`（45 行，「一词一义」），本表在它之外补上了代码级出处和跨文章索引。
@@ -31,6 +35,8 @@ status: draft
 | **realm（域）／`isolate`** | 「服务名 → 实例」这张查找表的一个命名空间。同一个名字 `terminals` 在根 realm 里解析到 A，在某个 isolate realm 里解析到 B。不写 `isolate` 的行发布到根 realm，也就是进程全局；preset 的全部 realm 规则都是这句话的推论。 | `vendor/cordis/src/context.ts:121`（`isolate()`）、`vendor/cordis/src/reflect.ts:286-292`（按 realm symbol 解析并拒绝重复注册） | [10](10-cordis-boot-preset.md) |
 | **dispatch mode（emit / parallel / serial / bail / waterfall）** | 事件派发的五种策略。`emit` 不 await 任何监听器（挂在这里只能观察）；`parallel` 并发 await 全部；`serial` 顺序 await 到有人给出返回值为止；`bail` 同步版的 serial；`waterfall` 把监听器套在 `next()` 外面，能改输入改输出也能短路。 | `vendor/cordis/src/events.ts:24-32` | [10](10-cordis-boot-preset.md)、[08](08-orchestration.md) |
 
+表里几个只留了英文的词，中文对一遍：seam 那条里的三个角色，Service Definition 是「服务定义」，Service Provider 是「服务提供方」，Consumer 是「消费方」。harness 字面是「挽具」，fiber 是「纤程」，effect 是「作用」，waterfall 是「瀑布」（监听器一层套一层往下走），shadowing 是「遮蔽」，lineage 是「血缘」，scope 是「作用域」，realm 是「域」，`isolate` 是「隔离」。五种派发模式的名字直译过来：emit 是「发出」，parallel 是「并发」，serial 是「串行」，bail 是「中途退出」，waterfall 同上。
+
 ## 二、组合层：profile / bundle / preset / patch
 
 | 术语 | 一句话 | 定义处 | 展开于 |
@@ -53,6 +59,8 @@ status: draft
 | **step** | 一次模型请求 + 它引发的工具执行。一个 turn 含零到多个 step。 | `docs/glossary.md:38` | [03](03-agent-loop.md) |
 | **round** | 外层策略的一次迭代（goal round、一次 Ralph 尝试）。计数属于那个策略，不等于 session 里的 turn 数。 | `docs/glossary.md:39` | [08](08-orchestration.md) |
 | **checkpoint** | 压缩产出的、代替一段被遮蔽历史的摘要消息，带可识别的 provenance。 | `packages/compaction/compaction/src/checkpoint.ts:21` | [06](06-compaction.md) |
+
+这一节的英文名字直译：event log 是「事件日志」，append-only 是「只追加」（写进去就不改也不删），surface 是「表面」，surfaceOp 里的 `'append'` 是「追加」、`{ op: 'replace', start, end }` 是「把 start 到 end 这一段换掉」，log-only 是「只进日志」，epoch 是「纪元」，checkpoint 是「检查点」，round 是「轮」。
 
 ## 四、消息投递
 
@@ -86,6 +94,8 @@ status: draft
 | **compaction（压缩）** | 上下文接近窗口时把一段历史换成摘要 checkpoint 的机制，本身是能力接缝（`CompactionEngine`）。 | `packages/compaction/compaction/src/index.ts:96` | [06](06-compaction.md) |
 | **prune（工具结果裁剪）** | 与压缩不同的一层：超过 `thresholdChars` 的工具结果保留 head/tail、砍掉中间，不动会话结构。 | `packages/compaction/compaction-tool-result-pruner/src/index.ts:50` | [06](06-compaction.md) |
 
+这一节的英文：cache read / write tokens 是「缓存读 token / 缓存写 token」，uncached input 是「没命中缓存的那部分输入」；DeepSeek 侧两个字段名，`prompt_cache_hit_tokens` 直译「提示词缓存命中的 token 数」，`cached_tokens` 是「已缓存的 token 数」。compaction 是「压缩」，prune 是「剪枝」，`thresholdChars` 是「字符数阈值」，head/tail 就是「留头留尾、砍中间」。
+
 ## 七、工具、子代理与扩展
 
 | 术语 | 一句话 | 定义处 | 展开于 |
@@ -104,6 +114,8 @@ status: draft
 | **plan mode** | 一个持久化的会话状态：记录计划、在 step 开始时叙述并施加限制；模式切换**不改变工具目录**，以保住请求缓存稳定。 | `packages/plan/plan-mode/src/index.ts:180` | [08](08-orchestration.md) |
 | **hook** | 外部 shell 命令扩展点。dsh 自己的扩展面是带类型的 Cordis 事件；`hooks-claude-code`（7 个事件）/ `hooks-codex`（5 个事件）只是把外部协议映射过来的兼容适配器，默认组装一个都没挂。 | `packages/hooks/hook-protocol/src/index.ts:1-7`（模块定性）、`packages/hooks/hook-protocol/src/runner.ts:20`（默认 600 秒超时） | [08](08-orchestration.md) |
 
+这一节的英文：one-shot 是「一次性」，continuable 是「可以续的」，`startContinuable()` 就是「起一个可续的」，`send_message` 是「发消息」，`SubagentRun` 是「子代理的一次运行」，Activation 是「激活体」（这个子代理此刻活着的那个实例）。spawn 是「另起一个」，fork 是「岔一条出来」，seed 是「种子」，`completedTurnPrefix` 直译「已完成 turn 的前缀」。goal 四个相位 `active` / `paused` / `blocked` / `complete` 分别是进行中、暂停、卡住、已完成。Code Mode 三种呈现模式 `native` / `code` / `both` 是原生调用、写代码、两者都给。hook 是「钩子」。
+
 ## 八、自证与文档
 
 | 术语 | 一句话 | 定义处 | 展开于 |
@@ -112,11 +124,15 @@ status: draft
 | **Model Experience** | 每个包 README 里强制的一节，回答三个问题：模型看见什么 / token 影响 / KV cache 影响。219 个包里 215 个必须有，4 个豁免包的理由写在门禁脚本里。 | `scripts/verify-package-readme-model-experience.ts:13` | [13](13-self-verification.md) |
 | **Agent Note** | 上游的设计记录体裁，路径编码状态（`{lifecycle}/{class}/yyyy-mm-dd-topic.md`），683 篇，`## Alternatives considered` 强制。 | `.agents/notes/README.md:9` | [15 设计记录导读](15-agent-notes-guide.md) |
 
+这一节的英文：invariant 是「不变量」，指一个始终该成立的断言；空实现里那句注释开头的 `No runtime invariant:` 意思是「本包没有运行时不变量」，冒号后面接的是为什么不需要。Model Experience 直译「模型体验」，问的是同一件事在模型那侧长什么样。Agent Note 强制的那一节标题 `## Alternatives considered` 意思是「考虑过的其它方案」，路径模板里的 `{lifecycle}` 是生命周期状态、`{class}` 是类别。
+
 ## 九、一个不属于 dsh 的词
 
 | 术语 | 说明 |
 | --- | --- |
 | **DSML** | **属于模型侧，不属于 harness。** 它是 DeepSeek V4 模型仓库里的聊天模板/工具调用序列化格式。在 dsh 锁定 commit 上 `grep -ril dsml` 全仓库**零命中**（排除 `node_modules` 与 `.git`）：源码、文档、设计记录都没有。dsh 在线发出的是 Chat Completions 的 SSE 请求，序列化代码在 `packages/llm/llm-deepseek/src/serialize.ts`。任何把 DSML 列进「dsh 的协议面」的说法都是把模型仓库的知识混进了 harness 分析。 |
+
+那一格里的 SSE 是 server-sent events（服务端推送事件）的缩写，Chat Completions 是 OpenAI 风格的那套对话补全接口。
 
 ## 复核
 
@@ -126,3 +142,19 @@ status: draft
 cat docs/glossary.md
 grep -ril dsml . --exclude-dir=node_modules --exclude-dir=.git | wc -l   # 0
 ```
+
+第一条把上游那份术语表打印出来对照读。第二条在整个仓库里不区分大小写地搜 dsml（跳过 `node_modules` 和 `.git`），数一下命中几个文件，行尾那个 `# 0` 就是它应该给出的答案。
+
+## 自检
+
+**1. section 和 context 都会变成 system prompt 里的文字，为什么非要分成两个词？**
+
+section 是静态文字，装配时按 order 排一次就定了；context 是每次求值的动态文字。分开是因为它们对缓存的影响完全不同：一个稳定的 section 每步都产出同样的字节，前缀能一直复用；而一个会随时间变化的 context 如果被放进 system，每一步的开头都不一样，前缀从第一个 token 起就废了。这也是 dsh 把运行时状态赶去 user 消息的原因。展开见 [01](01-system-prompt.md)、[02](02-kv-cache.md)。
+
+**2. spawn 和 fork 都开一个子代理，为什么只有 fork 需要「seed」这个词？**
+
+因为 spawn 出去的子代理看不见父对话，它的历史从零开始，没有什么可命名的；fork 带走了父对话的一段前缀，那段被带走的历史就是 seed。有了这个词才好谈两件事：边界切在哪（不能切在开放的 turn 里），以及血缘怎么记。展开见 [05](05-session.md)、[08](08-orchestration.md)。
+
+**3. 这份表里为什么要专门留一条「不属于 dsh 的词」？**
+
+因为术语表最容易出的错不是解释错，是收录了本不该收的词。DSML 属于模型仓库，把它列进 dsh 的协议面，读者会以为 harness 这一层要处理它。留着这一条并附上「全仓零命中」的复核命令，比悄悄删掉更有用——它同时是一份反例和一次示范：每条术语都该能被一条命令核回去。

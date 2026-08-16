@@ -21,11 +21,19 @@
 
 这个仓库是它的中文源码分析。**目标只有一个：把「模型每一步到底收到了什么、这些东西是怎么被拼出来的」讲到你能自己复现的程度**，然后告诉你 Claude Code、Codex、OpenCode、pi、mini-swe-agent 在同一件事上是怎么做的。
 
-不需要用过 dsh，但需要能读 TypeScript。所有结论绑定上游一个固定 commit，行号由 CI 校验。
+研发路线需要能读 TypeScript，但不需要用过 dsh；产品和决策路线完全不用读代码。所有结论绑定上游一个固定 commit，行号由 CI 校验。
 
-## 从哪读
+## 从哪读：先看你是谁
 
-**只想看最有信息量的三篇**：[System Prompt](docs/01-system-prompt.md) → [KV-Cache](docs/02-kv-cache.md) → [横向对照](docs/14-comparison.md)。
+| 你是 | 从这里进 | 需要读代码吗 |
+| --- | --- | --- |
+| **产品经理 / 交互** | [产品视角：用户看到的现象，背后是哪条机制](docs/for-product.md) | 不需要 |
+| **技术决策 / 运营 / 安全评审** | [成本、部署与风险](docs/for-ops.md) | 不需要 |
+| **完全没接触过这个领域** | [不写代码也要懂的：agent harness 到底是什么](docs/concepts.md) | 不需要 |
+| **研发，想搞懂内部构造** | [00 总览](docs/00-overview.md)，然后按下表顺序 | 需要，能读 TypeScript |
+| **只想要选型结论** | [14 横向对照](docs/14-comparison.md) | 不需要 |
+
+研发路线里最有信息量的三篇：[System Prompt](docs/01-system-prompt.md) → [KV-Cache](docs/02-kv-cache.md) → [横向对照](docs/14-comparison.md)。
 
 **想系统地读**，按下面的顺序：
 
@@ -39,16 +47,20 @@
 | 05 | [Session](docs/05-session.md) | 事件日志、surface 投影、以及「模型可见 ⟺ 已记录」这条不变量 |
 | 06 | [压缩](docs/06-compaction.md) | 什么时候触发、砍哪一段、摘要请求怎么少付一次全价 |
 | 07 | [工具、审批与沙箱](docs/07-tools-approval-sandbox.md) | 到底什么时候会弹窗（不是你以为的那样），以及沙箱怎么落地 |
-| 08 | [编排层](docs/08-orchestration.md) | 子代理、计划、目标、钩子、工作流各挂在循环的哪个点 |
+| 08 | [编排层](docs/08-orchestration.md) | 子代理、计划、待办、目标、钩子、工作流、技能各挂在循环的哪个点 |
 | 09 | [Extensions 与 Code Mode](docs/09-extensions-and-code-mode.md) | 让模型在运行时改自己的插件树，以及只给它一个 `run_code` 会怎样 |
 | 10 | [Cordis、启动与 preset](docs/10-cordis-boot-preset.md) | 默认到底装了什么、四个 preset 差在哪、为什么要 fork Cordis |
 | 11 | [Web 客户端与 host](docs/11-web-client-and-host.md) | 39 个 UI 包如何把事件日志变成你看到的界面 |
-| 12 | [产品表面与协议](docs/12-surfaces-and-protocols.md) | Web / headless / ACP / MCP / SDK 各是什么，谁驱动谁 |
-| 13 | [自证与工程化](docs/13-self-verification.md) | 219 个 invariant、测试多于源码、文档门禁，一个仓库如何证明自己没坏 |
-| 14 | [横向对照](docs/14-comparison.md) | 六个 harness 在 prompt、缓存、压缩、审批、会话上的机制差异 |
+| 12 | [产品表面与协议](docs/12-surfaces-and-protocols.md) | Web / headless / ACP / MCP / SDK / Python 各是什么，谁驱动谁 |
+| 13 | [自证与工程化](docs/13-self-verification.md) | 219 个 `invariant.ts`（真正装了检查的只有 35 个）、测试多于源码、文档门禁，一个仓库如何证明自己没坏 |
+| 14 | [横向对照](docs/14-comparison.md) | 六个 harness 在七个维度上的机制差异：prompt 装配、缓存、压缩、循环、审批沙箱、会话、扩展 |
 | 15 | [设计记录导读](docs/15-agent-notes-guide.md) | 683 篇 Agent Note 里最值得读的那些，以及上游文档的分工 |
 | A | [术语表](docs/appendix-a-glossary.md) | 每条带源码出处 |
 | B | [怎么自己核对](docs/appendix-b-verification.md) | 不用凭据能核什么、要凭据才能核什么 |
+
+另外三篇不需要读代码：[概念入门](docs/concepts.md)、[产品视角](docs/for-product.md)、[成本与风险](docs/for-ops.md)。加起来一共 21 篇。
+
+每篇开头写清楚了讲给谁、读完能回答什么，结尾有几道自检题。自检考的是「为什么这么设计」，不考「某个常量叫什么」，答不上来就回去看对应那一节。引用的英文原文一律带中文翻译，不用另开一个翻译窗口。
 
 ## 结论是怎么来的
 

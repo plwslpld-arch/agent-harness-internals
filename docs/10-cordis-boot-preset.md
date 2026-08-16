@@ -7,13 +7,20 @@ status: draft
 
 # Cordis、启动、bundle 与 preset：默认到底装了什么
 
+*写给想弄清「dsh 启动之后到底有哪些能力、是谁决定的」的读者。读完你能说出：一行 YAML 是怎么变成一个插件的，headless 和 Web 差在哪几行，以及为什么 Web 上要把一半能力先关掉再按会话挂回来。*
+
+你想知道 dsh 起来之后到底有哪些工具，于是去源码里找「哪里注册了这些工具」。`grep buildTools` 一无所获，翻遍 TypeScript 也找不到一个列出全部工具的地方。
+那份名单不在代码里。它在四五个 YAML 文件里，每次启动按顺序叠一遍才算数。
+
 大多数 coding harness 的「装了什么」写死在源码里：一个 `buildTools()` 函数返回一个数组，一个 `SYSTEM_PROMPT` 常量，配置文件里再开关几个 boolean。dsh 不是。dsh 跑起来的那棵能力树，是若干个 YAML 补丁文件按顺序叠出来的结果，**每一行 YAML 对应一个 npm 包**。想知道「默认开启了什么」，不需要读 TypeScript，读那几个 YAML 就够了。
 
-这篇文章把那几个 YAML 摊开，逐行说明每一行装了什么能力；然后回头讲支撑它的 Cordis 原语、启动链的叠加顺序，以及 Web 面上「按会话挂载」的 agent preset。
+这篇文章把那几个 YAML 摊开，逐行说明每一行装了什么能力；然后回头讲支撑它的 Cordis 原语、启动链的叠加顺序，以及 Web 面上「按会话挂载」的 agent preset（preset 指一套预先配好的能力组合，用户在 Web 界面上选一个，这一次会话就按它挂载对应的那批插件）。
 
 ---
 
 ## 一、先看见：headless bundle 的全文
+
+这里的 **bundle（捆）** 指一个只装 YAML 补丁、不装代码的 npm 包：它的全部内容就是一份「在别人的能力清单上加几行、改几行、关几行」的补丁文件。启动时按顺序叠几个 bundle，就叠出了这一次要跑的那棵树。
 
 最短的那个是 `packages/bundle/headless/cordis.patch.yml`，一共 35 行，是「一次性跑一个任务然后退出」这种形态的**全部**声明：
 
@@ -47,7 +54,11 @@ status: draft
         task: !!js ctx.headlessStartup.task
 ```
 
-（原文 `packages/bundle/headless/cordis.patch.yml:1-35`，注释已略去部分。）逐条读：
+（原文 `packages/bundle/headless/cordis.patch.yml:1-35`，注释已略去部分。）
+
+先把里面的英文过一遍。开头两行注释 `The dsh-headless bundle patch: one-shot task mode directly over dsh-base.` / `It mounts no Host, HTTP server, Web runtime, or browser plugin.` 的意思是：这是 dsh-headless 的 bundle 补丁，直接盖在 dsh-base 上，做「一次性任务」模式；它不挂 Host 平面，不开 HTTP 服务器，没有 Web 运行时，也没有浏览器插件。那句 persona `You are a coding agent powered by the {{model}} model. Your working directory is {{cwd}}.` 就是发给模型的第一句话，意思是「你是一个由 {{model}} 模型驱动的编码 agent，你的工作目录是 {{cwd}}」。
+
+几个反复出现的字段先认一下：`id` 是这一行在补丁里的寻址名（上层补丁靠它找到目标行）；`name` 是真正要加载的 npm 包名；`config` 是传给这个包的配置；`disabled` 控制这一行激不激活；`insert` 表示往清单里追加新行；`inject` 声明「我要等哪些服务就位才肯启动」。逐条读：
 
 - `:7-10`：把 `system-prompt` 这一行的 `persona` 配置换掉。`{{model}}` 和 `{{cwd}}` 不是 YAML 模板，是 prompt 变量，由 agent-loop 在装配时代入（`packages/core/agent-loop/src/index.ts:351-353` 注册了 `provider`/`model`/`cwd` 三个变量）。
 - `:14-15`：`hmr` 这一行 `disabled: true`。**注意 `disabled` 和「删掉这一行」不是一回事**：行还在树里，只是不激活。web-app 那一层也这么干，理由写在 `packages/bundle/web-app/cordis.patch.yml:283-285`：base 是共享的，一个「在某个面上被删掉」的行，等哪天有人重排组合顺序时会悄悄复活，而 `disabled` 是显式的。
@@ -71,7 +82,7 @@ status: draft
         root: !!js dshHomePath('storages')
 ```
 
-（`:54-57`）`dshHomePath` 是 boot 阶段注入根 context 的一个函数（`packages/boot/app-boot/src/index.ts:770`），所以 YAML 里可以直接写 `dshHomePath('storages')` 而不用硬编码用户主目录。
+（`:54-57`）`dshHomePath` 是 boot 阶段注入根 context 的一个函数（`packages/boot/app-boot/src/index.ts:770`），所以 YAML 里可以直接写 `dshHomePath('storages')` 而不用硬编码用户主目录。`root` 这个字段就是「JSON 存储把文件放在哪个目录下」。
 
 ```yaml
     - id: webserver
@@ -82,7 +93,7 @@ status: draft
         port: !!js ctx.webStartup.port ?? 3080
 ```
 
-（`:115-120`）监听地址来自命令行解析出来的 `webStartup` 服务，`??` 后面是部署兜底值。这一行也解释了 `dsh --profile web --help` 为什么不会真的开端口：文件头的注释（`:12`）写得很直白：`--help` 那条路径不提供 `webStartup` 服务，所以这一行永远 pending，服务器不 bind。
+（`:115-120`）`host` 是监听地址、`port` 是端口，两个值都来自命令行解析出来的 `webStartup` 服务，`??` 后面是没解析到时的兜底值（本机地址 `127.0.0.1`、端口 3080）。这一行也解释了 `dsh --profile web --help` 为什么不会真的开端口：文件头的注释（`:12`）写得很直白：`--help` 那条路径不提供 `webStartup` 服务，所以这一行永远 pending（等依赖等不到，一直挂着不启动），服务器不 bind。
 
 ```yaml
     - id: connection
@@ -92,13 +103,13 @@ status: draft
         trustedHosts: !!js ctx.webRuntime.trustedHosts
 ```
 
-（`:156-163`）LAN 信任名单不是配置里写死的，是服务器真的 bind 完之后由 `web-runtime` 采样一次再提供出来的（`:126-127` 的注释）。
+（`:156-163`）`trustedHosts` 是「允许从哪些主机名/地址访问」的信任名单。它不是配置里写死的，是服务器真的 bind 完之后由 `web-runtime` 采样一次再提供出来的（`:126-127` 的注释）。
 
 再往后是约 30 行 `ui-*`（`:174-274`），每一行就是浏览器里的一块界面：`ui-trajectory`（轨迹视图）、`ui-model-selection`（模型选择）、`ui-agent-preset`（preset 选择器）、`ui-deliverables`（产出文件链接）……这些在 [11 Web 客户端与 host](11-web-client-and-host.md) 里展开。
 
 **第三段，把 base 里「每个 agent 一份」的行全部 `disabled: true`**（`:276-408`）。这是 web-app 最有信息量的一段。tool-bash、tool-pwsh、tool-jobs、tool-fs、tool-fs-search、tool-str-replace-editor、skill-filesystem、tool-skill、tool-goal、plan-mode、compaction-basic、command-compact、tool-result-pruner、四个 tool-subagent 行、workflow、tool-ralph、agent-instructions、tool-todo、tool-web，全部关掉。
 
-关掉不是因为 Web 不要这些能力，而是因为在 Web 上**这些能力属于「某一个会话」而不是「整个进程」**。每一段禁用上面都有一段注释解释判据，写得很清楚。举 `tool-jobs` 那段（`:299-307`）：后台任务的**注册表**留在 host 平面，只有模型能看见的 `job_*` 控制工具搬走；理由是注册表的生产者（`tool-bash` 等）在 preset 的 realm 之外，用 `ctx.get` 取它；如果注册表被关进 preset 的 realm，那些兄弟行看不见它，`run_in_background` 会回答「background jobs unavailable」而控制工具却好端端挂在目录里。
+关掉不是因为 Web 不要这些能力，而是因为在 Web 上**这些能力属于「某一个会话」而不是「整个进程」**。每一段禁用上面都有一段注释解释判据，写得很清楚。举 `tool-jobs` 那段（`:299-307`）：后台任务的**注册表**留在 host 平面，只有模型能看见的 `job_*` 控制工具搬走；理由是注册表的生产者（`tool-bash` 等）在 preset 的 realm 之外，用 `ctx.get` 取它；如果注册表被关进 preset 的 realm，那些兄弟行看不见它，`run_in_background` 会回答「background jobs unavailable」（后台任务不可用）而控制工具却好端端挂在目录里。
 
 判据被反复陈述成两句互补的话：**一个被 preset 之外的行 inject 的服务，属于 host 平面**（`shell-env` 那段，`:287-291`）；**一个被 preset 之外的行 read 的服务，也属于 host 平面**（`goals` 那段，`:336-343`）。上游把这条判据的唯一出处写在 `.agents/notes/implemented/architecture/2026-08-10-host-plane-ownership-after-presets.md`（在 `:356` 被引用）。
 
@@ -129,7 +140,7 @@ constructor() {
     const self = new Proxy<this>(this, ReflectService.handler)
 ```
 
-（`vendor/cordis/src/context.ts:71-74`）根 context 的构造函数返回的不是 `this`，是一个 Proxy。所以 `ctx.systemPrompt` 这种读取不是普通属性访问，而是走 `ReflectService` 的服务解析，按当前 context 的**隔离标签**去查表。这一点是后面所有 realm 语义的地基。
+（`vendor/cordis/src/context.ts:71-74`）三行分别做了：建一张空的隔离标签表（`symbols.isolate`，记「这棵子树下某个服务名该解析到哪个实例」）、建一张空的拦截配置表（`symbols.intercept`），然后把自己包进一个 Proxy 再返回。也就是说，根 context 的构造函数返回的不是 `this`，是一个 Proxy。所以 `ctx.systemPrompt` 这种读取不是普通属性访问，而是走 `ReflectService` 的服务解析，按当前 context 的**隔离标签**去查表。这一点是后面所有 realm 语义的地基。
 
 三个派生方法都不改父 context，只造子 context：
 
@@ -141,9 +152,11 @@ constructor() {
 
 ### FiberState 六态
 
-每个挂载的插件是一个 fiber，状态定义在 `vendor/cordis/src/fiber.ts:147-153`，注释在 `:140-146`：
+每个挂载的插件是一个 **fiber（纤程）**，也就是 Cordis 给「一行插件的这一次挂载」建的运行时对象：它记着这行的配置、它注册过的东西、以及它当前处在哪个状态。一行 YAML 挂载一次就有一个 fiber，卸载了这个 fiber 就作废。状态定义在 `vendor/cordis/src/fiber.ts:147-153`，注释在 `:140-146`：
 
 > `PENDING` — waiting for required services; `LOADING` — the plugin callback is running; `ACTIVE` — loaded and providing; `FAILED` — the callback or its config threw; `UNLOADING` — disposers are running; `DISPOSED` — the fiber was removed and cannot restart.
+
+（`PENDING`：在等它要的服务出现；`LOADING`：插件的回调正在跑；`ACTIVE`：装好了，并且正在对外提供服务；`FAILED`：回调或者它的配置抛了异常；`UNLOADING`：清理函数正在跑；`DISPOSED`：这个 fiber 已经被移除，不会再起来了。）
 
 `PENDING` 是最容易被误读的一个：它**不是错误**。一行插件声明 `inject: [webStartup]`，而 `webStartup` 服务不存在，它就一直 PENDING，安静地待着。`dsh --profile web --help` 之所以不开端口，就是 webserver 那一行停在 PENDING。而 `FAILED` 是真的抛了。
 
@@ -157,7 +170,9 @@ constructor() {
     }
 ```
 
-（`vendor/cordis/src/fiber.ts:418-422`）`ctx.effect(fn)` 立即执行 `fn`，收集它返回的清理函数；这些清理要么在返回的 disposer 被调用时跑，要么在 fiber 卸载时跑，**以先到者为准，逆序执行**（契约写在 `:401-414` 的 JSDoc）。这是「插件卸载后不留残留」的机制保证：注册一个 prompt section、注册一个工具、开一个 watcher，全都是 effect。
+（`vendor/cordis/src/fiber.ts:418-422`）这几行先 `assertActive()` 确认 fiber 还活着，再单独挡掉 `UNLOADING` 状态：正在卸载的时候还想注册新副作用，直接抛 `INACTIVE_EFFECT`（意思是「在一个已经不活跃的 fiber 上注册副作用」），因为这时候注册的东西没人负责清理。`label = 'anonymous'` 只是给这个副作用起个名字，报错时好认。
+
+`ctx.effect(fn)` 立即执行 `fn`，收集它返回的清理函数；这些清理要么在返回的 disposer 被调用时跑，要么在 fiber 卸载时跑，**以先到者为准，逆序执行**（契约写在 `:401-414` 的 JSDoc）。这是「插件卸载后不留残留」的机制保证：注册一个 prompt section、注册一个工具、开一个 watcher，全都是 effect。
 
 ### 五种 DispatchMode
 
@@ -165,7 +180,9 @@ constructor() {
 export type DispatchMode = 'emit' | 'parallel' | 'serial' | 'bail' | 'waterfall'
 ```
 
-（`vendor/cordis/src/events.ts:32`，语义注释在 `:24-31`）其中 `waterfall` 是 dsh 用得最重的一种：
+（`vendor/cordis/src/events.ts:32`，语义注释在 `:24-31`）五个名字对应五种派发方式：`emit` 发出去就不管了；`parallel` 所有监听器一起跑、等它们都完成；`serial` 一个接一个跑；`bail` 谁先返回一个非空值就停、把这个值当结果；`waterfall` 直译是「瀑布」，指把值一层层往下传，每个监听器都可以先改一手再往下递。
+
+其中 `waterfall` 是 dsh 用得最重的一种：
 
 ```ts
   waterfall(...args: any[]) {
@@ -180,7 +197,7 @@ export type DispatchMode = 'emit' | 'parallel' | 'serial' | 'bail' | 'waterfall'
   }
 ```
 
-（`vendor/cordis/src/events.ts:234-243`）最后一个参数被当成最内层的 `next`，监听器由外向内包裹它——**一个不调用 `next()` 的监听器就否决了整条链，包括内建行为**（`:227-229` 的注释）。熟悉 Koa 中间件的人会觉得眼熟。`system-prompt/assemble`、`tools/execute`、`approval/request` 这些拦截点都是 waterfall；[07 工具、审批与沙箱](07-tools-approval-sandbox.md) 里的审批「无应答者则 fail-closed」，本质就是没人调 `next` 的默认行为。
+（`vendor/cordis/src/events.ts:234-243`）读法是：`cbs` 是收集到的监听器队列，`inner` 是从参数里弹出的最后一个参数（也就是内建行为），`next()` 每次从队列头取一个监听器来跑，取完了就落到 `inner`。最后一个参数被当成最内层的 `next`，监听器由外向内包裹它——**一个不调用 `next()` 的监听器就否决了整条链，包括内建行为**（`:227-229` 的注释）。熟悉 Koa 中间件的人会觉得眼熟。`system-prompt/assemble`、`tools/execute`、`approval/request` 这些拦截点都是 waterfall；[07 工具、审批与沙箱](07-tools-approval-sandbox.md) 里的审批「无应答者则 fail-closed」，本质就是没人调 `next` 的默认行为。
 
 ### Service：provide / inject 怎么形成 seam
 
@@ -192,7 +209,7 @@ export type DispatchMode = 'emit' | 'parallel' | 'serial' | 'bail' | 'waterfall'
   }
 ```
 
-（`vendor/cordis/src/service.ts:42-58`）`Service` 基类的构造函数就把自己注册进当前 context。而 `provide` 的实现本身是一个 effect：
+（`vendor/cordis/src/service.ts:42-58`）`Service` 基类的构造函数就把自己注册进当前 context：`provide(name, self, ...)` 三个参数分别是服务名、实例本身、以及一个「我现在算不算就绪」的检查函数。而 `provide` 的实现本身是一个 effect：
 
 ```ts
   provide(name: string, value?: any, check?: () => boolean) {
@@ -206,9 +223,9 @@ export type DispatchMode = 'emit' | 'parallel' | 'serial' | 'bail' | 'waterfall'
       }
 ```
 
-（`vendor/cordis/src/reflect.ts:277-292`）三件事在这几行里发生：服务注册随 fiber 卸载自动撤销（因为它是 effect）；解析的 key 是**当前 context 的隔离标签**，所以同名服务在不同 realm 里互不干扰；同一 realm 下重复注册**直接抛错**。
+（`vendor/cordis/src/reflect.ts:277-292`）代码里 `??=` 那行是「根 context 上要是还没给这个服务名分配过标识，就分配一个」，`const key = ...` 取的是当前 context 看到的那个标签，最后那句错误信息 `service "..." has been registered at <...>` 的意思是「这个服务名已经被某某 fiber 注册过了」。三件事在这几行里发生：服务注册随 fiber 卸载自动撤销（因为它是 effect）；解析的 key 是**当前 context 的隔离标签**，所以同名服务在不同 realm 里互不干扰；同一 realm 下重复注册**直接抛错**。
 
-消费侧是 `ctx.inject(names, callback)`（`vendor/cordis/src/registry.ts:300-302`），等依赖都在了才跑回调。
+消费侧是 `ctx.inject(names, callback)`（`vendor/cordis/src/registry.ts:300-302`），等依赖都在了才跑回调。**inject（注入）** 在 dsh 里就是这个意思：一行声明「我需要哪几个服务」，框架替它等，等齐了再启动，等不到就一直 PENDING。它不是「我自己去 new 一个」，而是「谁提供的由组合决定，我只说名字」。
 
 **seam 就是这样形成的**：一个包只定义抽象服务与它的类型（Definition），另一个包 `provide` 一个实现（Provider），第三批包 `inject` 它（Consumer）。谁 provide 是组合决定的：base 里 `sandbox` 这一行换成别的包名，整个沙箱后端就换了，消费者一行不改。上游把这条写成了设计记录 `.agents/notes/implemented/architecture/2026-06-13-capability-seams.md`，并明确「Service Definition 是抽象类/registry，绝不是 TS interface」，因为 interface 在运行时不存在，没法被 `provide`。
 
@@ -236,7 +253,9 @@ export function apply(ctx: Context): void {
 }
 ```
 
-（`packages/client/ui-deliverables/src/index.ts:8-27`）一个 dsh 插件就是一个导出 `apply` 的模块，可选导出 `name`、`inject`、`Config`。这里 `inject = ['systemPrompt']` 让它在 prompt 注册表就绪前保持 PENDING；`ctx.systemPrompt.section(...)` 通过 Proxy 解析到注册表，注册一段带 `order` 的 prompt 片段。
+（`packages/client/ui-deliverables/src/index.ts:8-27`）里面的英文先翻一遍。两行注释 `Services required for the model guidance paired with the browser renderer.` 是「这段模型引导语配套的浏览器渲染器，需要这些服务」；`Stable final-response guidance owned by the matching renderer.` 是「归对应渲染器所有的、稳定的终稿回复引导语」。中间那段 `FILE_REFERENCE_PROMPT` 是真正发给模型的话，意思是：你成功创建或修改文件之后，在最终回复里点名主要产出；想让这些以及其他改动过的文件引用在 Web 里可点击，就用 Markdown 行内代码格式写它们，路径要和文件工具用的路径一模一样，或者在这一轮改过的文件里唯一时用文件名即可。
+
+一个 dsh 插件就是一个导出 `apply` 的模块，可选导出 `name`、`inject`、`Config`。这里 `inject = ['systemPrompt']` 让它在 prompt 注册表就绪前保持 PENDING；`ctx.systemPrompt.section(...)` 通过 Proxy 解析到注册表，注册一段带 `order` 的 prompt 片段。
 
 `section()` 内部本身就是一个 effect（`packages/core/system-prompt/src/index.ts:385-389`），所以这一行从组合里删掉，那段提示词就从 system prompt 里消失，不需要任何清理代码。想显式持有 disposer 的写法在 `packages/preset/persona/src/index.ts:61-66` 有现成的：
 
@@ -249,7 +268,7 @@ export function apply(ctx: Context): void {
   }), 'persona.section()')
 ```
 
-Context（`ctx`）、Service（`ctx.systemPrompt`）、Effect（`ctx.effect`）三者在这五行里齐了。
+这段的字段是：`name` 给这段提示词一个标识、`order` 决定它在最终 system prompt 里排第几、`text` 是正文、`complete` 是「这一段就是完整的 system prompt」的开关（第六节会用到），末尾的 `'persona.section()'` 是给这个副作用起的名字。Context（`ctx`）、Service（`ctx.systemPrompt`）、Effect（`ctx.effect`）三者在这五行里齐了。
 
 ---
 
@@ -271,7 +290,7 @@ switch (invocation.mode) {
     })
 ```
 
-（`apps/cli/src/bin.ts:27-38`）三种 mode：`profile`、`plugin`、`dump-config`（`:29-49`）。命令行语法在 `apps/cli/src/args.ts`，帮助文本在 `:64-72`。launcher 只解析自己的 flag，**第一个它不认识的 token 开始就是应用自己的参数**（`apps/cli/src/args.ts:1-16` 的模块注释）。所以 `dsh --profile web --help` 打印的是 web 应用的帮助，不是 launcher 的。
+（`apps/cli/src/bin.ts:27-38`）传给 `runProfile` 的四个字段分别是：`environment` 分层加载出来的环境变量快照、`profile` 要跑哪个 profile、`patchFiles` 命令行 `--patch` 指定的补丁文件、`args` 剩下的原样交给应用的参数。三种 mode：`profile`、`plugin`、`dump-config`（`:29-49`）。命令行语法在 `apps/cli/src/args.ts`，帮助文本在 `:64-72`。launcher 只解析自己的 flag，**第一个它不认识的 token 开始就是应用自己的参数**（`apps/cli/src/args.ts:1-16` 的模块注释）。所以 `dsh --profile web --help` 打印的是 web 应用的帮助，不是 launcher 的。
 
 ### 补丁叠加顺序
 
@@ -284,7 +303,9 @@ switch (invocation.mode) {
 []
 ```
 
-（`apps/cli/src/profile-boot.ts:60-64`）而且它**每次启动都被重写**（`:101`），注释解释了原因（`:88-93`）：Loader 有一个「插件自我卸载时把当前树写回配置文件」的行为，如果让它把合成后的行写进这个文件，下次启动每个 bundle 的 insert 就会重复一遍。
+（`apps/cli/src/profile-boot.ts:60-64`）那三行英文注释是说：这是 dsh profile 的根，一个空的 entry 列表；这棵树由补丁组合而成，先是 `package.json` 里 `dsh.profile.bundles` 列出的每个 bundle，然后是 `cordis.patch.yml`，最后是 `--patch` 叠加层；要改就改 `cordis.patch.yml`，别改这个文件。
+
+而且它**每次启动都被重写**（`:101`），注释解释了原因（`:88-93`）：这里的 **Loader（加载器）** 是 Cordis 里负责「读配置文件、把每一行变成真的挂载起来的插件、文件变了就调和这棵树」的那个组件。Loader 有一个「插件自我卸载时把当前树写回配置文件」的行为，如果让它把合成后的行写进这个文件，下次启动每个 bundle 的 insert 就会重复一遍。
 
 叠加顺序在 `:122-129`：
 
@@ -298,6 +319,8 @@ function allPatches(composed: ComposedProfile): PatchOptions[] {
   ]
 }
 ```
+
+四个字段名就是四层的名字：`bundlePatches` 是各个 bundle 自带的补丁，`profile.patches` 是这个 profile 目录里的补丁，`homePatches` 是 `$DSH_HOME` 里的机器级补丁，`overlays` 是命令行 `--patch` 传进来的叠加层。数组里靠后的压过靠前的。
 
 即：**bundle 层（按 `dsh.profile.bundles` 顺序）→ profile 自己的 `cordis.patch.yml` → `$DSH_HOME/cordis.patch.yml` → `--patch` 叠加层 →（追加的）shipped preset 根与遥测开关**。home 层排在 profile 层之后，理由写在 `:134-137`：机器级偏好适用于每个 profile，所以它压过 per-profile 层。
 
@@ -319,7 +342,9 @@ export function loadLayeredEnv(
   const user = home === resolve(cwd) ? undefined : readEnvLayer(binName, home, warn)
 ```
 
-（`packages/boot/app-boot/src/index.ts:177-186`）三层是**继承环境 > 调用目录的 `.env` > Harness home 的 `.env`**，应用时不覆盖已有名字（`:187-193`）。
+（`packages/boot/app-boot/src/index.ts:177-186`）代码里那句英文注释 `// Parse both layers first: a rejection must not leave one file applied.` 的意思是「先把两层都解析完：一次拒绝不能落得只有一个文件被应用了」。`inherited` 是启动进程带进来的环境变量，`project` 是调用目录里的 `.env`，`user` 是 harness home 里的 `.env`（home 和调用目录相同就不重复读一遍）。
+
+三层是**继承环境 > 调用目录的 `.env` > Harness home 的 `.env`**，应用时不覆盖已有名字（`:187-193`）。
 
 `readEnvLayer` 还有一段拒绝逻辑：
 
@@ -330,7 +355,7 @@ export function loadLayeredEnv(
       `${binName}: ${path} sets "${name}", which only the launching environment may set`
 ```
 
-（`:153-157`）被拒的名单在 `:93-114`，包含 `NODE_OPTIONS`、`LD_PRELOAD`、`BASH_ENV`、`PYTHONSTARTUP`、`PERL5OPT`、`GIT_SSH_COMMAND`、`SSL_CERT_FILE`、`HTTPS_PROXY`、`NODE_TLS_REJECT_UNAUTHORIZED` 等，外加前缀 `DSH_`、`XDG_`、`DYLD_`、`BASH_FUNC_`（`:117`）。这是一条实打实的安全边界：一个仓库里的 `.env` 不能决定这个进程怎么启动、从哪里加载代码、怎么访问网络。而且两个文件**先全部解析再全部应用**（`:184` 的注释），一个拒绝不会留下半应用的状态。
+（`:153-157`）抛出来的那句英文 `... sets "...", which only the launching environment may set` 意思是「这个 `.env` 想设置某个变量，而这个变量只有启动进程的环境才有资格设」。被拒的名单在 `:93-114`，包含 `NODE_OPTIONS`、`LD_PRELOAD`、`BASH_ENV`、`PYTHONSTARTUP`、`PERL5OPT`、`GIT_SSH_COMMAND`、`SSL_CERT_FILE`、`HTTPS_PROXY`、`NODE_TLS_REJECT_UNAUTHORIZED` 等，外加前缀 `DSH_`、`XDG_`、`DYLD_`、`BASH_FUNC_`（`:117`）。这是一条实打实的安全边界：一个仓库里的 `.env` 不能决定这个进程怎么启动、从哪里加载代码、怎么访问网络。而且两个文件**先全部解析再全部应用**（`:184` 的注释），一个拒绝不会留下半应用的状态。
 
 ### boot 与 Loader
 
@@ -347,9 +372,9 @@ export function loadLayeredEnv(
     await assertEntriesActivated(ctx, binName)
 ```
 
-（`packages/boot/app-boot/src/index.ts:769-784`）顺序是：造根 context → 提供 `dshHomePath`（这就是 YAML 里 `!!js dshHomePath('sessions')` 能求值的原因）→ 装 Loader → 跑宿主 prepare（`apps/cli/src/profile-boot.ts:250-258` 在这里提供环境快照与 `ctx.cmdlineArgs`）→ 挂载 include 树 → 等 Loader 静默 → **fail-loud 审计**。
+（`packages/boot/app-boot/src/index.ts:769-784`）顺序是：造根 context → 提供 `dshHomePath`（这就是 YAML 里 `!!js dshHomePath('sessions')` 能求值的原因）→ 装 Loader → 跑宿主 prepare（`apps/cli/src/profile-boot.ts:250-258` 在这里提供环境快照与 `ctx.cmdlineArgs`）→ 挂载 include 树 → 等 Loader 静默 → **fail-loud 审计**（fail-loud 就是「出事就大声报错」，反面是悄悄吞掉）。中间那句 `stage = 'plugin tree failed to load'` 是在给后面可能抛出的异常预先贴一个阶段标签，字面意思是「插件树没能加载起来」。
 
-`assertEntriesActivated` 是 dsh 加的：一行永远不激活（比如包名拼错、依赖服务永不出现）不会被默默忽略，会在启动时报错并带上原始堆栈（`packages/boot/app-boot/src/index.ts:735-741` 的 JSDoc）。两个失败标签也分得很清：`prepare` 抛的叫 `host preparation failed`，之后抛的叫 `plugin tree failed to load`（`packages/boot/app-boot/src/index.ts:766-768`、`:796`）。
+`assertEntriesActivated` 是 dsh 加的：一行永远不激活（比如包名拼错、依赖服务永不出现）不会被默默忽略，会在启动时报错并带上原始堆栈（`packages/boot/app-boot/src/index.ts:735-741` 的 JSDoc）。两个失败标签也分得很清：`prepare` 抛的叫 `host preparation failed`（宿主准备阶段失败），之后抛的叫 `plugin tree failed to load`（插件树加载失败）（`packages/boot/app-boot/src/index.ts:766-768`、`:796`）。
 
 启动完成后，profile-boot 还会给两个用户补丁层装 watcher（`:285-294`）。如果组合里没有 HMR 服务（web/headless 都把 `hmr` 关了），它会临时挂一个「只看配置文件、不看模块」的 HMR 实例（`:279-284`），这样 `cordis.patch.yml` 的编辑在任何长命面上都仍然是热生效的。
 
@@ -368,11 +393,11 @@ export const PROFILE_TEMPLATES: Record<string, readonly string[]> = {
 }
 ```
 
-（`packages/boot/app-boot/src/profile.ts:114-117`）自己新建的 profile 默认只有 base（`:125`）。
+（`packages/boot/app-boot/src/profile.ts:114-117`）这张表就是「新建 profile 时默认叠哪几个 bundle」：`web` 叠 base 加 web-app，`headless` 叠 base 加 headless。自己新建的 profile 默认只有 base（`:125`）。
 
 ### base（451 行）：一次 insert，78 行 row
 
-`packages/bundle/base/cordis.patch.yml:15` 一个 `- insert:`，下面是整个 harness 的骨架，78 条 `- id:` 行（`grep -c '^    - id:'` 数得出来）。按文件里的先后顺序分组看：
+`packages/bundle/base/cordis.patch.yml:15` 一个 `- insert:`，下面是整个 harness 的骨架，78 条 `- id:` 行（`grep -c '^    - id:'` 数得出来）。这里说的 **row（行）** 是 dsh 的一个固定说法：YAML 清单里以 `- id:` 开头的一条记录，一条 row 对应一个 npm 包的一次挂载，也对应运行时的一个 fiber。下文说「关掉 24 行」「加三行」，数的都是它。按文件里的先后顺序分组看：
 
 | 组 | 行 | 装了什么 |
 |---|---|---|
@@ -427,13 +452,17 @@ Web 上被关掉的那些「每 agent 一份」的行，由 `packages/preset/age
     toolResultPruner: true
 ```
 
-（`apps/cli/config/agent-presets/standard/agent.cordis.yml:137-142`）compaction 后端和 pruner 共一个 realm，因为 `compaction-basic` 用 `ctx.get` 取 `toolResultPrune`，pruner 必须在同一 realm 里（`:128-129`）。但 `tokenMeter` **刻意不在这个 realm**（`:131-136`）：计量表留在 host 平面，它按 Session 折叠，还拥有浏览器要读的 context-meter 投影单元；放进 realm 的话，那些单元会随着「当前挂了哪些 preset」而来来去去。
+（`apps/cli/config/agent-presets/standard/agent.cordis.yml:137-142`）字段读法：`name: cordis:group` 加 `group: true` 表示这一行不是插件，是一个装着别的行的分组；`isolate` 下面列出的服务名（这里是 `compaction` 和 `toolResultPruner`）会在这个分组内部拿到自己的一份，跟组外同名的互不相干。compaction 后端和 pruner 共一个 realm，因为 `compaction-basic` 用 `ctx.get` 取 `toolResultPrune`，pruner 必须在同一 realm 里（`:128-129`）。但 `tokenMeter` **刻意不在这个 realm**（`:131-136`）：计量表留在 host 平面，它按 Session 折叠，还拥有浏览器要读的 context-meter 投影单元；放进 realm 的话，那些单元会随着「当前挂了哪些 preset」而来来去去。
 
 ### minimal：Claude SWE 兼容的 RL 组合
 
 `apps/cli/config/agent-presets/minimal/agent.cordis.yml` 全文 62 行，文件头（`:1-6`）说得很直接：
 
 > The persona is the complete system prompt, so global identity, Web orientation, tool guidance, and later assembly listeners cannot add prompt text. Runtime context snapshots are suppressed for this preset, and the model composes only persistent `bash` and `str_replace_editor`. Context compaction is absent.
+
+（persona 这一段就是完整的 system prompt，所以全局身份说明、Web 环境说明、工具指导，以及后面那些参与装配的监听器，都加不进任何提示词。这个 preset 关掉了运行时上下文快照，模型手里只有一个持久 `bash` 和一个 `str_replace_editor`。也没有上下文压缩。）
+
+翻译成人话就是：别的 preset 是「一堆人往 system prompt 里各加一段」，minimal 是「一句话封顶，谁都别再加」。
 
 三行配置实现这句话（`:8-13`）：
 
@@ -445,6 +474,8 @@ Web 上被关掉的那些「每 agent 一份」的行，由 `packages/preset/age
     complete: true
     includeRuntimeContext: false
 ```
+
+三个字段：`text` 是提示词正文（`You are a helpful software engineer assistant.` 意思是「你是一个乐于助人的软件工程师助手」），`complete: true` 声明「这段就是全部」，`includeRuntimeContext: false` 关掉运行时上下文快照。
 
 `complete: true` 的实现在 `packages/preset/persona/src/index.ts:61-66`：它给 section 加上 `complete: true` 标记，system-prompt 装配在所有监听器跑完之后把这一段**恢复为唯一 section**。`includeRuntimeContext: false` 调 `ctx.systemPrompt.suppressRuntimeContext()`（`:67`），丢弃动态上下文快照。合起来的效果是：模型收到的 system prompt 逐字就是 `You are a helpful software engineer assistant.`，一个字不多。
 
@@ -461,6 +492,8 @@ Run commands in a bash shell
 * Please run long lived commands in the background, e.g. 'sleep 10 &' or start a server in the background.
 ```
 
+这段工具描述是直接发给模型看的，逐条翻一遍：标题 `Run commands in a bash shell` 是「在一个 bash shell 里执行命令」；然后是七条，(1) 调这个工具时，`command` 参数里的内容不需要做 XML 转义；(2) 通过这个工具访问不了互联网；(3) 但可以通过 apt 和 pip 用到常见 linux 与 python 包的镜像；(4) 状态在多次调用和与用户的对话之间是持续的（这就是「持久 bash」的意思：上一条 `cd` 过的目录、设过的变量，下一条还在）；(5) 想看文件的某个行区间，比如 10 到 25 行，可以试 `sed -n 10,25p /path/to/the/file`；(6) 尽量别跑会吐出巨量输出的命令；(7) 长命的命令请放后台跑，比如 `sleep 10 &`，或者把服务器起在后台。
+
 文件系统那一段（`:46-62`）用 `isolate: { fs: true }` 把 host 的沙箱化 provider 换成裸的 `fs-local`（`cwd` 取 `DSH_CWD` 或 `process.cwd()`），`str_replace_editor` 与它共享 realm，`maxOutputChars: 16000`。
 
 **没有 compaction 组、没有 fs-sandbox、没有 skill、没有 plan mode、没有 subagent。** 这个组合就是 `BENCHMARK.md` 指向的那一个，同样的配方以 `examples/jsonrpc-agent/minimal.cordis.yml` 的形式交给 Python SDK 使用，细节见 [12 产品表面与协议](12-surfaces-and-protocols.md)。它同时也说明了一件事：dsh 的「全部功能」和「跑分用的组合」是两个可以差得很远的东西，而它们的差别是一个 62 行 vs 251 行的 YAML 文件，不是编译开关。
@@ -470,6 +503,10 @@ Run commands in a bash shell
 `cordis` preset 的 persona 里嵌了一段编排规则（`apps/cli/config/agent-presets/cordis/agent.cordis.yml:20-29`），教模型判断一个改动属于 host 平面还是 agent preset：
 
 > A row that publishes a service belongs in the host composition, or inside an `isolate` realm if the preset genuinely owns that service and nothing outside one agent reads it.
+
+（一行如果对外发布服务，它就该放在 host 组合里；除非这个服务确实归这个 preset 独占、而且除了这一个 agent 之外没人读它，那才可以放进 `isolate` realm。）
+
+翻译成人话就是：想放进 preset，得先证明「只有我用」。
 
 以及一条硬约束：自己写的 preset 放在 `$DSH_HOME/.agent-presets/<id>/`，**绝不许改发行版自带的那份**。文件头（`:9-12`）把信任等级挑明了：`cordis_mount` 对活着的运行时求值模型写的 JavaScript，「把这个 preset 上的会话当成 shell 访问看待」。
 
@@ -499,7 +536,7 @@ Run commands in a bash shell
 
 ### 生命周期加固（第 6 项）
 
-第 6 项（`vendor/README.md:38`）是最长的一条，全是重入式卸载的坑：effect 的 owner-list wrapper 在 setup 体运行**之前**注册，所以从 setup 内部发起的卸载会等 setup 和它收集的每个 cleanup；同步 setup 失败会移除 wrapper 并回滚已收集的 cleanup；`UNLOADING` 状态下拒绝创建新 effect（`PENDING` 和 `LOADING` 仍合法）——防止 cleanup 期间注册的东西逃出卸载快照；子 fiber 在 `internal/plugin` 发布**之前**就拿到父持有的 disposer；teardown 通知的失败按观察者隔离，一个回调不能饿死同僚。
+第 6 项（`vendor/README.md:38`）是最长的一条，全是重入式卸载（卸载过程中又触发了卸载）的坑：effect 的 owner-list wrapper（那层记录「这个副作用归谁管」的包装）在 setup 体运行**之前**注册，所以从 setup 内部发起的卸载会等 setup 和它收集的每个 cleanup；同步 setup 失败会移除 wrapper 并回滚已收集的 cleanup；`UNLOADING` 状态下拒绝创建新 effect（`PENDING` 和 `LOADING` 仍合法）——防止 cleanup 期间注册的东西逃出卸载快照；子 fiber 在 `internal/plugin` 发布**之前**就拿到父持有的 disposer；teardown 通知的失败按观察者隔离，一个回调不能饿死同僚。
 
 为什么 dsh 需要：dsh 的树是活的。用户改一行 `cordis.patch.yml`，HMR 会卸载一批 fiber 再挂一批；一个 agent preset 随会话挂载与卸载；`tool-cordis` 让模型自己 mount/retract 插件。上游 Cordis 的卸载路径没被这样折腾过。
 
@@ -509,7 +546,7 @@ Run commands in a bash shell
 
 第 12 项（`:44`）是一个真实死锁的修复：Include 的每一次子树变更走同一个队列（group 的事务 `update` 不可重入），HMR 主 watcher 加 `ignoreInitial: true`（初次扫描会重播 boot 刚消费过的文件，其中一个配置文件的 `add` 会在 initial apply 中途触发 refresh）。串行化之后，一次失败的 initial apply 的回滚会 dispose HMR，而 HMR 的 teardown drain 又在等排在同一个 apply 后面的 refresh，**退出码 13 且无任何诊断**。
 
-第 14 项（`:46`）是 Windows 特有的：Loader 子进程 dispose 后系统可能短暂保留目标句柄，上游那个 fire-and-forget 的 rename 会变成 unhandled rejection 并丢掉持久化的 `disabled` 状态；改成串行化 + 有界退避重试 `EACCES`/`EBUSY`/`EPERM`。
+第 14 项（`:46`）是 Windows 特有的：Loader 子进程 dispose 后系统可能短暂保留目标句柄，上游那个 fire-and-forget（发出去就不等结果）的 rename 会变成 unhandled rejection（没人接住的 Promise 失败）并丢掉持久化的 `disabled` 状态；改成串行化 + 有界退避重试 `EACCES`/`EBUSY`/`EPERM`（权限不足 / 文件被占用 / 操作不允许这三种系统错误码）。
 
 为什么 dsh 需要：一次热重载失败之后，树必须还是可用的。
 
@@ -556,7 +593,7 @@ Run commands in a bash shell
 | pi | 内建 7 个工具（`bash`/`edit`/`find`/`grep`/`ls`/`read`/`write`，`pi!packages/coding-agent/src/core/tools/bash.ts:331`） | 部分：扩展可在 `before_agent_start` 里换 systemPrompt | Extension API（33 个事件、`registerTool`/`registerCommand`/`registerProvider`）、Packages；无 MCP |
 | mini-swe-agent | `mini.yaml` 151 行 + `DefaultAgent` 190 行（`mini-swe-agent!src/minisweagent/agents/default.py:38`），只有一个 bash 工具 | 换 yaml 就是换一切 | 不适用 |
 
-差别不在「能不能扩展」，每一家都有扩展点。差别在于**核心自己是不是用同一套扩展机制拼出来的**。Codex 的 `ToolRouter` 是 Rust 里的一个结构体，扩展通过 Extension API 往里加东西；dsh 的 `tools` 注册表本身就是补丁里的一行（`packages/bundle/base/cordis.patch.yml:424-425`），和一个第三方工具包在机制上没有区别。代价也从这里来：dsh 的 219 个包大部分是这个决定的直接后果，而 mini-swe-agent 用 341 行做到了一个能跑 SWE-bench 的 agent。
+差别不在「能不能扩展」，每一家都有扩展点。差别在于**核心自己是不是用同一套扩展机制拼出来的**。Codex 的 `ToolRouter` 是 Rust 里的一个结构体，扩展通过 Extension API 往里加东西；dsh 的 `tools` 注册表本身就是补丁里的一行（`packages/bundle/base/cordis.patch.yml:424-425`），和一个第三方工具包在机制上没有区别。代价也从这里来：dsh 的 219 个包大部分是这个决定的直接后果，而 mini-swe-agent 用 341 行（190 行 agent 代码 + 151 行 yaml）做到了一个能跑 SWE-bench 的 agent。
 
 另一个可对照的点是「一次跑分用的组合」怎么表达。mini-swe-agent 的答案是「就是那个 yaml」；dsh 的答案是 `minimal` preset 那 62 行。两者形态惊人地接近，区别只在 dsh 的 62 行是从 451 行的 base 上**减**出来的，而 mini 的 151 行是全部。
 
@@ -599,6 +636,22 @@ dsh --profile web --dump-config            # 加上用户层与 --patch 叠加�
 ```
 
 这两条走的是与真实挂载完全相同的 `applyEntryPatches`（`vendor/README.md:43`），所以 dump 出来的就是会挂载的。
+
+---
+
+## 自检
+
+**1. web-app 为什么把 `tool-bash` 这类行写成 `disabled: true`，而不是干脆从清单里删掉？**
+
+答：两点。一是 base 是三个模式共享的，「在某个模式下被删掉」是隐式的，哪天有人调整组合顺序它会悄悄复活；`disabled` 把「这里我们故意不要它」写在了脸上。二是留着行就留着 `name` 和 `config`，用户想开回来只要在自己的 `cordis.patch.yml` 里写 `- id: tool-bash` / `disabled: false` 两行，不用把整行重述一遍。
+
+**2. `tool-jobs` 那段为什么把后台任务的注册表留在 host 平面，只把 `job_*` 控制工具搬进 preset？**
+
+答：判据是「谁在读它」。注册表的生产者是 `tool-bash` 这些行，它们在 preset 的 realm 之外，靠 `ctx.get` 去取注册表。realm 是按名字查实例的一层命名空间，把注册表关进 preset 的 realm，realm 外的兄弟行就查不到它了，结果是 `run_in_background` 说后台任务不可用，而控制工具还挂在工具目录里，读起来像是坏了一半。同样的判据也管着 `shell-env` 和 `goals`：被 preset 之外的行 inject 或 read 的服务，都属于 host 平面。
+
+**3. 如果把 `port: !!js ctx.webStartup.port ?? 3080` 里的 `inject: [webStartup]` 删掉，会发生什么？**
+
+答：这一行不再等 `webStartup` 就绪就直接挂载，而惰性配置解析的前提正是「等声明的注入激活之后再求值」。少了这个声明，`ctx.webStartup` 在求值那一刻还不存在，端口会落到 `??` 后面的 3080，命令行给的 `--port` 就静默失效了。更糟的是 `dsh --profile web --help` 这条路径本来靠「webStartup 不存在所以永远 PENDING」来避免开端口，删掉之后 `--help` 也会真的把服务器 bind 起来。
 
 ---
 

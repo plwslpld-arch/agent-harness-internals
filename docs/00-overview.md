@@ -7,7 +7,13 @@ status: draft
 
 # 总览：一次请求是怎么拼出来、发出去、记下来的
 
-dsh（DeepSeek Harness）没有一个叫 `main.ts` 的地方把请求拼好发出去。它是一棵 Cordis 插件树（Cordis 是一个 TypeScript 的依赖注入 / 插件框架，上游 fork 了一份自用，为什么要 fork 见 [10](10-cordis-boot-preset.md)）：树上每个节点是一个插件实例，插件之间靠事件和服务互相找。模型每一步收到的字节就由这几十个互不认识的插件各自贡献一小块，在 `preStep()` 这一个函数里汇合。这一篇给出那条完整路径，把术语在原地讲清楚，再列出上游 49 个包组各管什么、由本系列哪一篇覆盖。
+*这一篇讲给第一次翻 dsh 源码的人。读完你能回答：一次请求从进程启动到落盘经过了哪些环节、219 个包里哪几组真正在这条路径上、其余的该去看本系列哪一篇。*
+
+你要找 dsh（DeepSeek Harness）的「主流程」，大概会去 grep `main.ts`、`prompts.ts`。**都没有。**
+
+dsh 是一棵 Cordis 插件树（Cordis 是一个 TypeScript 的依赖注入 / 插件框架，上游 fork 了一份自用，为什么要 fork 见 [10](10-cordis-boot-preset.md)）：树上每个节点是一个插件实例，插件之间靠事件和服务互相找。模型每一步收到的字节就由这几十个互不认识的插件各自贡献一小块，在 `preStep()` 这一个函数里汇合。所以读懂 dsh 的第一步不是「找入口」，而是接受一件事：入口是一次汇合，不是一条主干。
+
+这一篇给出那条完整路径，把术语在原地讲清楚，再列出上游 49 个包组各管什么、由本系列哪一篇覆盖。
 
 ## 一次 dsh 请求，从进程到落盘
 
@@ -54,13 +60,15 @@ $ dsh web
          step 循环收敛 → serial 'agent/turn-stopping' → turn/end
 ```
 
+这张图怎么读：空行以上是进程启动，缩进表示「谁装载了谁」；空行以下是运行时，缩进表示调用与事件的先后。右边一列是出处，写全的形如「路径:行号」，只写 `:229` 这种冒号加数字的，承接上一行给出的同一个文件。`waterfall`、`inbox`、`surface`、`preset` 这些词在下一节就地解释，先照字面往下读不影响理解。
+
 先说清三件事：
 
-**一、模型每一步收到的是三块，不是一块。** system 字符串由 `renderPrompt(assembly)` 现拼（`packages/core/system-prompt/src/index.ts:212`），工具 schema 数组由同一次 `assemble()` 一起产出，会话历史由 `session.deriveMessages()` 从事件日志投影出来（`packages/core/session/src/index.ts:726`）。三块在 `buildRequest` 里合成一个冻结对象，再交给 adapter 序列化成 DeepSeek chat-completions 请求体（`packages/llm/llm-deepseek/src/serialize.ts:151`，system 进 `messages[0]` 在 `:156-158`）。哪一块放什么，见 [01 System Prompt](01-system-prompt.md)。
+**一、模型每一步收到的是三块，不是一块。** system 字符串由 `renderPrompt(assembly)` 现拼（`packages/core/system-prompt/src/index.ts:212`），工具 schema 数组由同一次 `assemble()` 一起产出，会话历史由 `session.deriveMessages()` 从事件日志投影出来（`packages/core/session/src/index.ts:726`）。三块在 `buildRequest` 里合成一个冻结对象，再交给 **adapter（适配器）** 序列化成 DeepSeek chat-completions 请求体（`packages/llm/llm-deepseek/src/serialize.ts:151`，system 进 `messages[0]` 在 `:156-158`）。adapter 就是把 dsh 内部那套统一的请求对象翻译成某一家厂商 HTTP 请求体的那一层，换一家模型就换一个 adapter。哪一块放什么，见 [01 System Prompt](01-system-prompt.md)。
 
 **二、`assemble()` 每一步都重跑，但设计目标是字节不变。** `request/header` 事件只在首次或 `headerEquals` 判定变化时才写（`packages/core/agent-loop/src/agent.ts:464-470`），这既是审计记录，也是「前缀有没有断」的可观测量。为什么这条约束值得整套架构围着它转，见 [02 KV-Cache](02-kv-cache.md)。
 
-**三、「模型可见 ⟺ 已记录」是硬不变量。** 任何进入请求的内容都必须先成为一条 session 事件，所以你在 `agent.ts:282-284` 看到的是「先 append 再发」，而不是「发完再记」。上游把这条写进了 `docs/architecture.md:96`，还写了一句「a runtime invariant asserts it」。这句话要打个折：那条断言确实存在（`packages/core/agent-loop/src/invariant.ts:39-42`），但它挂在可选的 `dsh-invariants` 服务上，而出厂的 `dsh` 配置**一个 invariant 都不挂**（`.agents/notes/implemented/simplification/2026-08-03-omit-invariants-from-shipped-config.md:13`）。真正一直生效的是写入侧的强制：surface 事件不带 `surfaceOp` 直接抛。展开见 [05 Session](05-session.md)。
+**三、「模型可见 ⟺ 已记录」是硬不变量。** 任何进入请求的内容都必须先成为一条 session 事件，所以你在 `agent.ts:282-284` 看到的是「先 append 再发」，而不是「发完再记」。上游把这条写进了 `docs/architecture.md:96`，还写了一句「a runtime invariant asserts it」（有一条运行时不变量在断言这件事）。这句话要打个折：那条断言确实存在（`packages/core/agent-loop/src/invariant.ts:39-42`），但它挂在可选的 `dsh-invariants` 服务上，而出厂的 `dsh` 配置**一个 invariant 都不挂**（`.agents/notes/implemented/simplification/2026-08-03-omit-invariants-from-shipped-config.md:13`）。也就是说，你正常跑起来的进程里那条断言根本没上岗。真正一直生效的是写入侧的强制：surface（表面，事件日志里模型能看见的那个子视图，下一节详解）事件不带 `surfaceOp` 直接抛。展开见 [05 Session](05-session.md)。
 
 ## 术语（就地解释，不用翻附录）
 
@@ -70,8 +78,8 @@ $ dsh web
 - **waterfall（瀑布事件）**是 Cordis 的环绕式中间件：监听器必须 `await next()` 才会往下走，返回值权威。`agent/pre-step`、`agent/request`、`llm/stream`、`system-prompt/assemble`、三个 `tools/*` 都是 waterfall（`docs/architecture.md:84`）。这是 dsh 唯一的拦截机制，没有第二套钩子系统。
 - **fiber（纤程）**是 Cordis 里一个插件实例的生命周期句柄。所有注册都是 `ctx.effect(...)`，插件卸载时 fiber 一起 dispose，注册自动撤销。所以「装了什么插件」和「模型看到什么」永远是同一件事。
 - **inbox（收件箱）**是 agent 的唯一输入队列。`send(message, target, wakeup)` 把消息投进去，`target` 是 `'next-turn'` 或 `'next-step'`，`wakeup` 决定要不要立刻唤醒驱动（`packages/core/agent-loop/src/agent.ts:113-131`）。注入的上下文可以不唤醒，等下一条真消息把它带上车。
-- **seam（能力接缝）**指一个可替换能力的三个角色：Service Definition（抽象类或注册表，绝不是 TS `interface`）、Service Provider、Consumer。`packages/shell` 是范本：`dsh-shell` 定义、`dsh-bash-local`/`dsh-bash-sandbox` 提供、`dsh-tool-bash` 消费。换一个 provider 就换掉整个产品的一整块行为。
-- **preset（agent preset）**是会话级的插件组合，一个目录里一份 `agent.cordis.yml`。每进程挂载一次到一个「standing scope」，session 通过 scope 父链加入，于是 `agent → preset → global` 三层。Web 下模型看到的工具与 prompt 段落几乎全部由 preset 决定。
+- **seam（能力接缝）**指一个可替换能力的三个角色：Service Definition（定义方，抽象类或注册表，绝不是 TS `interface`）、Service Provider（提供方，真正干活的实现）、Consumer（使用方，通常就是模型能调的那个工具）。`packages/shell` 是范本：`dsh-shell` 定义、`dsh-bash-local`/`dsh-bash-sandbox` 提供、`dsh-tool-bash` 消费。换一个 provider 就换掉整个产品的一整块行为。
+- **preset（agent preset）**是会话级的插件组合，一个目录里一份 `agent.cordis.yml`。每进程挂载一次到一个「standing scope」（常驻作用域：preset 挂上去以后一直在，不随某个 session 生灭），session 通过 scope 父链加入，于是 `agent → preset → global` 三层。Web 下模型看到的工具与 prompt 段落几乎全部由 preset 决定。
 - **bundle** 是一种发行格式：一个声明了 `dsh.bundle` 的 npm 包，实质是一份 `cordis.patch.yml`。`dsh-base` 是每个 profile 的第一层，`dsh-web-app` / `dsh-headless` 叠在上面。补丁按 id 定位行并**整块替换** `config`，不做深合并。
 
 ## 上游 49 个包组
@@ -117,7 +125,7 @@ $ dsh web
 | `settings` | 2 | 1,532 | 「schema 默认 → 组合 base → 用户段」三层设置解析 | [10](10-cordis-boot-preset.md) |
 | `credentials` | 2 | 741 | 配置里只放引用，key 从环境与 `$DSH_HOME` 解析 | [10](10-cordis-boot-preset.md) |
 | `identity` | 1 | 131 | 一个匿名 Harness-home 关联 id | [10](10-cordis-boot-preset.md) |
-| `client` | 39 | 72,428 | 浏览器半边：shell、连接、运行时、slot 扩展点、约 22 个 `ui-*` 特性插件 | [11](11-web-client-and-host.md) |
+| `client` | 39 | 71,896 | 浏览器半边：shell、连接、运行时、slot 扩展点、约 22 个 `ui-*` 特性插件 | [11](11-web-client-and-host.md) |
 | `host` | 8 | 10,680 | Web GUI 的 Node 半边：apiproxy、webserver、静态资源、目录选择、插件清单 | [11](11-web-client-and-host.md) |
 | `api` | 2 | 1,817 | Typert 一元 RPC 网关与 BFF remotes | [11](11-web-client-and-host.md) |
 | `typert` | 4 | 8,430 | 源码类型反射 → 运行时注册表 → 生成 Host/Client 契约 | [11](11-web-client-and-host.md) |
@@ -142,14 +150,14 @@ $ dsh web
 | 包组（两级层次的第一级） | 49 |
 | `packages/` 非测试 TS/TSX 行数 | 228,300 |
 | `packages/` 测试行数 | 268,040 |
-| 测试文件数 | 950 |
+| 测试文件数 | 854 |
 | `.agents/notes/` 英文设计记录 | 683 |
 | `docs/` 英文文档 | 110 |
 | 所有包与 app 的版本号 | `0.1.0-rc.5` |
 
-测试比源码多 17%。原因是上游把「每个包必须有 README 的 Model Experience 小节」「每个非平凡改动必须配一篇 Agent Note」「行号快照必须可重录」都做成了脚本门禁。这套自证机制单独占一篇，见 [13 自证与工程化](13-self-verification.md)。
+测试比源码多 17%。原因是上游把「每个包必须有 README 的 Model Experience 小节」（这一节固定写清「模型在什么条件下、看到这个包贡献的什么内容」）、「每个非平凡改动必须配一篇 Agent Note」、「行号快照必须可重录」都做成了脚本门禁。这套自证机制单独占一篇，见 [13 自证与工程化](13-self-verification.md)。
 
-683 篇设计记录是 dsh 最不寻常的地方：它把「为什么这么定」全部写进了 `.agents/notes/`，路径即状态（`{lifecycle}/{class}/yyyy-mm-dd-topic.md`）。本系列的「为什么这么设计」几乎全部引自那里，导读见 [15 设计记录导读](15-agent-notes-guide.md)。
+683 篇设计记录是 dsh 最不寻常的地方：它把「为什么这么定」全部写进了 `.agents/notes/`，路径即状态（`{lifecycle}/{class}/yyyy-mm-dd-topic.md`，三层依次是生命周期、类别、日期与主题，看一眼路径就知道这篇记录处在什么阶段、属于哪一类改动）。本系列的「为什么这么设计」几乎全部引自那里，导读见 [15 设计记录导读](15-agent-notes-guide.md)。
 
 ## 这个系列怎么读
 
@@ -169,9 +177,23 @@ $ dsh web
 | 11 | [Web 客户端与 host](11-web-client-and-host.md) | 39 个前端包如何把一条事件日志变成你看到的界面 |
 | 12 | [产品表面与协议](12-surfaces-and-protocols.md) | Web / headless / ACP / MCP / Python SDK 各是什么、谁驱动谁、退出码怎么定 |
 | 13 | [自证与工程化](13-self-verification.md) | invariant 服务、测试分层、文档门禁：一个仓库如何用脚本证明自己没坏 |
-| 14 | [横向对照](14-comparison.md) | dsh 与 Claude Code / Codex / OpenCode / pi / mini-swe-agent 在六个维度上的机制差异 |
+| 14 | [横向对照](14-comparison.md) | dsh 与 Claude Code / Codex / OpenCode / pi / mini-swe-agent 在七个维度上的机制差异 |
 | 15 | [设计记录导读](15-agent-notes-guide.md) | 683 篇 Agent Note 里最值得读的那些，以及上游 110 篇文档的分工 |
 | A | [术语表](appendix-a-glossary.md) | 每条术语带源码出处 |
 | B | [怎么自己核对](appendix-b-verification.md) | 不用凭据能核什么、要凭据才能核什么，以及本系列所有统计数字的命令 |
 
 想省时间就读 01 → 02 → 14 三篇：模型看到什么、为什么这么排、别人怎么做。其余按需查。
+
+## 自检
+
+**1. `assemble()` 每一步都重跑一遍，为什么反而要求它每次产出的字节一模一样？**
+
+重跑是为了让插件树的当前状态说了算：谁装上了、谁卸了、哪个 scope 遮蔽了哪个，都在这一步现算。字节不变是为了让这件事对模型不可见，因为模型看到的开头一变，前缀复用就断了。dsh 把这个约束做成了可观测量：`request/header` 事件只在首次或 `headerEquals` 判定变化时才写（`packages/core/agent-loop/src/agent.ts:464-470`），所以日志里凭空多出一条 header，就等于告诉你「这一步前缀断了」。展开见 [02 KV-Cache](02-kv-cache.md)。
+
+**2. 上游说「模型可见 ⟺ 已记录」由一条运行时不变量保证，这篇为什么要给这句话打折？打完折还剩什么在兜底？**
+
+断言本身确实存在（`packages/core/agent-loop/src/invariant.ts:39-42`），但它挂在可选的 `dsh-invariants` 服务上，而出厂的 `dsh` 配置一个 invariant 都不挂（`.agents/notes/implemented/simplification/2026-08-03-omit-invariants-from-shipped-config.md:13`），所以正常跑起来的进程里它没上岗。兜底的是写入侧那道更硬的门：surface 事件不带 `surfaceOp` 就直接抛，想绕过记录的内容压根写不进日志，也就进不了请求。
+
+**3. 只想搞懂「一次请求怎么成形」，该盯哪几组包？为什么浏览器那一侧的代码可以先整个跳过，哪怕它是全仓最大的一坨？**
+
+盯 `core` + `llm` + `session`，13,589 + 8,065 + 8,385 = 30,039 行，请求的拼装、序列化与记录全在这里。行数第一的是 `client`，39 个包、71,896 行，占源码 31%，它是浏览器那半边，干的是把一条事件日志渲染成你看到的界面，不参与请求怎么拼、怎么发。想知道界面是怎么来的，再去看 [11 Web 客户端与 host](11-web-client-and-host.md)。
