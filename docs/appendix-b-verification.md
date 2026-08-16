@@ -128,22 +128,35 @@ pnpm vitest run packages/core/agent-loop
 
 本仓库**没有**把这些运行结果写进正文——上面给的是命令，不是「预期输出」。
 
-## 三、需要凭据的验证：本仓库还没做
+## 三、需要凭据的验证：跑过了什么
 
-诚实地说明现状：**本仓库至今没有跑过任何带 `DEEPSEEK_API_KEY` 的端到端验证。** 这件事有一份记录：`research/runtime-evidence/2026-08-14-deepseek-auth-e2e-pending.md`，字段写得很清楚：
+本仓库跑过带 `DEEPSEEK_API_KEY` 的验证，记录在 [`research/runtime-evidence/2026-08-16-deepseek-cache-probe.md`](../research/runtime-evidence/2026-08-16-deepseek-cache-probe.md)。跑了两类东西，它们的证明力不一样，别混着用。
 
+**第一类：上游自己的 e2e 测试。** 证明力最强，因为它是 dsh 进程真的跑出来的。
+
+```bash
+cd sources/checkouts/deepseek-harness
+pnpm install --no-frozen-lockfile        # 会改动 pnpm-lock.yaml，跑完记得还原
+export DEEPSEEK_API_KEY=your-own-key
+node node_modules/vitest/vitest.mjs run --config vitest.e2e.config.ts   packages/core/agent-loop/tests/request-cache.e2e.ts
 ```
-| credential_ref            | DEEPSEEK_API_KEY |
-| credential_value_recorded | false            |
-| environment_has_key       | false            |
-| authenticated_e2e_executed| false            |
+
+结果：通过，2.03 秒真实 API 调用。同一条命令去掉 key 再跑，结果是 `1 skipped`——这一步很重要，它排除了「门控放行但其实没测」这种假通过。`packages/llm/llm-deepseek/tests/adapter.e2e.ts` 的 6 条也全过（含 thinking 开关切换、tool call 轮次的 reasoning 回传、SSE 顺序）。
+
+两个坑：**Node 必须 22 以上**（上游 `.nvmrc` 写 24；Node 20 缺 `Promise.withResolvers`，加载 agent-loop 就报错），以及 `pnpm install` 会改上游 checkout 的 `pnpm-lock.yaml`，不还原的话本仓库的 `sources:verify` 会报「checkout has local changes」。
+
+**第二类：本仓库自己写的探针。** 证明力弱一些——它用手写的、模仿 dsh 请求形状的请求直接打 API，测的是 **provider 的行为**，不是 dsh 的实现。
+
+```bash
+export DEEPSEEK_API_KEY=your-own-key
+node scripts/experiments/cache-probe.mjs --json probe.json
 ```
 
-该记录的结尾写着它的边界：「This record proves only that the current environment lacked the required credential. It does not prove the provider path fails, succeeds, or is unavailable.」
+它回答上游 e2e 回答不了的问题：命中率具体是多少、什么情况下会掉。四组结果（完整数字见运行记录）：前缀稳定时 81–96%；只改 system 一句话 → 掉到 0；权限策略写进 system 每次切换只剩 256 token 命中，改成尾部 user 快照则保持 81%；摘要请求复用主对话前缀 93.4%，另起 summarizer system prompt 0%。
 
-所以正文里不会出现任何「运行后你会看到 X」的句子。凡是没跑过的，要么不写，要么写成命令。
+**这两类都不能替代第三类**：真实项目里跑一个完整任务，看长会话下的压缩、审批、恢复。那个还没做。
 
-如果你自己要跑，模板由 `npm run evidence:local` 生成，需要记录的字段是：
+自己跑的话，记录模板由 `npm run evidence:local` 生成，需要写清楚的字段是：
 
 - **来源基线**：本仓库 commit、dsh commit（`47f9438`）、生成时间（UTC）；
 - **环境**：os/arch、Node 版本、key 是否存在（**只记存在与否，绝不记值**）、网络状况；

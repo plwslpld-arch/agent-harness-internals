@@ -32,6 +32,13 @@
 - 旧 `docs/10`、`docs/12` 把 DSML 列为 dsh 的协议面——上游源码 `grep -ri dsml` 零命中，它属于模型侧。
 - `AGENTS.md` 禁用 `inference` 标签而校验脚本仍允许——两边已对齐（标签体系整体取消）。
 
+### Verified — 带凭据的端到端验证（2026-08-16）
+
+- 上游 `packages/core/agent-loop/tests/request-cache.e2e.ts` 用真实 key 跑通并通过；去掉 key 同一条命令是 `1 skipped`，排除了「门控放行但没测」的假通过。
+- 上游 `packages/llm/llm-deepseek/tests/adapter.e2e.ts` 6 条全过（thinking 开关切换、tool call 轮次的 reasoning 回传、SSE 顺序、凭据只从 credentials 文档读）。
+- 新增 `scripts/experiments/cache-probe.mjs`：零依赖探针，直接测四条缓存论断。实测数字——前缀稳定时命中 81–96%；只改 system 一句话掉到 0；权限策略进 system 每次切换只剩 256 token 命中，改成尾部 user 快照保持 81%；摘要请求复用前缀 93.4%，另起 summarizer system prompt 0%。全部非零命中值都是 64 的整数倍，独立佐证了 64-token 块粒度。
+- 据此改写 README、01、02、附录 B 里「尚未跑过」的说法，并删掉那份已经过时的 pending 记录。
+
 ### Removed
 
 - `PROJECT_STATUS.md`（内容属更早一版）、`ROADMAP.md`（打勾项对应产物已删）、`GOVERNANCE.md` / `MAINTAINERS.md` / `SUPPORT.md` / `CODE_OF_CONDUCT.md` / `CITATION.cff`（单人研究仓库的仪式性文件）。

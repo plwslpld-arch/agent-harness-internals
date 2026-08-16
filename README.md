@@ -61,7 +61,7 @@
 
 CI 会做一件别处不太做的事：**抽查正文里每一处 `路径:行号` 是否真的指向那一行**（`npm run check:anchors`）。行号写错、上游漂移，门禁直接失败。这是「结论可追溯」的唯一硬保证。
 
-带 `DEEPSEEK_API_KEY` 的端到端验证目前**还没有跑过**，[research/runtime-evidence](research/runtime-evidence/) 里如实记着这一点——所以正文里不会出现任何「预期输出」式的实验结果。
+带 `DEEPSEEK_API_KEY` 的端到端验证**已经跑过**：上游的 `request-cache.e2e.ts` 与 `llm-deepseek/adapter.e2e.ts` 用真实 key 全部通过（去掉 key 则整组 skip），另有一个本仓库自己写的探针脚本量到了具体的缓存数字——改 system 一句话命中率从 85.7% 掉到 0，摘要请求复用前缀能拿到 93.4% 而另起 system prompt 是 0%。命令、环境、原始数字见 [research/runtime-evidence](research/runtime-evidence/)。正文里的实验只写跑过的，不写「预期输出」。
 
 ## 本地跑一遍
 

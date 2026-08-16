@@ -12,7 +12,7 @@
 
 ## 当前记录
 
-- [2026-08-14 DeepSeek 带凭据 E2E 待办](2026-08-14-deepseek-auth-e2e-pending.md)：当时环境没有 `DEEPSEEK_API_KEY`，带凭据的 headless E2E 未执行。这条记录存在的意义是——**没跑就写没跑**，不要把它转写成成功结论。
+- [2026-08-16 带凭据的 DeepSeek 端到端验证](2026-08-16-deepseek-cache-probe.md)：上游的 `request-cache.e2e.ts` 与 `llm-deepseek/adapter.e2e.ts` 用真实 key 跑通（7 条全过，去掉 key 则 skip），另附本仓库探针脚本量到的四组缓存数据。
 
 ## 怎么生成一份新记录
 

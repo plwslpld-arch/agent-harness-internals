@@ -1,1 +1,6 @@
 * text=auto eol=lf
+
+# 这是一个以中文长文为主的仓库；默认 linguist 不统计 Markdown，
+# 会让语言条显示成 100% JavaScript（其实只有校验脚本）。
+*.md linguist-detectable=true
+*.md linguist-documentation=false
