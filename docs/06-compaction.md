@@ -7,7 +7,7 @@ status: draft
 
 # 压缩：什么时候触发、砍哪一段、怎么少付一次全价
 
-上下文会满。所有 coding harness 都要回答同一组问题：什么时候动手、砍掉哪一段、砍掉的东西用什么替代、这次操作本身要花多少钱。dsh 的答案有一个别人少见的特点——**摘要请求本身是主对话请求的字节前缀**，所以那次辅助调用几乎白嫖上一次的热缓存。这篇把整条链路讲清楚，也把它的代价讲清楚。
+上下文会满。所有 coding harness 都要回答同一组问题：什么时候动手、砍掉哪一段、砍掉的东西用什么替代、这次操作本身要花多少钱。dsh 的答案有一个别人少见的特点：**摘要请求本身是主对话请求的字节前缀**，所以那次辅助调用几乎白嫖上一次的热缓存。这篇把整条链路讲清楚，也把它的代价讲清楚。
 
 ## 先看见：落地的 checkpoint 长什么样
 
@@ -24,7 +24,7 @@ status: draft
 
 - `seq 19` 是**锁**。`seq 22` 放锁。中间的一切失败都要保证至少尝试写一次 `compaction/end`。
 - `seq 20` 是账本：摘要正文、模型原始输出、被遮蔽（源码里叫 shadowed，指「被这次替换顶掉、模型从此看不见」的那些节点）的范围与 seq 列表、被遮蔽内容的估价（266 token）、实际路由到哪个 provider/model、辅助请求的 usage。这条事件**不上 surface**，模型看不到。
-- `seq 21` 才是模型看得见的东西：一条 `user/message`，`surfaceOp` 是 `{op:'replace', start:4, end:4}`——它把 surface 上的 `seq 4` 节点整个遮蔽掉，自己占据那个位置。`sourceEventSeqs: [19,20,4]` 把锁、账本、被遮蔽节点全部引上。
+- `seq 21` 才是模型看得见的东西：一条 `user/message`，`surfaceOp` 是 `{op:'replace', start:4, end:4}`，它把 surface 上的 `seq 4` 节点整个遮蔽掉，自己占据那个位置。`sourceEventSeqs: [19,20,4]` 把锁、账本、被遮蔽节点全部引上。
 - checkpoint 消息的正文结构是固定的三段：前言 + `<compacted-summary>` 开标签、摘要文本块、`</compacted-summary>` 闭标签。
 
 surface 的变化因此是：
@@ -34,7 +34,7 @@ surface 的变化因此是：
 压缩后：[user(seq21)=checkpoint] [user(seq5)] [assistant(seq…)] [tool/result(seq…)] …
 ```
 
-也就是：**头部被一条 checkpoint 消息顶替，尾巴原样保留**。下一次主对话请求的消息序列因此从第一条起就和上一次不同——这是压缩最直接的代价，后面会算这笔账。
+也就是：**头部被一条 checkpoint 消息顶替，尾巴原样保留**。下一次主对话请求的消息序列因此从第一条起就和上一次不同。这是压缩最直接的代价，后面会算这笔账。
 
 ## 触发：两个入口
 
@@ -42,14 +42,14 @@ surface 的变化因此是：
 
 ### 压力（`agent/pre-step`）
 
-每一步派发之前跑一次（`packages/compaction/compaction-basic/src/index.ts:147-164`）。失败只 warn 不中断——`ctx.logger.warn('step compaction failed: …; continuing the turn')`（`:160-161`），也就是说压缩失败不会打断这一轮。
+每一步派发之前跑一次（`packages/compaction/compaction-basic/src/index.ts:147-164`）。失败只 warn 不中断：`ctx.logger.warn('step compaction failed: …; continuing the turn')`（`:160-161`），也就是说压缩失败不会打断这一轮。
 
 判定链在 `compactIfNeeded`（`packages/compaction/compaction-basic/src/index.ts:258-332`）：
 
-1. 从日志的最新 `request/header` 拿 provider/model（`routedTarget`）；**没有 header 就什么都不做**——没发过请求就没有压力可谈。
+1. 从日志的最新 `request/header` 拿 provider/model（`routedTarget`）；**没有 header 就什么都不做**：没发过请求就没有压力可谈。
 2. `ctx.llm.resolveModelInfo(...)` 拿 `contextWindow`。拿不到就抛 `TargetPressureConfigError`（`:296-301`），每个目标只警告一次。
 3. `tokenMeter.measure(session).totalTokens < thresholdTokens` → 返回 null，什么都不做。
-4. 超阈值了，**先跑模型无关的剪枝**（如果装了 `toolResultPruner`），重新测量；还是低于阈值就到此为止（`:306-312`）——这一步能完全避免掉那次花钱的摘要调用。
+4. 超阈值了，**先跑模型无关的剪枝**（如果装了 `toolResultPruner`），重新测量；还是低于阈值就到此为止（`:306-312`）。这一步能完全避免掉那次花钱的摘要调用。
 5. 仍然超阈值：最多 `compactionRetries + 1` 轮「选区间 → 压缩 → 重测」；跑完还超就抛错（`:313-330`）。
 
 默认参数（`packages/compaction/compaction-basic/src/config.ts:19-23, 86-96`）：
@@ -73,7 +73,7 @@ surface 的变化因此是：
     : policy.retainTokens
 ```
 
-并且校验 `retainTokens < thresholdTokens`（`:148-154`），否则压缩后立刻又超阈值。DeepSeek 默认窗口 1,000,000，所以出厂配置下阈值 800,000、保留 160,000。`modelPolicies[]` 可以按 provider/model 覆盖上表里除 `auto` 之外的每一项——可覆盖的键名单写死在 `POLICY_CONFIG_KEYS`（`packages/compaction/compaction-basic/src/config.ts:26-35`），`auto` 不在里面。
+并且校验 `retainTokens < thresholdTokens`（`:148-154`），否则压缩后立刻又超阈值。DeepSeek 默认窗口 1,000,000，所以出厂配置下阈值 800,000、保留 160,000。`modelPolicies[]` 可以按 provider/model 覆盖上表里除 `auto` 之外的每一项，可覆盖的键名单写死在 `POLICY_CONFIG_KEYS`（`packages/compaction/compaction-basic/src/config.ts:26-35`），`auto` 不在里面。
 
 ### 溢出恢复（`agent/request-error`）
 
@@ -85,14 +85,14 @@ surface 的变化因此是：
 
 流程与压力路径不同的地方：
 
-- **不看阈值**——请求已经被 provider 拒了，再问本地估算没有意义。
+- **不看阈值**：请求已经被 provider 拒了，再问本地估算没有意义。
 - 先记下当前的 `replaceGeneration`（`:191`），这是「有没有实际进展」的判据。
-- 剪枝 → `selectCompactableRange(..., retainTokens = 0)`（`packages/compaction/compaction-basic/src/index.ts:281-290`）——**不留尾巴**，尽可能多压。
+- 剪枝 → `selectCompactableRange(..., retainTokens = 0)`（`packages/compaction/compaction-basic/src/index.ts:281-290`）：**不留尾巴**，尽可能多压。
 - 只有 `replaceGeneration` 真的增大了才返回 `{kind:'retry'}`，否则保留原来的失败（`:217-222`）。这条规则防止空转：压缩没压掉任何东西时重试只会再撞一次墙。
 - 有一个刻意的例外（`:195-208`）：如果模型无关的剪枝已经落地、但后面的摘要环节抛了错，只要 surface 确实变了，仍然算作可重试的进展——注释说得很直白，「那次持久化的缩减本身就是充分的重试证据，不要因为可选的第二阶段失败就把它丢掉」。
 - 计数器在 `agent/status` 变 idle 或者出现成功的 `assistant/message` 时清零（`:167-177`）。
 
-顺带说清一件事：`CONTEXT_WINDOW_EXCEEDED` **不在** `llm-retry` 的默认 `retryableCodes` 里（见 [04 LLM 层](04-llm-adapter.md)），所以 `normal` 模式的重试插件会直接放行给下游；`always` 模式则会特意先问下游要不要处理，压缩因此优先于盲目重试。
+`CONTEXT_WINDOW_EXCEEDED` **不在** `llm-retry` 的默认 `retryableCodes` 里（见 [04 LLM 层](04-llm-adapter.md)），所以 `normal` 模式的重试插件会直接放行给下游；`always` 模式则会特意先问下游要不要处理，压缩因此优先于盲目重试。
 
 ### 手动 `/compact`
 
@@ -104,7 +104,7 @@ surface 的变化因此是：
 
 `selectCompactableRange`（`packages/compaction/compaction-basic/src/region.ts:98-133`）：
 
-1. 校验 token-meter 看到的 surface 与 session 当前 surface 完全一致，不一致直接抛（`:107-110`）——两者错位时任何选择都是错的。
+1. 校验 token-meter 看到的 surface 与 session 当前 surface 完全一致，不一致直接抛（`:107-110`）。两者错位时任何选择都是错的。
 2. 从尾部向前累计每个节点的估价，直到累计 `>= retainTokens`，得到 `keepFromIdx`（`:112-120`）。
 3. `keepFromIdx === 0` 表示尾巴就吃掉了全部预算，无可压，返回 null。
 4. 从 `keepFromIdx` 继续向前退，直到那个 cut 处 tool 配对是平衡的（`toolPairingBalancedBefore`，`:123-127`）。再退到 0 也是无可压。
@@ -132,11 +132,11 @@ commitCompactionBody             ← append compaction/summary，再 append user
 append compaction/end            ← 放锁
 ```
 
-几个细节值得单独说。
+几个细节单独说。
 
 **锁的语义**。`compaction/start` 的 `turn` 字段是 `number | null`（`packages/compaction/compaction/src/types.ts:23`）：数字表示这次压缩被那个开放 turn 严格包住（自动路径），`null` 表示这是两个 turn 之间的独立事务（手动路径）。`assertCompactionInactive`（`packages/compaction/compaction-basic/src/region.ts:286-298`）判断「有没有未配对的 start」时，会拿 `session/end-seed` 的位置做比较：如果最新的种子边界比那条未配对的 start 还靠后，说明那是上个生命周期留下的，不算活跃锁。这就是 [05 Session](05-session.md) 里 `session/end-seed` 存在的实际用途之一。
 
-**失败一定尝试收尾**（`packages/compaction/compaction-basic/src/region.ts:218-229`）：catch 里会再 append 一条带 `error` 的 `compaction/end`；连这一步都写不出去，就故意留下一个未配对的 `start`——可检测，好过假装干净。
+**失败一定尝试收尾**（`packages/compaction/compaction-basic/src/region.ts:218-229`）：catch 里会再 append 一条带 `error` 的 `compaction/end`；连这一步都写不出去，就故意留下一个未配对的 `start`：可检测，好过假装干净。
 
 **两种稳定性检查**。自动路径用 `assertWholeSurfaceUnchanged`（`packages/compaction/compaction-basic/src/region.ts:387-396`）：重新 measure，整个 surface 的节点列表必须与准备时深度相等，否则抛 `SurfaceChangedError`。手动路径用 `assertSelectedSpanStable`（`packages/compaction/compaction-basic/src/region.ts:403-424`）：只要求所选的那一段仍然是同一个存在、连续、等价定价、配对平衡的替换目标——摘要期间新追加的上下文不算破坏。区别的理由很实际：手动压缩跑在 idle 期，但用户随时可能再输入。
 
@@ -153,7 +153,7 @@ append compaction/end            ← 放锁
 
 注意比较的是**加了框架之后**的 checkpoint 消息估价，不是裸摘要。压缩不缩小就不算压缩。
 
-**提交是两条 append 紧挨着**（`packages/compaction/compaction-basic/src/region.ts:427-465`）：先写 `compaction/summary`，再写那条 `user/message`，`surfaceOp: {op:'replace', start, end}`，`sourceEventSeqs: [startSeq, summarySeq, ...shadowedSeqs]`。这个「计量事件紧邻其替换节点」的相邻性是**契约**——`packages/compaction/compaction/src/types.ts:25-32` 明确写道：消费者可以直接把一个 replace 节点和它前面那条计量事件配对，从而算出这次替换省下了多少。
+**提交是两条 append 紧挨着**（`packages/compaction/compaction-basic/src/region.ts:427-465`）：先写 `compaction/summary`，再写那条 `user/message`，`surfaceOp: {op:'replace', start, end}`，`sourceEventSeqs: [startSeq, summarySeq, ...shadowedSeqs]`。这个「计量事件紧邻其替换节点」的相邻性是**契约**。`packages/compaction/compaction/src/types.ts:25-32` 明确写道：消费者可以直接把一个 replace 节点和它前面那条计量事件配对，从而算出这次替换省下了多少。
 
 ## 摘要请求怎么复用热前缀
 
@@ -181,7 +181,7 @@ function buildSummarizationInput(
 }
 ```
 
-`system` 和 `tools` 直接取自最新的 `request/header`；消息是被遮蔽的 seq 逐个过 `deriveEventMessage`——也就是 `deriveMessages()` 折进主请求的**同一批对象**。
+`system` 和 `tools` 直接取自最新的 `request/header`；消息是被遮蔽的 seq 逐个过 `deriveEventMessage`，也就是 `deriveMessages()` 折进主请求的**同一批对象**。
 
 然后 `summarizeWithLlm`（`packages/compaction/compaction-basic/src/summarizer.ts:121-163`）把指令追加在**最后**：
 
@@ -230,7 +230,7 @@ export function frameSummary(summary: readonly ContentBlock[]): ContentBlock[] {
 }
 ```
 
-`CHECKPOINT_PREAMBLE`（`packages/compaction/compaction-basic/src/summarizer.ts:69-70`）就是本文开头那条 `seq 21` 里看到的那段话。只保留 text 块，出现图像抛 `UNSUPPORTED_CONTENT`（`packages/compaction/compaction-basic/src/summarizer.ts:216-224`），`max-tokens` 结束当作失败——「summarization truncated at the token cap (incomplete checkpoint)」（`packages/compaction/compaction-basic/src/summarizer.ts:206-209`）。
+`CHECKPOINT_PREAMBLE`（`packages/compaction/compaction-basic/src/summarizer.ts:69-70`）就是本文开头那条 `seq 21` 里看到的那段话。只保留 text 块，出现图像抛 `UNSUPPORTED_CONTENT`（`packages/compaction/compaction-basic/src/summarizer.ts:216-224`），`max-tokens` 结束当作失败：「summarization truncated at the token cap (incomplete checkpoint)」（`packages/compaction/compaction-basic/src/summarizer.ts:206-209`）。
 
 ### 为什么指令在尾部
 
@@ -238,16 +238,16 @@ export function frameSummary(summary: readonly ContentBlock[]): ContentBlock[] {
 
 > A provider caches on the request's leading token sequence, so a first token that differs — a different system prompt — invalidates the entire cached prefix. Every compaction therefore paid full prompt-processing cost for the whole replayed history twice: once for the conversation request that tripped pressure, and again for the summarization call, defeating the cache exactly when the conversation is largest.
 
-决定是把指令从**请求前部**挪到**对话末尾**（`:13`）。Note 里被否决的四个方案值得记（`:29-32`）：
+决定是把指令从**请求前部**挪到**对话末尾**（`:13`）。Note 里被否决的四个方案（`:29-32`）：
 
-- 「保留 summarizer system prompt，其余照抄」——被否：system 槽正是 provider 缓存的第一个 token 区域，换掉它后面写什么都没用。
-- 「只发被遮蔽区间，不带 system/tools 头」——被否：头不一样照样从第一个 token 就分叉，缓存一点没省，还丢了摘要需要的框架。
-- 「省掉 `tools`（反正摘要器不会调工具）」——被否，原话是 "tool schemas are part of the cached token sequence; omitting them misaligns every following token and defeats reuse"。**即使不调用也必须带上**。
-- 「专门开一个发 `assistant/chunk` 的子会话做快照回放」——被否：`compaction/summary` 事件已经记录了这次本地调用的位置和完整输出，它的显式调用标记（`llmStreamCall: true`）防止回放把模板或远程产出的摘要当成本地流。这条正好解释了那个字段为什么存在。
+- 「保留 summarizer system prompt，其余照抄」。被否：system 槽正是 provider 缓存的第一个 token 区域，换掉它后面写什么都没用。
+- 「只发被遮蔽区间，不带 system/tools 头」。被否：头不一样照样从第一个 token 就分叉，缓存一点没省，还丢了摘要需要的框架。
+- 「省掉 `tools`（反正摘要器不会调工具）」。被否，原话是 "tool schemas are part of the cached token sequence; omitting them misaligns every following token and defeats reuse"。**即使不调用也必须带上**。
+- 「专门开一个发 `assistant/chunk` 的子会话做快照回放」。被否：`compaction/summary` 事件已经记录了这次本地调用的位置和完整输出，它的显式调用标记（`llmStreamCall: true`）防止回放把模板或远程产出的摘要当成本地流。这条正好解释了那个字段为什么存在。
 
-Note 也划清了保证范围（`:23-25`）：自动压缩锚在 surface 头，所以复用是**必中**的情况；手动的中段 `compactRegion` 仍然正确、但放弃复用（它的区间不是请求头）；配置了不同 `summarizationProvider`/`summarizationModel` 同样放弃复用——那是部署方的显式取舍，不是缺陷。
+Note 也划清了保证范围（`:23-25`）：自动压缩锚在 surface 头，所以复用是**必中**的情况；手动的中段 `compactRegion` 仍然正确、但放弃复用（它的区间不是请求头）；配置了不同 `summarizationProvider`/`summarizationModel` 同样放弃复用。那是部署方的显式取舍，不是缺陷。
 
-**顺带纠正一个常见误解**：压缩**确实会发一次独立的 LLM 请求**（`packages/compaction/compaction-basic/src/summarizer.ts:164` 那行 `for await (const chunk of ctx.llm.stream(options))`）。「复用热前缀」的意思不是「不发请求」，而是「这次请求的前缀与刚才那次对话请求字节对齐，所以 prefill 几乎不要钱」。
+还有一个常被弄反的地方：压缩**确实会发一次独立的 LLM 请求**（`packages/compaction/compaction-basic/src/summarizer.ts:164` 那行 `for await (const chunk of ctx.llm.stream(options))`）。「复用热前缀」的意思不是「不发请求」，而是「这次请求的前缀与刚才那次对话请求字节对齐，所以 prefill 几乎不要钱」。
 
 ## 模型无关的剪枝
 
@@ -286,25 +286,25 @@ export const PRUNE_MARKER = '\n\n[... tool result middle pruned ...]\n\n'
       })
 ```
 
-和摘要走的是同一套「计量事件紧邻替换节点」协议。而 `tool/result` 的 replace 在 session 层有额外约束——只能替换恰好一个同类节点、只能改 `content`（见 [05 Session](05-session.md)），所以剪枝在类型和运行时上都无法越界。
+和摘要走的是同一套「计量事件紧邻替换节点」协议。而 `tool/result` 的 replace 在 session 层有额外约束：只能替换恰好一个同类节点、只能改 `content`（见 [05 Session](05-session.md)），所以剪枝在类型和运行时上都无法越界。
 
-剪枝在两条触发路径上都跑在摘要之前（`packages/compaction/compaction-basic/src/index.ts:284-287, 308-311`）。README 也点出了它最大的价值（`packages/compaction/compaction-basic/README.md:99`）：「Model-free pruning can avoid the auxiliary call entirely」——很多时候剪一剪就够了，那次摘要请求根本不用发。
+剪枝在两条触发路径上都跑在摘要之前（`packages/compaction/compaction-basic/src/index.ts:284-287, 308-311`）。README 也点出了它最大的价值（`packages/compaction/compaction-basic/README.md:99`）：「Model-free pruning can avoid the auxiliary call entirely」。很多时候剪一剪就够了，那次摘要请求根本不用发。
 
 ## 代价与失效点
 
-1. **主对话在压缩后必然从第一条消息起 miss**。README 自己写明（`packages/compaction/compaction-basic/README.md:103`）：「Each checkpoint invalidates reuse from the first replaced history token; the unchanged request prefix before that range remains reusable」——保住的只有 system 和 tools。
+1. **主对话在压缩后必然从第一条消息起 miss**。README 自己写明（`packages/compaction/compaction-basic/README.md:103`）：「Each checkpoint invalidates reuse from the first replaced history token; the unchanged request prefix before that range remains reusable」。保住的只有 system 和 tools。
 2. **每轮压缩都重写头部 checkpoint**。上游提案的问题陈述（`.agents/notes/proposed/feature/2026-07-06-recallable-compaction.md:9`）自评得很直接：「the head checkpoint is rewritten every pass, so the request prefix takes a full prompt-cache miss each time, and earlier summaries are re-summarized generation after generation」。压得越频繁，重复摘要的损耗越大。
 3. **被压掉的原文对模型彻底消失**。同一份提案指出（`:9`）：`shadowedRange` 只存在于 log-only 的 `compaction/summary` 事件上，模型看到的摘要里没有任何指向它所遮蔽内容的引用，也没有工具能把那一段读回来——即使只追加的日志里一个字节都没丢。提案给出的方案是拆成「冻结的索引 checkpoint + 一个可变的状态 checkpoint」并加 `history_read` / `history_search` 两个工具，请求前缀变成 `[system][stubs…][state][tail]`，让 miss 的起点从位置 0 后移（`:46-47, :53`）。**状态是 proposed，尚未实现。**
 4. **阈值建立在 4 字符/token 的启发式上**（见 [04 LLM 层](04-llm-adapter.md)）。对中文和代码偏差都不小；而 DeepSeek 默认窗口 1,000,000 × 0.8 = 800,000，出厂配置下自动压缩极少触发。真正常见的入口反而是溢出恢复。
 5. **只有单摘要节点，没有分级或分段**。区间永远从头开始、结果永远是一条 checkpoint 消息。摘要质量完全依赖那一份固定的英文模板。
 6. **剪枝按字符不按 token**。8192 个字符对英文和对中文意味着差别很大的 token 量。
-7. **压力路径失败只是 warn**（`packages/compaction/compaction-basic/src/index.ts:160-161`）。压不动的会话会继续膨胀，直到撞上 provider 的窗口，然后走溢出恢复——如果那次也压不动，`maxOverflowRetries` 用完就把原始失败抛出去。
+7. **压力路径失败只是 warn**（`packages/compaction/compaction-basic/src/index.ts:160-161`）。压不动的会话会继续膨胀，直到撞上 provider 的窗口，然后走溢出恢复；如果那次也压不动，`maxOverflowRetries` 用完就把原始失败抛出去。
 8. **手动中段压缩放弃缓存复用**，这是设计上接受的（Note `:23-25`）；配置了跨路由摘要模型同理。
 9. **`compaction/summary` 与其 `user/message` 的相邻性是契约而非机制**。类型注释写了 "The replacement MUST be appended synchronously right after this event"（`packages/compaction/compaction/src/types.ts:78-79`），但没有运行时断言强制它。
 
 ## 别人怎么做
 
-开头那四个问题（何时动手、砍哪一段、用什么替代、这次操作花多少钱）正好是下表的前四列。Claude Code 一行来自官方公开文档，其余读自源码。读的时候盯住「摘要怎么发」这一列——那是唯一一处 dsh 和所有人都不一样的地方。
+开头那四个问题（何时动手、砍哪一段、用什么替代、这次操作花多少钱）正好是下表的前四列。Claude Code 一行来自官方公开文档，其余读自源码。读的时候盯住「摘要怎么发」这一列，那是唯一一处 dsh 和所有人都不一样的地方。
 
 | harness | 触发 | 砍哪一段 | 摘要怎么发 | 特别之处 |
 | --- | --- | --- | --- | --- |
@@ -315,11 +315,11 @@ export const PRUNE_MARKER = '\n\n[... tool result middle pruned ...]\n\n'
 | **pi** | `contextTokens > contextWindow − 16384`；三种 reason：`manual` / `threshold` / `overflow`（溢出只做**一次**恢复性压缩） | 从最新往回累加到 ≥ 20,000 token；合法切点只有 user / assistant / bashExecution / custom，**绝不切在 tool result 上**；单个 turn 超预算时对 turn 前缀单独摘要再合并 | 独立 system prompt 的摘要助手，maxTokens = `0.8 × reserveTokens` | 压缩记为 JSONL **树**上的一条 `CompactionEntry{summary, firstKeptEntryId, …}`，重建上下文时 = system + summary + `firstKeptEntryId` 之后的消息 |
 | **mini-swe-agent** | **没有压缩** | — | — | 唯一的体积保护是 observation 模板：超过 10,000 字符时取头 5000 + 尾 5000；`ContextWindowExceededError` 列在放弃列表里，直接终止任务 |
 
-几处值得对照的分野：
+几处可以对照的分野：
 
 - **切点约束**：dsh 用「tool 配对平衡」的 cut，pi 用「合法切点白名单」，OpenCode 允许在 turn 内切分。三者都在解决同一个问题——不能留下悬空的工具调用。
 - **摘要请求的头**：只有 dsh 刻意让它与主对话请求对齐。OpenCode 和 pi 都用独立的 summarizer system prompt，Codex 本地实现用 `base_instructions` 加空工具列表。上游提案的自评（`.agents/notes/proposed/feature/2026-07-06-recallable-compaction.md:13`）：「none of the surveyed implementations makes compaction prefix-cache-aware」。
-- **压缩之外的便宜办法**：Claude Code 的 `/rewind`（回退到一个已缓存的前缀）和 Codex 的 token-budget 新窗口都绕开了「摘要」这件事本身。dsh 的对应物是模型无关的剪枝——它同样不花模型的钱，只是保守得多。
+- **压缩之外的便宜办法**：Claude Code 的 `/rewind`（回退到一个已缓存的前缀）和 Codex 的 token-budget 新窗口都绕开了「摘要」这件事本身。dsh 的对应物是模型无关的剪枝，它同样不花模型的钱，只是保守得多。
 - **压缩后的重新注入**：Claude Code 会把 CLAUDE.md 和已用 skill 的正文重新注入，Codex 会重新注入初始上下文并对齐位置，OpenCode 会追加一条续跑消息。dsh 什么都不重注入，压缩之后 surface 上只多了那一条 checkpoint。唯一的例外是运行时上下文快照：**如果**被压区间恰好盖住了那条还留着的快照，`RuntimeContextProjection` 的 `retained` 会被置空，下一步于是重发一份完整快照（机制见 [01 System Prompt](01-system-prompt.md) 的 `retained` 三态；本条是从那段逻辑推出来的，**是推断**，本文开头那个 fixture 里被替换的是 `seq 4`，运行时快照 `seq 5` 并没被盖住，所以看不到这个效果）。
 
 ## 怎么自己核

@@ -9,8 +9,8 @@ status: draft
 
 dsh 有两件事是别家 harness 基本没有的：
 
-- **Code Mode**——把「模型看到的工具表」整体折叠成一个 `run_code`，其余工具变成系统提示里的一段 TypeScript（或 Python）SDK 声明；模型不再一次调一个工具，而是写一段程序，在程序里调工具、循环、分支、汇总，最后只把它想留下的东西返回给自己。
-- **Extensions**（`packages/extensions/`，16,096 行非测试源码，仅次于 `client` 组，见 [00 总览](00-overview.md)的包组表）——给模型一组 `cordis_*` 工具，让它在**当前这个进程里**定义、启动、停止、删除 Cordis 插件。也就是说，agent 可以在运行期给自己加一个新工具、加一个浏览器 UI 面板，然后继续干活。
+- **Code Mode**：把「模型看到的工具表」整体折叠成一个 `run_code`，其余工具变成系统提示里的一段 TypeScript（或 Python）SDK 声明；模型不再一次调一个工具，而是写一段程序，在程序里调工具、循环、分支、汇总，最后只把它想留下的东西返回给自己。
+- **Extensions**（`packages/extensions/`，16,096 行非测试源码，仅次于 `client` 组，见 [00 总览](00-overview.md)的包组表）：给模型一组 `cordis_*` 工具，让它在**当前这个进程里**定义、启动、停止、删除 Cordis 插件。也就是说，agent 可以在运行期给自己加一个新工具、加一个浏览器 UI 面板，然后继续干活。
 
 两者都不是默认开启的。它们是 dsh「万物皆插件」这条路线走到尽头时长出来的东西：既然工具注册表是一个可替换的服务，那「工具怎么呈现给模型」就是它的一个配置项；既然整个 harness 是一棵 Cordis 插件树，那「往树上再插一个节点」也可以是一个工具。
 
@@ -119,7 +119,7 @@ declare const tools: {
 }
 ```
 
-这就是「模型看到什么」的全部答案：**一个工具 schema + 一份 `.d.ts`**。native 模式下模型只知道每个工具吃什么参数，Code Mode 下它还知道每个工具吐什么结构——因为它要在程序里消费这些结果。
+这就是「模型看到什么」的全部答案：**一个工具 schema + 一份 `.d.ts`**。native 模式下模型只知道每个工具吃什么参数，Code Mode 下它还知道每个工具吐什么结构，因为它要在程序里消费这些结果。
 
 ### 1.3 模型写了什么，session 里留下了什么
 
@@ -143,7 +143,7 @@ tool/code-dispatch-start  subCallId=call_..._7875:code:2  name=bash  arguments={
 tool/code-dispatch        subCallId=call_..._7875:code:2  isError=false  content=[{"type":"text","text":"CODE_TWO\n"}]
 ```
 
-然后是模型真正收到的东西——唯一一条 `tool/result`（`session.jsonl:25`）：
+然后是模型真正收到的东西，唯一一条 `tool/result`（`session.jsonl:25`）：
 
 ```
 captured output
@@ -172,7 +172,7 @@ export type ToolPresentationMode = 'native' | 'code' | 'both'
 
 > Model presentation. `native` (default) sends every visible schema; `code` sends only `run_code` plus a generated SDK prompt and collapses the executor to the same surface (a model-direct call may only name `run_code`; `run_code` SDK sub-dispatches keep every visible tool); `both` sends both forms. Code modes require a `ctx.codeRuntime` whose `language` has a registered SDK renderer (TypeScript or Python) and fail prompt assembly when it is absent or has no renderer. Under `code`, native names in `toolOrder` are invalid.
 
-注意最后一句：`code` 模式下，如果部署还配着 native 工具名的 `systemPrompt.toolOrder`，整次装配直接失败。这是有意的——不是 bug，是「你换了呈现方式就得更新顺序配置」。
+注意最后一句：`code` 模式下，如果部署还配着 native 工具名的 `systemPrompt.toolOrder`，整次装配直接失败。这是有意的：不是 bug，是「你换了呈现方式就得更新顺序配置」。
 
 生产 dsh 的组装里 `tools` 行**不写** `mode`，也就是保持默认 native（`packages/bundle/base/cordis.patch.yml:422-425` 注释：「Presentation mode is a deployment choice; omitting it here keeps the schema default (native).」）。Web 与 headless 两个 bundle 各自加了一个进程级临时开关，读环境变量（`packages/bundle/web-app/cordis.patch.yml:41`、`packages/bundle/headless/cordis.patch.yml:19`）：
 
@@ -214,11 +214,11 @@ Code Mode 往系统提示里塞两段，顺序是有讲究的。
 
 再往下的注释解释了不放这一段会发生什么（`packages/core/tools/src/index.ts:843-850`）：每个工具包都会注册自己的 `tool:*` 指导段（order 100-199），这些段落只讲「这个工具怎么用」，没有一段会说「但你不能直接调它」。缺了 order 99 这一句，模型读到一整本工具手册、发出一次 native 调用、收到一个刚刚在 prompt 里声明过的工具的 `UNKNOWN_TOOL`，然后**得出「这个部署坏了」的结论**。把规则排在手册前面，就是为了不让模型走到那一步。
 
-`both` 模式下这一段渲染成空字符串——因为在 `both` 下 native 调用确实能执行，这条规则是假的（`packages/core/tools/src/index.ts:852-853`）。
+`both` 模式下这一段渲染成空字符串，因为在 `both` 下 native 调用确实能执行，这条规则是假的（`packages/core/tools/src/index.ts:852-853`）。
 
 **`tools:sdk`，order 150**（`packages/core/tools/src/code-mode.ts:23`）。JSDoc：「The `tools:sdk` section order: inside the 100–199 tool-guidance band, after per-tool guidance sections.」也就是说：先读规则（99），再读每个工具的散文指导（100-199），最后读机器可读的类型声明（150 落在带内偏后）。
 
-段落文本由 `sdkSection()` 生成（`packages/core/tools/src/index.ts:876-894`）：按调用方 scope 重新枚举可见工具，查 `ctx.codeRuntime.language`，从渲染器表里取对应语言的渲染函数（`packages/core/tools/src/index.ts:60-63`，目前两项：`typescript`、`python`）。native scope 渲染成空——空段会被 prompt 装配丢掉，所以「部署默认 code、某个 agent 选了 native」也不会漏出一段孤立的 SDK。
+段落文本由 `sdkSection()` 生成（`packages/core/tools/src/index.ts:876-894`）：按调用方 scope 重新枚举可见工具，查 `ctx.codeRuntime.language`，从渲染器表里取对应语言的渲染函数（`packages/core/tools/src/index.ts:60-63`，目前两项：`typescript`、`python`）。native scope 渲染成空：空段会被 prompt 装配丢掉，所以「部署默认 code、某个 agent 选了 native」也不会漏出一段孤立的 SDK。
 
 TypeScript 渲染器 `renderToolsSdk`（`packages/core/tools/src/ts-types.ts:273-293`）有一个对 KV cache 关键的细节：**工具按名字字典序排序**。函数 JSDoc 明说这是为了「an unchanged tool set produces byte-identical text across assemblies」。注册顺序变了不影响这一段的字节。
 
@@ -238,7 +238,7 @@ if (this.modeFor(scope) !== 'native') {
 
 > The transport's own `description` and both SDK instruction flavors open by naming `code` and `description` as the call's two required arguments. Prose that describes the call as passing a program leaves the second argument discoverable only through the parameter schema, and a model that emits `{code}` alone loses the whole written program to an `INVALID_ARGS` rejection.
 
-描述与 `code` 参数说明按运行时语言换皮：`TYPESCRIPT_FLAVOR`（`packages/core/tools/src/code-mode.ts:46-54`）与 `PYTHON_FLAVOR`（`packages/core/tools/src/code-mode.ts:61-69`）。换皮是**惰性**的——两个 getter 装在定义对象上（`packages/core/tools/src/code-mode.ts:659-671`），在注册表投影 schema 的那一刻才读 `ctx.codeRuntime.language`。理由也写在注释里：定义在注册时铸造一次，那时还不知道会挂哪个运行时；推迟到投影点是「仍能发出所载入运行时语言」的最小改动。
+描述与 `code` 参数说明按运行时语言换皮：`TYPESCRIPT_FLAVOR`（`packages/core/tools/src/code-mode.ts:46-54`）与 `PYTHON_FLAVOR`（`packages/core/tools/src/code-mode.ts:61-69`）。换皮是**惰性**的：两个 getter 装在定义对象上（`packages/core/tools/src/code-mode.ts:659-671`），在注册表投影 schema 的那一刻才读 `ctx.codeRuntime.language`。理由也写在注释里：定义在注册时铸造一次，那时还不知道会挂哪个运行时；推迟到投影点是「仍能发出所载入运行时语言」的最小改动。
 
 ### 2.4 直呼 native 工具会发生什么
 
@@ -285,7 +285,7 @@ kind: 'exception' | 'timeout' | 'abort' | 'worker-exit' | 'invalid-output' | 'ou
 
 `computeMs` 用「实测忙时」而不是墙钟，理由写在字段 JSDoc 里（`packages/code-runtime/code-runtime-worker-thread/src/index.ts:27-34`）：这样既公平（程序等一个慢工具不累计）又不可作弊（热循环无论有没有诱饵调用在飞都在累计）。
 
-每次运行开一个新 Worker，选项里有两行值得注意（`packages/code-runtime/code-runtime-worker-thread/src/index.ts:378-388`）：
+每次运行开一个新 Worker，选项里有两行要看（`packages/code-runtime/code-runtime-worker-thread/src/index.ts:378-388`）：
 
 ```ts
 const worker = new Worker(WORKER_PATH, {
@@ -303,7 +303,7 @@ const worker = new Worker(WORKER_PATH, {
 
 ### 2.6 子调用怎么调度
 
-程序里每个 `await tools.xxx(...)` 都是一次**完整重入**工具流水线的子调用。绑定函数在 `packages/core/tools/src/code-mode.ts:464-479`：参数先 `snapshotJsonValue` 归一为无损 JSON（不是无损就当场报错，`packages/core/tools/src/code-mode.ts:151-167`），然后构造一次调用输入，`callId` 是父 callId 加后缀（`` `${exec.callId}:code:${n}` ``），并把父的 `token` 放进 `parent` 字段——这个字段就是 §2.4 里让折叠放行的凭证。
+程序里每个 `await tools.xxx(...)` 都是一次**完整重入**工具流水线的子调用。绑定函数在 `packages/core/tools/src/code-mode.ts:464-479`：参数先 `snapshotJsonValue` 归一为无损 JSON（不是无损就当场报错，`packages/core/tools/src/code-mode.ts:151-167`），然后构造一次调用输入，`callId` 是父 callId 加后缀（`` `${exec.callId}:code:${n}` ``），并把父的 `token` 放进 `parent` 字段，这个字段就是 §2.4 里让折叠放行的凭证。
 
 绑定表按**调用方 agent 的可见集**枚举（`packages/core/tools/src/code-mode.ts:606-609`），也就是 SDK 段声明的那同一份视图，所以「prompt 里承诺的」和「程序里能绑的」永远一致。命名空间对象用 null 原型 + `defineProperty` 建（`packages/core/tools/src/code-mode.ts:601`），这样一个叫 `__proto__` 的工具是普通自有属性而不是原型碰撞。
 
@@ -316,7 +316,7 @@ const worker = new Worker(WORKER_PATH, {
 
 也就是说：程序里的 `Promise.all` 买到的是「工具自己声明为并发安全的那些调用之间」的墙钟并行，不是无条件并行。SDK 指令里那句「safe calls run concurrently; mutating calls run alone, in submission order」讲的就是这条真实契约。
 
-子调用的 `additionalContexts` 不能就地注入——那会破坏父调用与父结果的相邻性——所以统一走 `exec.deferContext()` 攒起来，由外层结果带出（`packages/core/tools/src/code-mode.ts:562-564`）。
+子调用的 `additionalContexts` 不能就地注入（那会破坏父调用与父结果的相邻性），所以统一走 `exec.deferContext()` 攒起来，由外层结果带出（`packages/core/tools/src/code-mode.ts:562-564`）。
 
 **取消与排空**：整个运行有一条 run-scoped 的 AbortController，外层信号进来会转发，运行以任何方式结束都会 abort 它。`finally` 里两行（`packages/core/tools/src/code-mode.ts:627-628`）：
 
@@ -325,13 +325,13 @@ runController.abort('run_code settled')
 await drainDispatches()
 ```
 
-排空的语义是「每个已派发的子调用都 settle 且 commit 完，排队未启动的被放弃」，而且要等所有 settle 事件都 append 完——因为这些 append 必须落在还没关闭的 `run_code` turn 里面。
+排空的语义是「每个已派发的子调用都 settle 且 commit 完，排队未启动的被放弃」，而且要等所有 settle 事件都 append 完，因为这些 append 必须落在还没关闭的 `run_code` turn 里面。
 
 ### 2.7 session 里留下什么
 
-两类 log-only 事件（不进模型历史）：`tool/code-dispatch-start` 在入池时写，`tool/code-dispatch` 在结算时写并带完整渲染内容（`packages/core/tools/src/code-mode.ts:510-521`）。写进日志的参数是**归一化值的兄弟副本**——`jsonNormalizeArgs` 把同一个值 snapshot 了两次（`packages/core/tools/src/code-mode.ts:151-166`），一份派发一份记录，注释给的理由是「a tool mutating its args cannot desync this record from what it actually received」（`packages/core/tools/src/code-mode.ts:516-518`）。
+两类 log-only 事件（不进模型历史）：`tool/code-dispatch-start` 在入池时写，`tool/code-dispatch` 在结算时写并带完整渲染内容（`packages/core/tools/src/code-mode.ts:510-521`）。写进日志的参数是**归一化值的兄弟副本**：`jsonNormalizeArgs` 把同一个值 snapshot 了两次（`packages/core/tools/src/code-mode.ts:151-166`），一份派发一份记录，注释给的理由是「a tool mutating its args cannot desync this record from what it actually received」（`packages/core/tools/src/code-mode.ts:516-518`）。
 
-`tool/code-dispatch` 的内容还会先过一次 `tools/code-dispatch-log` waterfall（`shapeDispatchLog`），spill 后端就是在这里把超大内容换成预览 + 定位符的——**只换持久副本，程序拿到的值和模型看到的外层结果都不动**（`packages/core/tools/src/code-mode.ts:500-509`）。
+`tool/code-dispatch` 的内容还会先过一次 `tools/code-dispatch-log` waterfall（`shapeDispatchLog`），spill 后端就是在这里把超大内容换成预览 + 定位符的，**只换持久副本，程序拿到的值和模型看到的外层结果都不动**（`packages/core/tools/src/code-mode.ts:500-509`）。
 
 ---
 
@@ -343,19 +343,19 @@ await drainDispatches()
 
 **代价，Note 自己列了**：
 
-1. **SDK 前缀的 token 成本可能不比 native schema 小**，`both` 模式更是两份都带。Note 的原话是「The `.d.ts` can rival the native schemas it complements; `'both'` carries two representations」，并且明确说这篇笔记**不做无条件省钱的断言**——什么时候用哪个模式是「post-ship learning」。前缀稳定 + provider 缓存能摊掉每会话成本，但摊不掉「这一段本来就更长」。
+1. **SDK 前缀的 token 成本可能不比 native schema 小**，`both` 模式更是两份都带。Note 的原话是「The `.d.ts` can rival the native schemas it complements; `'both'` carries two representations」，并且明确说这篇笔记**不做无条件省钱的断言**：什么时候用哪个模式是「post-ship learning」。前缀稳定 + provider 缓存能摊掉每会话成本，但摊不掉「这一段本来就更长」。
 2. **并发预期落差**。程序里写 `Promise.all` 不代表真并行；一串 exclusive 调用还是要一个一个来。SDK 指令陈述了真实契约，但模型可能过度期待。
 3. **worker 不是安全边界**。信任姿态等同 bash 工具；`worker.terminate()` 停得了线程，停不了它 spawn 出去的 OS 进程（`packages/code-runtime/code-runtime-worker-thread/README.md` 的 Known Limitations 第一条就是这个）。需要硬多租户边界的部署要等 `isolation: 'container'` 的后端。
 4. **`stripTypeScriptTypes` 是 Node 的实验 API**。它拒绝非 erasable 语法（`enum`、namespace），这个拒绝会以 `exception` 形式回到模型面前，SDK 指令里那句「erasable syntax only」就是配套的预防。
 5. **中间绑定值没有字节上限**。只有外层输出（logs + 完成值 + 诊断）受 `maxOutputBytes` 管；程序可以在内存里堆出一个永远不成为外层输出的巨大值，把进程撑爆。
 6. **`toolOrder` 兼容性**：切到 `code` 的部署必须更新或删掉 native 工具名的顺序配置，否则每次装配都失败。
 
-Note 的「Alternatives considered」里有两条特别值得看，因为它们解释了 dsh 为什么**没有**做得更激进：
+Note 的「Alternatives considered」里有两条解释了 dsh 为什么**没有**做得更激进：
 
 - **「Always-exclusive（忠实于 Cloudflare、不做模式）」被拒**：理由是编码 agent 的日常单次调用（`bash`、`read`、`edit`）本来就最适合 native，硬把每次编辑塞进一个程序是给常见情形加税。留一个 `mode` 配置，让忠实形态离你只有一行。
 - **「REPL 式常驻内核」（跨 `run_code` 调用保留状态）被拒**：跨调用状态对 session log 不可见，会破坏「每次请求是 log 的纯函数」这条可重建性保证。每次一个新 worker 才守得住。
 
-还有一条 Note 里的取舍解释了 dsh 与别家的分工：**它没有把 Code Mode 做成一个后置的 waterfall 插件**。理由是 `agent/request` 在「可重建请求」纪律下只允许改调用配置；而在装配好的工具表上做变换，就得在不拥有 `toolOrder` 配置的前提下撤销它的规范化，还会依赖监听器顺序。「模型被提供哪些工具、以什么表示」是注册表的单一职责——native schema 和 SDK 是同一份可见存储的两个投影。
+还有一条 Note 里的取舍解释了 dsh 与别家的分工：**它没有把 Code Mode 做成一个后置的 waterfall 插件**。理由是 `agent/request` 在「可重建请求」纪律下只允许改调用配置；而在装配好的工具表上做变换，就得在不拥有 `toolOrder` 配置的前提下撤销它的规范化，还会依赖监听器顺序。「模型被提供哪些工具、以什么表示」是注册表的单一职责，native schema 和 SDK 是同一份可见存储的两个投影。
 
 ---
 
@@ -401,7 +401,7 @@ order 115 落在 100-199 的工具指导带内。文本是一个 105 行的模�
 
 工具描述在 `packages/extensions/tool-cordis/src/index.ts` 里逐个 `defineTool`，`docs/tool-catalog.md` 有生成的完整目录。分两类：
 
-**三个只读的 inspect 工具**——`cordis_inspect_list`（`packages/extensions/tool-cordis/src/index.ts:42`）、`cordis_inspect_query`（`:61`）、`cordis_inspect_self`（`:97`）。前两个的用途是让模型在写代码之前**问清楚运行时到底有什么**：
+**三个只读的 inspect 工具**：`cordis_inspect_list`（`packages/extensions/tool-cordis/src/index.ts:42`）、`cordis_inspect_query`（`:61`）、`cordis_inspect_self`（`:97`）。前两个的用途是让模型在写代码之前**问清楚运行时到底有什么**：
 
 > Run a read-only query explicitly declared by an Inspect Provider. platform, provider, and method must come from cordis_inspect_list, and input must satisfy that method's schema. Use this Tool before cordis_define to read exact Service methods, Event modes, Builtin signatures, Tool schemas, theme tokens, or live Slot trees and props. Host queries run locally. A Client query waits for the first valid page response and remains pending until a page answers or the Tool is cancelled. This Tool cannot invoke business Service methods or modify the runtime. ...
 >
@@ -409,7 +409,7 @@ order 115 落在 100-199 的工具指导带内。文本是一个 105 行的模�
 
 注意「Host queries run locally. A Client query waits for the first valid page response」——inspect 是跨进程半边的：Host 半在 Node 进程，Client 半在浏览器页面，一次查询可能要等某个页面回答。
 
-**四个生命周期工具**——`cordis_define`（`:149`）、`cordis_run`（`:241`）、`cordis_stop`（`:330`）、`cordis_undefine`（`:352`）。`cordis_define` 的描述定义了整个身份模型：
+**四个生命周期工具**：`cordis_define`（`:149`）、`cordis_run`（`:241`）、`cordis_stop`（`:330`）、`cordis_undefine`（`:352`）。`cordis_define` 的描述定义了整个身份模型：
 
 > Define an immutable Cordis Package. For a new Plugin, use kind:"new" and provide only a semantic prefix of 3–6 lowercase English letters; the Host returns the final pluginId and packageId. To modify an existing Plugin, use kind:"existing" with its exact pluginId to append a Package without overwriting older versions. Provide at least one of code.host and code.client. Each value is a plain JavaScript function body that returns a Cordis Plugin; no TypeScript, JSX, or import transformation occurs. Query Inspect before depending on a Service, Event, Builtin, Slot, or token. Define only validates parameters and syntax and records source: it does not request approval, execute apply, or change currentPackageId. On success, call cordis_run with the returned IDs.
 >
@@ -417,9 +417,9 @@ order 115 落在 100-199 的工具指导带内。文本是一个 105 行的模�
 
 三级身份（prompt 里也重复了一遍，`packages/extensions/tool-cordis/src/prompt.ts:40-44`）：
 
-- **pluginId**——一个可以持续修改的插件；新建时模型只提交 3–6 个小写字母的语义前缀，最终 id 由 Host 分配。
-- **packageId**——该插件下一个**不可变**的 Host/Client 源码版本。改代码 = 定义一个新 Package，**永不覆盖旧版本**。
-- **pluginRunId**——一次激活尝试，把它的批准、Host/Client 加载、私有 RPC、Run 卡片和错误串起来。
+- **pluginId**：一个可以持续修改的插件；新建时模型只提交 3–6 个小写字母的语义前缀，最终 id 由 Host 分配。
+- **packageId**：该插件下一个**不可变**的 Host/Client 源码版本。改代码 = 定义一个新 Package，**永不覆盖旧版本**。
+- **pluginRunId**：一次激活尝试，把它的批准、Host/Client 加载、私有 RPC、Run 卡片和错误串起来。
 
 两个指针：`currentPackageId` 是最近一次**完全成功**的 Package（停止、开始更新、更新失败都不会清它）；`nextPackageId` 是正在等批准/正在尝试/最近失败的目标。
 
@@ -439,13 +439,13 @@ order 115 落在 100-199 的工具指导带内。文本是一个 105 行的模�
 
 > The registration boundary between a sandboxed host half and the real runtime: ParameterSchemaSpec normalization + validation with teaching errors, the marker-guarded `harness.defineTool` / `harness.registerTool` pair, the `harness.handle` invoke-handler normalizer, the SANDBOX CONTEXT FAÇADE a running plugin's `apply` receives in place of the real `ctx`, and the plugin-shape helpers the run lifecycle narrows sandbox return values with. The façade is a whitelist of lifecycle-safe verbs and declared services; framework internals and context-valued service returns are denied.
 
-「context-valued service returns are denied」这条是关键的一环：注释解释了它挡的是什么（`packages/extensions/cordis-host-runner/src/guard.ts:658-661`）——一个返回 Context 的服务方法会把「一个全新的、未加固的运行时句柄」交回给沙箱代码，正是 façade 要堵的逃逸。
+「context-valued service returns are denied」这条是关键的一环：注释解释了它挡的是什么（`packages/extensions/cordis-host-runner/src/guard.ts:658-661`）：一个返回 Context 的服务方法会把「一个全新的、未加固的运行时句柄」交回给沙箱代码，正是 façade 要堵的逃逸。
 
 有一条约束不在这套护栏里，上游自己把它记在了另一篇笔记里（`.agents/notes/implemented/architecture/2026-08-10-host-plane-ownership-after-presets.md:23`）：模型挂上的临时插件**属于组装（composition）而不是挂它的那个 session**。也就是说这不是 per-session 的能力隔离。
 
 ### 4.4 Client 半与 UI
 
-`cordis-client-runner` 是浏览器半边：把定义求值成一个活的浏览器插件，并回答 run 请求；它有自己的一套 façade（不复用 host 的 vm sandbox 模块）。`ui-cordis` 提供一个 frame 级面板（run / stop / undefine）和一个只读 define 卡片；用户从面板发起的动作会把状态变化排给模型的下一步——`undefineFromPanel` / `stopFromPanel` 的 JSDoc 原文是「queue the resulting state change for the model's next step」（`docs/subsystems/extensions.md`）。
+`cordis-client-runner` 是浏览器半边：把定义求值成一个活的浏览器插件，并回答 run 请求；它有自己的一套 façade（不复用 host 的 vm sandbox 模块）。`ui-cordis` 提供一个 frame 级面板（run / stop / undefine）和一个只读 define 卡片；用户从面板发起的动作会把状态变化排给模型的下一步，`undefineFromPanel` / `stopFromPanel` 的 JSDoc 原文是「queue the resulting state change for the model's next step」（`docs/subsystems/extensions.md`）。
 
 Host 与 Client 之间的往返被记成六个 `cordis/*` 事件（`docs/subsystems/extensions.md`，源在 `packages/extensions/cordis-host-runner/src/types.ts:367-397`）：`cordis/request-run`、`cordis/request-run-resolved`、`cordis/dynamic-package`、`cordis/dynamic-retract`、`cordis/inspect-query`、`cordis/inspect-query-resolved`。
 
@@ -469,11 +469,11 @@ Host 与 Client 之间的往返被记成六个 `cordis/*` 事件（`docs/subsyst
 >
 > Load the `editing-cordis-compositions` skill before writing or changing a composition.
 
-除了 `tool-cordis` 那一行（`apps/cli/config/agent-presets/cordis/agent.cordis.yml:245-246`），preset 还随身带两个 skill——`cordis-plugin-development` 和 `editing-cordis-compositions`——通过给 `skill-filesystem` 配一个指向 preset 自己目录的 `customSkillDirs` 实现（`apps/cli/config/agent-presets/cordis/agent.cordis.yml:255-259`）。注释解释了为什么 skill 跟着 preset 走而不是放用户的 skill root：「it documents THIS deployment's two planes, and a preset is the unit that gets copied and edited」。skill 机制本身见 [08 编排层](08-orchestration.md)。
+除了 `tool-cordis` 那一行（`apps/cli/config/agent-presets/cordis/agent.cordis.yml:245-246`），preset 还随身带两个 skill（`cordis-plugin-development` 和 `editing-cordis-compositions`），通过给 `skill-filesystem` 配一个指向 preset 自己目录的 `customSkillDirs` 实现（`apps/cli/config/agent-presets/cordis/agent.cordis.yml:255-259`）。注释解释了为什么 skill 跟着 preset 走而不是放用户的 skill root：「it documents THIS deployment's two planes, and a preset is the unit that gets copied and edited」。skill 机制本身见 [08 编排层](08-orchestration.md)。
 
 ### 4.6 风险与护栏，逐条
 
-这套东西让模型往活着的进程里塞代码，所以它的护栏值得逐条摊开看。下表的第三列是**上游自己承认还没堵上的**——每一条都能在源码或笔记里找到原话。
+这套东西让模型往活着的进程里塞代码，护栏就得逐条摊开看。下表的第三列是**上游自己承认还没堵上的**，每一条都能在源码或笔记里找到原话。
 
 | 风险 | 现有护栏 | 缺口 |
 |---|---|---|
@@ -483,9 +483,9 @@ Host 与 Client 之间的往返被记成六个 `cordis/*` 事件（`docs/subsyst
 | 未授权的浏览器代码 | Client 半要用户批准；单勾只授权本 Package，双勾授权该 Plugin 的未来版本 | 双勾等于把一个插件的后续所有版本一次性放行 |
 | 身份/归属 | 每个工具都 `requireAgent(exec)`（`packages/extensions/tool-cordis/src/index.ts:29-31`），Plugin 归属校验到 session | 临时插件属于 composition 而非 session（上游自记，见 §4.3） |
 | 持久化 | 定义只活在当前进程，重启即无（`packages/extensions/tool-cordis/src/prompt.ts:7`） | 反过来说：没有「让它活下来」的路径，要固化只能写成真的 preset 文件 |
-| 装进生产 | `tool-cordis` **不在任何发行组装里**——只在 `cordis` preset 里，且这是刻意的 opt-in（`docs/tool-catalog.md:23`：「Not in any shipped tree (a deliberate opt-in — dynamic package code reaches the real runtime …)」） | 一个跑着的插件可以**再注册模型可见的工具**，直到它被停/删/进程重启；这些工具集变化会以一次 changed request header 记录下来 |
+| 装进生产 | `tool-cordis` **不在任何发行组装里**，只在 `cordis` preset 里，且这是刻意的 opt-in（`docs/tool-catalog.md:23`：「Not in any shipped tree (a deliberate opt-in — dynamic package code reaches the real runtime …)」） | 一个跑着的插件可以**再注册模型可见的工具**，直到它被停/删/进程重启；这些工具集变化会以一次 changed request header 记录下来 |
 
-最后一条值得单独说：`docs/tool-catalog.md:23` 明确写着「A running package may register ADDITIONAL model-visible tools until it is stopped, undefined, or DSH restarts; a full changed request header logs those tool-set changes.」也就是说，Extensions 是 dsh 里**唯一一处工具集能在会话中途被模型自己改变**的地方。对 KV cache 而言这是一次确定的前缀失效（见 [02 KV-Cache](02-kv-cache.md)），而 dsh 选择的是把它**记下来**而不是禁止它。
+最后一条单独说：`docs/tool-catalog.md:23` 明确写着「A running package may register ADDITIONAL model-visible tools until it is stopped, undefined, or DSH restarts; a full changed request header logs those tool-set changes.」也就是说，Extensions 是 dsh 里**唯一一处工具集能在会话中途被模型自己改变**的地方。对 KV cache 而言这是一次确定的前缀失效（见 [02 KV-Cache](02-kv-cache.md)），而 dsh 选择的是把它**记下来**而不是禁止它。
 
 ---
 
@@ -498,14 +498,14 @@ Host 与 Client 之间的往返被记成六个 `cordis/*` 事件（`docs/subsyst
 | **Code mode** | `tools.mode: native/code/both`，per-agent-preset 可选；`run_code` + 生成的 `.d.ts`（TS/Python 两种渲染器）；子调用重入完整工具流水线 | 有：模型元数据带 `tool_mode: code_mode_only` 时只暴露一个 freeform `exec`，模型写 JavaScript，在 V8 isolate 里通过全局 `tools.<name>(...)` 调工具；配 `wait` 续接长脚本（`codex!codex-rs/code-mode-protocol/src/description.rs:22-45`） | 无 | `experimentalCodeMode` 开关（环境变量 `OPENCODE_EXPERIMENTAL_CODE_MODE`，`opencode!packages/opencode/src/effect/runtime-flags.ts:48`）下走 code-mode 工具 | 无 |
 | **code mode 的语言与运行时** | 类型剥离后的 TypeScript，Node worker thread（新 worker/次，`env: {}`，四个预算）；接缝允许换成 Python 或容器后端 | JavaScript，V8 isolate，自陈「no Node, no file system, no network access, no console」 | — | — | — |
 | **code mode 里的类型信息** | 参数表 **和** 返回值表都生成（`ToolArgsMap` + `ToolOutputMap`），加 `ToolCallError` | 描述模板里给 `text()/image()/store()/load()/notify()/yield_control()/ALL_TOOLS` 等原语与 `// @exec:` pragma | — | — | — |
-| **运行期改自己的运行时** | `cordis_*` 七工具：定义/启动/停止/删除进程内 Cordis 插件，可注册新的模型可见工具与浏览器 UI；host 半在 `node:vm` | Extension API：`context_contributors()` 贡献上下文片段与 WorldState 分节（`ext/memories`、`ext/goal` 等都这样挂）——但那是**开发者写的扩展**，不是模型运行期生成的 | plugins / skills / MCP：打包 skills、commands、agents、hooks、MCP、LSP，**不改运行时**，装卸是会话外的动作 | npm/本地插件，`plugin/loader.ts` 按需 `import()`，`Hooks` 接口 21 个键（`opencode!packages/plugin/src/index.ts:222-334`）；MCP 客户端 | Extensions：TS 模块 `export default function (pi: ExtensionAPI)`，`registerTool` / `registerCommand` / `registerProvider` / `registerShortcut` / `registerFlag` + `ctx.ui.*`；`/reload` 热重载；Packages 从 npm/git 装 |
+| **运行期改自己的运行时** | `cordis_*` 七工具：定义/启动/停止/删除进程内 Cordis 插件，可注册新的模型可见工具与浏览器 UI；host 半在 `node:vm` | Extension API：`context_contributors()` 贡献上下文片段与 WorldState 分节（`ext/memories`、`ext/goal` 等都这样挂），但那是**开发者写的扩展**，不是模型运行期生成的 | plugins / skills / MCP：打包 skills、commands、agents、hooks、MCP、LSP，**不改运行时**，装卸是会话外的动作 | npm/本地插件，`plugin/loader.ts` 按需 `import()`，`Hooks` 接口 21 个键（`opencode!packages/plugin/src/index.ts:222-334`）；MCP 客户端 | Extensions：TS 模块 `export default function (pi: ExtensionAPI)`，`registerTool` / `registerCommand` / `registerProvider` / `registerShortcut` / `registerFlag` + `ctx.ui.*`；`/reload` 热重载；Packages 从 npm/git 装 |
 | **扩展的作者是谁** | **模型自己**（运行期），或人写 preset | 人（编译期/配置期） | 人（plugin 包） | 人（npm 包） | 人（TS 文件），但 system prompt 内嵌 pi 自身 README/docs 绝对路径，**鼓励让 pi 给自己写扩展** |
 | **扩展存活期** | 只到进程结束 | 进程/配置生命周期 | 安装即持久 | 安装即持久 | 文件即持久，`/reload` 生效 |
 | **工具集能否会话中途变** | 能（跑着的动态包可再注册工具），变化记进 changed request header | MCP 服务器上下线、deferred 工具加载会改 `tools` 并失效缓存 | MCP 服务器连断、按名 deny 工具会移除定义并失效缓存 | 插件 `tool.definition` 钩子 | `setActiveTools` |
 
-三点值得展开：
+三点展开说：
 
-**dsh 与 Codex 的 code mode 是同一个想法的两种实现。** Codex 走 V8 isolate + freeform Lark grammar，dsh 走 Node worker thread + 类型剥离的 TypeScript。最大的差别在两处：（一）dsh 生成**返回值类型**，Codex 的描述模板给的是一组通用原语（`text()`、`image()`、`store()`、`load()`）；（二）Codex 有 `wait` 让长脚本续接，dsh 的 `run_code` 是一次性的——它明确拒绝了 REPL 式常驻内核，理由是跨调用状态对 session log 不可见、破坏可重建性。dsh 的模式还是 per-agent-preset 的，同进程可以混跑；Codex 的 code mode 绑在模型元数据上。
+**dsh 与 Codex 的 code mode 是同一个想法的两种实现。** Codex 走 V8 isolate + freeform Lark grammar，dsh 走 Node worker thread + 类型剥离的 TypeScript。最大的差别在两处：（一）dsh 生成**返回值类型**，Codex 的描述模板给的是一组通用原语（`text()`、`image()`、`store()`、`load()`）；（二）Codex 有 `wait` 让长脚本续接，dsh 的 `run_code` 是一次性的：它明确拒绝了 REPL 式常驻内核，理由是跨调用状态对 session log 不可见、破坏可重建性。dsh 的模式还是 per-agent-preset 的，同进程可以混跑；Codex 的 code mode 绑在模型元数据上。
 
 **Claude Code 的 plugins/skills 是另一条路子。** 它扩展的是「模型能读到什么、什么时候被触发」，不改运行时本身：skill 正文在调用点作为 user message 注入，plugin 打包 skills/commands/agents/hooks/MCP/LSP。装卸是会话外的动作，装完这套东西对模型是静态的。dsh 的 Extensions 是模型在**这一轮**里写一段 JS、下一轮就多出一个工具。
 

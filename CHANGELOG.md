@@ -39,6 +39,14 @@
 - 新增 `scripts/experiments/cache-probe.mjs`：零依赖探针，直接测四条缓存论断。实测数字——前缀稳定时命中 81–96%；只改 system 一句话掉到 0；权限策略进 system 每次切换只剩 256 token 命中，改成尾部 user 快照保持 81%；摘要请求复用前缀 93.4%，另起 summarizer system prompt 0%。全部非零命中值都是 64 的整数倍，独立佐证了 64-token 块粒度。
 - 据此改写 README、01、02、附录 B 里「尚未跑过」的说法，并删掉那份已经过时的 pending 记录。
 
+### Changed — 文风（2026-08-16）
+
+- 全部 18 篇正文 + README 用「说人话」skill（[MrGeDiao/shuorenhua](https://github.com/MrGeDiao/shuorenhua) v2.3.0）按 `docs` 场景改写：档位 `minimal`、scope `bounded`、无源引用 `audit-only`。
+- 破折号 `——` 从 478 处降到 44 处（剩下的都承担真插入或转折）；「值得注意的是 / 换句话说 / 至关重要 / 本质上 / 一句话总结」清零；引号统一成「」。
+- 改写全程不动 protected spans：1033 处 `路径:行号` 引用一处未少，frontmatter、代码块、上游英文原文引文逐字节未变；三批改写的删除清单都是空的，没有删句或并句。
+- `AGENTS.md` 记下这套文风标准与 skill 的安装方式，后续改文档照此执行。
+- `.claude/` 加入 `.gitignore` 与门禁忽略目录：本地 agent 配置不属于仓库内容，也不参与文件扫描。
+
 ### Removed
 
 - `PROJECT_STATUS.md`（内容属更早一版）、`ROADMAP.md`（打勾项对应产物已删）、`GOVERNANCE.md` / `MAINTAINERS.md` / `SUPPORT.md` / `CODE_OF_CONDUCT.md` / `CITATION.cff`（单人研究仓库的仪式性文件）。

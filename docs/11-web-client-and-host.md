@@ -9,7 +9,7 @@ status: draft
 
 `packages/client` 是 dsh 全仓最大的一组代码：39 个包，各包 `src/` 下 501 个 `.ts`/`.tsx` 文件，71,896 行源码（不含 CSS 与 `tests/`）。加上 `packages/host` 的 8 个包和 `packages/api` 的 2 个包，构成 dsh 唯一的交互界面。
 
-这组代码和 harness 的核心机制关系不大——它不决定模型看到什么、不决定 token 怎么花。但它决定了**你在浏览器里看到的每一样东西**，而且它对「一条 session 事件」的处理方式，恰好是理解 dsh 事件溯源设计的一个好切口：后端的 append-only 事件日志，是怎么变成屏幕上一条会滚动的消息的。
+这组代码和 harness 的核心机制关系不大：它不决定模型看到什么、不决定 token 怎么花。但它决定了**你在浏览器里看到的每一样东西**，而且它对「一条 session 事件」的处理方式，恰好是理解 dsh 事件溯源设计的一个好切口：后端的 append-only 事件日志，是怎么变成屏幕上一条会滚动的消息的。
 
 ---
 
@@ -37,7 +37,7 @@ status: draft
 
 注意 `event` 字段是**原封不动的 SessionEvent 信封**。浏览器收到的和落盘的是同一个结构。
 
-**跳 1b，投影走另一条支路。** 有些东西（token 用量、todo 列表、goal、plan、权限档位）不适合让浏览器自己从事件流折叠——那样每个客户端都要重算一遍，还容易算错。这些由 host 算好整值再广播：
+**跳 1b，投影走另一条支路。** 有些东西（token 用量、todo 列表、goal、plan、权限档位）不适合让浏览器自己从事件流折叠，那样每个客户端都要重算一遍，还容易算错。这些由 host 算好整值再广播：
 
 ```ts
       broadcast({ type: 'session/projection', sessionId: session.id, key, value, seq })
@@ -104,7 +104,7 @@ export function bindSnapshotSelector<T>(w: HostObservable<T>): SnapshotSelectorH
 
 （`packages/client/web-react/src/bind.ts:18`）内部是 `useSyncExternalStoreWithSelector`（`:22`）。这是整个 client 唯一的 **hook 构造器**——唯一一处把「host / engine 交出来的裸 observable 源」变成带 selector 的 React hook 的地方，README 写得很直白（`packages/client/web-react/README.md:5`）：「hosts and engines traffic in bare observable sources; every hook binds here, cached per source」。
 
-（注意别把这句读成「client 里只有一处 `useSyncExternalStore`」：`ui-primitives`、`ui-commands`、`ui-model-selection`、`web/AppRoot.tsx` 等处也直接调 React 的 `useSyncExternalStore`，但它们订阅的是组件自己的局部 store——语法高亮的懒加载计数、popup 的选中态、启动状态机——不是 Session/Workspace 这类业务数据源。业务数据只从 `bindSnapshotSelector` 进来。）
+（注意别把这句读成「client 里只有一处 `useSyncExternalStore`」：`ui-primitives`、`ui-commands`、`ui-model-selection`、`web/AppRoot.tsx` 等处也直接调 React 的 `useSyncExternalStore`，但它们订阅的是组件自己的局部 store（语法高亮的懒加载计数、popup 的选中态、启动状态机），不是 Session/Workspace 这类业务数据源。业务数据只从 `bindSnapshotSelector` 进来。）
 
 **跳 9，组件渲染。**
 
@@ -130,7 +130,7 @@ Chat 视图把事件折叠成对话：分组的步骤摘要流、流式尾部隔
 
 > Trajectory-owned Definitions assemble business records, including cancellation-frozen Assistant and Tool records, from the shared Session window, so Trajectory neither reads nor changes the Chat conversation snapshot.
 
-两个视图**互不读取对方的快照**。它们共享的是原始事件窗口，不是彼此的派生状态。这正是事件溯源的直接红利：加一个新视图不需要改任何已有视图，只要注册一套自己的 Event Definition 和一个 `'conversation.view'` tab。`ui-trajectory` 那 7,900 行里没有一个 Service，也没有任何 Context 合并——它纯粹是一个消费者。
+两个视图**互不读取对方的快照**。它们共享的是原始事件窗口，不是彼此的派生状态。这正是事件溯源的直接红利：加一个新视图不需要改任何已有视图，只要注册一套自己的 Event Definition 和一个 `'conversation.view'` tab。`ui-trajectory` 那 7,900 行里没有一个 Service，也没有任何 Context 合并，它纯粹是一个消费者。
 
 代价是长账本的性能得自己扛：虚拟滚动只挂可见行加少量 overscan，向上滚到已加载范围顶端时加载一页更早的，选中/时间轴/折叠/搜索/Request 合计**都只覆盖当前已加载的窗口**。
 
@@ -163,7 +163,7 @@ Chat 视图把事件折叠成对话：分组的步骤摘要流、流式尾部隔
 | 设置 | `ui-settings` / `-general` / `-models` / `-plugins` / `-plugin-inventory` | 482 / 714 / 3,341 / 1,541 / 322 | 设置域 |
 | 目录选择 | `ui-directory-picker-native` / `-browse` | 146 / 1,224 | 与 host 的两种 picker 后端配对 |
 
-表里这 39 个包就是 `packages/client/` 的全部内容（有几行合并了同类包，`ls -d packages/client/*/` 数出来正好 39）。另有一个 `ui-cordis` 也是浏览器插件，但它住在 `packages/extensions/ui-cordis`——它是 `tool-cordis` 的浏览器半，属于「agent 修改自身运行时」那一组，见 [09 扩展与 Code Mode](09-extensions-and-code-mode.md)。
+表里这 39 个包就是 `packages/client/` 的全部内容（有几行合并了同类包，`ls -d packages/client/*/` 数出来正好 39）。另有一个 `ui-cordis` 也是浏览器插件，但它住在 `packages/extensions/ui-cordis`：它是 `tool-cordis` 的浏览器半，属于「agent 修改自身运行时」那一组，见 [09 扩展与 Code Mode](09-extensions-and-code-mode.md)。
 
 39 个包**全部**有 README。绝大多数是**双面包**：`src/index.ts` 是运行在 Node 上的 host 半，`src/client/index.ts` 是浏览器半，由 package.json 里的 `dsh.client` 字段声明。这个设计让「一个功能」始终是一个包，而不是拆成前后端两个包再靠命名约定对齐。
 
@@ -231,7 +231,7 @@ export type ChainSelect<O extends object, M> = (owner: O) => M | null
 
 （`packages/client/ui-conversation/src/client/apply.ts:371`）当有一个待审批的工具调用时，`selectApproval` 返回非空，`ApprovalPanel` 就占住 composer 的位置（琥珀色条、理由标题、从调用参数拼出的命令行、一次性的拒绝/允许）；没有时它返回 null，普通输入框继续占位。`ui-user-questions`（`packages/client/ui-user-questions/src/client/index.ts:56-57`）和 `ui-subagent`（`packages/client/ui-subagent/src/client/index.ts:121-123`）用完全一样的模式注册各自的条目。
 
-`priority` 是**升序**的，数字小的先跑（`packages/client/ui-slots/src/index.ts:248`、`:862-868`）。审批面板写了 `priority: 1`，提问面板用默认的 0，所以两者同时挂起时提问先被选中——注册处的注释解释了理由（`packages/client/ui-conversation/src/client/apply.ts:367-370`）：提问是模型在等的一次对话，审批只卡住一次工具调用，先答提问不会把审批饿死（提问一结束审批立刻重新当选）。
+`priority` 是**升序**的，数字小的先跑（`packages/client/ui-slots/src/index.ts:248`、`:862-868`）。审批面板写了 `priority: 1`，提问面板用默认的 0，所以两者同时挂起时提问先被选中，注册处的注释解释了理由（`packages/client/ui-conversation/src/client/apply.ts:367-370`）：提问是模型在等的一次对话，审批只卡住一次工具调用，先答提问不会把审批饿死（提问一结束审批立刻重新当选）。
 
 这带来一个可观察的产品行为：**待审批和待回答不会在消息流里留下一张占位卡片**（`packages/client/ui-conversation/README.md:17` 明说了这一点）。它们只接管输入区，答完就还回去。
 
@@ -239,7 +239,7 @@ export type ChainSelect<O extends object, M> = (owner: O) => M | null
 
 ## 四、hmr：热重载的真实条件
 
-`packages/client/hmr` 让客户端插件在不刷新页面的情况下重新加载。机制是：Node 半用一个定时器 stat 轮询每个 client bundle（`packages/client/hmr/src/index.ts:139` 的 `setInterval`，默认 500ms，`:37`；轮询而非 inotify 是刻意的，模块注释 `:2-4` 写了理由——网络挂载不发文件事件），变化时通过 `/plugins/events` 这条 SSE 通道通知浏览器（`packages/client/hmr/src/events.ts:16`）。浏览器半收到之后换 fiber——fiber 是 cordis 里「一行 entry 的活实例」，见 [10 Cordis、启动、bundle 与 preset](10-cordis-boot-preset.md)：
+`packages/client/hmr` 让客户端插件在不刷新页面的情况下重新加载。机制是：Node 半用一个定时器 stat 轮询每个 client bundle（`packages/client/hmr/src/index.ts:139` 的 `setInterval`，默认 500ms，`:37`；轮询而非 inotify 是刻意的，模块注释 `:2-4` 写了理由：网络挂载不发文件事件），变化时通过 `/plugins/events` 这条 SSE 通道通知浏览器（`packages/client/hmr/src/events.ts:16`）。浏览器半收到之后换 fiber——fiber 是 cordis 里「一行 entry 的活实例」，见 [10 Cordis、启动、bundle 与 preset](10-cordis-boot-preset.md)：
 
 ```ts
     modLoader.invalidate(id)
@@ -256,7 +256,7 @@ export type ChainSelect<O extends object, M> = (owner: O) => M | null
 
 > The client-plugin HMR receiver is active, but client-plugin changes reload without a refresh only while `pnpm run dev:web` is also running from this same checkout to rebuild their bundles; verify that watcher before promising automatic updates. Every other change — the apps/web shell and plain packages — requires rebuilding the affected Web artifacts and verifying this existing URL after a page refresh.
 
-这段 prompt 是一次事故的产物（上游 `docs/postmortem/0003-web-agent-gui-feedback-loop.md`）：让 agent 改 Web 界面时，它会以为自己改完就生效了，然后向用户宣布「已更新，刷新看看」——而实际上什么都没变。同一段 prompt 里还有两句同样来自事故的话：「Starting another server does not update this GUI」和「The apps/web Vite entry builds the shell but is not a standalone application because only `dsh web` injects `window.__DSH_BOOT__`」（`:103-104`）。
+这段 prompt 是一次事故的产物（上游 `docs/postmortem/0003-web-agent-gui-feedback-loop.md`）：让 agent 改 Web 界面时，它会以为自己改完就生效了，然后向用户宣布「已更新，刷新看看」，而实际上什么都没变。同一段 prompt 里还有两句同样来自事故的话：「Starting another server does not update this GUI」和「The apps/web Vite entry builds the shell but is not a standalone application because only `dsh web` injects `window.__DSH_BOOT__`」（`:103-104`）。
 
 HMR 自己的三条已知限制（`packages/client/hmr/README.md:19-21`）：重载是**粗粒度**的（新 fiber、新组件，插件内的 React 状态丢失，但数据层不动）；**失败不回滚**（entry 停在 FAILED，旧 bundle 不会自动恢复）；graph 的 `rev` 不被 rebuilt 帧刷新（无害，因为 bundle 端点是 no-cache）。
 
@@ -300,13 +300,13 @@ const STANDALONE_ERROR = 'apps/web is not a standalone application: bare Vite ca
 
 shell 的启动是两阶段的（`packages/client/web/README.md:5`）：阶段一建模块系统并并行预取 `immediately` 那一档——**执行 bundle 只注册工厂函数，不执行模块体**；阶段二挂 vendored cordis Loader，把模块系统通过它的 `internal` 契约注入，每行 graph 建一个 loader entry，然后**等 Loader 静默且每个 entry fiber 都 ACTIVE，才一次性把整个 UI 切出来**。没有半成品界面。
 
-这里有一个漂亮的复用：浏览器里跑的是**同一个 vendored Cordis Loader**（见 [10 Cordis、启动、bundle 与 preset](10-cordis-boot-preset.md)）。它对「插件代码怎么到达」这件事是可替换的——Node 上是 ESM import，浏览器上是 `packages/client/modules` 提供的惰性 CJS 表。替换点只有一个：`EntryTree.import`（`packages/client/modules/README.md:5`）。
+这里有一个漂亮的复用：浏览器里跑的是**同一个 vendored Cordis Loader**（见 [10 Cordis、启动、bundle 与 preset](10-cordis-boot-preset.md)）。它对「插件代码怎么到达」这件事是可替换的：Node 上是 ESM import，浏览器上是 `packages/client/modules` 提供的惰性 CJS 表。替换点只有一个：`EntryTree.import`（`packages/client/modules/README.md:5`）。
 
 ---
 
 ## 六、host 与 api：Node 半边
 
-浏览器那一半讲完了，下面是它对面的 Node 半边。看这张表时注意「ctx key」这一列——它就是这个包往 cordis context 上挂的服务名，别的包靠它找到这个能力；空着的表示这个包只消费别人、不提供服务。
+浏览器那一半讲完了，下面是它对面的 Node 半边。看这张表时注意「ctx key」这一列，它就是这个包往 cordis context 上挂的服务名，别的包靠它找到这个能力；空着的表示这个包只消费别人、不提供服务。
 
 | 包 | ctx key | 职责 |
 |---|---|---|
@@ -321,11 +321,11 @@ shell 的启动是两阶段的（`packages/client/web/README.md:5`）：阶段�
 
 （表出自 `packages/host/README.md:7-16` 与各包 package.json；行数为各包 `src/` 下 `.ts` 的行数。）
 
-**webserver 什么都不知道。** 它提供四个注册方法——`register`（`packages/host/webserver/src/index.ts:94`）、`registerUpgrade`（`:109`）、`registerFallback`（`:125`）、`tapIndex`（`:139`）——加一个最长前缀匹配的 `match`（`:242`）。它不认识任何 harness 概念，不服务任何文件，`/api` 和 WebSocket 都是别的插件注册的路由。重复注册直接抛错（`:97`、`:111`、`:127-128`）。
+**webserver 什么都不知道。** 它提供四个注册方法：`register`（`packages/host/webserver/src/index.ts:94`）、`registerUpgrade`（`:109`）、`registerFallback`（`:125`）、`tapIndex`（`:139`），外加一个最长前缀匹配的 `match`（`:242`）。它不认识任何 harness 概念，不服务任何文件，`/api` 和 WebSocket 都是别的插件注册的路由。重复注册直接抛错（`:97`、`:111`、`:127-128`）。
 
 **frontend-static 占 fallback 座**（`packages/host/frontend-static/src/index.ts:98`），语义锁死：非 GET/HEAD 返回 405，越界返回 403，未命中的路径回落到 index.html 且状态码 200（`:83` 的注释：`// Miss (ENOENT/EISDIR) falls back to index.html with 200 (SPA routing).`）。dist 路径不是它自己找的，是 web-app bundle 用 `require.resolve('@deepseek-ai/dsh-web-frontend/dist/index.html')` 解析后传进来的（`packages/bundle/web-app/src/index.ts:119`、`:139`）。
 
-**directory-picker-auto 是一个纯决策函数**，值得整段贴：
+**directory-picker-auto 是一个纯决策函数**，整段贴出来：
 
 ```ts
 export function resolveDirectoryPickerBackend(facts: DirectoryPickerHostFacts): DirectoryPickerBackendKind {
@@ -347,7 +347,7 @@ export function resolveDirectoryPickerBackend(facts: DirectoryPickerHostFacts): 
       const result = await connection.rpc.call('/api', endpoint, { args }, signal)
 ```
 
-（`packages/api/gateway/src/client/index.ts:406`）endpoint 是 `<namespace>/<method>`，HTTP 层映射成 `POST /api/<namespace>/<method>`，payload 里**有且只有一个 `args` 纯对象**——这条约束是硬校验的（`packages/api/gateway/src/index.ts:201-208`）。取消协议也很干净：host 签名最后一个参数必须是 `signal: AbortSignal`，它进 descriptor 而不进 `args`（`docs/api-gateway.md:56`）。
+（`packages/api/gateway/src/client/index.ts:406`）endpoint 是 `<namespace>/<method>`，HTTP 层映射成 `POST /api/<namespace>/<method>`，payload 里**有且只有一个 `args` 纯对象**，这条约束是硬校验的（`packages/api/gateway/src/index.ts:201-208`）。取消协议也很干净：host 签名最后一个参数必须是 `signal: AbortSignal`，它进 descriptor 而不进 `args`（`docs/api-gateway.md:56`）。
 
 `host/apiproxy` 是旧的，作为尚未迁移方法的兜底（`packages/api/README.md:17`）。运行时的分工在 connection 里三行说清楚：
 
@@ -361,7 +361,7 @@ export function resolveDirectoryPickerBackend(facts: DirectoryPickerHostFacts): 
 
 ### 信任围栏
 
-`/api` 这一条路由上有一道信任检查（`packages/client/connection/src/index.ts:165`），WebSocket upgrade 上也有一道（`:184`）。而且有一组方法被**钉死在回环地址**——名单是硬编码的 15 条（`packages/client/connection/src/index.ts:104-118`）：agent-preset 的创作面 `agentPreset.read`/`copy`/`openDocument`/`remove`，`host.pickDirectory`、`host.openPath`，整个配置面 `settings.describe`/`openDocument`/`update`/`replace`/`mutate` 与 `credentials.describe`/`set`/`unset`，再加一个 `llm.discoverModels`。connection 的 README 逐条解释了理由（`packages/client/connection/README.md:5`）：读一份 composition 是侦察，因为它写明了一个 session 会跑哪些插件；copy/remove/openDocument 管理名册并驱动 host 桌面。而 `agentPreset.list` 和 `agentPreset.select` 不在名单里——名册只带 id 和信任等级，选一个 preset 也不会给出 `session.create` 的 `agentPreset` 参数没给的东西。
+`/api` 这一条路由上有一道信任检查（`packages/client/connection/src/index.ts:165`），WebSocket upgrade 上也有一道（`:184`）。而且有一组方法被**钉死在回环地址**，名单是硬编码的 15 条（`packages/client/connection/src/index.ts:104-118`）：agent-preset 的创作面 `agentPreset.read`/`copy`/`openDocument`/`remove`，`host.pickDirectory`、`host.openPath`，整个配置面 `settings.describe`/`openDocument`/`update`/`replace`/`mutate` 与 `credentials.describe`/`set`/`unset`，再加一个 `llm.discoverModels`。connection 的 README 逐条解释了理由（`packages/client/connection/README.md:5`）：读一份 composition 是侦察，因为它写明了一个 session 会跑哪些插件；copy/remove/openDocument 管理名册并驱动 host 桌面。而 `agentPreset.list` 和 `agentPreset.select` 不在名单里：名册只带 id 和信任等级，选一个 preset 也不会给出 `session.create` 的 `agentPreset` 参数没给的东西。
 
 顺带：`--host 0.0.0.0` 是被显式禁掉的：
 
@@ -384,7 +384,7 @@ export function rehydrateSchema(serialized: unknown): SchemaNode {
 
 （`packages/client/schema-form/src/model.ts:19-20`）目的写在 README（`packages/client/schema-form/README.md:5`）：**在 host 上校验一个配置段的，和在浏览器里校验草稿的，是同一个 schema 对象**，所以客户端校验不可能与服务定义漂移。
 
-这个包只有 195 行，且**不含任何 React**。`hasPath` 的语义是「这个字段被用户覆写过」，`deletePath` 就是「重置这一个字段」。真正的表单控件由各个设置页自己写——Models 页手写了自己的卡片。代价写在 README `:21`：`rehydrateSchema` 会通过 `new Function` 复活序列化的回调，所以这个信封是可执行内容，只对同源可信 host 安全。
+这个包只有 195 行，且**不含任何 React**。`hasPath` 的语义是「这个字段被用户覆写过」，`deletePath` 就是「重置这一个字段」。真正的表单控件由各个设置页自己写，Models 页手写了自己的卡片。代价写在 README `:21`：`rehydrateSchema` 会通过 `new Function` 复活序列化的回调，所以这个信封是可执行内容，只对同源可信 host 安全。
 
 **i18n 只有 `zh`/`en` 两种语言，中文是兜底不是默认。** `LocaleRuntime`（`packages/client/locale/src/client/index.ts:114`）管这两种；初始语言取**浏览器自己的语言**（按主语言标签匹配，`zh-Hans-CN` → zh、`en-GB` → en，`:332-343`），匹配不上才落到 `FALLBACK_LOCALE`，也就是 `zh`（`:319-320`、`:90`）。用户显式选的偏好存在 `$DSH_HOME/settings.yaml` 的 `locale.preference`（`packages/client/locale/src/locale-settings.ts:6`、`:9`），插件激活后覆盖这个临时值。
 
@@ -402,7 +402,7 @@ export function rehydrateSchema(serialized: unknown): SchemaNode {
 
 ## 八、界面上的东西对应哪个包
 
-这张表是给「我想改屏幕上那个东西，该去哪个目录」用的。第三列同时告诉你**它是怎么进去的**——是抢一个单人座、排进一个 list、按 key 被点名、自荐进 chain，还是干脆不走 slot 而由某个组件直接渲染（最后一种表里有一行，看列名就知道 slot 不是唯一途径）。
+这张表是给「我想改屏幕上那个东西，该去哪个目录」用的。第三列同时告诉你**它是怎么进去的**：是抢一个单人座、排进一个 list、按 key 被点名、自荐进 chain，还是干脆不走 slot 而由某个组件直接渲染（最后一种表里有一行，看列名就知道 slot 不是唯一途径）。
 
 | 你看到的 | 包 | 怎么进到界面里 |
 |---|---|---|
@@ -429,7 +429,7 @@ export function rehydrateSchema(serialized: unknown): SchemaNode {
 
 注册在 `:23-27`，`name: 'ui:deliverable-file-references'`，`order: 190`。浏览器半则在收尾 assistant 消息下面渲染一行产出文件，并把匹配的行内代码变成可点击链接。
 
-这是一个很干净的因果链：**因为界面要把文件路径变成链接，所以要教模型用行内代码写路径**。而且这两件事被绑在同一个包、同一行 `cordis.patch.yml` 上——README 明说（`packages/client/ui-deliverables/README.md:5`）：删掉那一行 entry，提示词、那一行界面、以及散文里的链接一起消失。
+这是一个很干净的因果链：**因为界面要把文件路径变成链接，所以要教模型用行内代码写路径**。而且这两件事被绑在同一个包、同一行 `cordis.patch.yml` 上，README 明说（`packages/client/ui-deliverables/README.md:5`）：删掉那一行 entry，提示词、那一行界面、以及散文里的链接一起消失。
 
 KV cache 的影响也写清了（`:29`）：这个 section 在包挂载期间是静态的、order 190，所以它留在可复用的 prompt 前缀里，不随 turn 变化。这条纪律见 [02 KV Cache](02-kv-cache.md)。
 
@@ -439,7 +439,7 @@ KV cache 的影响也写清了（`:29`）：这个 section 在包挂载期间是
 
 **39 个包的界面，改一处要动几个地方。** 加一个新的界面元素，最少要：在某个包的 children 表里声明 slot（否则 `register` 抛错）、写浏览器半、在 `web-app/cordis.patch.yml` 加一行、如果需要 host 数据还要加 Remote 方法或投影。`docs/cookbook/adding-a-conversation-node.md` 就是为这条路径写的。
 
-**投影是 host 算的，所以 host 版本决定浏览器能显示什么。** todo、goal、plan、权限档位、token 用量全是 `session/projection` 帧。浏览器不从事件流自己折叠这些——好处是一致性，坏处是新增一种投影必须改 host。
+**投影是 host 算的，所以 host 版本决定浏览器能显示什么。** todo、goal、plan、权限档位、token 用量全是 `session/projection` 帧。浏览器不从事件流自己折叠这些：好处是一致性，坏处是新增一种投影必须改 host。
 
 **信任围栏是「回环 vs 非回环」的二分，没有认证层。** connection 的 README 自己写了：这些方法「stay loopback-local until a real authentication layer exists」。局域网上的浏览器能看会话、能发消息，但改不了设置、读不了 preset 组合。这不是权限系统，是一道临时围栏。
 
@@ -460,11 +460,11 @@ KV cache 的影响也写清了（`:29`）：这个 section 在包挂载期间是
 | dsh | 唯一一个 Web GUI（TUI 已删除） | host 算投影，浏览器只渲染；WebSocket 下行 + HTTP 上行 | 39 个插件包 + slot 声明表 |
 | Claude Code | CLI 为主，另有桌面端、Web、IDE 扩展 | 不开源 | 不适用（有 hooks/skills/plugins 但不是 UI 插件） |
 | Codex | Rust CLI，可选 UI 与 app server | rollout 记录 + 客户端全量重放历史 | Extension API 有 12 类 contributor（`context_contributors()` 等，`codex!codex-rs/ext/extension-api/src/registry.rs:145-156`），**一个都不是 UI** |
-| OpenCode | TUI + server；`Session.Event.*` 经 EventV2 总线推给 TUI/Web | 从 DB 消息重建，中断可续 | 两套：server 侧 `Hooks` 21 个键（`opencode!packages/plugin/src/index.ts:222`，无一个是 UI），另有独立的 `TuiPluginApi`——12 个具名 host slot + 对话框/toast/路由/keymap |
+| OpenCode | TUI + server；`Session.Event.*` 经 EventV2 总线推给 TUI/Web | 从 DB 消息重建，中断可续 | 两套：server 侧 `Hooks` 21 个键（`opencode!packages/plugin/src/index.ts:222`，无一个是 UI），另有独立的 `TuiPluginApi`，含 12 个具名 host slot + 对话框/toast/路由/keymap |
 | pi | 自定义 TUI（`packages/tui` 1.7 万行 + `modes/interactive` 1.8 万行） | 扩展可 `registerTool` 并自定义 `renderCall`/`renderResult` | Extension API 里 `ctx.ui.*`：`setHeader`/`setFooter`/`setWidget`/`setEditorComponent`/`custom`/`select`/`confirm` 等 |
 | mini-swe-agent | 交互式 CLI，另有一个 Textual 写的轨迹检查器（`mini-swe-agent!src/minisweagent/run/utilities/inspector.py:16`） | 不适用 | 不适用 |
 
-差别不在「谁能画东西」——pi 和 OpenCode 的扩展都能画，而且画的不止是工具卡片：pi 的 `ctx.ui.setHeader`/`setFooter`/`setWidget` 直接换掉框架的边条，OpenCode 的 `TuiHostSlotMap` 是一张实打实的具名洞表（`app`、`session_prompt`、`sidebar_content`、`home_footer` 等 12 个，`opencode!packages/plugin/src/tui.ts:455-486`），跟 dsh 的 `SlotMap` 是同一个思路。
+差别不在「谁能画东西」，pi 和 OpenCode 的扩展都能画，而且画的不止是工具卡片：pi 的 `ctx.ui.setHeader`/`setFooter`/`setWidget` 直接换掉框架的边条，OpenCode 的 `TuiHostSlotMap` 是一张实打实的具名洞表（`app`、`session_prompt`、`sidebar_content`、`home_footer` 等 12 个，`opencode!packages/plugin/src/tui.ts:455-486`），跟 dsh 的 `SlotMap` 是同一个思路。
 
 真正的差别是**规模和强制力**。dsh 的 slot 声明表覆盖到 composer 底排的每一个座位、会话头的每一个动作、聊天流里的每一种节点；未声明的 slot 注册直接抛错，所以「谁能改哪块界面」是编译期加运行期双重可查的；连内建的 chat 视图自己都只是注册进 `conversation.view` 的一个 tab，没有特权。OpenCode 的 12 个 host slot 是宿主开好的固定几个口子，插件可以自带私有 slot，但宿主界面的其余部分不通过这套机制。
 
@@ -506,7 +506,7 @@ grep -rn "__DSH_BOOT__" packages/client apps/web --include=*.ts --include=*.tsx
 sed -n '95,106p' packages/bundle/web-app/src/index.ts
 ```
 
-启动之后，浏览器控制台里 `window.__DSH_BOOT__` 就是那张 boot graph；设置页里的 Plugin list tab（`ui-settings-plugin-inventory`）调 `pluginInventory/list`，能看到每一行 Loader entry 当前的 fiber 状态——这是判断「某一行到底激活没有」最直接的办法。
+启动之后，浏览器控制台里 `window.__DSH_BOOT__` 就是那张 boot graph；设置页里的 Plugin list tab（`ui-settings-plugin-inventory`）调 `pluginInventory/list`，能看到每一行 Loader entry 当前的 fiber 状态，这是判断「某一行到底激活没有」最直接的办法。
 
 ---
 
