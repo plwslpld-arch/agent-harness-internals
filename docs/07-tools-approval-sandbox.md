@@ -13,10 +13,10 @@ status: draft
 
 在默认组合下（`packages/bundle/base/cordis.patch.yml` 那套，沙箱 `workspace-write` + 审批 `ask`），模型调 `write`、`edit`、`bash` 都**不会弹窗**。安全边界不是弹窗，是沙箱：`bash` 的 argv 被 bwrap / Landlock / Seatbelt / Windows 受限令牌包住，`write`/`edit` 在进程内被路径围栏挡住。弹窗只在两种情况下出现：
 
-1. **沙箱真的拒绝了，模型请求升级**——它在同一个工具调用里带上 `sandbox_permissions` + `justification` 重试，这次重试会问人；
-2. **`tools/pre-execute` 有插件返回了 `ask`**——在 commit 47f9438 的整个仓库里，唯一会返回 `ask` 的是 Claude Code 方言的 hook 桥（`packages/hooks/hooks-claude-code/src/index.ts:242`），而默认组合**没有挂任何 hooks 桥**。
+1. **沙箱真的拒绝了，模型请求升级**：它在同一个工具调用里带上 `sandbox_permissions` + `justification` 重试，这次重试会问人；
+2. **`tools/pre-execute` 有插件返回了 `ask`**：在 commit 47f9438 的整个仓库里，唯一会返回 `ask` 的是 Claude Code 方言的 hook 桥（`packages/hooks/hooks-claude-code/src/index.ts:242`），而默认组合**没有挂任何 hooks 桥**。
 
-所以"审批"在 dsh 里不是一个逐调用的确认流程，而是一个**升级通道**。下面这篇讲清楚这三层——工具、审批、沙箱——各自管什么、代码在哪、模型看到什么。
+所以「审批」在 dsh 里不是一个逐调用的确认流程，而是一个**升级通道**。下面这篇讲清楚这三层（工具、审批、沙箱）各自管什么、代码在哪、模型看到什么。
 
 ## 先看见：两条真实的日志
 
@@ -64,7 +64,7 @@ approval/decided seq 62  {"outcome":"rejected"}
 tool/result      seq 63  content "Error: the user rejected tool \"bash\""  isError:true
 ```
 
-注意 `tool/call` 在 `hook/invoked` **之前**就落盘了——先记录模型要做什么，再决定让不让做。还有 `tool/result` 的文案 `Error: the user rejected tool "bash"`，这是 `ToolRuntime` 四种拒绝文案里的一种，后面会全部列出来。
+注意 `tool/call` 在 `hook/invoked` **之前**就落盘了：先记录模型要做什么，再决定让不让做。还有 `tool/result` 的文案 `Error: the user rejected tool "bash"`，这是 `ToolRuntime` 四种拒绝文案里的一种，后面会全部列出来。
 
 ## 三个正交旋钮
 
@@ -93,7 +93,7 @@ dsh 把权限拆成三个互不包含的东西。搞混它们是理解这套系�
             approval: never
 ```
 
-插件自带的 schema 默认表只有两项（`packages/interaction/permission-presets/src/index.ts:168-175`），bundle 补了 `read-only`。选一个 preset 写一条 `permission/preset` 事件（纯"用户意图"记录），然后按需分别写 `sandbox/mode` 和 `approval/policy`；两个旋钮的值凑不出任何一个 preset 时，派生状态是 `custom`。每个新会话发布前，`pinInitialPermission`（`packages/interaction/permission-presets/src/index.ts:400-430`）把三条事件补齐，于是"这个会话当时是什么权限"永远能从日志本身重建。
+插件自带的 schema 默认表只有两项（`packages/interaction/permission-presets/src/index.ts:168-175`），bundle 补了 `read-only`。选一个 preset 写一条 `permission/preset` 事件（纯「用户意图」记录），然后按需分别写 `sandbox/mode` 和 `approval/policy`；两个旋钮的值凑不出任何一个 preset 时，派生状态是 `custom`。每个新会话发布前，`pinInitialPermission`（`packages/interaction/permission-presets/src/index.ts:400-430`）把三条事件补齐，于是「这个会话当时是什么权限」永远能从日志本身重建。
 
 默认部署值：`DSH_PERMISSION_MODE ?? 'workspace-write'`，审批是 `danger-full-access ? 'never' : 'ask'`（`packages/bundle/base/cordis.patch.yml:175`、`:191`）。
 
@@ -104,7 +104,7 @@ dsh 把权限拆成三个互不包含的东西。搞混它们是理解这套系�
 1. **沙箱升级**：`approveEscalation`（`packages/sandbox/sandbox/src/escalation.ts:157-189`），被 `bash`/`pwsh`（`packages/shell/tool-bash/src/index.ts:213-233`）和 `write`/`edit`（`packages/fs/tool-fs/src/sandbox.ts:97`）共用。
 2. **`tools/pre-execute` 返回 `ask`**：由 `ToolRuntime.serviceAsk` 转成一次 `request()`（`packages/core/tools/src/index.ts:1689-1729`）。
 
-其余出现 `approval/request` 字样的地方都是**回答方**（answerer），不是发起方：ACP 桥（`packages/acp/acp/src/index.ts:215`）和 Web 客户端的 api-proxy（`packages/host/apiproxy/src/api-proxy.ts:1422`）。答不上来就是答不上来——零监听器时 waterfall 落到默认值 `'unavailable'`，消费方一律按拒绝处理。
+其余出现 `approval/request` 字样的地方都是**回答方**（answerer），不是发起方：ACP 桥（`packages/acp/acp/src/index.ts:215`）和 Web 客户端的 api-proxy（`packages/host/apiproxy/src/api-proxy.ts:1422`）。答不上来就是答不上来，零监听器时 waterfall 落到默认值 `'unavailable'`，消费方一律按拒绝处理。
 
 `ApprovalService.request()` 本身很短（`packages/interaction/user-approval/src/index.ts:257-276`）：
 
@@ -132,17 +132,17 @@ dsh 把权限拆成三个互不包含的东西。搞混它们是理解这套系�
     if (this.effectivePolicy(session) === 'never') return 'rejected'
 ```
 
-上面那行的注释解释了为什么不做成监听器：一个用 `prepend: true` 后挂的监听器会排在任何"网关式监听器"前面，那样 `never` 就没法保证确定性了；只有服务自己的 `request` 路径能守住这个承诺。
+上面那行的注释解释了为什么不做成监听器：一个用 `prepend: true` 后挂的监听器会排在任何「网关式监听器」前面，那样 `never` 就没法保证确定性了；只有服务自己的 `request` 路径能守住这个承诺。
 
-结果只有四种（`packages/interaction/user-approval/src/types.ts:29`）：`allowed-once | rejected | cancelled | unavailable`。第一个是唯一的通过，其余三个全是拒绝，但**拒绝理由文案不同**，好让模型分得清"人说不行"和"这儿根本没人能答"。
+结果只有四种（`packages/interaction/user-approval/src/types.ts:29`）：`allowed-once | rejected | cancelled | unavailable`。第一个是唯一的通过，其余三个全是拒绝，但**拒绝理由文案不同**，好让模型分得清「人说不行」和「这儿根本没人能答」。
 
 ## 完整工具目录：默认组合下模型看得见什么
 
-下面这张表覆盖默认 bundle（`packages/bundle/base/cordis.patch.yml`）与 CLI 的 `standard` preset（`apps/cli/config/agent-presets/standard/agent.cordis.yml`）。描述原文摘自上游自动生成的目录 `docs/tool-catalog.md`——那份文件是启动真实插件后读 `ctx.tools.schemas()` 生成的，所以是**真实 schema**，不是手写文档。
+下面这张表覆盖默认 bundle（`packages/bundle/base/cordis.patch.yml`）与 CLI 的 `standard` preset（`apps/cli/config/agent-presets/standard/agent.cordis.yml`）。描述原文摘自上游自动生成的目录 `docs/tool-catalog.md`。那份文件是启动真实插件后读 `ctx.tools.schemas()` 生成的，所以是**真实 schema**，不是手写文档。
 
-但有一个必须知道的差别：**生成器给每个包用的是它自己的默认配置，不是这两套组合**。最直接的证据是 `grep -c sandbox_permissions docs/tool-catalog.md` 返回 0——目录里 `bash` 的 schema **没有** `sandbox_permissions` / `justification` 这两个字段，因为 `packages/shell/tool-bash/src/index.ts:259-269` 只在挂了会限制的执行器（`escalationModes.length > 0`）时才把它们加进 schema，而默认组合恰恰挂了。所以：描述文本可以照读，字段清单要按组合另算——前面 `escalation-approved` 那条日志里模型真的填了这两个字段，就是这个道理。
+但有一个必须知道的差别：**生成器给每个包用的是它自己的默认配置，不是这两套组合**。最直接的证据是 `grep -c sandbox_permissions docs/tool-catalog.md` 返回 0：目录里 `bash` 的 schema **没有** `sandbox_permissions` / `justification` 这两个字段，因为 `packages/shell/tool-bash/src/index.ts:259-269` 只在挂了会限制的执行器（`escalationModes.length > 0`）时才把它们加进 schema，而默认组合恰恰挂了。所以：描述文本可以照读，字段清单要按组合另算，前面 `escalation-approved` 那条日志里模型真的填了这两个字段，就是这个道理。
 
-"并发"一列的判据是 §「并发分类」。
+「并发」一列的判据是 §「并发分类」。
 
 | 工具 | 模型看到的描述（摘要，原文见目录） | 并发 | 在哪 |
 | --- | --- | --- | --- |
@@ -163,7 +163,7 @@ dsh 把权限拆成三个互不包含的东西。搞混它们是理解这套系�
 | `subagent` | "Delegate a self-contained task to a subagent… Give it a complete, standalone prompt: it does not see this conversation. This call waits for the result by default. Set `run_in_background: true`…"（`docs/tool-catalog.md:1475`） | **parallel** | 两处 |
 | `subagent_fork` | 同包第二实例，绑 fork 后端 | **parallel** | 两处 |
 | `send_message` / `interrupt_agent` / `list_agents` | 给后台子代理续发下一 turn / 取消其当前 turn / 列出子孙（`docs/tool-catalog.md:1554`、`:1511`、`:1532`） | exclusive | 两处 |
-| `report` | "Report selected content to the agent that started you… only your direct parent receives it"（`docs/tool-catalog.md:1586`）——**只注册在 continuable 子 agent 的 scope 里** | exclusive | 两处（宿主平面注册） |
+| `report` | "Report selected content to the agent that started you… only your direct parent receives it"（`docs/tool-catalog.md:1586`），**只注册在 continuable 子 agent 的 scope 里** | exclusive | 两处（宿主平面注册） |
 | `workflow` | "Run a JavaScript workflow script that orchestrates subagents at scale…"（`docs/tool-catalog.md:1736`） | exclusive | 两处 |
 | `ralph` | "Run a foreground fresh-agent Ralph loop toward one immutable objective. Use only when the direct human explicitly asks for Ralph or fresh-agent iteration…"（`docs/tool-catalog.md:1184`） | exclusive | 两处 |
 | `create_goal` / `get_goal` / `update_goal` | 同会话持久目标；create/edit/pause/resume 要求直接人类根权限（`docs/tool-catalog.md:945`、`:970`、`:983`） | exclusive | 两处 |
@@ -269,7 +269,7 @@ fail-closed 到了偏执的程度：未声明、返回了别的东西、抛异�
       }
 ```
 
-设计理由写在注释里：一个注定失败的调用不能让 pre-execute 监听器、审批、guard 看见——更不能被它们"批准"。这跟真正的未知工具名不同：未知名仍走原来的 dispatch 阶段 `UNKNOWN_TOOL` 路径，好让策略监听器看到每一个到过注册表的名字。
+设计理由写在注释里：一个注定失败的调用不能让 pre-execute 监听器、审批、guard 看见，更不能被它们「批准」。这跟真正的未知工具名不同：未知名仍走原来的 dispatch 阶段 `UNKNOWN_TOOL` 路径，好让策略监听器看到每一个到过注册表的名字。
 
 ### 四种拒绝文案
 
@@ -300,11 +300,11 @@ fail-closed 到了偏执的程度：未声明、返回了别的东西、抛异�
 | `cancelled` | `Error: approval for tool "<name>" was cancelled` |
 | `unavailable` | `Error: tool "<name>" requires approval, but no approval channel is available` |
 
-沙箱升级那条路的文案是另一套（`packages/sandbox/sandbox/src/escalation.ts:184-186`）：`the user rejected escalating this <subject> to "<mode>"` / `approval for escalating to "<mode>" was cancelled` / `sandbox escalation to "<mode>" requires approval, but no approval channel is available`。**两套文案刻意不复用**，因为模型需要分清"这个工具要批准"和"这次升级要批准"。
+沙箱升级那条路的文案是另一套（`packages/sandbox/sandbox/src/escalation.ts:184-186`）：`the user rejected escalating this <subject> to "<mode>"` / `approval for escalating to "<mode>" was cancelled` / `sandbox escalation to "<mode>" requires approval, but no approval channel is available`。**两套文案刻意不复用**，因为模型需要分清「这个工具要批准」和「这次升级要批准」。
 
 ### `ABORTED` 与 `ABORTED_BEFORE_DISPATCH`
 
-取消有两个码，判据是"工具体有没有被调用过"（`packages/core/tools/src/index.ts:1518-1525`）：
+取消有两个码，判据是「工具体有没有被调用过」（`packages/core/tools/src/index.ts:1518-1525`）：
 
 ```ts
   private cancellationResult(exec: ToolRunContext, prior?: ToolExecutionResult): ToolExecutionResult {
@@ -321,7 +321,7 @@ fail-closed 到了偏执的程度：未声明、返回了别的东西、抛异�
 
 ### `fuseToolSignals`：取消不会丢
 
-`tools/execute` 是"环绕派发"的 waterfall，wrapper 可以替换 `exec.signal`（超时策略就是这么加 deadline 的）。问题是：wrapper 换了 signal 之后，调用方的原始取消还灵不灵？答案在 `dispatchToolBody`（`packages/core/tools/src/index.ts:1536-1538`）：
+`tools/execute` 是「环绕派发」的 waterfall，wrapper 可以替换 `exec.signal`（超时策略就是这么加 deadline 的）。问题是：wrapper 换了 signal 之后，调用方的原始取消还灵不灵？答案在 `dispatchToolBody`（`packages/core/tools/src/index.ts:1536-1538`）：
 
 ```ts
     const wrapperSignal = exec.signal
@@ -350,7 +350,7 @@ fail-closed 到了偏执的程度：未声明、返回了别的东西、抛异�
 
 `block` 会**丢弃工具自己 defer 的上下文**——被拦下的调用只暴露拦截方自己给的上下文。这不是 bug，是刻意的：被否决的调用不该顺带把它自己想说的话塞进下一步。
 
-最后两段：`finalizeContent` 是定义方自己注册的同步"最后一英里"内容变换（`packages/core/tools/src/index.ts:1649-1654`，`tool-jobs` 用它切输出长度），然后深冻结、无损 JSON 化，`Object.freeze(exec)` 之后才 emit `tools/result`（`:1657-1676`）。观察者拿到的是不可变的、已经无损序列化过的最终结果，改不动也不会影响调用。
+最后两段：`finalizeContent` 是定义方自己注册的同步「最后一英里」内容变换（`packages/core/tools/src/index.ts:1649-1654`，`tool-jobs` 用它切输出长度），然后深冻结、无损 JSON 化，`Object.freeze(exec)` 之后才 emit `tools/result`（`:1657-1676`）。观察者拿到的是不可变的、已经无损序列化过的最终结果，改不动也不会影响调用。
 
 默认组合里挂在这四个点上的插件：`tools/pre-execute` 有 `tool-jobs`；`tools/execute` 有 `timeout-policy`、`session-checkpoint-policy`；`tools/post-execute` 有 `spill-policy`、`repeat-tool-reminder`、`tool-fs-search`；`tools/result` 有 `agent-instructions`、`subagent-in-process-driver`。
 
@@ -371,9 +371,9 @@ const PLATFORM_CHAINS: Record<string, readonly SelectedRunner['runner'][]> = {
 }
 ```
 
-只有候选多于一个的平台才做功能性探测（Linux 上先真跑一次 `bwrap ... true` 看退出码）；只有一个候选的平台不探测——探测是用来仲裁的，不是用来复验一个没有替代品的选择的。Landlock 那条路自带一个约 300 行 C 的 launcher（`native/landlock-run`）随 SDK 发布，因为 `bwrap` 恰恰在最需要沙箱的宿主上不可用（最小容器、禁用 unprivileged userns、拒绝 `mount` 的 LSM）。
+只有候选多于一个的平台才做功能性探测（Linux 上先真跑一次 `bwrap ... true` 看退出码）；只有一个候选的平台不探测：探测是用来仲裁的，不是用来复验一个没有替代品的选择的。Landlock 那条路自带一个约 300 行 C 的 launcher（`native/landlock-run`）随 SDK 发布，因为 `bwrap` 恰恰在最需要沙箱的宿主上不可用（最小容器、禁用 unprivileged userns、拒绝 `mount` 的 LSM）。
 
-**`SandboxEnforcement` 只有两态**：`'full' | 'partial'`（`packages/sandbox/sandbox/src/index.ts:59`）。别把它和 `'unavailable'` 混在一起——后者不是 enforcement 的取值，它是 `EscalationOutcome` 的一个成员（`packages/sandbox/sandbox/src/escalation.ts:93`），语义是"审批渠道答不上来"。一个说的是沙箱能兑现多少承诺，一个说的是有没有人来批准，两者在不同的轴上。
+**`SandboxEnforcement` 只有两态**：`'full' | 'partial'`（`packages/sandbox/sandbox/src/index.ts:59`）。别把它和 `'unavailable'` 混在一起。后者不是 enforcement 的取值，它是 `EscalationOutcome` 的一个成员（`packages/sandbox/sandbox/src/escalation.ts:93`），语义是「审批渠道答不上来」。一个说的是沙箱能兑现多少承诺，一个说的是有没有人来批准，两者在不同的轴上。
 
 `partial` 目前只有一个来源（`packages/sandbox/sandbox-local/src/index.ts:177-187`）：
 
@@ -402,7 +402,7 @@ Landlock 还可能在探测时报 `partial`（老内核 ABI 管不了全部承�
 [sandbox: escalation available — retry this exact command once with sandbox_permissions (the narrowest wider mode that suffices) + justification; the approval prompt asks the user]
 ```
 
-第二行只在组合真的挂了升级通道时才出现。`write`/`edit` 用同一对函数，只把 `command` 换成 `operation`——两个工具家族刻意共用一套词汇，好让模型不用分辨"这次是内核拒的还是路径围栏拒的"。
+第二行只在组合真的挂了升级通道时才出现。`write`/`edit` 用同一对函数，只把 `command` 换成 `operation`：两个工具家族刻意共用一套词汇，好让模型不用分辨「这次是内核拒的还是路径围栏拒的」。
 
 升级的合法性是**执行期**判定，不是 schema 约束（`packages/sandbox/sandbox/src/escalation.ts:28-31`）：
 
@@ -413,11 +413,11 @@ export const WIDER_MODES: Record<string, readonly SandboxMode[]> = {
 }
 ```
 
-schema 里的 enum 是封闭的目标词汇 `ESCALATION_TARGETS = ['workspace-write', 'danger-full-access']`（`packages/sandbox/sandbox/src/escalation.ts:41`），因为 schema 是注册表全局的，而"当前有效模式"是每次调用的事实。`approveEscalation` 的顺序是固定的：先查是否严格变宽（不变宽**根本不会惊动人**），再解析审批通道，最后映射结果（`packages/sandbox/sandbox/src/escalation.ts:157-189`）。
+schema 里的 enum 是封闭的目标词汇 `ESCALATION_TARGETS = ['workspace-write', 'danger-full-access']`（`packages/sandbox/sandbox/src/escalation.ts:41`），因为 schema 是注册表全局的，而「当前有效模式」是每次调用的事实。`approveEscalation` 的顺序是固定的：先查是否严格变宽（不变宽**根本不会惊动人**），再解析审批通道，最后映射结果（`packages/sandbox/sandbox/src/escalation.ts:157-189`）。
 
 ## 两段运行时上下文的原文
 
-模型是怎么知道当前策略的？靠两段注册在 `ctx.systemPrompt.context()` 上的运行时上下文——它们**不进 system prompt**，而是每个 step 被渲染、去重、以一条 user 角色消息追加进历史（机制见 [03 Agent Loop](03-agent-loop.md)，缓存影响见 [02 KV-Cache](02-kv-cache.md)；system prompt 本身的构成见 [01 System Prompt](01-system-prompt.md)）。
+模型是怎么知道当前策略的？靠两段注册在 `ctx.systemPrompt.context()` 上的运行时上下文。它们**不进 system prompt**，而是每个 step 被渲染、去重、以一条 user 角色消息追加进历史（机制见 [03 Agent Loop](03-agent-loop.md)，缓存影响见 [02 KV-Cache](02-kv-cache.md)；system prompt 本身的构成见 [01 System Prompt](01-system-prompt.md)）。
 
 `sandbox:policy`，order 110（`packages/sandbox/sandbox-policy/src/index.ts:113-122`），三种模式三段原文（`packages/sandbox/sandbox-policy/src/index.ts:38-52`）：
 
@@ -446,7 +446,7 @@ without an available answerer, the request fails closed.
 
 order 决定了它们在快照里的先后：110 的沙箱段在前，115 的审批段在后。前面 `escalation-approved` 那条 `user/message` 里两段的顺序正是如此，而且事件的 `source.sections` 字段还逐段留了名字和文本，UI 能据此归因到贡献它的子系统。
 
-`read-only` 那段的措辞值得单读一遍："Do not refuse a required modification from this policy alone: try an available tool normally and follow any denial and escalation guidance it returns."——设计者明确不希望模型看到 `read-only` 就自我审查、直接放弃；它应该照常尝试，让沙箱来拒，然后按拒绝里的指引走升级。这是把"策略"和"边界"分开的一个具体表现。
+`read-only` 那段的措辞要单读一遍："Do not refuse a required modification from this policy alone: try an available tool normally and follow any denial and escalation guidance it returns."——设计者明确不希望模型看到 `read-only` 就自我审查、直接放弃；它应该照常尝试，让沙箱来拒，然后按拒绝里的指引走升级。这是把「策略」和「边界」分开的一个具体表现。
 
 子 agent 还会额外收到 order 120 的 `subagent:delegation` 段（`packages/subagent/subagent/src/child-agent.ts:170`），注释里明写它排在 110 和 115 之后。
 
@@ -465,17 +465,17 @@ export function captureDelegatedPolicyOverrides(parent: Agent): DelegatedPolicyO
 
 三条规则：
 
-1. **审批钉死为 `never`**——只要组合里有审批服务，子会话就写一条 `approval/policy: never`，"regardless of the parent's own policy"。子 agent 永远问不了人，也就永远升不了权，只能把失败报告回去。
-2. **沙箱只复制父的显式覆盖**——`overrideOf` 读的是父会话日志里的 `sandbox/mode` 事件，部署默认和一次性 grant 都不复制。父没显式切过，子就继承部署默认（因为它们本来就在同一个组合里）。捕获必须在子启动的第一个 await 之前同步做完：之后父再切模式，那属于父的未来，不属于这个孩子。
-3. **`toolFilter` 只过滤继承来的工具**——`tools.restrict()` 只作用于"全局 + 祖先 scope"来的工具，不影响子 scope 自己注册的，也碰不到保留的 `run_code`（`packages/core/tools/src/index.ts:1071-1098`）。所以子 agent 的 `report` 工具（注册在它自己的 scope 里）不会被父设的过滤器删掉。多层限制取交集。
+1. **审批钉死为 `never`**：只要组合里有审批服务，子会话就写一条 `approval/policy: never`，"regardless of the parent's own policy"。子 agent 永远问不了人，也就永远升不了权，只能把失败报告回去。
+2. **沙箱只复制父的显式覆盖**：`overrideOf` 读的是父会话日志里的 `sandbox/mode` 事件，部署默认和一次性 grant 都不复制。父没显式切过，子就继承部署默认（因为它们本来就在同一个组合里）。捕获必须在子启动的第一个 await 之前同步做完：之后父再切模式，那属于父的未来，不属于这个孩子。
+3. **`toolFilter` 只过滤继承来的工具**：`tools.restrict()` 只作用于「全局 + 祖先 scope」来的工具，不影响子 scope 自己注册的，也碰不到保留的 `run_code`（`packages/core/tools/src/index.ts:1071-1098`）。所以子 agent 的 `report` 工具（注册在它自己的 scope 里）不会被父设的过滤器删掉。多层限制取交集。
 
 ## 威胁模型：源码自己承认的边界
 
 dsh 的仓库在这件事上相当坦白，几处原文：
 
 - **插件、工具、scope 全在宿主进程里。** `packages/core/scope/README.md:27`：`Scopes route trusted same-process plugins; they are not sandboxes or authority boundaries.` scope 是可见性和所有权的路由，不是权限边界。
-- **Code Mode 的 worker 是"容纳，不是安全边界"。** `packages/code-runtime/code-runtime-worker-thread/README.md:5`：`Containment, not a security boundary`，信任姿态被明确定义为"与 bash 等价"。同样的话出现在 workflow 的 worker（`packages/workflow/README.md:14`）和动态 Cordis 包的 vm（`packages/extensions/tool-cordis/README.md:23`）。
-- **fs 围栏是"在受信代码里检查一个模型控制的路径"。** `packages/fs/fs-sandbox/README.md:21` 把残留的 TOCTOU（重新规范化和实际 syscall 之间被换掉祖先符号链接）写明为"已知并接受"，并说明真正内核级的隔离是 `ctx.shell` 的活。
+- **Code Mode 的 worker 是「容纳，不是安全边界」。** `packages/code-runtime/code-runtime-worker-thread/README.md:5`：`Containment, not a security boundary`，信任姿态被明确定义为「与 bash 等价」。同样的话出现在 workflow 的 worker（`packages/workflow/README.md:14`）和动态 Cordis 包的 vm（`packages/extensions/tool-cordis/README.md:23`）。
+- **fs 围栏是「在受信代码里检查一个模型控制的路径」。** `packages/fs/fs-sandbox/README.md:21` 把残留的 TOCTOU（重新规范化和实际 syscall 之间被换掉祖先符号链接）写明为「已知并接受」，并说明真正内核级的隔离是 `ctx.shell` 的活。
 - **沙箱只管文件效果。** 网络、进程可见性、凭据不在 `SandboxMode` 的词汇表里（`packages/sandbox/sandbox/src/index.ts:23-28`）。
 
 把这些拼起来，dsh 的实际立场是：**模型写的东西（bash 命令、`run_code` 程序、workflow 脚本）在文件效果上受真 OS 沙箱约束；人装的东西（Cordis 插件、工具包）拥有宿主进程的全部权限。** 装一个插件等于给一次 shell 访问——这是组合式设计的必然代价，上游选择了写清楚而不是假装它不存在。
@@ -496,15 +496,15 @@ dsh 的仓库在这件事上相当坦白，几处原文：
 | 持久授权 | **没有** "always allow"，grant 只活一次调用 | `ApprovedForSession`、规则写回 `~/.codex/rules/*.rules` | settings 里的 allow 规则 + 会话内"always" | `always` 写进会话 `approved`，并自动放行同会话其它等待中的匹配请求 | — | — |
 | OS 沙箱 | bwrap → Landlock（Linux）、Seatbelt（macOS）、受限令牌+ACL（Windows，`partial`）；fs 另有进程内路径围栏 | Seatbelt / Landlock+seccomp / bubblewrap / Windows 受限令牌；另有受管网络代理 | Seatbelt / bubblewrap（+ socat 网络代理）；**原生 Windows 不支持** | **无 OS 沙箱** | **无**（推荐 Gondolin micro-VM / Docker / OpenShell） | 沙箱=换环境类（`local`/`docker`/`singularity`/`bubblewrap`/…） |
 | 网络 | 不在沙箱词汇表内 | 域名白/黑名单渲染进 `<environment_context><network>` | 外部代理按 hostname 放行，首访新域提示；有 TLS 终止+凭据 mask 的实验特性 | 无 | 无 | 无 |
-| 拒绝后怎么办 | 模型带 `sandbox_permissions` + `justification` 原样重试一次，人批准才放行 | 沙箱内失败判定为 `Denied` → 用 `"command failed; retry without sandbox?"` 再问一次 → 去沙箱重跑 | 失败信息附上"沙箱挡了哪个路径/主机"，模型可用 `dangerouslyDisableSandbox` 重试并走常规权限流 | 拒绝变成 `CorrectedError` 反馈给模型；`continue_loop_on_deny !== true` 时直接停循环 | — | 拒绝时把用户评论作为 user 消息喂回模型 |
+| 拒绝后怎么办 | 模型带 `sandbox_permissions` + `justification` 原样重试一次，人批准才放行 | 沙箱内失败判定为 `Denied` → 用 `"command failed; retry without sandbox?"` 再问一次 → 去沙箱重跑 | 失败信息附上「沙箱挡了哪个路径/主机」，模型可用 `dangerouslyDisableSandbox` 重试并走常规权限流 | 拒绝变成 `CorrectedError` 反馈给模型；`continue_loop_on_deny !== true` 时直接停循环 | — | 拒绝时把用户评论作为 user 消息喂回模型 |
 | 自动审核 | 无 | **guardian**：独立子会话重建紧凑 transcript 交给模型判，超时/异常一律拒绝（fail closed） | `auto` 模式的分类器（信任工作目录与会话开始时的 git remotes） | 无 | 无 | 无 |
 | 受保护路径 | 无专门名单；靠 sandbox mode 的工作区边界 | deny-read 路径规则；存在 deny-read 时绝不免沙箱 | `.git`、`.claude/`、`.mcp.json`、shell 启动文件等，除 bypass 外**永不**自动批准，allow 规则也不能预批 | `.env`/`.env.*` 读取默认 `ask`；项目外目录单独请求 | 无 | 无 |
 
 三点观察：
 
-- **dsh 的词汇几乎照搬 Codex**（`read-only`/`workspace-write`/`danger-full-access`、`sandbox_permissions`、justification、拒绝后升级重试），但把 Codex 的四态审批砍成了两态，并且**去掉了所有持久授权**。取舍很清楚：宁可没有 allow 规则，也不要一个"批准过一次就一直放行"的状态需要维护和审计。
-- **Claude Code 走了完全相反的路**：规则语言极其丰富（顺序固定的 deny/ask/allow、glob、域名、按参数），沙箱是后来才补的，并且专门列了一份"沙箱内也不许写"的路径名单，理由写得很直白——能改这些文件的命令可以给自己授权。dsh 没有对应的名单，因为它的信任模型里"插件本来就有进程权限"。
-- **pi 是另一个极端**：明确不做权限系统，把隔离整个推给容器。这不是偷懒，是一种主张——权限系统给的是虚假的安全感，真边界只能是进程/VM 边界。dsh 的 README 其实同意后半句（scope 不是权限边界、worker 不是安全边界），只是它还额外提供了一层真 OS 沙箱。
+- **dsh 的词汇几乎照搬 Codex**（`read-only`/`workspace-write`/`danger-full-access`、`sandbox_permissions`、justification、拒绝后升级重试），但把 Codex 的四态审批砍成了两态，并且**去掉了所有持久授权**。取舍很清楚：宁可没有 allow 规则，也不要一个「批准过一次就一直放行」的状态需要维护和审计。
+- **Claude Code 走了完全相反的路**：规则语言极其丰富（顺序固定的 deny/ask/allow、glob、域名、按参数），沙箱是后来才补的，并且专门列了一份「沙箱内也不许写」的路径名单，理由写得很直白：能改这些文件的命令可以给自己授权。dsh 没有对应的名单，因为它的信任模型里「插件本来就有进程权限」。
+- **pi 是另一个极端**：明确不做权限系统，把隔离整个推给容器。这不是偷懒，是一种主张：权限系统给的是虚假的安全感，真边界只能是进程/VM 边界。dsh 的 README 其实同意后半句（scope 不是权限边界、worker 不是安全边界），只是它还额外提供了一层真 OS 沙箱。
 
 ## 怎么自己核
 
@@ -536,6 +536,6 @@ sed -n '99,103p' packages/interaction/user-approval/src/index.ts
 grep -n "^### \`" docs/tool-catalog.md
 ```
 
-想确认"默认不弹窗"这个结论，最直接的读法是把上面两条 `grep` 的结果和 `packages/bundle/base/cordis.patch.yml` 对一遍：调用审批的只有升级和 `ask`，产生 `ask` 的只有 hooks 桥，而默认 bundle 里没有 hooks 桥。
+想确认「默认不弹窗」这个结论，最直接的读法是把上面两条 `grep` 的结果和 `packages/bundle/base/cordis.patch.yml` 对一遍：调用审批的只有升级和 `ask`，产生 `ask` 的只有 hooks 桥，而默认 bundle 里没有 hooks 桥。
 
 相关的其它篇：工具调度与取消语义见 [03 Agent Loop](03-agent-loop.md)；这两段运行时上下文为什么不进 system prompt 见 [02 KV-Cache](02-kv-cache.md)；子代理的完整委托流程见 [08 Orchestration](08-orchestration.md)；Code Mode 下工具怎么呈现见 [09 扩展与 Code Mode](09-extensions-and-code-mode.md)；术语见 [附录 A 术语表](appendix-a-glossary.md)。

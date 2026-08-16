@@ -50,7 +50,7 @@ status: draft
 （原文 `packages/bundle/headless/cordis.patch.yml:1-35`，注释已略去部分。）逐条读：
 
 - `:7-10`：把 `system-prompt` 这一行的 `persona` 配置换掉。`{{model}}` 和 `{{cwd}}` 不是 YAML 模板，是 prompt 变量，由 agent-loop 在装配时代入（`packages/core/agent-loop/src/index.ts:351-353` 注册了 `provider`/`model`/`cwd` 三个变量）。
-- `:14-15`：`hmr` 这一行 `disabled: true`。**注意 `disabled` 和「删掉这一行」不是一回事**：行还在树里，只是不激活。web-app 那一层也这么干，理由写在 `packages/bundle/web-app/cordis.patch.yml:283-285`——base 是共享的，一个「在某个面上被删掉」的行，等哪天有人重排组合顺序时会悄悄复活，而 `disabled` 是显式的。
+- `:14-15`：`hmr` 这一行 `disabled: true`。**注意 `disabled` 和「删掉这一行」不是一回事**：行还在树里，只是不激活。web-app 那一层也这么干，理由写在 `packages/bundle/web-app/cordis.patch.yml:283-285`：base 是共享的，一个「在某个面上被删掉」的行，等哪天有人重排组合顺序时会悄悄复活，而 `disabled` 是显式的。
 - `:17-20`：`tools` 注册表的呈现模式由环境变量 `DSH_TOOLS_MODE` 决定。`!!js` 是这套 YAML 方言的自定义标签，值是一段在挂载时求值的 JavaScript 表达式（不是字符串）。
 - `:22-35`：`insert` 追加三行新的。`code-runtime` 是 Code Mode 的执行后端（跑在 worker thread 里）；`headless-startup` 解析命令行位置参数；`headless-runner` 声明 `inject: [headlessStartup]`，所以它的 `task: !!js ctx.headlessStartup.task` 这个表达式，**要等到 `headlessStartup` 这个服务真的存在之后才求值**。这是 vendored Cordis 的一项本地修改（惰性配置解析，后面第八节会讲）。
 
@@ -82,7 +82,7 @@ status: draft
         port: !!js ctx.webStartup.port ?? 3080
 ```
 
-（`:115-120`）监听地址来自命令行解析出来的 `webStartup` 服务，`??` 后面是部署兜底值。这一行也解释了 `dsh --profile web --help` 为什么不会真的开端口：文件头的注释（`:12`）写得很直白——`--help` 那条路径不提供 `webStartup` 服务，所以这一行永远 pending，服务器不 bind。
+（`:115-120`）监听地址来自命令行解析出来的 `webStartup` 服务，`??` 后面是部署兜底值。这一行也解释了 `dsh --profile web --help` 为什么不会真的开端口：文件头的注释（`:12`）写得很直白：`--help` 那条路径不提供 `webStartup` 服务，所以这一行永远 pending，服务器不 bind。
 
 ```yaml
     - id: connection
@@ -96,9 +96,9 @@ status: draft
 
 再往后是约 30 行 `ui-*`（`:174-274`），每一行就是浏览器里的一块界面：`ui-trajectory`（轨迹视图）、`ui-model-selection`（模型选择）、`ui-agent-preset`（preset 选择器）、`ui-deliverables`（产出文件链接）……这些在 [11 Web 客户端与 host](11-web-client-and-host.md) 里展开。
 
-**第三段，把 base 里「每个 agent 一份」的行全部 `disabled: true`**（`:276-408`）。这是 web-app 最有信息量的一段。tool-bash、tool-pwsh、tool-jobs、tool-fs、tool-fs-search、tool-str-replace-editor、skill-filesystem、tool-skill、tool-goal、plan-mode、compaction-basic、command-compact、tool-result-pruner、四个 tool-subagent 行、workflow、tool-ralph、agent-instructions、tool-todo、tool-web——全部关掉。
+**第三段，把 base 里「每个 agent 一份」的行全部 `disabled: true`**（`:276-408`）。这是 web-app 最有信息量的一段。tool-bash、tool-pwsh、tool-jobs、tool-fs、tool-fs-search、tool-str-replace-editor、skill-filesystem、tool-skill、tool-goal、plan-mode、compaction-basic、command-compact、tool-result-pruner、四个 tool-subagent 行、workflow、tool-ralph、agent-instructions、tool-todo、tool-web，全部关掉。
 
-关掉不是因为 Web 不要这些能力，而是因为在 Web 上**这些能力属于「某一个会话」而不是「整个进程」**。每一段禁用上面都有一段注释解释判据，写得很清楚。举 `tool-jobs` 那段（`:299-307`）：后台任务的**注册表**留在 host 平面，只有模型能看见的 `job_*` 控制工具搬走；理由是注册表的生产者（`tool-bash` 等）在 preset 的 realm 之外，用 `ctx.get` 取它——如果注册表被关进 preset 的 realm，那些兄弟行看不见它，`run_in_background` 会回答「background jobs unavailable」而控制工具却好端端挂在目录里。
+关掉不是因为 Web 不要这些能力，而是因为在 Web 上**这些能力属于「某一个会话」而不是「整个进程」**。每一段禁用上面都有一段注释解释判据，写得很清楚。举 `tool-jobs` 那段（`:299-307`）：后台任务的**注册表**留在 host 平面，只有模型能看见的 `job_*` 控制工具搬走；理由是注册表的生产者（`tool-bash` 等）在 preset 的 realm 之外，用 `ctx.get` 取它；如果注册表被关进 preset 的 realm，那些兄弟行看不见它，`run_in_background` 会回答「background jobs unavailable」而控制工具却好端端挂在目录里。
 
 判据被反复陈述成两句互补的话：**一个被 preset 之外的行 inject 的服务，属于 host 平面**（`shell-env` 那段，`:287-291`）；**一个被 preset 之外的行 read 的服务，也属于 host 平面**（`goals` 那段，`:336-343`）。上游把这条判据的唯一出处写在 `.agents/notes/implemented/architecture/2026-08-10-host-plane-ownership-after-presets.md`（在 `:356` 被引用）。
 
@@ -129,12 +129,12 @@ constructor() {
     const self = new Proxy<this>(this, ReflectService.handler)
 ```
 
-（`vendor/cordis/src/context.ts:71-74`）根 context 的构造函数返回的不是 `this`，是一个 Proxy。所以 `ctx.systemPrompt` 这种读取不是普通属性访问，而是走 `ReflectService` 的服务解析——按当前 context 的**隔离标签**去查表。这一点是后面所有 realm 语义的地基。
+（`vendor/cordis/src/context.ts:71-74`）根 context 的构造函数返回的不是 `this`，是一个 Proxy。所以 `ctx.systemPrompt` 这种读取不是普通属性访问，而是走 `ReflectService` 的服务解析，按当前 context 的**隔离标签**去查表。这一点是后面所有 realm 语义的地基。
 
 三个派生方法都不改父 context，只造子 context：
 
 - `extend(meta)`（`:99-107`）：原型继承一个子 context，`meta` 的自有属性遮蔽继承来的。
-- `isolate(name, label?)`（`:121-125`）：给某个服务名换一个作用域标签。「在这个子树下面，`terminals` 这个服务名解析到另一个实例」——`minimal` preset 里的 `isolate: { terminals: true }` 就是这个。`label` 省略时是一个新的 unique symbol，即「entry-local realm」；传相同 label 则两个 isolate 汇合成同一个 realm。
+- `isolate(name, label?)`（`:121-125`）：给某个服务名换一个作用域标签。「在这个子树下面，`terminals` 这个服务名解析到另一个实例」，`minimal` preset 里的 `isolate: { terminals: true }` 就是这个。`label` 省略时是一个新的 unique symbol，即「entry-local realm」；传相同 label 则两个 isolate 汇合成同一个 realm。
 
   这里出现的 **realm（域）** 后文会反复用到，先定义清楚：一个 realm 就是「服务名 → 实例」这张查找表的一个命名空间。同一个名字 `terminals` 在根 realm 里解析到 A，在某个 isolate realm 里解析到 B，互不干扰；不在任何 isolate 里的行都发布到**根 realm**，也就是进程全局。preset 的全部 realm 规则都是这句话的推论。
 - `intercept(name, config)`（`:141-145`）：给子树下加载的插件注入某个服务的额外配置。
@@ -210,7 +210,7 @@ export type DispatchMode = 'emit' | 'parallel' | 'serial' | 'bail' | 'waterfall'
 
 消费侧是 `ctx.inject(names, callback)`（`vendor/cordis/src/registry.ts:300-302`），等依赖都在了才跑回调。
 
-**seam 就是这样形成的**：一个包只定义抽象服务与它的类型（Definition），另一个包 `provide` 一个实现（Provider），第三批包 `inject` 它（Consumer）。谁 provide 是组合决定的——base 里 `sandbox` 这一行换成别的包名，整个沙箱后端就换了，消费者一行不改。上游把这条写成了设计记录 `.agents/notes/implemented/architecture/2026-06-13-capability-seams.md`，并明确「Service Definition 是抽象类/registry，绝不是 TS interface」——因为 interface 在运行时不存在，没法被 `provide`。
+**seam 就是这样形成的**：一个包只定义抽象服务与它的类型（Definition），另一个包 `provide` 一个实现（Provider），第三批包 `inject` 它（Consumer）。谁 provide 是组合决定的：base 里 `sandbox` 这一行换成别的包名，整个沙箱后端就换了，消费者一行不改。上游把这条写成了设计记录 `.agents/notes/implemented/architecture/2026-06-13-capability-seams.md`，并明确「Service Definition 是抽象类/registry，绝不是 TS interface」，因为 interface 在运行时不存在，没法被 `provide`。
 
 ### 一个真实的最小插件
 
@@ -271,7 +271,7 @@ switch (invocation.mode) {
     })
 ```
 
-（`apps/cli/src/bin.ts:27-38`）三种 mode：`profile`、`plugin`、`dump-config`（`:29-49`）。命令行语法在 `apps/cli/src/args.ts`，帮助文本在 `:64-72`。launcher 只解析自己的 flag，**第一个它不认识的 token 开始就是应用自己的参数**（`apps/cli/src/args.ts:1-16` 的模块注释）——所以 `dsh --profile web --help` 打印的是 web 应用的帮助，不是 launcher 的。
+（`apps/cli/src/bin.ts:27-38`）三种 mode：`profile`、`plugin`、`dump-config`（`:29-49`）。命令行语法在 `apps/cli/src/args.ts`，帮助文本在 `:64-72`。launcher 只解析自己的 flag，**第一个它不认识的 token 开始就是应用自己的参数**（`apps/cli/src/args.ts:1-16` 的模块注释）。所以 `dsh --profile web --help` 打印的是 web 应用的帮助，不是 launcher 的。
 
 ### 补丁叠加顺序
 
@@ -301,9 +301,9 @@ function allPatches(composed: ComposedProfile): PatchOptions[] {
 
 即：**bundle 层（按 `dsh.profile.bundles` 顺序）→ profile 自己的 `cordis.patch.yml` → `$DSH_HOME/cordis.patch.yml` → `--patch` 叠加层 →（追加的）shipped preset 根与遥测开关**。home 层排在 profile 层之后，理由写在 `:134-137`：机器级偏好适用于每个 profile，所以它压过 per-profile 层。
 
-`--patch` 之后还会追加两个由 launcher 合成的补丁：`agent-presets` 的 `roots`（`:159-167`，把随发行版安装的 preset 目录以 `system` 信任等级钉进去），以及遥测开关（`:168-169`）。遥测开关的语义写在 `resolveTelemetryPatch`（`:80-83`）：`DSH_TELEMETRY_DISABLED` **任何非空值**（包括 `'0'`、`'false'`）都关闭——「一个隐私开关宁可误关也不要误开」（`:71-73`）。
+`--patch` 之后还会追加两个由 launcher 合成的补丁：`agent-presets` 的 `roots`（`:159-167`，把随发行版安装的 preset 目录以 `system` 信任等级钉进去），以及遥测开关（`:168-169`）。遥测开关的语义写在 `resolveTelemetryPatch`（`:80-83`）：`DSH_TELEMETRY_DISABLED` **任何非空值**（包括 `'0'`、`'false'`）都关闭：「一个隐私开关宁可误关也不要误开」（`:71-73`）。
 
-关键在于：`--dump-config` 用的是同一个 `composeEntries` 与同一份 `applyEntryPatches` 算法（`:151`），所以 dump 出来的树和真正挂载的树不可能漂移。
+`--dump-config` 用的是同一个 `composeEntries` 与同一份 `applyEntryPatches` 算法（`:151`），所以 dump 出来的树和真正挂载的树不可能漂移。
 
 ### loadLayeredEnv 三层
 
@@ -321,7 +321,7 @@ export function loadLayeredEnv(
 
 （`packages/boot/app-boot/src/index.ts:177-186`）三层是**继承环境 > 调用目录的 `.env` > Harness home 的 `.env`**，应用时不覆盖已有名字（`:187-193`）。
 
-真正值得注意的是 `readEnvLayer` 的拒绝逻辑：
+`readEnvLayer` 还有一段拒绝逻辑：
 
 ```ts
   for (const name of Object.keys(values)) {
@@ -407,7 +407,7 @@ export const PROFILE_TEMPLATES: Record<string, readonly string[]> = {
 
 Web 上被关掉的那些「每 agent 一份」的行，由 `packages/preset/agent-presets` 按会话挂回来。preset 是一个目录，里面一个 `agent.cordis.yml` 加一个 `preset.yml`（显示名与排序）。发行版自带四个，在 `apps/cli/config/agent-presets/`。
 
-一个关键约束写在 `apps/cli/config/agent-presets/standard/agent.cordis.yml:11-18`：**preset 里一个 provide 服务的行，必须待在带 `isolate` realm 的 group 里**。否则它发布到根 realm，就是进程级的——另一个 preset 发布同名服务会碰撞，host 侧的读者会替所有会话解析到某一个 preset 的实例。`dsh-agent-presets` 在挂载时就拒绝这种组合。
+一个关键约束写在 `apps/cli/config/agent-presets/standard/agent.cordis.yml:11-18`：**preset 里一个 provide 服务的行，必须待在带 `isolate` realm 的 group 里**。否则它发布到根 realm，就是进程级的：另一个 preset 发布同名服务会碰撞，host 侧的读者会替所有会话解析到某一个 preset 的实例。`dsh-agent-presets` 在挂载时就拒绝这种组合。
 
 | preset | 显示名 | 组成 | compaction |
 |---|---|---|---|
@@ -416,7 +416,7 @@ Web 上被关掉的那些「每 agent 一份」的行，由 `packages/preset/age
 | `minimal` | 极简模式 | persona（`complete: true`）+ 持久 bash + str_replace_editor，共 62 行 | **无** |
 | `cordis` | 创造模式 | standard 去掉 skill 两件套，加 `tool-cordis` 与两个自带 skill，persona 换成一段讲「两个平面」的长文 | 有 |
 
-`standard` 里三个 group 各自的 realm 边界值得看一眼，因为它们是「什么该隔离、什么不该」的现成教材：
+`standard` 里三个 group 各自的 realm 边界是「什么该隔离、什么不该」的现成教材：
 
 ```yaml
 - id: compaction
@@ -427,7 +427,7 @@ Web 上被关掉的那些「每 agent 一份」的行，由 `packages/preset/age
     toolResultPruner: true
 ```
 
-（`apps/cli/config/agent-presets/standard/agent.cordis.yml:137-142`）compaction 后端和 pruner 共一个 realm，因为 `compaction-basic` 用 `ctx.get` 取 `toolResultPrune`，pruner 必须在同一 realm 里（`:128-129`）。但 `tokenMeter` **刻意不在这个 realm**（`:131-136`）：计量表留在 host 平面，它按 Session 折叠，还拥有浏览器要读的 context-meter 投影单元——放进 realm 的话，那些单元会随着「当前挂了哪些 preset」而来来去去。
+（`apps/cli/config/agent-presets/standard/agent.cordis.yml:137-142`）compaction 后端和 pruner 共一个 realm，因为 `compaction-basic` 用 `ctx.get` 取 `toolResultPrune`，pruner 必须在同一 realm 里（`:128-129`）。但 `tokenMeter` **刻意不在这个 realm**（`:131-136`）：计量表留在 host 平面，它按 Session 折叠，还拥有浏览器要读的 context-meter 投影单元；放进 realm 的话，那些单元会随着「当前挂了哪些 preset」而来来去去。
 
 ### minimal：Claude SWE 兼容的 RL 组合
 
@@ -463,7 +463,7 @@ Run commands in a bash shell
 
 文件系统那一段（`:46-62`）用 `isolate: { fs: true }` 把 host 的沙箱化 provider 换成裸的 `fs-local`（`cwd` 取 `DSH_CWD` 或 `process.cwd()`），`str_replace_editor` 与它共享 realm，`maxOutputChars: 16000`。
 
-**没有 compaction 组、没有 fs-sandbox、没有 skill、没有 plan mode、没有 subagent。** 这个组合就是 `BENCHMARK.md` 指向的那一个——同样的配方以 `examples/jsonrpc-agent/minimal.cordis.yml` 的形式交给 Python SDK 使用，细节见 [12 产品表面与协议](12-surfaces-and-protocols.md)。它同时也说明了一件事：dsh 的「全部功能」和「跑分用的组合」是两个可以差得很远的东西，而它们的差别是一个 62 行 vs 251 行的 YAML 文件，不是编译开关。
+**没有 compaction 组、没有 fs-sandbox、没有 skill、没有 plan mode、没有 subagent。** 这个组合就是 `BENCHMARK.md` 指向的那一个，同样的配方以 `examples/jsonrpc-agent/minimal.cordis.yml` 的形式交给 Python SDK 使用，细节见 [12 产品表面与协议](12-surfaces-and-protocols.md)。它同时也说明了一件事：dsh 的「全部功能」和「跑分用的组合」是两个可以差得很远的东西，而它们的差别是一个 62 行 vs 251 行的 YAML 文件，不是编译开关。
 
 ### cordis：让 agent 写 agent
 
@@ -479,17 +479,17 @@ Run commands in a bash shell
 
 上面 YAML 里出现过、但很容易被当成噪音的几行，实际承担了这套组合能工作的前提。
 
-**`packages/typert`（8,430 行非测试源码，在 49 个包组里排第六）** 组 README 列了三个包（`packages/typert/README.md:5-11`）：`registry`（`ctx.typert`，运行时的包反射与 schema 存储）、`loader`（扫描 Loader entry，把生成的 host 契约注册进去）、`generator`（构建期从源码类型生成产物）；目录下还有第四个 `protocol`——它只放两端共享的声明（Remote 基类、装饰器、编解码器、协议映射表），不做类型分析也不注册 Cordis 服务，所以组 README 的表里没列它。它在 base 里是三行（`packages/bundle/base/cordis.patch.yml:30-37`），加上 `api-gateway`。它解决的问题是：浏览器要调 host 上某个服务的方法，谁来保证两端签名一致？答案是从 TypeScript 源码类型生成 Remote 契约，而不是手写 DTO。详见 [11 Web 客户端与 host](11-web-client-and-host.md)。
+**`packages/typert`（8,430 行非测试源码，在 49 个包组里排第六）** 组 README 列了三个包（`packages/typert/README.md:5-11`）：`registry`（`ctx.typert`，运行时的包反射与 schema 存储）、`loader`（扫描 Loader entry，把生成的 host 契约注册进去）、`generator`（构建期从源码类型生成产物）；目录下还有第四个 `protocol`，它只放两端共享的声明（Remote 基类、装饰器、编解码器、协议映射表），不做类型分析也不注册 Cordis 服务，所以组 README 的表里没列它。它在 base 里是三行（`packages/bundle/base/cordis.patch.yml:30-37`），加上 `api-gateway`。它解决的问题是：浏览器要调 host 上某个服务的方法，谁来保证两端签名一致？答案是从 TypeScript 源码类型生成 Remote 契约，而不是手写 DTO。详见 [11 Web 客户端与 host](11-web-client-and-host.md)。
 
-**`settings`**：`ctx.settings` 是「命名空间 + schema」的注册表，解析分三层——schema 默认值 → 注册者所在组合的 `base`（它自己的 cordis.yml entry config 子集）→ 用户文档里的那一段（`packages/settings/settings/README.md:5`）。所以 base 里 `llm-deepseek` 那一行不内联 key 和 endpoint（`packages/bundle/base/cordis.patch.yml:446-449` 的注释），它们每次请求从 `llm-deepseek:` 设置段解析。**没挂 provider 时消费者退回只读 entry config**，组合照常工作。
+**`settings`**：`ctx.settings` 是「命名空间 + schema」的注册表，解析分三层：schema 默认值 → 注册者所在组合的 `base`（它自己的 cordis.yml entry config 子集）→ 用户文档里的那一段（`packages/settings/settings/README.md:5`）。所以 base 里 `llm-deepseek` 那一行不内联 key 和 endpoint（`packages/bundle/base/cordis.patch.yml:446-449` 的注释），它们每次请求从 `llm-deepseek:` 设置段解析。**没挂 provider 时消费者退回只读 entry config**，组合照常工作。
 
-**`credentials`**：一句话原则——**配置里只放引用，不放密钥**（`packages/credentials/credentials/README.md:5-7`）。`apiKeyEnv: DEEPSEEK_API_KEY` 是配置，值在 credential provider 那边；`resolve(ref)` 每次操作调一次、不跨操作缓存，所以改了密钥下一次请求就生效，不用重启插件；空字符串一律视为「未配置」。
+**`credentials`**：一句话原则是**配置里只放引用，不放密钥**（`packages/credentials/credentials/README.md:5-7`）。`apiKeyEnv: DEEPSEEK_API_KEY` 是配置，值在 credential provider 那边；`resolve(ref)` 每次操作调一次、不跨操作缓存，所以改了密钥下一次请求就生效，不用重启插件；空字符串一律视为「未配置」。
 
 **`identity/anonymous-user-id`**：一个随机 UUID v4，存成 `$DSH_HOME/.anonymous-user-id` 的一行（`packages/identity/anonymous-user-id/README.md:5`）。遥测的 Resource `user.id`、`/feedback` 的回执、DeepSeek 请求的 `x-deepseek-harness-user-id` 都用它。README 明确它**不从主机名、网络地址、git remote 或任何可识别来源派生**，删掉文件即重置。
 
 **`workspace`**：`ctx.workspaceRegistry`，目录的稳定 id、标题、会话成员顺序（`packages/workspace/workspace/README.md:5`）。只有 web-app 层挂（`packages/bundle/web-app/cordis.patch.yml:73-74`），因为 headless 没有「多个工作区」这个概念。
 
-**`storage`**：`ctx.storage` 是非会话数据的中枢——命名后端注册表 + 数据形态挂载，**中枢自己不做 IO**（`packages/storage/storage/README.md:5`）。web-app 挂了 `storage` + `storage-json`（根在 `dshHomePath('storages')`）+ `storage-domain`（路由到 `json`）三行（`packages/bundle/web-app/cordis.patch.yml:51-62`）。会话日志不走这里，它有自己的 append-only 通道，见 [05 Session](05-session.md)。
+**`storage`**：`ctx.storage` 是非会话数据的中枢：命名后端注册表 + 数据形态挂载，**中枢自己不做 IO**（`packages/storage/storage/README.md:5`）。web-app 挂了 `storage` + `storage-json`（根在 `dshHomePath('storages')`）+ `storage-domain`（路由到 `json`）三行（`packages/bundle/web-app/cordis.patch.yml:51-62`）。会话日志不走这里，它有自己的 append-only 通道，见 [05 Session](05-session.md)。
 
 ---
 
@@ -507,7 +507,7 @@ Run commands in a bash shell
 
 第 8 项（`:40`）把 Loader/Include 的配置调和改成事务性的：Loader 在卸载前先 import 新的 entry 名字，等生命周期落定，候选应用失败就恢复旧插件或旧配置；group 更新并发启动候选、等待每个结果、失败时撤销新增与修改；Include 读取并校验**分离的**候选内容，对克隆应用补丁，调和树，成功之后才提交缓存。
 
-第 12 项（`:44`）是一个真实死锁的修复：Include 的每一次子树变更走同一个队列（group 的事务 `update` 不可重入），HMR 主 watcher 加 `ignoreInitial: true`（初次扫描会重播 boot 刚消费过的文件，其中一个配置文件的 `add` 会在 initial apply 中途触发 refresh）——串行化之后，一次失败的 initial apply 的回滚会 dispose HMR，而 HMR 的 teardown drain 又在等排在同一个 apply 后面的 refresh，**退出码 13 且无任何诊断**。
+第 12 项（`:44`）是一个真实死锁的修复：Include 的每一次子树变更走同一个队列（group 的事务 `update` 不可重入），HMR 主 watcher 加 `ignoreInitial: true`（初次扫描会重播 boot 刚消费过的文件，其中一个配置文件的 `add` 会在 initial apply 中途触发 refresh）。串行化之后，一次失败的 initial apply 的回滚会 dispose HMR，而 HMR 的 teardown drain 又在等排在同一个 apply 后面的 refresh，**退出码 13 且无任何诊断**。
 
 第 14 项（`:46`）是 Windows 特有的：Loader 子进程 dispose 后系统可能短暂保留目标句柄，上游那个 fire-and-forget 的 rename 会变成 unhandled rejection 并丢掉持久化的 `disabled` 状态；改成串行化 + 有界退避重试 `EACCES`/`EBUSY`/`EPERM`。
 
@@ -515,7 +515,7 @@ Run commands in a bash shell
 
 ### 惰性配置（第 15、18 项）
 
-第 15 项（`:47`）移植了上游的 PR #41：fiber 保留**原始**配置，只在声明的注入激活之后才通过 `internal/config` 解析。这就是 `task: !!js ctx.headlessStartup.task`、`port: !!js ctx.webStartup.port ?? 3080`、`trustedHosts: !!js ctx.webRuntime.trustedHosts` 这些表达式能写出来的原因——没有它，这些表达式会在服务还不存在时求值成 undefined。而且解析只作用于 entry 根，子插件保持调用者拥有的配置身份。
+第 15 项（`:47`）移植了上游的 PR #41：fiber 保留**原始**配置，只在声明的注入激活之后才通过 `internal/config` 解析。这就是 `task: !!js ctx.headlessStartup.task`、`port: !!js ctx.webStartup.port ?? 3080`、`trustedHosts: !!js ctx.webRuntime.trustedHosts` 这些表达式能写出来的原因：没有它，这些表达式会在服务还不存在时求值成 undefined。而且解析只作用于 entry 根，子插件保持调用者拥有的配置身份。
 
 第 18 项（`:50`）补上最后一块：`disabled: !!js` 表达式在**每次挂载判定时**求值，原始节点留在选项里所以写回时仍是 `!!js` 形式。`disabled` 是唯一被插值的元数据字段。base 里 `disabled: !!js process.platform === 'win32'` 这类按平台互斥的行靠它工作。
 
@@ -531,7 +531,7 @@ Run commands in a bash shell
 
 ## 九、代价与失效点
 
-**读一个 YAML 行需要知道包名映射。** `- id: tool-fs-search` / `name: '@deepseek-ai/dsh-tool-fs-search'`——id 是补丁的寻址键，name 是 npm 包。改 id 会让上层补丁找不到目标，而且不会报错，只是「那条补丁没生效」。上游的应对是 `assertEntriesActivated` 的 fail-loud 与 `--dump-config`，但补丁没命中任何 id 本身不是错误。
+**读一个 YAML 行需要知道包名映射。** `- id: tool-fs-search` / `name: '@deepseek-ai/dsh-tool-fs-search'`：id 是补丁的寻址键，name 是 npm 包。改 id 会让上层补丁找不到目标，而且不会报错，只是「那条补丁没生效」。上游的应对是 `assertEntriesActivated` 的 fail-loud 与 `--dump-config`，但补丁没命中任何 id 本身不是错误。
 
 **`config` 整块替换而非深合并。** 这是 base 文件头（`:6-8`）反复强调的。一个上层补丁想改某一行的一个键，必须重述这一行的**全部**键。web-app 里 `session-query-sqlite` 那段（`:26-29`）就是在解释自己为什么要重述 `path` 和 `openAt` 两个键。这个规则很容易出静默错误：漏写一个键，那个键就退回 schema 默认值。
 
@@ -545,7 +545,7 @@ Run commands in a bash shell
 
 ## 十、别人怎么做
 
-同一个问题——「这个 harness 跑起来到底装了什么，谁说了算」——六家给的答案在同一条轴上，从「编译期写死」滑到「每次启动由 YAML 叠出来」：
+同一个问题「这个 harness 跑起来到底装了什么，谁说了算」，六家给的答案在同一条轴上，从「编译期写死」滑到「每次启动由 YAML 叠出来」：
 
 | harness | 「装了什么」由谁决定 | 能不能按会话换一套 | 第三方能插进来吗 |
 |---|---|---|---|
@@ -556,9 +556,9 @@ Run commands in a bash shell
 | pi | 内建 7 个工具（`bash`/`edit`/`find`/`grep`/`ls`/`read`/`write`，`pi!packages/coding-agent/src/core/tools/bash.ts:331`） | 部分：扩展可在 `before_agent_start` 里换 systemPrompt | Extension API（33 个事件、`registerTool`/`registerCommand`/`registerProvider`）、Packages；无 MCP |
 | mini-swe-agent | `mini.yaml` 151 行 + `DefaultAgent` 190 行（`mini-swe-agent!src/minisweagent/agents/default.py:38`），只有一个 bash 工具 | 换 yaml 就是换一切 | 不适用 |
 
-差别不在「能不能扩展」——每一家都有扩展点。差别在于**核心自己是不是用同一套扩展机制拼出来的**。Codex 的 `ToolRouter` 是 Rust 里的一个结构体，扩展通过 Extension API 往里加东西；dsh 的 `tools` 注册表本身就是补丁里的一行（`packages/bundle/base/cordis.patch.yml:424-425`），和一个第三方工具包在机制上没有区别。代价也从这里来：dsh 的 219 个包大部分是这个决定的直接后果，而 mini-swe-agent 用 341 行做到了一个能跑 SWE-bench 的 agent。
+差别不在「能不能扩展」，每一家都有扩展点。差别在于**核心自己是不是用同一套扩展机制拼出来的**。Codex 的 `ToolRouter` 是 Rust 里的一个结构体，扩展通过 Extension API 往里加东西；dsh 的 `tools` 注册表本身就是补丁里的一行（`packages/bundle/base/cordis.patch.yml:424-425`），和一个第三方工具包在机制上没有区别。代价也从这里来：dsh 的 219 个包大部分是这个决定的直接后果，而 mini-swe-agent 用 341 行做到了一个能跑 SWE-bench 的 agent。
 
-另一个可对照的点是「一次跑分用的组合」怎么表达。mini-swe-agent 的答案是「就是那个 yaml」；dsh 的答案是 `minimal` preset 那 62 行——两者形态惊人地接近，区别只在 dsh 的 62 行是从 451 行的 base 上**减**出来的，而 mini 的 151 行是全部。
+另一个可对照的点是「一次跑分用的组合」怎么表达。mini-swe-agent 的答案是「就是那个 yaml」；dsh 的答案是 `minimal` preset 那 62 行。两者形态惊人地接近，区别只在 dsh 的 62 行是从 451 行的 base 上**减**出来的，而 mini 的 151 行是全部。
 
 ---
 

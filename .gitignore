@@ -12,6 +12,9 @@ coverage/
 # 由 CI 发布到 gh-pages 分支，不进入主干。
 .generated/
 
+# 本地 agent 工具配置，不属于仓库内容。
+.claude/
+
 # Generated temporary files and local experiment output.
 .tmp/
 research/working-notes/private/

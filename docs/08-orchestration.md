@@ -9,9 +9,9 @@ status: draft
 
 [03 Agent Loop](03-agent-loop.md) 讲的循环只有四百多行，里面找不到「子代理」「计划模式」「待办清单」这些词。它们全部在外面，是挂在循环事件上的插件。本篇逐个讲清楚三件事：**它是什么 / 挂在循环的哪个事件 / 模型实际看到什么文本**。
 
-一个统一的观察先放在前面：dsh 里这些能力全部通过两条通道之一到达模型。
+dsh 里这些能力全部通过两条通道之一到达模型。
 
-- **system prompt section**：带一个 `order` 数字，装配时按 order 排成 system prompt。它落在**请求前缀**里——所谓前缀，就是每次请求都原样重发、因而能被服务端 KV-Cache 命中的开头那一段（见 [02 KV-Cache](02-kv-cache.md)）。改动一个 section，它自己和它之后的所有内容都要重新预填。
+- **system prompt section**：带一个 `order` 数字，装配时按 order 排成 system prompt。它落在**请求前缀**里。所谓前缀，就是每次请求都原样重发、因而能被服务端 KV-Cache 命中的开头那一段（见 [02 KV-Cache](02-kv-cache.md)）。改动一个 section，它自己和它之后的所有内容都要重新预填。
 - **user-role 消息**：`agent.inject()` / `followup()` / `steer()` / `additionalContexts` 追加到对话历史末尾。前缀一个字节不动，只是多了一条新消息。
 
 哪条通道是刻意选的，本篇会逐个点出来。
@@ -24,7 +24,7 @@ status: draft
 
 > Delegate a self-contained task to a subagent (a separate agent that works in its own context) to offload focused, independent work — research, a scoped implementation, an analysis — so it does not consume this conversation's context. The subagent returns its result, not its intermediate steps. Give it a complete, standalone prompt: it does not see this conversation. **This call waits for the subagent and returns its result.**
 
-而进程内的 `subagent`，前面几句一字不差，只有最后那句收尾不同——它配的是 **continuable** 模式，所以收的是「This tool runs in the background by default, immediately returns a durable subagent id, and keeps the child conversation available for later turns. …」
+而进程内的 `subagent`，前面几句一字不差，只有最后那句收尾不同：它配的是 **continuable** 模式，所以收的是「This tool runs in the background by default, immediately returns a durable subagent id, and keeps the child conversation available for later turns. …」
 
 这里先把 dsh 全篇都要用的一对词说清楚：
 
@@ -48,7 +48,7 @@ provider 只需要实现一个 `start(request): Promise<SubagentRun>`（`package
 进程内的 one-shot 路径全在 `packages/subagent/subagent-in-process-driver/src/index.ts:102-148`。关键是传给 `agents.create()` 的 `setup` 回调（`:120-130`），它在**尚未发布的**子 scope 里按固定顺序做四件事：
 
 1. 把父的策略覆盖写进子会话（`appendDelegatedPolicyOverrides`，`:121`）；
-2. `applyChildComposition`（`:122`）——组合 preset、注入委派声明、遮蔽 persona、限制工具；
+2. `applyChildComposition`（`:122`）：组合 preset、注入委派声明、遮蔽 persona、限制工具；
 3. 如果要求结构化输出，装上捕获工具（`:126-128`）；
 4. 追加 `subagent/descriptor` 事件（`:129`）。
 
@@ -75,7 +75,7 @@ sandboxMode: parent.ctx.get('sandboxPolicy')?.overrideOf(parent.session),
 approvalPolicy: parent.ctx.get('approval') === undefined ? undefined : 'never',
 ```
 
-沙箱模式**只复制父会话的显式覆盖**（不复制部署默认值，也不复制一次性升级），审批策略则无条件钉成 `never`。两条都以普通 session 事件追加到子会话（`:220`、`:223`，`source: 'delegation'`），而且刻意排在 fork 种子之后——「fresh policy wins stale seed state」。子代理因此永远无法通过升级审批拿到更宽的权限，只能报告失败。审批与沙箱的完整模型见 [07 工具、审批与沙箱](07-tools-approval-sandbox.md)。
+沙箱模式**只复制父会话的显式覆盖**（不复制部署默认值，也不复制一次性升级），审批策略则无条件钉成 `never`。两条都以普通 session 事件追加到子会话（`:220`、`:223`，`source: 'delegation'`），而且刻意排在 fork 种子之后：「fresh policy wins stale seed state」。子代理因此永远无法通过升级审批拿到更宽的权限，只能报告失败。审批与沙箱的完整模型见 [07 工具、审批与沙箱](07-tools-approval-sandbox.md)。
 
 ### 2.3 continuable：子代理结算怎么回到父
 
@@ -103,7 +103,7 @@ approvalPolicy: parent.ctx.get('approval') === undefined ? undefined : 'never',
 
 > `Background subagent <childId> reported:`
 
-后面接子代理写的内容，消息 source 是 `{ kind: 'subagent-report', form: 'relay', senderSessionId }`——**它是数据，不是用户话语**，这一点靠 source 标注保证。
+后面接子代理写的内容，消息 source 是 `{ kind: 'subagent-report', form: 'relay', senderSessionId }`，**它是数据，不是用户话语**，这一点靠 source 标注保证。
 
 ### 2.4 fork：种子父前缀，以及它为什么被绑成 one-shot
 
@@ -124,13 +124,13 @@ function completedTurnPrefix(parent: Agent): SessionEvent[] {
 
 fork 是唯一 `inheritsParentContext = true` 的 provider（`packages/subagent/subagent-fork-in-process/src/index.ts:64`），其余五个全是 `false`。
 
-**为什么绑成 one-shot**——源码里留了一段少见的坦白（`packages/subagent/subagent-fork-in-process/src/index.ts:77-82`）：
+**为什么绑成 one-shot**：源码里留了一段少见的坦白（`packages/subagent/subagent-fork-in-process/src/index.ts:77-82`）：
 
 > `TODO(fork-continuable-prefix-reuse)`: no shipped composition calls this — they bind fork to `backgroundMode: one-shot` because a continuable child's `report` tool and prompt section precede the inherited history, defeating the prefix reuse a fork exists for. Reopening needs a byte-identical child system prompt and tool schemas …
 
-逻辑是这样的：fork 的全部价值在于「子代理能复用父的前缀缓存」。但 continuable 的子代理会被装上 `report` 工具（改工具表）和 `tool:report` 提示段（改 system prompt），这两样都排在继承来的历史**前面**——于是在第一条继承 turn 之前缓存就已经失效，整段被重新预填。配套的 Agent Note 是 `.agents/notes/implemented/architecture/2026-08-10-fork-children-stay-one-shot.md`，它把这条明确定性为「限制来自组装，不是代码」：`prepareContinuable` 照样实现着，只是没人调。
+逻辑是这样的：fork 的全部价值在于「子代理能复用父的前缀缓存」。但 continuable 的子代理会被装上 `report` 工具（改工具表）和 `tool:report` 提示段（改 system prompt），这两样都排在继承来的历史**前面**，于是在第一条继承 turn 之前缓存就已经失效，整段被重新预填。配套的 Agent Note 是 `.agents/notes/implemented/architecture/2026-08-10-fork-children-stay-one-shot.md`，它把这条明确定性为「限制来自组装，不是代码」：`prepareContinuable` 照样实现着，只是没人调。
 
-值得记一笔的是，这条纪律在发行版里**没有守住**：base bundle 确实是 `backgroundMode: one-shot`（`packages/bundle/base/cordis.patch.yml:329`），但 CLI 的三个 agent preset 都把 fork 配成了 `continuable`（`apps/cli/config/agent-presets/standard/agent.cordis.yml:198`、`apps/cli/config/agent-presets/code/agent.cordis.yml:199`、`apps/cli/config/agent-presets/cordis/agent.cordis.yml:186`）。Agent Note 里「Every shipped composition binds …」这句在基线 commit 上已经不成立——而这正是那篇笔记自己在 Risks 里写下的「悄悄被重新引入」的风险。
+这条纪律在发行版里**没有守住**：base bundle 确实是 `backgroundMode: one-shot`（`packages/bundle/base/cordis.patch.yml:329`），但 CLI 的三个 agent preset 都把 fork 配成了 `continuable`（`apps/cli/config/agent-presets/standard/agent.cordis.yml:198`、`apps/cli/config/agent-presets/code/agent.cordis.yml:199`、`apps/cli/config/agent-presets/cordis/agent.cordis.yml:186`）。Agent Note 里「Every shipped composition binds …」这句在基线 commit 上已经不成立，而这正是那篇笔记自己在 Risks 里写下的「悄悄被重新引入」的风险。
 
 ### 2.5 结构化输出子代理
 
@@ -142,7 +142,7 @@ fork 是唯一 `inheritsParentContext = true` 的 provider（`packages/subagent/
 
 > When you have your final answer, you MUST report it by calling the `structured_output` tool with arguments matching its parameter schema exactly. Do not finish with a plain text answer: only the tool call counts as your result.
 
-执行时校验通过就 `exec.concludeTurn()`（`packages/subagent/subagent-in-process-driver/src/structured.ts:93`）——这是默认组装里**唯一**用到「工具结果直接结束 turn」这个能力的地方。之后任何工具调用都被一道单调 guard 拒掉（`:109-111`），拒绝文案同样是模型可见的：`structured output already recorded: the run is complete, so <tool> is not executed`。
+执行时校验通过就 `exec.concludeTurn()`（`packages/subagent/subagent-in-process-driver/src/structured.ts:93`）。这是默认组装里**唯一**用到「工具结果直接结束 turn」这个能力的地方。之后任何工具调用都被一道单调 guard 拒掉（`:109-111`），拒绝文案同样是模型可见的：`structured output already recorded: the run is complete, so <tool> is not executed`。
 
 ### 2.6 三个控制工具与 report
 
@@ -157,7 +157,7 @@ fork 是唯一 `inheritsParentContext = true` 的 provider（`packages/subagent/
 
 > That agent shares your workspace but does not automatically receive your transcript, tool output, or reasoning, so **finishing your work is not itself a result**. Reporting does not end your turn or finish your work, and only your direct parent receives it. A failed call may still have arrived, so do not blindly repeat it.
 
-配套的 order 117 提示段（`packages/subagent/tool-subagent-report/src/index.ts:24`）把同一条义务在 schema 之外再说一遍——理由 README 写得直白：「where a child that ignores tool descriptions still reads it」。
+配套的 order 117 提示段（`packages/subagent/tool-subagent-report/src/index.ts:24`）把同一条义务在 schema 之外再说一遍，理由 README 写得直白：「where a child that ignores tool descriptions still reads it」。
 
 `tool-subagent` 自己也在 order **116.5**（`packages/subagent/tool-subagent/src/index.ts:26`，注释：「Prompt order after bounded delegation policy and before child reporting」）注册一段，只在 continuable + 允许后台时才有内容（`:464`）：
 
@@ -169,28 +169,28 @@ fork 是唯一 `inheritsParentContext = true` 的 provider（`packages/subagent/
 
 这是 dsh 最不像别家的一块。三个 provider 各自接一个真实的外部 agent：
 
-**`subagent-claude-code`** 用的是官方 SDK：`import { query as officialQuery, ... } from '@anthropic-ai/claude-agent-sdk'`（`packages/subagent/subagent-claude-code/src/run.ts:10-17`，`package.json` 里 pin 在 `0.3.220`）。provider 名固定为 `'claude-code'`（`packages/subagent/subagent-claude-code/src/index.ts:53`），能力表是全 false 的共享常量 `NO_START_CAPABILITIES`（`packages/subagent/subagent/src/out-of-process.ts:25-30`）——persona、工具过滤、深度、结构化输出一个都要不到，服务层会直接拒绝这些请求，而不是悄悄忽略。
+**`subagent-claude-code`** 用的是官方 SDK：`import { query as officialQuery, ... } from '@anthropic-ai/claude-agent-sdk'`（`packages/subagent/subagent-claude-code/src/run.ts:10-17`，`package.json` 里 pin 在 `0.3.220`）。provider 名固定为 `'claude-code'`（`packages/subagent/subagent-claude-code/src/index.ts:53`），能力表是全 false 的共享常量 `NO_START_CAPABILITIES`（`packages/subagent/subagent/src/out-of-process.ts:25-30`）：persona、工具过滤、深度、结构化输出一个都要不到，服务层会直接拒绝这些请求，而不是悄悄忽略。
 
-传给 SDK 的选项在 `packages/subagent/subagent-claude-code/src/run.ts:177-195`，几行值得逐条看：
+传给 SDK 的选项在 `packages/subagent/subagent-claude-code/src/run.ts:177-195`，几行逐条看：
 
-- `cwd: spec.cwd`（`:184`）——父会话的工作目录；父会话没有 cwd 就直接报错，不猜。
-- `pathToClaudeCodeExecutable: spec.executable`（`:185`）——路径来自 `ctx.subprocess.resolveExecutable('claude', ...)`（`packages/subagent/subagent-claude-code/src/index.ts:69-73`），也就是**走 dsh 自己的 subprocess 接缝、用清洗过的 PATH 解析**，而不是让 SDK 自己去找。
+- `cwd: spec.cwd`（`:184`）：父会话的工作目录；父会话没有 cwd 就直接报错，不猜。
+- `pathToClaudeCodeExecutable: spec.executable`（`:185`）：路径来自 `ctx.subprocess.resolveExecutable('claude', ...)`（`packages/subagent/subagent-claude-code/src/index.ts:69-73`），也就是**走 dsh 自己的 subprocess 接缝、用清洗过的 PATH 解析**，而不是让 SDK 自己去找。
 - `env: { ...scrubbedParentEnv(), ...spec.env }`（`:186`）。
-- `persistSession: false`（`:187`）——不给宿主留会话文件。
-- `disallowedTools: ['AskUserQuestion']`（`:188`）——子代理不许向人提问。这与 §2.2 的「审批钉 never」是同一条纪律：被委派者不得自己去要授权。
-- `spawnClaudeCodeProcess`（`:189-193`）——自己接管进程 spawn，好让 dispose 时能真正杀掉。Windows 上还有一层 `.cmd`/`.bat` 的 shim，把可执行路径塞进环境变量再由 `cmd.exe` 展开（`packages/subagent/subagent-claude-code/src/process.ts:63`），避免路径进命令行被解析。
+- `persistSession: false`（`:187`）：不给宿主留会话文件。
+- `disallowedTools: ['AskUserQuestion']`（`:188`）：子代理不许向人提问。这与 §2.2 的「审批钉 never」是同一条纪律：被委派者不得自己去要授权。
+- `spawnClaudeCodeProcess`（`:189-193`）：自己接管进程 spawn，好让 dispose 时能真正杀掉。Windows 上还有一层 `.cmd`/`.bat` 的 shim，把可执行路径塞进环境变量再由 `cmd.exe` 展开（`packages/subagent/subagent-claude-code/src/process.ts:63`），避免路径进命令行被解析。
 
 结果映射很严：只有 `subtype === 'success'`、非 `is_error`、且结果非空白才算成功，否则抛 `subagent-claude-code: Claude Code failed: <detail>`。**Claude Code 的推理、工具活动、中间消息、stderr、用量、产品 id 一律不复制进父会话**（`packages/subagent/subagent-claude-code/README.md:79`）。模型只拿到最终那段文本。
 
 **`subagent-codex`** 走的是 Codex 自己的 app-server 协议：`['codex', 'app-server', '--stdio']`（`packages/subagent/subagent-codex/src/run.ts:41`；Windows 上前面加 `cmd.exe /d /s /c`）。argv 是常量，所以任务文本永远不经过 shell。握手三步（`packages/subagent/subagent-codex/src/wire.ts`）：`initialize` 带 `clientInfo: { name: 'deepseek-harness', ... }`（`:134`），`thread/start { cwd, ephemeral: true }`（`:154`，非 ephemeral 直接拒），`turn/start { threadId, input }`（`:180`）。
 
-最有意思的是**无人值守审批**（`packages/subagent/subagent-codex/src/wire.ts:294-318`）：Codex 会反过来向客户端请求批准，而 dsh 这一侧没有人。于是命令执行/文件修改的审批请求一律回 `cancel` 或 `decline`，权限请求回空权限，用户输入请求回空答案，MCP elicitation 回 `{ action: 'decline' }`（`:309`），任何**没列举到**的方法直接让整次运行失败。fail-closed，和 dsh 自己审批接缝的姿态一致。
+**无人值守审批**（`packages/subagent/subagent-codex/src/wire.ts:294-318`）是这样：Codex 会反过来向客户端请求批准，而 dsh 这一侧没有人。于是命令执行/文件修改的审批请求一律回 `cancel` 或 `decline`，权限请求回空权限，用户输入请求回空答案，MCP elicitation 回 `{ action: 'decline' }`（`:309`），任何**没列举到**的方法直接让整次运行失败。fail-closed，和 dsh 自己审批接缝的姿态一致。
 
 答案选取只认 `phase === 'final_answer'` 或无 phase 的 `agentMessage`，`commentary` 被丢弃。上下文超窗被识别出来映射成 `max-tokens` 而不是笼统的 error（`:191`）。
 
 **`subagent-acp`** 是通用的那个：配置里给 `command` + `args`，spawn 之后用 `@agentclientprotocol/sdk` 在 stdio 上说 ACP（`packages/subagent/subagent-acp/src/run.ts:266-272`）。握手时**刻意不声明任何可选客户端能力**：`conn.initialize({ protocolVersion: PROTOCOL_VERSION, clientCapabilities: {} })`（`:297-302`），注释写着「no fs, no terminal: the child self-serves in its own process」；`conn.newSession({ cwd, mcpServers: [] })`（`:303`）。默认权限策略是 `'reject'`。输出只折叠 `agent_message_chunk`，thoughts / tool calls / plans 全部消费但不上浮。
 
-三者的共同点：**父只拿最终文本，子的一切中间状态留在子那边**；以及**能力表全 false**——你不能给 Claude Code 换 persona，也不能给它加工具过滤，服务层会当场拒绝而不是假装成功。
+三者的共同点：**父只拿最终文本，子的一切中间状态留在子那边**；以及**能力表全 false**：你不能给 Claude Code 换 persona，也不能给它加工具过滤，服务层会当场拒绝而不是假装成功。
 
 一个部署事实：生产 `@deepseek-ai/dsh-base` **不再依赖也不挂载**这两个产品 provider（`.agents/notes/implemented/simplification/2026-08-12-production-dsh-excludes-product-subagent-providers.md`），理由是不想让每个安装都下载 Claude Agent SDK。standard preset 里两行是 `disabled: true`（`apps/cli/config/agent-presets/standard/agent.cordis.yml:203-219`），注释教你怎么开：「Copy this preset, then remove `disabled` from either ordinary tool row」。
 
@@ -208,7 +208,7 @@ fork 是唯一 `inheritsParentContext = true` 的 provider（`packages/subagent/
 
 > **The tool catalog stays the same across modes for request-cache stability.** These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
 
-这就是「有意接受的缓存失效点」的全貌：dsh 选择了**只动 system prompt 的一段、不动工具表**。切换 plan mode 会让 order 50 及其之后的 system prompt 全部失效（README 自己承认：「entering or leaving changes the system prompt from order 50 onward」），但工具 schema 一个字节都不变。相比之下，如果按「plan 模式下把写工具摘掉」来做，失效的是**工具表**——那是缓存层级里更靠前的一层，代价大得多（见 [02 KV-Cache](02-kv-cache.md)）。
+这就是「有意接受的缓存失效点」的全貌：dsh 选择了**只动 system prompt 的一段、不动工具表**。切换 plan mode 会让 order 50 及其之后的 system prompt 全部失效（README 自己承认：「entering or leaving changes the system prompt from order 50 onward」），但工具 schema 一个字节都不变。相比之下，如果按「plan 模式下把写工具摘掉」来做，失效的是**工具表**，那是缓存层级里更靠前的一层，代价大得多（见 [02 KV-Cache](02-kv-cache.md)）。
 
 `exit_plan_mode` 为什么始终注册，源码注释说了两遍。模块头（`packages/plan/plan-mode/src/index.ts:16-18`）：
 
@@ -218,7 +218,7 @@ fork 是唯一 `inheritsParentContext = true` 的 provider（`packages/subagent/
 
 > Use only in plan mode. Present your plan for the user's review and, on approval, leave plan mode. Send the COMPLETE plan as markdown, starting with a # heading that names it. The user may approve (carry out the plan from your next step) or keep planning — their feedback comes back in the tool result; revise and present again.
 
-审批走 `ctx.userQuestions` 而**不是** approval 接缝（`packages/plan/plan-mode/src/index.ts:330-350`）：一个 id 为 `plan-review` 的问题，两个选项 `Approve` / `Keep planning`。接受条件极严（`:368-375`）——恰好一个答案、id 匹配、恰好一个被选标签等于 `Approve`、且**用户没有额外写自定义文本**。写了字就算「继续规划」，反馈原样回到工具结果里。批准之后的模式翻转是**挂起**的（`:379`），要等下一个 `agent/pre-step` 才落 log，这样同一批 assistant 工具调用里 plan 指导仍然有效。
+审批走 `ctx.userQuestions` 而**不是** approval 接缝（`packages/plan/plan-mode/src/index.ts:330-350`）：一个 id 为 `plan-review` 的问题，两个选项 `Approve` / `Keep planning`。接受条件极严（`:368-375`）：恰好一个答案、id 匹配、恰好一个被选标签等于 `Approve`、且**用户没有额外写自定义文本**。写了字就算「继续规划」，反馈原样回到工具结果里。批准之后的模式翻转是**挂起**的（`:379`），要等下一个 `agent/pre-step` 才落 log，这样同一批 assistant 工具调用里 plan 指导仍然有效。
 
 ---
 
@@ -234,7 +234,7 @@ fork 是唯一 `inheritsParentContext = true` 的 provider（`packages/subagent/
 
 > Mark every todo being actively worked on `in_progress` — several at once when work genuinely runs in parallel (e.g. concurrent subagents or background commands), one for sequential work; while work remains, at least one task should be `in_progress`.
 
-执行只写一条 `todo/write` 事件（`packages/todo/tool-todo/src/index.ts:213`），投影在每个 `turn/start` 清空——所以待办是**当前 turn 的**，不跨 turn。
+执行只写一条 `todo/write` 事件（`packages/todo/tool-todo/src/index.ts:213`），投影在每个 `turn/start` 清空，所以待办是**当前 turn 的**，不跨 turn。
 
 ### `packages/goal/*`：跨 turn 的持久目标
 
@@ -277,7 +277,7 @@ Continue working toward the objective in this same session. Treat the current wo
 
 > Use goal tools for one long-running completion objective in the current session. create_goal may infer goal intent from a direct human request in any language; do not create a goal for routine single-turn work. Call get_goal before update_goal and copy its exact goal_id and revision. After session resume or fork, an active goal is disarmed: when a human asks to continue or resume in any wording or language, use update_goal action resume to rearm it. Mark complete only when the objective is actually achieved. **Mark blocked only after the same blocking condition persists for at least 3 consecutive goal rounds**, and report that concrete condition in blocked_reason; difficulty, uncertainty, or useful remaining work is not blocked.
 
-`create_goal` 的描述（`packages/goal/tool-goal/src/index.ts:45-49`）明确写了权限边界：「Execution rejects non-human and subagent authority.」对应的拒绝文案是 `this goal operation requires a direct human turn on a top-level agent`（`packages/goal/tool-goal/src/authority.ts:92`）——判定要求 agent 是**运行时根**、且当前 turn 里有一条 `source.kind === 'user'` 的消息。
+`create_goal` 的描述（`packages/goal/tool-goal/src/index.ts:45-49`）明确写了权限边界：「Execution rejects non-human and subagent authority.」对应的拒绝文案是 `this goal operation requires a direct human turn on a top-level agent`（`packages/goal/tool-goal/src/authority.ts:92`）。判定要求 agent 是**运行时根**、且当前 turn 里有一条 `source.kind === 'user'` 的消息。
 
 目标终结（complete / blocked）时会 defer 一段收尾上下文（`packages/goal/tool-goal/src/wrapup.ts:17-40`），例如 complete 那支：
 
@@ -288,7 +288,7 @@ The goal is marked complete and this autonomous run is ending. Write the closing
 </goal_complete>
 ```
 
-只在 `authority.kind === 'goal-round'` 时注入（`packages/goal/tool-goal/src/index.ts:313`）——人类手动标完成是不会收到这段的。
+只在 `authority.kind === 'goal-round'` 时注入（`packages/goal/tool-goal/src/index.ts:313`）；人类手动标完成是不会收到这段的。
 
 ---
 
@@ -296,7 +296,7 @@ The goal is marked complete and this autonomous run is ending. Write the closing
 
 `packages/hooks/` 三个包：`hook-protocol`（共享引擎，纯库，不是插件）+ 两个方言桥。默认组装**一个都没挂**。
 
-`hook-protocol` 的要点：hook 命令经 `ctx.shell` 执行（因此同样受沙箱约束），默认超时 600 秒（`packages/hooks/hook-protocol/src/runner.ts:20`），阻断退出码固定为 2（`packages/hooks/hook-protocol/src/codec.ts:11`），结构化 JSON 只在 exit 0 且 stdout 以 `{` 开头时才解析。多个 hook 的决策按最严合并——`rank()`（`packages/hooks/hook-protocol/src/merge.ts:35-42`）给 `deny`/`block` 3 分、`ask` 2 分、`approve`/`allow` 1 分，只有**获胜档位**的理由会浮到模型面前。两条 log-only 事件 `hook/invoked` / `hook/result`（`packages/hooks/hook-protocol/src/types.ts:19-39`）。
+`hook-protocol` 的要点：hook 命令经 `ctx.shell` 执行（因此同样受沙箱约束），默认超时 600 秒（`packages/hooks/hook-protocol/src/runner.ts:20`），阻断退出码固定为 2（`packages/hooks/hook-protocol/src/codec.ts:11`），结构化 JSON 只在 exit 0 且 stdout 以 `{` 开头时才解析。多个 hook 的决策按最严合并：`rank()`（`packages/hooks/hook-protocol/src/merge.ts:35-42`）给 `deny`/`block` 3 分、`ask` 2 分、`approve`/`allow` 1 分，只有**获胜档位**的理由会浮到模型面前。两条 log-only 事件 `hook/invoked` / `hook/result`（`packages/hooks/hook-protocol/src/types.ts:19-39`）。
 
 ### 六个映射点
 
@@ -349,7 +349,7 @@ The goal is marked complete and this autonomous run is ending. Write the closing
 
 预算全在 config（`packages/workflow/workflow-worker-thread/src/index.ts:115-122`）：`maxConcurrentAgents`（0 = 自动，`min(16, availableParallelism()-2)`）、`maxTotalAgents` 1000、`maxItemsPerCall` 4096、`syncTimeoutMs` 5000、`disposeGraceMs` 5000。
 
-工具描述（`packages/workflow/tool-workflow/src/index.ts:138-150`）是全仓最长的工具描述之一，它**就是脚本编写规范**——源码上方的注释直接这么说：「The script-authoring contract, embedded in the tool description. This IS the model-facing spec」。开头与三个 hook 的语义：
+工具描述（`packages/workflow/tool-workflow/src/index.ts:138-150`）是全仓最长的工具描述之一，它**就是脚本编写规范**，源码上方的注释直接这么说：「The script-authoring contract, embedded in the tool description. This IS the model-facing spec」。开头与三个 hook 的语义：
 
 > Run a JavaScript workflow script that orchestrates subagents at scale. Use this for work that fans out across many independent pieces — an audit over many files, a migration, multi-angle research, adversarial verification of findings — where you write the orchestration as a script instead of delegating turn by turn.
 >
@@ -368,7 +368,7 @@ order 115 的提示段（`packages/workflow/tool-workflow/src/index.ts:212-216`�
 
 ### `tool-ralph`：fresh-agent 迭代循环
 
-Ralph 的脚本**不是模型写的**——它是一段固定的、部署拥有的编排（`packages/workflow/tool-ralph/src/index.ts:90-177`），注释写明了动机（`:86-89`）：
+Ralph 的脚本**不是模型写的**：它是一段固定的、部署拥有的编排（`packages/workflow/tool-ralph/src/index.ts:90-177`），注释写明了动机（`:86-89`）：
 
 > Fixed, deployment-owned orchestration. The model supplies data only; it cannot alter the loop, provider route, schema, or handoff validation.
 
@@ -382,9 +382,9 @@ Ralph 的脚本**不是模型写的**——它是一段固定的、部署拥有�
 
 跨轮的只有一个东西：上一轮返回的结构化报告（`{ status, summary, evidence[], nextSteps[], blocker }`），序列化后塞进下一轮 prompt，还有一道字节上限。轮上限默认 256（`packages/workflow/tool-ralph/src/index.ts:37`），发行版 preset 配成 64（`apps/cli/config/agent-presets/standard/agent.cordis.yml:229-233`），且**只能调低不能调高**。
 
-provider 有门禁（`packages/workflow/tool-ralph/src/index.ts:220-232`）：必须支持结构化输出，且 `inheritsParentContext` 必须为 false——fork 那种继承上下文的 provider 会被拒，因为 Ralph 的整个意义就是「每轮忘光」。
+provider 有门禁（`packages/workflow/tool-ralph/src/index.ts:220-232`）：必须支持结构化输出，且 `inheritsParentContext` 必须为 false。fork 那种继承上下文的 provider 会被拒，因为 Ralph 的整个意义就是「每轮忘光」。
 
-order 116 的提示段（`packages/workflow/tool-ralph/src/index.ts:409`）里有一句值得单独引：
+order 116 的提示段（`packages/workflow/tool-ralph/src/index.ts:409`）里有这么一句：
 
 > Completion and blockers are **worker reports, not independent evaluation**.
 
@@ -434,7 +434,7 @@ owner.inject(message)
 
 > Turns one owner may have opened by completion wakes before the next notice degrades to injection, reset by any user-authored input (default 3). **Bounds the self-exciting chain where a woken turn starts the job whose completion wakes it again.**
 
-预算的补充条件很精确（`:225-229`）：只有 `agent/inbox/claimed` 里 `message.source.kind === 'user'` 才清零——本插件自己排的通知不许给自己续命。
+预算的补充条件很精确（`:225-229`）：只有 `agent/inbox/claimed` 里 `message.source.kind === 'user'` 才清零，本插件自己排的通知不许给自己续命。
 
 order 106 的提示段（`packages/jobs/tool-jobs/src/index.ts:264-267`）：
 
@@ -467,7 +467,7 @@ A user may also invoke a skill directly; its <skill_content> block then appears 
 
 > The available skill catalog changed. This complete catalog replaces every earlier available-skills list in this session:
 
-——追加而不是重写，仍然是 append-only。变没变靠对 `[name, description]` 做 sha256 摘要判定；provider 观察不完整（`!snapshot.complete`）时**什么都不发**，保留上一次的好状态。
+这是追加而不是重写，仍然是 append-only。变没变靠对 `[name, description]` 做 sha256 摘要判定；provider 观察不完整（`!snapshot.complete`）时**什么都不发**，保留上一次的好状态。
 
 `skill` 工具的描述（`packages/skill/tool-skill/src/index.ts:83`）：
 
@@ -481,7 +481,7 @@ A user may also invoke a skill directly; its <skill_content> block then appears 
 const SKILL_GESTURE = /(^|\s)\/([a-z0-9]+(?:-[a-z0-9]+)*)(?=\s|$)/g
 ```
 
-只扫 `source.kind === 'user'` 的文本块，前后必须是空白边界——这样 `/usr/bin` 和 `5/8` 都不会误触发。命中且该 skill 允许用户调用时，把同一个 `<skill_content>` 渲染注入进去，位置排在**所有其他注入之后**（背景在前、要动手的材料在最后）。这条路径是 `disable-model-invocation` 型 skill 的唯一入口——它们从不出现在目录里，`skill` 工具也看不到。
+只扫 `source.kind === 'user'` 的文本块，前后必须是空白边界，这样 `/usr/bin` 和 `5/8` 都不会误触发。命中且该 skill 允许用户调用时，把同一个 `<skill_content>` 渲染注入进去，位置排在**所有其他注入之后**（背景在前、要动手的材料在最后）。这条路径是 `disable-model-invocation` 型 skill 的唯一入口：它们从不出现在目录里，`skill` 工具也看不到。
 
 `skill-filesystem` 是磁盘 provider，六个 root 按 rank（`packages/skill/skill-filesystem/src/index.ts:241-260`）：`<project>/.dsh/skills`(100) → `<project>/.agents/skills`(200) → 配置的 `customSkillDirs`(300) → `$DSH_HOME/skills`(400) → `~/.agents/skills`(500) → 打包内置(600)。注册表的合并规则是「最近的层整体胜出，rank 只在层内起作用」。
 
@@ -491,7 +491,7 @@ const SKILL_GESTURE = /(^|\s)\/([a-z0-9]+(?:-[a-z0-9]+)*)(?=\s|$)/g
 
 ## 九、spill、guard、interaction：三组循环卫生插件
 
-**`packages/spill/*`**——接缝 `ctx.spillStore` 只有一个方法 `saveText`。`spill-policy` 挂在 `tools/post-execute` 上，先 `await next()` 让下游把结果定下来，再决定要不要落盘（`packages/spill/spill-policy/src/index.ts:194-208`）。跳过条件写在一行里（`:196-197`）：非 `accept` 决策、被换成 value 的结果、**嵌套子调用**（`exec.parent !== undefined`）、以及 **`read`**——注释解释 `read` 的理由是「避免 read → spill → 再 read 的循环」。有意思的是持久日志那一支（`:217-231`）**不跳过 `read`**，因为日志副本不进模型上下文，那个循环不可能发生，而 `read` 恰恰是产出巨大日志的元凶。
+**`packages/spill/*`**：接缝 `ctx.spillStore` 只有一个方法 `saveText`。`spill-policy` 挂在 `tools/post-execute` 上，先 `await next()` 让下游把结果定下来，再决定要不要落盘（`packages/spill/spill-policy/src/index.ts:194-208`）。跳过条件写在一行里（`:196-197`）：非 `accept` 决策、被换成 value 的结果、**嵌套子调用**（`exec.parent !== undefined`）、以及 **`read`**。注释解释 `read` 的理由是「避免 read → spill → 再 read 的循环」。持久日志那一支（`:217-231`）**不跳过 `read`**，因为日志副本不进模型上下文，那个循环不可能发生，而 `read` 恰恰是产出巨大日志的元凶。
 
 模型看到的替换文本形如：
 
@@ -503,19 +503,19 @@ const SKILL_GESTURE = /(^|\s)\/([a-z0-9]+(?:-[a-z0-9]+)*)(?=\s|$)/g
 
 后半句的 `retrievalHint` 是后端提供的（`packages/spill/spill-local/src/index.ts:60`）。有个细节体现了工程克制：通知本身的字节被**预留在** `maxInlineBytes` 之内；如果通知比上限还长，就干脆不替换、把超大原文留在行内并记 warning。
 
-**`packages/guard/repeat-tool-reminder`**——按「工具名 + 规范化参数」计数，阈值默认 `[3, 5, 8]`（`packages/guard/repeat-tool-reminder/src/index.ts:46`），第一档给温和版，之后给详细版（`:200`）。温和版原文（`:63-67`）：
+**`packages/guard/repeat-tool-reminder`**：按「工具名 + 规范化参数」计数，阈值默认 `[3, 5, 8]`（`packages/guard/repeat-tool-reminder/src/index.ts:46`），第一档给温和版，之后给详细版（`:200`）。温和版原文（`:63-67`）：
 
 > You are repeating the exact same tool call with identical arguments. Carefully analyze the previous result before calling again: if the task is not complete, try a different approach or different arguments instead of repeating the call.
 
 详细版（`:70-79`）把工具名、连续次数、规范化参数列成表，再加一句「Do not call this tool with these exact arguments again.」它挂在 `tools/post-execute` 上是刻意的：**被拒绝的调用也走这条 waterfall**，而模型反复撞一个被拒的调用，正是最值得打断的循环。经 `additionalContexts` 送达，任何 `source.kind === 'user'` 的消息会把计数清零。
 
-**`packages/guard/timeout-policy`**——`tools/execute` 上的 wrapper，读 `ToolDefinition.timeoutMs`，没声明就原样放行（没有全局默认值）。只有**自己这道 deadline 赢了**才替换结果，文案是 `Error: tool call timed out after <N>ms`（`packages/guard/timeout-policy/src/index.ts:42`）。post-execute 之前会把 `exec.signal` 换回调用方的原信号，免得下游看到一个已 abort 的信号。它是协作式的，不硬杀。
+**`packages/guard/timeout-policy`**：`tools/execute` 上的 wrapper，读 `ToolDefinition.timeoutMs`，没声明就原样放行（没有全局默认值）。只有**自己这道 deadline 赢了**才替换结果，文案是 `Error: tool call timed out after <N>ms`（`packages/guard/timeout-policy/src/index.ts:42`）。post-execute 之前会把 `exec.signal` 换回调用方的原信号，免得下游看到一个已 abort 的信号。它是协作式的，不硬杀。
 
-**`packages/interaction/*`**——`commands` 是**纯人类面**的：它不注册任何工具、任何提示段，模型既看不见也调不了 `/`-命令；`execute()` 的 JSDoc 明说「Execute against the receiving agent without sending the command to the model」。命令要影响模型，必须由 handler 显式安排——`/plan <message>` 就是这么做的（`agent.steer()`）。`permission-presets` 拥有 `permission/preset` 这个纯「用户意图」记录，[07](07-tools-approval-sandbox.md) 里讲。`user-questions` 是接缝，`tool-ask-user` 是它唯一的模型面消费者，描述（`packages/interaction/tool-ask-user/src/index.ts:16-17`）：
+**`packages/interaction/*`**：`commands` 是**纯人类面**的：它不注册任何工具、任何提示段，模型既看不见也调不了 `/`-命令；`execute()` 的 JSDoc 明说「Execute against the receiving agent without sending the command to the model」。命令要影响模型，必须由 handler 显式安排，`/plan <message>` 就是这么做的（`agent.steer()`）。`permission-presets` 拥有 `permission/preset` 这个纯「用户意图」记录，[07](07-tools-approval-sandbox.md) 里讲。`user-questions` 是接缝，`tool-ask-user` 是它唯一的模型面消费者，描述（`packages/interaction/tool-ask-user/src/index.ts:16-17`）：
 
 > Ask the user a concise question when you need confirmation, a choice, or missing information before proceeding. Send one or more questions, each with a stable id that will be echoed in the answer.
 
-一个细节：`options` 参数的说明里教了推荐写法——「If you recommend one, put it first and append "(Recommended)" to that label.」还有一条重要限制：被委派的子代理调它会被拒（`human interaction is unavailable while the calling agent is owned by another live agent; include the unresolved question or decision in the child agent's final result`），判定用的是**活的 agent 注册表**而不是持久 lineage。
+一个细节是，`options` 参数的说明里教了推荐写法：「If you recommend one, put it first and append "(Recommended)" to that label.」还有一条重要限制：被委派的子代理调它会被拒（`human interaction is unavailable while the calling agent is owned by another live agent; include the unresolved question or decision in the child agent's final result`），判定用的是**活的 agent 注册表**而不是持久 lineage。
 
 ---
 
@@ -540,7 +540,7 @@ const SKILL_GESTURE = /(^|\s)\/([a-z0-9]+(?:-[a-z0-9]+)*)(?=\s|$)/g
 | **150** | `tools:sdk`（Code Mode） | `packages/core/tools/src/code-mode.ts:23` |
 | **190** | `tool:structured_output`（仅结构化子代理 scope） | `packages/subagent/subagent-in-process-driver/src/structured.ts:101` |
 
-而 **skill 目录、goal 轮次提示、goal 收尾、schedule 提醒、jobs 完成通知、repeat 提醒、spill 预览、hooks 的 additionalContext、子代理结算通知与 report**——全部不在这张表里。它们是 user-role 消息，追加在历史末尾。这条分界线本身就是 dsh 缓存纪律的具体化：**会变的东西不进前缀**。
+而 **skill 目录、goal 轮次提示、goal 收尾、schedule 提醒、jobs 完成通知、repeat 提醒、spill 预览、hooks 的 additionalContext、子代理结算通知与 report**，全部不在这张表里。它们是 user-role 消息，追加在历史末尾。这条分界线本身就是 dsh 缓存纪律的具体化：**会变的东西不进前缀**。
 
 ---
 
@@ -548,7 +548,7 @@ const SKILL_GESTURE = /(^|\s)\/([a-z0-9]+(?:-[a-z0-9]+)*)(?=\s|$)/g
 
 本篇讲的每一件事，其他 harness 都有对应物，但落点差别很大。总的格局是：dsh 一律是可拆卸的插件行，Claude Code 多在配置文件与内置工具，Codex 在 Rust 里写死角色，OpenCode 在 config 的 `agent` 字段，pi 则大多**选择不做**。下面按三个主题分表看。
 
-**（1）委派本身：子代理从哪来、能不能续、能不能驱动别家。** 这四行回答的是「一个 agent 怎么把活派给另一个 agent」。最后一行是分歧最大的一格——只有 dsh 把「驱动别家 agent」做成产品能力。
+**（1）委派本身：子代理从哪来、能不能续、能不能驱动别家。** 这四行回答的是「一个 agent 怎么把活派给另一个 agent」。最后一行是分歧最大的一格：只有 dsh 把「驱动别家 agent」做成产品能力。
 
 | 维度 | dsh | Claude Code | Codex | OpenCode | pi |
 |---|---|---|---|---|---|
@@ -573,13 +573,13 @@ const SKILL_GESTURE = /(^|\s)\/([a-z0-9]+(?:-[a-z0-9]+)*)(?=\s|$)/g
 | **hooks** | 通过两个兼容桥支持 CC 的 7 个事件 / Codex 的 5 个事件；原生扩展 = Cordis 插件 | 原生 30+ 事件、5 种 handler 类型（command/http/mcp_tool/prompt/agent） | 原生 11 个事件（`codex!codex-rs/app-server-protocol/src/protocol/v2/hook.rs:20`） | npm 插件的 `Hooks` 接口共 21 个键（`opencode!packages/plugin/src/index.ts:222-334`），其中 15 个是点号命名的事件钩子（`chat.params`、`tool.execute.before/after`、`permission.ask`…），6 个带 `experimental.` 前缀 | Extension API 33 个生命周期事件（`pi!packages/coding-agent/src/core/extensions/types.ts:1198`） |
 | **MCP** | `mcp-client`，只桥接 tools | 有，工具默认 deferred | 有 | 有（含 OAuth、resources 三工具） | **刻意没有**（「Build CLI tools with READMEs, or build an extension that adds MCP support」） |
 
-对照下来最值得说的三点：
+对照下来有三点：
 
 **一、pi 是刻意什么都不做的那一极。** `pi!packages/coding-agent/README.md:494` 起有一节直接叫 Philosophy，逐条列出「No MCP. No sub-agents. No permission popups. No plan mode. No built-in to-dos. No background bash.」——但它给出了最全的扩展 API：`ExtensionAPI` 上挂着 33 个 `on(event, …)` 生命周期事件（`pi!packages/coding-agent/src/core/extensions/types.ts:1198`），外加 `registerTool`/`registerCommand`/`registerShortcut`/`registerFlag`/`registerProvider`/`registerMessageRenderer`。它的立场是：核心保持最小，这些能力你自己按需要装。dsh 是完全相反的一极：全都有，但每一项都是可拆卸的插件行，默认组装里还有一大半是 `disabled: true`。
 
-**二、Codex 的内置角色文案是「教父代理怎么委派」。** explorer 的描述鼓励并行多开、复用结果；worker 明确 ownership 并告知「你不是唯一在改代码的人」。dsh 没有角色概念——它把这件事推到了 provider 和 preset 层：委派的**语义**由部署写在 preset 里，模型只看到一个统一的委派契约（§一）。两种做法各有代价：Codex 的角色文案对模型更直接，dsh 的做法让同一份工具描述能同时代表六种完全不同的后端。
+**二、Codex 的内置角色文案是「教父代理怎么委派」。** explorer 的描述鼓励并行多开、复用结果；worker 明确 ownership 并告知「你不是唯一在改代码的人」。dsh 没有角色概念，它把这件事推到了 provider 和 preset 层：委派的**语义**由部署写在 preset 里，模型只看到一个统一的委派契约（§一）。两种做法各有代价：Codex 的角色文案对模型更直接，dsh 的做法让同一份工具描述能同时代表六种完全不同的后端。
 
-**三、Claude Code 的 hook 面是 dsh 兼容不完的。** 30+ 事件对 7 个，5 种 handler 类型对 1 种（只跑 `command`）。dsh 的桥接目标从一开始就不是「完整实现」，而是让你现有的 `hooks.json` 里那部分事件能跑起来；真正的扩展路子是写 Cordis 插件——那是 [09](09-extensions-and-code-mode.md) 的题目。
+**三、Claude Code 的 hook 面是 dsh 兼容不完的。** 30+ 事件对 7 个，5 种 handler 类型对 1 种（只跑 `command`）。dsh 的桥接目标从一开始就不是「完整实现」，而是让你现有的 `hooks.json` 里那部分事件能跑起来；真正的扩展路子是写 Cordis 插件，那是 [09](09-extensions-and-code-mode.md) 的题目。
 
 ---
 

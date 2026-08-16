@@ -11,7 +11,7 @@ status: draft
 
 上游自己有一份术语表 `docs/glossary.md`（45 行，「一词一义」），本表在它之外补上了代码级出处和跨文章索引。
 
-有几组词最容易混，先在这里点明：**seam 是整体能力、Service 是其中一个角色**；**section 是静态文字、context 是每次求值的动态文字**；**turn 是一次排空输入、step 是一次模型请求**；**compaction 换掉一段历史、prune 只砍单条工具结果**；**spawn 不带父对话、fork 带**（fork 带的那段就叫 seed）；**one-shot 出完结果就作废、continuable 可以一直续**；**profile 在磁盘上、bundle 是 npm 包、preset 是会话级的**。看不懂某条时，先看它归在哪一节——分节本身就是语义分层。
+有几组词最容易混，先在这里点明：**seam 是整体能力、Service 是其中一个角色**；**section 是静态文字、context 是每次求值的动态文字**；**turn 是一次排空输入、step 是一次模型请求**；**compaction 换掉一段历史、prune 只砍单条工具结果**；**spawn 不带父对话、fork 带**（fork 带的那段就叫 seed）；**one-shot 出完结果就作废、continuable 可以一直续**；**profile 在磁盘上、bundle 是 npm 包、preset 是会话级的**。看不懂某条时，先看它归在哪一节，分节本身就是语义分层。
 
 ## 一、框架层：Cordis
 
@@ -28,7 +28,7 @@ status: draft
 | **scope** | 每个 agent 的注册单元：一项贡献（工具、prompt section、变量、监听器）要么全局，要么归某一个 scope。两层、扁平，不向子代理继承。 | `docs/glossary.md:13` | [08 编排层](08-orchestration.md) |
 | **shadowing** | 最具体者胜：同名的 scoped 工具/section/变量在该 scope 内取代全局的那个。per-agent persona 就靠它。 | `docs/glossary.md:18` | [08](08-orchestration.md) |
 | **lineage** | 父子关系作为**数据**携带（`parentSession`、`delegationDepth`、`subagentDepth`），永不影响可见性。 | `docs/glossary.md:21` | [08](08-orchestration.md) |
-| **realm（域）／`isolate`** | 「服务名 → 实例」这张查找表的一个命名空间。同一个名字 `terminals` 在根 realm 里解析到 A，在某个 isolate realm 里解析到 B。不写 `isolate` 的行发布到根 realm，也就是进程全局——preset 的全部 realm 规则都是这句话的推论。 | `vendor/cordis/src/context.ts:121`（`isolate()`）、`vendor/cordis/src/reflect.ts:286-292`（按 realm symbol 解析并拒绝重复注册） | [10](10-cordis-boot-preset.md) |
+| **realm（域）／`isolate`** | 「服务名 → 实例」这张查找表的一个命名空间。同一个名字 `terminals` 在根 realm 里解析到 A，在某个 isolate realm 里解析到 B。不写 `isolate` 的行发布到根 realm，也就是进程全局；preset 的全部 realm 规则都是这句话的推论。 | `vendor/cordis/src/context.ts:121`（`isolate()`）、`vendor/cordis/src/reflect.ts:286-292`（按 realm symbol 解析并拒绝重复注册） | [10](10-cordis-boot-preset.md) |
 | **dispatch mode（emit / parallel / serial / bail / waterfall）** | 事件派发的五种策略。`emit` 不 await 任何监听器（挂在这里只能观察）；`parallel` 并发 await 全部；`serial` 顺序 await 到有人给出返回值为止；`bail` 同步版的 serial；`waterfall` 把监听器套在 `next()` 外面，能改输入改输出也能短路。 | `vendor/cordis/src/events.ts:24-32` | [10](10-cordis-boot-preset.md)、[08](08-orchestration.md) |
 
 ## 二、组合层：profile / bundle / preset / patch
@@ -64,7 +64,7 @@ status: draft
 | **steer** | 向最近的一个 step 投递引导内容；空闲时会开新 turn，运行中在下一个 step 边界被消费。 | `packages/core/agent/src/runtime-types.ts:133` | [03](03-agent-loop.md) |
 | **inject** | 排一段面向模型的补充上下文到 `nextStep`，**不唤醒**驱动；它可能错过一个已经认领完批次的请求。 | `packages/core/agent/src/runtime-types.ts:143` | [03](03-agent-loop.md) |
 | **claim（认领）** | 一个 turn 从 inbox 取走待办项这件事本身。区分「取走了但没跑成」和「压根没取」，是崩溃语义的关键。 | `packages/core/agent/src/consumed-work.ts:10` | [03](03-agent-loop.md) |
-| **runtime context** | 每步刷新的动态上下文快照（文件策略、沙箱模式等），以持久的 `user/message` 追加，而不是改写 system prompt——后者会破坏可重建性和缓存。 | `packages/core/agent-loop/src/runtime-context.ts:13` | [01 System Prompt](01-system-prompt.md) |
+| **runtime context** | 每步刷新的动态上下文快照（文件策略、沙箱模式等），以持久的 `user/message` 追加，而不是改写 system prompt，后者会破坏可重建性和缓存。 | `packages/core/agent-loop/src/runtime-context.ts:13` | [01 System Prompt](01-system-prompt.md) |
 
 ## 五、Prompt 装配
 
@@ -94,7 +94,7 @@ status: draft
 | **run_code** | Code Mode 下唯一暴露给模型的传输工具，system prompt 里附上生成的 SDK 声明。 | `packages/core/tools/src/code-mode.ts:20` | [09](09-extensions-and-code-mode.md) |
 | **one-shot** | 委派的两种契约之一：`start()` 发起一次运行，父等它出结果，结果一旦回来这个子会话就作废，父再也够不着它。 | `packages/subagent/subagent/src/index.ts:16-17` | [08](08-orchestration.md) |
 | **continuable** | 另一种契约：`startContinuable()` 建立一个**持久**子代理，立刻返回一个持久 id，父可以用 `send_message` 继续跟它对话，它结算时反过来通知父。continuable 子代理永远不会变成 `SubagentRun`，续话由它自己的 inbox 排序。 | `packages/subagent/subagent/src/index.ts:16-17`（两个入口的意图）、`packages/subagent/subagent/src/continuation.ts:403`（实现） | [08](08-orchestration.md) |
-| **Activation** | 一个 continuable 子代理「当前这条命」。子会话是磁盘上的持久事件流，Activation 是它此刻活在内存里的那个 Agent 实例，**进程内最多一个**。它不是请求、结果、取消或 Task 的边界——一个 Activation 可以跑很多个 FIFO turn，并且在它创建的后代还没跑完时保持驻留。 | `packages/subagent/subagent/src/continuation.ts:8`（定性注释）、`packages/subagent/subagent/src/continuation.ts:191`（`interface Activation`） | [08](08-orchestration.md) |
+| **Activation** | 一个 continuable 子代理「当前这条命」。子会话是磁盘上的持久事件流，Activation 是它此刻活在内存里的那个 Agent 实例，**进程内最多一个**。它不是请求、结果、取消或 Task 的边界：一个 Activation 可以跑很多个 FIFO turn，并且在它创建的后代还没跑完时保持驻留。 | `packages/subagent/subagent/src/continuation.ts:8`（定性注释）、`packages/subagent/subagent/src/continuation.ts:191`（`interface Activation`） | [08](08-orchestration.md) |
 | **spawn** | 进程内新建子 agent：自己的 session，**看不到**父对话历史。 | `packages/subagent/subagent-spawn-in-process/README.md:5` | [08](08-orchestration.md) |
 | **fork** | 进程内新建子 agent，但用父已完成的对话轮次做种子。与 spawn 的唯一行为差别就是这个种子。 | `packages/subagent/subagent-fork-in-process/README.md:5` | [08](08-orchestration.md) |
 | **seed（fork 的对话种子）** | fork 出来的子代理开头自带的那段父会话历史：从 seq 0 起、到父**最后一个 `turn/end`** 为止的连续事件前缀。切在 `turn/end` 是因为当前那个没跑完的工具调用轮次不平衡，重放不出一个合法的子会话；父还没有任何已完成的 turn 时种子为空，此时 fork 等价于 spawn。 | `packages/subagent/subagent-fork-in-process/src/index.ts:3-6`（模块定性）、`packages/subagent/subagent-fork-in-process/src/index.ts:48`（`completedTurnPrefix`） | [08](08-orchestration.md) |
@@ -108,7 +108,7 @@ status: draft
 
 | 术语 | 一句话 | 定义处 | 展开于 |
 | --- | --- | --- | --- |
-| **invariant** | 包自有的运行时契约断言，注册在 `ctx.invariants` 上，只断言「事件流或可变数据之间的关系」。219 个包各有一个 `invariant.ts`、全都调用 `ctx.invariants.register(...)`，但其中 **184 个装的是空实现**——它们统一带一句 `No runtime invariant:` 注释交代为什么不需要——**真正写了检查的是 35 个**（`grep -rl 'No runtime invariant:' packages --include=invariant.ts \| wc -l` 数得出来）。发行版默认不挂这套伴生插件。 | `packages/runtime-diagnostics/invariants/src/index.ts:94`；空实现的样板见 `packages/attachment/attachment/src/invariant.ts:12-13` | [13 自证与工程化](13-self-verification.md) |
+| **invariant** | 包自有的运行时契约断言，注册在 `ctx.invariants` 上，只断言「事件流或可变数据之间的关系」。219 个包各有一个 `invariant.ts`、全都调用 `ctx.invariants.register(...)`，但其中 **184 个装的是空实现**（统一带一句 `No runtime invariant:` 注释交代为什么不需要），**真正写了检查的是 35 个**（`grep -rl 'No runtime invariant:' packages --include=invariant.ts \| wc -l` 数得出来）。发行版默认不挂这套伴生插件。 | `packages/runtime-diagnostics/invariants/src/index.ts:94`；空实现的样板见 `packages/attachment/attachment/src/invariant.ts:12-13` | [13 自证与工程化](13-self-verification.md) |
 | **Model Experience** | 每个包 README 里强制的一节，回答三个问题：模型看见什么 / token 影响 / KV cache 影响。219 个包里 215 个必须有，4 个豁免包的理由写在门禁脚本里。 | `scripts/verify-package-readme-model-experience.ts:13` | [13](13-self-verification.md) |
 | **Agent Note** | 上游的设计记录体裁，路径编码状态（`{lifecycle}/{class}/yyyy-mm-dd-topic.md`），683 篇，`## Alternatives considered` 强制。 | `.agents/notes/README.md:9` | [15 设计记录导读](15-agent-notes-guide.md) |
 
@@ -116,7 +116,7 @@ status: draft
 
 | 术语 | 说明 |
 | --- | --- |
-| **DSML** | **属于模型侧，不属于 harness。** 它是 DeepSeek V4 模型仓库里的聊天模板/工具调用序列化格式。在 dsh 锁定 commit 上 `grep -ril dsml` 全仓库**零命中**（排除 `node_modules` 与 `.git`）——源码、文档、设计记录都没有。dsh 在线发出的是 Chat Completions 的 SSE 请求，序列化代码在 `packages/llm/llm-deepseek/src/serialize.ts`。任何把 DSML 列进「dsh 的协议面」的说法都是把模型仓库的知识混进了 harness 分析。 |
+| **DSML** | **属于模型侧，不属于 harness。** 它是 DeepSeek V4 模型仓库里的聊天模板/工具调用序列化格式。在 dsh 锁定 commit 上 `grep -ril dsml` 全仓库**零命中**（排除 `node_modules` 与 `.git`）：源码、文档、设计记录都没有。dsh 在线发出的是 Chat Completions 的 SSE 请求，序列化代码在 `packages/llm/llm-deepseek/src/serialize.ts`。任何把 DSML 列进「dsh 的协议面」的说法都是把模型仓库的知识混进了 harness 分析。 |
 
 ## 复核
 

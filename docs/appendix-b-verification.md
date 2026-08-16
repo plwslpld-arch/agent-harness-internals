@@ -18,9 +18,9 @@ status: draft
 | **源码** | 锁定 commit `47f9438` 下的真实代码，带 `路径:行号` | `sed -n '<行号>p'` 一句就能验；行号本身由 CI 校验 |
 | **上游测试与 fixture** | 尤其是 `system-prompt.expected.md`、`tool-schemas.expected.json`、`session.jsonl` 这类渲染快照 | 直接 `cat`，它们是纯文本 |
 | **官方文档** | 上游 110 篇英文文档、683 篇 Agent Note；涉及闭源产品（Claude Code）时只用公开文档 | 在 checkout 里读原文 |
-| **作者推断** | 从前三者推出、但上游没明说的判断 | 正文里**直接写「这是推断」**——不用行内标签，不用脚注 |
+| **作者推断** | 从前三者推出、但上游没明说的判断 | 正文里**直接写「这是推断」**，不用行内标签，不用脚注 |
 
-「推断在正文里是明写的」这条值得强调一次：本仓库不使用 `evidence: code` 这类行内证据标签。理由很简单——标签会让人以为「没标签的句子就没证据」，而实际情况是每句话都该有证据，只是有的证据是行号，有的证据是「我从 A 和 B 推出来的」。后者写成中文句子比写成标签更诚实。
+「推断在正文里是明写的」这条再说一次：本仓库不使用 `evidence: code` 这类行内证据标签。理由是标签会让人以为「没标签的句子就没证据」，而实际情况是每句话都该有证据，只是有的证据是行号，有的证据是「我从 A 和 B 推出来的」。后者写成中文句子比写成标签更诚实。
 
 ## 二、不需要凭据就能做的核对
 
@@ -63,7 +63,7 @@ sed -n '103p' AGENTS.md
 sed -n '300,322p' packages/core/agent-loop/src/agent.ts
 ```
 
-行号会随上游演进漂移，所以**别只对行号，要对内容**：读一眼那段代码是不是在讲文章说的那件事。行号只保证「指到了一个真实存在的行」，语义对不对仍然要人看——这正是本仓库 `check:anchors` 的边界（见第四节）。
+行号会随上游演进漂移，所以**别只对行号，要对内容**：读一眼那段代码是不是在讲文章说的那件事。行号只保证「指到了一个真实存在的行」，语义对不对仍然要人看，这正是本仓库 `check:anchors` 的边界（见第四节）。
 
 ### 2.3 读 fixture：最省力的证据
 
@@ -110,7 +110,7 @@ find .agents/notes -name '*.md' ! -name '*.zh.md' \
 find docs -name '*.md' ! -name '*.zh.md' | wc -l               # 110
 ```
 
-口径必须跟着数字一起给，否则数字没有意义。举个反例：`packages/client` 在上面这套「排除 `tests/`」的口径下，只数 `.ts` 是 44,093 行，加上 `.tsx` 是 72,428 行——两个都对，但不说数了哪些后缀、排没排测试，就是误导。
+口径必须跟着数字一起给，否则数字没有意义。举个反例：`packages/client` 在上面这套「排除 `tests/`」的口径下，只数 `.ts` 是 44,093 行，加上 `.tsx` 是 72,428 行。两个都对，但不说数了哪些后缀、排没排测试，就是误导。
 
 ### 2.5 跑上游的单元测试
 
@@ -122,11 +122,11 @@ pnpm vitest run packages/core/system-prompt
 pnpm vitest run packages/core/agent-loop
 ```
 
-`package.json:34` 的 `test` 脚本就是 `vitest run`，测试分层写在 `docs/testing.md:9-13`（unit / coverage / real-API e2e / snapshot / web browser snapshot 五层）。**只有 real-API e2e 那一层需要 key**，其余四层都是 keyless 的——`docs/testing.md:11` 说明了每个 with-key 套件在缺 key 时自动 skip。
+`package.json:34` 的 `test` 脚本就是 `vitest run`，测试分层写在 `docs/testing.md:9-13`（unit / coverage / real-API e2e / snapshot / web browser snapshot 五层）。**只有 real-API e2e 那一层需要 key**，其余四层都是 keyless 的；`docs/testing.md:11` 说明了每个 with-key 套件在缺 key 时自动 skip。
 
 无 key 跑快照层的命令是 `pnpm run test:snapshot`（`package.json:38`）。它会启动真的 ACP 示例进程、用 `llm-replay` 从录制好的 `session.jsonl` 重放模型流，再 diff 归一化后的输出。
 
-本仓库**没有**把这些运行结果写进正文——上面给的是命令，不是「预期输出」。
+本仓库**没有**把这些运行结果写进正文；上面给的是命令，不是「预期输出」。
 
 ## 三、需要凭据的验证：跑过了什么
 
@@ -141,11 +141,11 @@ export DEEPSEEK_API_KEY=your-own-key
 node node_modules/vitest/vitest.mjs run --config vitest.e2e.config.ts   packages/core/agent-loop/tests/request-cache.e2e.ts
 ```
 
-结果：通过，2.03 秒真实 API 调用。同一条命令去掉 key 再跑，结果是 `1 skipped`——这一步很重要，它排除了「门控放行但其实没测」这种假通过。`packages/llm/llm-deepseek/tests/adapter.e2e.ts` 的 6 条也全过（含 thinking 开关切换、tool call 轮次的 reasoning 回传、SSE 顺序）。
+结果：通过，2.03 秒真实 API 调用。同一条命令去掉 key 再跑，结果是 `1 skipped`。这一步很重要，它排除了「门控放行但其实没测」这种假通过。`packages/llm/llm-deepseek/tests/adapter.e2e.ts` 的 6 条也全过（含 thinking 开关切换、tool call 轮次的 reasoning 回传、SSE 顺序）。
 
 两个坑：**Node 必须 22 以上**（上游 `.nvmrc` 写 24；Node 20 缺 `Promise.withResolvers`，加载 agent-loop 就报错），以及 `pnpm install` 会改上游 checkout 的 `pnpm-lock.yaml`，不还原的话本仓库的 `sources:verify` 会报「checkout has local changes」。
 
-**第二类：本仓库自己写的探针。** 证明力弱一些——它用手写的、模仿 dsh 请求形状的请求直接打 API，测的是 **provider 的行为**，不是 dsh 的实现。
+**第二类：本仓库自己写的探针。** 证明力弱一些：它用手写的、模仿 dsh 请求形状的请求直接打 API，测的是 **provider 的行为**，不是 dsh 的实现。
 
 ```bash
 export DEEPSEEK_API_KEY=your-own-key
@@ -189,16 +189,16 @@ node scripts/experiments/cache-probe.mjs --json probe.json
 
 `scripts/verify-anchors.mjs` 做五件事：
 
-1. 扫 `docs/` 下每篇正文，用正则找形如「仓库相对路径 + 冒号 + 行号」的引用（也支持 `起-止` 区间）。**路径必须含至少一个斜杠、且后缀在白名单里**（`.ts` / `.tsx` / `.mjs` / `.js` / `.rs` / `.py` / `.md` / `.yml` / `.yaml` / `.json`）——所以根目录的 `AGENTS.md:103` 这种引用**不会**被自动校验，只能靠人。
-2. **代码块里的行号不算引用**——因为那多半是 `sed -n '19,55p'` 这样的命令参数。
-3. 在锁定的 checkout 里读出那一行（区间取首行）。行号越界直接失败；路径不存在也失败，但**前提是那些 checkout 已经拉下来**——没 bootstrap 过的话这一步整体跳过，由 `sources:verify` 去报。
+1. 扫 `docs/` 下每篇正文，用正则找形如「仓库相对路径 + 冒号 + 行号」的引用（也支持 `起-止` 区间）。**路径必须含至少一个斜杠、且后缀在白名单里**（`.ts` / `.tsx` / `.mjs` / `.js` / `.rs` / `.py` / `.md` / `.yml` / `.yaml` / `.json`）。所以根目录的 `AGENTS.md:103` 这种引用**不会**被自动校验，只能靠人。
+2. **代码块里的行号不算引用**，因为那多半是 `sed -n '19,55p'` 这样的命令参数。
+3. 在锁定的 checkout 里读出那一行（区间取首行）。行号越界直接失败；路径不存在也失败，但**前提是那些 checkout 已经拉下来**；没 bootstrap 过的话这一步整体跳过，由 `sources:verify` 去报。
 4. 如果那一行是空行，往下找 3 行内的第一行非空内容（多行声明和注释块常见这种偏移），仍找不到才算失败。
 
 5. **如果引用后面跟着「原文片段」，还会做一次子串匹配。** 写成 `` `路径:行号`「export function renderPrompt」 `` 时，门禁会把被引区间的空白折叠后找这段文字，找不到就失败。
 
 repo 前缀可以显式写（`codex!codex-rs/core/src/lib.rs:10`），不写就取 frontmatter 里唯一绑定的那个源，还不唯一就默认 `deepseek-harness`。
 
-不带引文时，它保证的是「指到了一个真实存在的行」，**不保证那一行讲的是文章说的那件事**——「行号对、但指到了相邻的另一个声明」这类错要靠人读，或者靠上面第 5 条把它变成机器可查的。但这一条已经把「行号写错也能过 CI」这个漏洞堵上了——旧版校验只确认文件存在，于是「每句话都能追到证据」是句空话。
+不带引文时，它保证的是「指到了一个真实存在的行」，**不保证那一行讲的是文章说的那件事**：「行号对、但指到了相邻的另一个声明」这类错要靠人读，或者靠上面第 5 条把它变成机器可查的。但这一条已经把「行号写错也能过 CI」这个漏洞堵上了；旧版校验只确认文件存在，于是「每句话都能追到证据」是句空话。
 
 想自己跑单步：
 

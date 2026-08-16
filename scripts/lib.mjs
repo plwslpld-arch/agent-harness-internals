@@ -75,7 +75,7 @@ export function parseGitmodules(content) {
 }
 
 export function listProjectFiles() {
-  const ignoredDirectories = new Set(['.git', '.generated', 'node_modules', 'checkouts', '.tmp', 'dist', 'build', 'coverage']);
+  const ignoredDirectories = new Set(['.git', '.claude', '.generated', 'node_modules', 'checkouts', '.tmp', 'dist', 'build', 'coverage']);
   const files = [];
   function visit(directory) {
     for (const entry of readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {

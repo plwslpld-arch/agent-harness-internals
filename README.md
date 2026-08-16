@@ -17,7 +17,7 @@
 
 ## 这是什么
 
-[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（简称 dsh）是 DeepSeek 在 2026 年 8 月开源的 agent harness——包在模型外面、负责拼上下文、调工具、管权限、记轨迹的那一层。
+[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（简称 dsh）是 DeepSeek 在 2026 年 8 月开源的 agent harness：包在模型外面、负责拼上下文、调工具、管权限、记轨迹的那一层。
 
 这个仓库是它的中文源码分析。**目标只有一个：把「模型每一步到底收到了什么、这些东西是怎么被拼出来的」讲到你能自己复现的程度**，然后告诉你 Claude Code、Codex、OpenCode、pi、mini-swe-agent 在同一件事上是怎么做的。
 
@@ -44,7 +44,7 @@
 | 10 | [Cordis、启动与 preset](docs/10-cordis-boot-preset.md) | 默认到底装了什么、四个 preset 差在哪、为什么要 fork Cordis |
 | 11 | [Web 客户端与 host](docs/11-web-client-and-host.md) | 39 个 UI 包如何把事件日志变成你看到的界面 |
 | 12 | [产品表面与协议](docs/12-surfaces-and-protocols.md) | Web / headless / ACP / MCP / SDK 各是什么，谁驱动谁 |
-| 13 | [自证与工程化](docs/13-self-verification.md) | 219 个 invariant、测试多于源码、文档门禁——一个仓库如何证明自己没坏 |
+| 13 | [自证与工程化](docs/13-self-verification.md) | 219 个 invariant、测试多于源码、文档门禁，一个仓库如何证明自己没坏 |
 | 14 | [横向对照](docs/14-comparison.md) | 六个 harness 在 prompt、缓存、压缩、审批、会话上的机制差异 |
 | 15 | [设计记录导读](docs/15-agent-notes-guide.md) | 683 篇 Agent Note 里最值得读的那些，以及上游文档的分工 |
 | A | [术语表](docs/appendix-a-glossary.md) | 每条带源码出处 |
@@ -54,14 +54,14 @@
 
 四种依据，正文里直接说清楚是哪一种：
 
-- **源码**——锁定 commit 下的真实代码，带 `路径:行号`；
-- **上游测试与 fixture**——尤其是 `system-prompt.expected.md` 这类渲染快照，它们是最好读的证据；
-- **官方文档**——涉及 Claude Code 这类闭源产品时只用公开文档，不用泄露的 prompt 转储；
-- **作者推断**——在正文里明写「这是推断」，不藏在标签里。
+- **源码**：锁定 commit 下的真实代码，带 `路径:行号`；
+- **上游测试与 fixture**：尤其是 `system-prompt.expected.md` 这类渲染快照，它们是最好读的证据；
+- **官方文档**：涉及 Claude Code 这类闭源产品时只用公开文档，不用泄露的 prompt 转储；
+- **作者推断**：在正文里明写「这是推断」，不藏在标签里。
 
 CI 会做一件别处不太做的事：**抽查正文里每一处 `路径:行号` 是否真的指向那一行**（`npm run check:anchors`）。行号写错、上游漂移，门禁直接失败。这是「结论可追溯」的唯一硬保证。
 
-带 `DEEPSEEK_API_KEY` 的端到端验证**已经跑过**：上游的 `request-cache.e2e.ts` 与 `llm-deepseek/adapter.e2e.ts` 用真实 key 全部通过（去掉 key 则整组 skip），另有一个本仓库自己写的探针脚本量到了具体的缓存数字——改 system 一句话命中率从 85.7% 掉到 0，摘要请求复用前缀能拿到 93.4% 而另起 system prompt 是 0%。命令、环境、原始数字见 [research/runtime-evidence](research/runtime-evidence/)。正文里的实验只写跑过的，不写「预期输出」。
+带 `DEEPSEEK_API_KEY` 的端到端验证**已经跑过**：上游的 `request-cache.e2e.ts` 与 `llm-deepseek/adapter.e2e.ts` 用真实 key 全部通过（去掉 key 则整组 skip），另有一个本仓库自己写的探针脚本量到了具体的缓存数字：改 system 一句话命中率从 85.7% 掉到 0，摘要请求复用前缀能拿到 93.4% 而另起 system prompt 是 0%。命令、环境、原始数字见 [research/runtime-evidence](research/runtime-evidence/)。正文里的实验只写跑过的，不写「预期输出」。
 
 ## 本地跑一遍
 
