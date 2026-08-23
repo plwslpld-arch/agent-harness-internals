@@ -56,7 +56,7 @@ JSONL 就是「每行一个独立 JSON 对象」的文本格式，一行读完�
 
 - **第一行不是事件**，是会话头（`type:"session"`，无 `seq`）。事件从 `seq: 0` 开始，`seq` 与行序严格对应。
 - **整个 35 行文件里只有 5 行带 `surfaceOp`**：`seq 4`、`seq 5`、`seq 64`、`seq 66`、`seq 99`（两条 user、两条 assistant、一条 tool result）。带这个标记的事件才是模型能看到的历史，其余全是证据。
-- `seq 5` 是运行时上下文快照（sandbox / approval 策略），走的是 **user 消息**而不是 system prompt，原因见 [02 KV-Cache](02-kv-cache.md)。
+- `seq 5` 是运行时上下文快照（sandbox / approval 策略），走的是 **user 消息**而不是 system prompt，原因见 [02 KV-Cache](dsh-kv-cache.md)。
 - `reasoning-chunks` 和 `tool-call-chunks` 不是事件类型，是**存储打包行**：`seq0: 10` 那一行在读回来时展开成 `seq 10..27` 共 18 个 `assistant/chunk` 事件。
 - 两步之间 `cacheReadTokens` 从 0 跳到 2816，`inputTokens` 从 2877 掉到 168：第一步没有热缓存，第二步整个前缀命中。
 
@@ -181,7 +181,7 @@ export type SurfaceOp =
 - `headerEquals`（`:44-54`）：逐字段比，`config` 走 `callConfigEquals`，`adapterDefaults` 比两个布尔标记，`system` 直接 `===`，`tools` **按顺序**用 `JSON.stringify` 比每个 schema。
 - `foldRequestHeader`（`:65-70`）：扫一遍事件，取最后一个 `request/header` 的 canonical 形式。这是纯离线重建路径；活会话用同一个折叠函数增量维护。
 
-循环只在 header 变化时写事件（`packages/core/agent-loop/src/agent.ts:483-489`）。因此「任何一次请求 = 最新 header + surface 派生消息」是可以从日志离线重建的，这也是 [02 KV-Cache](02-kv-cache.md) 里那套稳定性论证的地基。
+循环只在 header 变化时写事件（`packages/core/agent-loop/src/agent.ts:483-489`）。因此「任何一次请求 = 最新 header + surface 派生消息」是可以从日志离线重建的，这也是 [02 KV-Cache](dsh-kv-cache.md) 里那套稳定性论证的地基。
 
 ## 崩溃修复：`repair.ts`
 
@@ -335,13 +335,13 @@ sed -n '26,33p'   packages/session/session-persistence/src/coordinator.ts  # 200
 sed -n '20,23p'   packages/session/session-persistence-sqlite/src/schema.ts
 ```
 
-相关阅读：请求是怎么从 header + surface 拼出来的见 [04 LLM 层](04-llm-adapter.md)；为什么只追加就自然保住前缀缓存见 [02 KV-Cache](02-kv-cache.md)；`replace` 的两个使用者见 [06 压缩](06-compaction.md)；turn/step 的边界语义见 [03 Agent 循环](03-agent-loop.md)；扩展点机制见 [12 表面与协议](12-surfaces-and-protocols.md)；术语见 [附录 A 词汇表](appendix-a-glossary.md)。
+相关阅读：请求是怎么从 header + surface 拼出来的见 [04 LLM 层](dsh-llm-adapter.md)；为什么只追加就自然保住前缀缓存见 [02 KV-Cache](dsh-kv-cache.md)；`replace` 的两个使用者见 [06 压缩](dsh-compaction.md)；turn/step 的边界语义见 [03 Agent 循环](dsh-agent-loop.md)；扩展点机制见 [12 表面与协议](dsh-surfaces-and-protocols.md)；术语见 [附录 A 词汇表](../appendix-a-glossary.md)。
 
 ## 自检
 
 **一、压缩要把一大段历史换成一句摘要，为什么做法是往 surface 上追加一条 `replace` 事件，而不是把被压掉的事件删掉？**
 
-因为「模型可见 ⟺ 已记录」是硬不变量：任何进入模型上下文的东西都必须能从日志重建出来。删事件会同时毁掉两样东西。一是离线重建能力，「最新 header + surface 派生消息」这条路走不通了，[02 KV-Cache](02-kv-cache.md) 里那套稳定性论证的地基也跟着塌。二是人的视角，用户已经看过的对话会凭空消失。追加 `replace` 只动模型视角，日志里那些被遮蔽的节点还在，`isAppendSurfaceEvent`（`packages/core/session/src/surface.ts:51-54`）能筛出 append 起源的事件把人看的 transcript 还原出来。代价在失效点第 4、5 条：这只是约定不是强制，谁直接拿 surface 当 transcript 渲染，谁就会在第一次压缩后掉对话；而且 `deriveMessages()` 在 replace 之后要整体重建一次。
+因为「模型可见 ⟺ 已记录」是硬不变量：任何进入模型上下文的东西都必须能从日志重建出来。删事件会同时毁掉两样东西。一是离线重建能力，「最新 header + surface 派生消息」这条路走不通了，[02 KV-Cache](dsh-kv-cache.md) 里那套稳定性论证的地基也跟着塌。二是人的视角，用户已经看过的对话会凭空消失。追加 `replace` 只动模型视角，日志里那些被遮蔽的节点还在，`isAppendSurfaceEvent`（`packages/core/session/src/surface.ts:51-54`）能筛出 append 起源的事件把人看的 transcript 还原出来。代价在失效点第 4、5 条：这只是约定不是强制，谁直接拿 surface 当 transcript 渲染，谁就会在第一次压缩后掉对话；而且 `deriveMessages()` 在 replace 之后要整体重建一次。
 
 **二、崩溃修复为什么必须按「先关工具调用、再关 step、最后关 turn」的顺序？换个顺序会怎样？**
 

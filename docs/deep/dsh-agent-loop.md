@@ -15,7 +15,7 @@ status: reviewed
 
 ## 先看见：一条真实的会话日志
 
-dsh 的上游仓库里存了一批端到端快照，每个快照是一个跑得起来的 ACP 会话（ACP 是 dsh 对外的一种 stdio JSON-RPC 协议表面，见 [12 产品表面与协议](12-surfaces-and-protocols.md)），产物包括完整的 session 日志（会话事件日志，一条一行往后追加，模型看到的历史就是从它投影出来的）。这批快照分两类，`recorded` 这个布尔量决定是哪一类（`packages/test-support/acp-snapshot/src/suite.ts:88`）：`recorded: true` 的会被 `test:snapshot:record` 拿真 API 重录，`recorded: false` 的是**手写或手工采集**的 fixture，永不重录，用于那些活模型不肯稳定复现的场景（provider 错误、取消、脚本化的重复动作）。commit `b150a55` 上是 39 比 45。
+dsh 的上游仓库里存了一批端到端快照，每个快照是一个跑得起来的 ACP 会话（ACP 是 dsh 对外的一种 stdio JSON-RPC 协议表面，见 [12 产品表面与协议](dsh-surfaces-and-protocols.md)），产物包括完整的 session 日志（会话事件日志，一条一行往后追加，模型看到的历史就是从它投影出来的）。这批快照分两类，`recorded` 这个布尔量决定是哪一类（`packages/test-support/acp-snapshot/src/suite.ts:88`）：`recorded: true` 的会被 `test:snapshot:record` 拿真 API 重录，`recorded: false` 的是**手写或手工采集**的 fixture，永不重录，用于那些活模型不肯稳定复现的场景（provider 错误、取消、脚本化的重复动作）。commit `b150a55` 上是 39 比 45。
 
 下面这个 `parallel-tool-calls` 属于后者（`examples/acp-agent/tests/acp.snapshot.ts:214-218`），所以别把它的 usage 数字（模型返回的 token 用量）当真实计量看；**它作为「事件顺序长什么样」的证据是可信的**，因为回放同样要过 session 层的全部校验。我把每行的 `type` 和关键字段抽出来，把 `assistant/chunk`（两个 step 一共 13 条流式碎片）折叠成了一行：
 
@@ -54,7 +54,7 @@ turn/end         seq 31 {"turn":1,"reason":{"kind":"completed"}}
 
 - **turn 和 step 不是一回事。** 一次用户提问开一个 turn（`turn/start` → `turn/end`），turn 内部每次真正打模型 API 开一个 step（`step/start` → `step/end`）。上面这次是 1 个 turn、2 个 step。
 - **用户那句话出现了两次**：一次在 `agent/inbox/spliced`（进队列），一次在 `user/message`（进历史）。中间隔着 `turn/start`：排队和进历史是两个动作，中间有一个可以被插件否决的关口。
-- **多出来的 seq 5** 不是用户写的。它是运行时上下文快照，由系统提示装配器渲染成一条 plugin 来源的 user 消息追加进历史。沙箱模式、审批策略、当前时间这些「会变的策略」都从这里进模型，而不是改 system prompt。这就是 dsh 保住 KV 前缀的手法，见 [02 KV-Cache](02-kv-cache.md)。
+- **多出来的 seq 5** 不是用户写的。它是运行时上下文快照，由系统提示装配器渲染成一条 plugin 来源的 user 消息追加进历史。沙箱模式、审批策略、当前时间这些「会变的策略」都从这里进模型，而不是改 system prompt。这就是 dsh 保住 KV 前缀的手法，见 [02 KV-Cache](dsh-kv-cache.md)。
 - **`request/header` 只出现了一次**，`reason` 是 `initial`。第二个 step 没有再写。它不是每次请求都记，只在首次和变化时记。
 - **`sourceEventSeqs` 把结果指回原因**：`assistant/message` 指回它的全部 chunk，`tool/result` 指回它的 `tool/call`。
 
@@ -130,7 +130,7 @@ type Phase =
 
 三个分支的字段名直译一下：`kind` 是「当前处在哪一态」，`lastTurn` 是「上一个 turn 的编号」，`turn` / `step` 是「正在跑第几个 turn、第几个 step」，`wakeRequested` 是「有人想叫醒我但没送进去」的闩锁。`abort` 是一个 `AbortController`，Web 标准里的取消把手：它身上的 `signal` 会一路传给 pre-step、模型请求和每个工具，一处 abort，全链路同时收到。只有 idle 态没有 `abort`，因为闲着的驱动器没有什么可取消的。
 
-对外的 `status` 只有 `idle | running` 两态，`maintenance` 对外报 `idle`（`agent.ts:99-101`）。`maintenance` 是「不属于任何 turn 的后台工作」用的相位。`runMaintenance(job)`（`agent.ts:142-162`）先把相位翻过去，跑完在 `finally` 里翻回 `idle`，并且如果期间有人想唤醒，就在这时补一次 `wakeDriver()`。compaction 之类的整理工作走这条路，见 [06 Compaction](06-compaction.md)。
+对外的 `status` 只有 `idle | running` 两态，`maintenance` 对外报 `idle`（`agent.ts:99-101`）。`maintenance` 是「不属于任何 turn 的后台工作」用的相位。`runMaintenance(job)`（`agent.ts:142-162`）先把相位翻过去，跑完在 `finally` 里翻回 `idle`，并且如果期间有人想唤醒，就在这时补一次 `wakeDriver()`。compaction 之类的整理工作走这条路，见 [06 Compaction](dsh-compaction.md)。
 
 构造时的 turn 号不是从 0 开始猜的，是从日志里倒查出来的：`session.events.findLast(event => event.type === 'turn/start')?.data.turn ?? 0`（`agent.ts:92`）。所以 resume 一个会话，turn 编号接着数，不会撞号。
 
@@ -382,7 +382,7 @@ turn 结束前有一个专门的关口（`agent.ts:295-299`）：
 
 但这里要打个折，别把它当成生产环境的护栏：这个校验插件挂在可选的 `dsh-invariants` 服务上，而**出厂的 `dsh` 配置一个 invariant 都不挂**。2026-08-03 的一条设计记录明确做了这个决定（`.agents/notes/implemented/simplification/2026-08-03-omit-invariants-from-shipped-config.md:13`），理由是 TUI 和 Web 两个表面当时挂得不一致，而且一次断言失败会直接终止普通用户的一次运行。所以它真正生效的场合是测试、示例组合和自建的开发组合。上游的 `docs/architecture.md:96` 写着「a runtime invariant asserts it」（意思是「有一条运行时断言在保证这件事」），读的时候要补上这个前提。
 
-一直生效的是另一件事：写入侧的强制。surface 事件不带 `surfaceOp` 会当场抛，`sourceEventSeqs` 覆盖不全会当场抛（见 [05 Session](05-session.md)）。断言只是在开发时多加一道复核。本文之所以能拿快照日志当「模型看到什么」的证据用，靠的是快照测试本身跑在开着 invariant 的组合里。
+一直生效的是另一件事：写入侧的强制。surface 事件不带 `surfaceOp` 会当场抛，`sourceEventSeqs` 覆盖不全会当场抛（见 [05 Session](dsh-session.md)）。断言只是在开发时多加一道复核。本文之所以能拿快照日志当「模型看到什么」的证据用，靠的是快照测试本身跑在开着 invariant 的组合里。
 
 ## 工具调度：屏障、滚动池、按模型顺序提交
 
@@ -538,7 +538,7 @@ grep -n "@mode\|^    'agent/" packages/core/agent/src/runtime-types.ts
 
 想看「模型到底收到什么」，最快的路是读快照目录里的 `session.jsonl`：它就是重建请求的全部输入，而 `packages/core/agent-loop/src/invariant.ts:39-42` 那条断言保证了这一点在运行期成立。
 
-关于这个循环怎么被组装、agent 怎么被创建与恢复，见 [05 Session](05-session.md) 和 [08 Orchestration](08-orchestration.md)；工具执行流水线的内部（审批、沙箱、guard）见 [07 工具、审批与沙箱](07-tools-approval-sandbox.md)；每 step 重装配对缓存的影响见 [02 KV-Cache](02-kv-cache.md)。
+关于这个循环怎么被组装、agent 怎么被创建与恢复，见 [05 Session](dsh-session.md) 和 [08 Orchestration](dsh-orchestration.md)；工具执行流水线的内部（审批、沙箱、guard）见 [07 工具、审批与沙箱](dsh-tools-approval-sandbox.md)；每 step 重装配对缓存的影响见 [02 KV-Cache](dsh-kv-cache.md)。
 
 ## 自检
 

@@ -54,7 +54,7 @@ status: reviewed
 
 ## 二、headless：150 行的一次性驱动器
 
-headless 常被误解成「无界面的 Web」。它不是。它的 bundle 补丁只有 35 行（全文见 [10 Cordis、启动、bundle 与 preset](10-cordis-boot-preset.md) 第一节），第 2 行的注释就说清了：
+headless 常被误解成「无界面的 Web」。它不是。它的 bundle 补丁只有 35 行（全文见 [10 Cordis、启动、bundle 与 preset](dsh-cordis-boot-preset.md) 第一节），第 2 行的注释就说清了：
 
 > It mounts no Host, HTTP server, Web runtime, or browser plugin.
 
@@ -419,7 +419,7 @@ grep -riI "dsml" --exclude-dir=node_modules --exclude-dir=.git . | wc -l
 
 结果是 **0**。源码、`docs/`、`.agents/notes/`、示例配置，全仓零命中。
 
-DSML 属于 **DeepSeek V4 模型仓库**（`encoding_dsv4.py`），是模型侧的聊天模板与工具调用序列化格式。它和 dsh 的在线 wire 没有关系：dsh 发出去的是 Chat Completions 的 SSE 请求，序列化在 `packages/llm/llm-deepseek/src/serialize.ts`，见 [附录 A 术语表](appendix-a-glossary.md)。
+DSML 属于 **DeepSeek V4 模型仓库**（`encoding_dsv4.py`），是模型侧的聊天模板与工具调用序列化格式。它和 dsh 的在线 wire 没有关系：dsh 发出去的是 Chat Completions 的 SSE 请求，序列化在 `packages/llm/llm-deepseek/src/serialize.ts`，见 [附录 A 术语表](../appendix-a-glossary.md)。
 
 把 DSML 放进 dsh 的协议面表格会让读者以为源码里有对应实现。**它是外部内容，属于模型侧**。如果要研究「chat template 到 token 序列」这一层，那是模型仓库的话题，不是 harness 的。
 
@@ -540,4 +540,4 @@ echo $?
 
 ---
 
-相关：[10 Cordis、启动、bundle 与 preset](10-cordis-boot-preset.md) 讲这些入口各自的组合从哪来；[11 Web 客户端与 host](11-web-client-and-host.md) 讲 Web 面的内部结构；[03 Agent Loop](03-agent-loop.md) 讲 `TurnEndReason` 的六种取值；[08 编排](08-orchestration.md) 讲子代理与委派；[13 自证制度](13-self-verification.md) 讲上游怎么保证这些包的文档不漂移；[14 横向对比](14-comparison.md) 有更完整的六家对照。
+相关：[10 Cordis、启动、bundle 与 preset](dsh-cordis-boot-preset.md) 讲这些入口各自的组合从哪来；[11 Web 客户端与 host](dsh-web-client-and-host.md) 讲 Web 面的内部结构；[03 Agent Loop](dsh-agent-loop.md) 讲 `TurnEndReason` 的六种取值；[08 编排](dsh-orchestration.md) 讲子代理与委派；[13 自证制度](dsh-self-verification.md) 讲上游怎么保证这些包的文档不漂移；[14 横向对比](../00-overview.md) 有更完整的六家对照。

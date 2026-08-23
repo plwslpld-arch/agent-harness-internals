@@ -697,7 +697,7 @@ node -e "const fs=require('fs');const L=fs.readFileSync('apps/web/tests/snapshot
 
 单元测试是最好的规则说明书：`packages/core/system-prompt/tests/system-prompt.spec.ts`（582 行，覆盖插值规则、`complete`、waterfall、change 事件回滚）、`scoped.spec.ts`（226 行，scope 遮蔽）、`tool-order.spec.ts`（115 行）。runtime 快照那套逻辑在 `packages/core/agent-loop/tests/loop.spec.ts:357` 起的几个用例里，用例名字本身就是规格：「materializes changed runtime context at the history tail without rewriting the system header」，意思是「把变化了的运行时上下文落在历史尾部，同时不重写 system header」。
 
-带 `DEEPSEEK_API_KEY` 的缓存端到端在 `packages/core/agent-loop/tests/request-cache.e2e.ts`，本系列**跑过了**，通过（记录见 [research/runtime-evidence](../research/runtime-evidence/2026-08-16-deepseek-cache-probe.md)）。上面引用的 256 / 14.7k 那组数字仍然来自上游笔记，但「策略进 system 会把命中打到只剩 256 token」这个结论我们自己也独立测出来了，见 [02 KV-Cache](02-kv-cache.md)。
+带 `DEEPSEEK_API_KEY` 的缓存端到端在 `packages/core/agent-loop/tests/request-cache.e2e.ts`，本系列**跑过了**，通过（记录见 [research/runtime-evidence](../../research/runtime-evidence/2026-08-16-deepseek-cache-probe.md)）。上面引用的 256 / 14.7k 那组数字仍然来自上游笔记，但「策略进 system 会把命中打到只剩 256 token」这个结论我们自己也独立测出来了，见 [02 KV-Cache](dsh-kv-cache.md)。
 
 ---
 
@@ -717,4 +717,4 @@ node -e "const fs=require('fs');const L=fs.readFileSync('apps/web/tests/snapshot
 
 ---
 
-下一篇 [02 KV-Cache](02-kv-cache.md) 把「前缀边界在哪、什么会打断它」讲完：本篇讲清了 system 和 tools 两块为什么设计成不变，那一篇讲历史那一块怎么保持只追加，以及压缩这个唯一会重写头部的操作怎么把损失降到最小。
+下一篇 [02 KV-Cache](dsh-kv-cache.md) 把「前缀边界在哪、什么会打断它」讲完：本篇讲清了 system 和 tools 两块为什么设计成不变，那一篇讲历史那一块怎么保持只追加，以及压缩这个唯一会重写头部的操作怎么把损失降到最小。

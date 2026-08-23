@@ -20,11 +20,11 @@ status: reviewed
 dsh 有两件事是别家 harness 基本没有的：
 
 - **Code Mode**（code mode，直译「代码模式」：模型的动作从「填一个工具调用的参数」换成「写一段调工具的程序」）：把「模型看到的工具表」整体折叠成一个 `run_code`，其余工具变成系统提示里的一段 TypeScript（或 Python）SDK 声明；模型不再一次调一个工具，而是写一段程序，在程序里调工具、循环、分支、汇总，最后只把它想留下的东西返回给自己。
-- **Extensions**（`packages/extensions/`，16,096 行非测试源码，仅次于 `client` 组，见 [00 总览](00-overview.md)的包组表）：给模型一组 `cordis_*` 工具，让它在**当前这个进程里**定义、启动、停止、删除 Cordis 插件。也就是说，agent 可以在运行期给自己加一个新工具、加一个浏览器 UI 面板，然后继续干活。
+- **Extensions**（`packages/extensions/`，16,096 行非测试源码，仅次于 `client` 组，见 [00 总览](dsh-overview.md)的包组表）：给模型一组 `cordis_*` 工具，让它在**当前这个进程里**定义、启动、停止、删除 Cordis 插件。也就是说，agent 可以在运行期给自己加一个新工具、加一个浏览器 UI 面板，然后继续干活。
 
 两者都不是默认开启的。它们是 dsh「万物皆插件」这条路线走到尽头时长出来的东西：既然工具注册表是一个可替换的服务，那「工具怎么呈现给模型」就是它的一个配置项；既然整个 harness 是一棵 Cordis 插件树，那「往树上再插一个节点」也可以是一个工具。
 
-本篇先看 Code Mode 的真实产物，再讲机制与代价，然后讲 Extensions，最后横向对照。循环层与工具流水线本身见 [03 Agent Loop](03-agent-loop.md) 与 [07 工具、审批与沙箱](07-tools-approval-sandbox.md)；系统提示的段落装配见 [01 System Prompt](01-system-prompt.md)。
+本篇先看 Code Mode 的真实产物，再讲机制与代价，然后讲 Extensions，最后横向对照。循环层与工具流水线本身见 [03 Agent Loop](dsh-agent-loop.md) 与 [07 工具、审批与沙箱](dsh-tools-approval-sandbox.md)；系统提示的段落装配见 [01 System Prompt](dsh-system-prompt.md)。
 
 ---
 
@@ -562,7 +562,7 @@ Host 与 Client 之间的往返被记成六个 `cordis/*` 事件（`docs/subsyst
 
 写或改 composition 之前，先加载 `editing-cordis-compositions` 这个 skill。）
 
-除了 `tool-cordis` 那一行（`apps/cli/config/agent-presets/cordis/agent.cordis.yml:246-247`），preset 还随身带两个 skill（`cordis-plugin-development` 和 `editing-cordis-compositions`），通过给 `skill-filesystem` 配一个指向 preset 自己目录的 `customSkillDirs` 实现（`apps/cli/config/agent-presets/cordis/agent.cordis.yml:256-260`）。注释解释了为什么 skill 跟着 preset 走而不是放用户的 skill root：「it documents THIS deployment's two planes, and a preset is the unit that gets copied and edited」（它记录的是**这一个**部署的两个平面，而 preset 正是被整个复制、整个修改的那个单位）。skill 机制本身见 [08 编排层](08-orchestration.md)。
+除了 `tool-cordis` 那一行（`apps/cli/config/agent-presets/cordis/agent.cordis.yml:246-247`），preset 还随身带两个 skill（`cordis-plugin-development` 和 `editing-cordis-compositions`），通过给 `skill-filesystem` 配一个指向 preset 自己目录的 `customSkillDirs` 实现（`apps/cli/config/agent-presets/cordis/agent.cordis.yml:256-260`）。注释解释了为什么 skill 跟着 preset 走而不是放用户的 skill root：「it documents THIS deployment's two planes, and a preset is the unit that gets copied and edited」（它记录的是**这一个**部署的两个平面，而 preset 正是被整个复制、整个修改的那个单位）。skill 机制本身见 [08 编排层](dsh-orchestration.md)。
 
 ### 4.6 风险与护栏，逐条
 
@@ -578,7 +578,7 @@ Host 与 Client 之间的往返被记成六个 `cordis/*` 事件（`docs/subsyst
 | 持久化 | 定义只活在当前进程，重启即无（`packages/extensions/tool-cordis/src/prompt.ts:7`） | 反过来说：没有「让它活下来」的路径，要固化只能写成真的 preset 文件 |
 | 装进生产 | `tool-cordis` **不在任何发行组装里**，只在 `cordis` preset 里，且这是刻意的 opt-in（`docs/tool-catalog.md:23`：「Not in any shipped tree (a deliberate opt-in — dynamic package code reaches the real runtime …)」，意思是不在任何发行的组装树里，这是刻意留的 opt-in，因为动态 package 的代码够得到真实运行时） | 一个跑着的插件可以**再注册模型可见的工具**，直到它被停/删/进程重启；这些工具集变化会以一次 changed request header 记录下来 |
 
-最后一条单独说：`docs/tool-catalog.md:23` 明确写着「A running package may register ADDITIONAL model-visible tools until it is stopped, undefined, or DSH restarts; a full changed request header logs those tool-set changes.」，意思是：一个跑着的 package 可以再注册**额外的**、模型可见的工具，直到它被停掉、被删掉，或者 DSH 重启；这些工具集变化会由一次完整的 changed request header 记录下来。也就是说，Extensions 是 dsh 里**唯一一处工具集能在会话中途被模型自己改变**的地方。对 KV cache 而言这是一次确定的前缀失效（见 [02 KV-Cache](02-kv-cache.md)），而 dsh 选择的是把它**记下来**而不是禁止它。
+最后一条单独说：`docs/tool-catalog.md:23` 明确写着「A running package may register ADDITIONAL model-visible tools until it is stopped, undefined, or DSH restarts; a full changed request header logs those tool-set changes.」，意思是：一个跑着的 package 可以再注册**额外的**、模型可见的工具，直到它被停掉、被删掉，或者 DSH 重启；这些工具集变化会由一次完整的 changed request header 记录下来。也就是说，Extensions 是 dsh 里**唯一一处工具集能在会话中途被模型自己改变**的地方。对 KV cache 而言这是一次确定的前缀失效（见 [02 KV-Cache](dsh-kv-cache.md)），而 dsh 选择的是把它**记下来**而不是禁止它。
 
 ---
 
@@ -644,7 +644,7 @@ grep -rn "code-runtime\|tool-cordis" packages/bundle/*/cordis.patch.yml apps/cli
 
 设计记录本体：`.agents/notes/implemented/feature/2026-06-15-code-mode.md`（Code Mode 的三个决策、What the model sees、五条 Risks、六条 Alternatives considered）与 `.agents/notes/implemented/feature/2026-07-08-self-referential-cordis-toolset.md`（Extensions 的设计家）。相关的还有 `2026-07-20-code-mode-typed-tool-returns.md`（`ToolOutputMap` 的来源）、`2026-07-26-code-mode-live-parallel-dispatch.md`（子调用调度器）、`2026-07-31-code-mode-language-dispatch.md`（Python 渲染器）。
 
-更多背景：工具流水线本身见 [07 工具、审批与沙箱](07-tools-approval-sandbox.md)，prompt section 的排序与装配见 [01 System Prompt](01-system-prompt.md)，前缀稳定性见 [02 KV-Cache](02-kv-cache.md)，`cordis` preset 与 boot/profile 的关系见 [10 Cordis 与 boot preset](10-cordis-boot-preset.md)，横向对照的完整版见 [14 横向对比](14-comparison.md)，术语见 [附录 A 术语表](appendix-a-glossary.md)。
+更多背景：工具流水线本身见 [07 工具、审批与沙箱](dsh-tools-approval-sandbox.md)，prompt section 的排序与装配见 [01 System Prompt](dsh-system-prompt.md)，前缀稳定性见 [02 KV-Cache](dsh-kv-cache.md)，`cordis` preset 与 boot/profile 的关系见 [10 Cordis 与 boot preset](dsh-cordis-boot-preset.md)，横向对照的完整版见 [14 横向对比](../00-overview.md)，术语见 [附录 A 术语表](../appendix-a-glossary.md)。
 
 ---
 

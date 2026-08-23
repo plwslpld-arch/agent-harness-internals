@@ -105,7 +105,7 @@ status: reviewed
 
 （`:156-163`）`trustedHosts` 是「允许从哪些主机名/地址访问」的信任名单。它不是配置里写死的，是服务器真的 bind 完之后由 `web-runtime` 采样一次再提供出来的（`:126-127` 的注释）。
 
-再往后是约 30 行 `ui-*`（`:174-274`），每一行就是浏览器里的一块界面：`ui-trajectory`（轨迹视图）、`ui-model-selection`（模型选择）、`ui-agent-preset`（preset 选择器）、`ui-deliverables`（产出文件链接）……这些在 [11 Web 客户端与 host](11-web-client-and-host.md) 里展开。
+再往后是约 30 行 `ui-*`（`:174-274`），每一行就是浏览器里的一块界面：`ui-trajectory`（轨迹视图）、`ui-model-selection`（模型选择）、`ui-agent-preset`（preset 选择器）、`ui-deliverables`（产出文件链接）……这些在 [11 Web 客户端与 host](dsh-web-client-and-host.md) 里展开。
 
 **第三段，把 base 里「每个 agent 一份」的行全部 `disabled: true`**（`:276-408`）。这是 web-app 最有信息量的一段。tool-bash、tool-pwsh、tool-jobs、tool-fs、tool-fs-search、tool-str-replace-editor、skill-filesystem、tool-skill、tool-goal、plan-mode、compaction-basic、command-compact、tool-result-pruner、四个 tool-subagent 行、workflow、tool-ralph、agent-instructions、tool-todo、tool-web，全部关掉。
 
@@ -197,7 +197,7 @@ export type DispatchMode = 'emit' | 'parallel' | 'serial' | 'bail' | 'waterfall'
   }
 ```
 
-（`vendor/cordis/src/events.ts:234-243`）读法是：`cbs` 是收集到的监听器队列，`inner` 是从参数里弹出的最后一个参数（也就是内建行为），`next()` 每次从队列头取一个监听器来跑，取完了就落到 `inner`。最后一个参数被当成最内层的 `next`，监听器由外向内包裹它——**一个不调用 `next()` 的监听器就否决了整条链，包括内建行为**（`:227-229` 的注释）。熟悉 Koa 中间件的人会觉得眼熟。`system-prompt/assemble`、`tools/execute`、`approval/request` 这些拦截点都是 waterfall；[07 工具、审批与沙箱](07-tools-approval-sandbox.md) 里的审批「无应答者则 fail-closed」，本质就是没人调 `next` 的默认行为。
+（`vendor/cordis/src/events.ts:234-243`）读法是：`cbs` 是收集到的监听器队列，`inner` 是从参数里弹出的最后一个参数（也就是内建行为），`next()` 每次从队列头取一个监听器来跑，取完了就落到 `inner`。最后一个参数被当成最内层的 `next`，监听器由外向内包裹它——**一个不调用 `next()` 的监听器就否决了整条链，包括内建行为**（`:227-229` 的注释）。熟悉 Koa 中间件的人会觉得眼熟。`system-prompt/assemble`、`tools/execute`、`approval/request` 这些拦截点都是 waterfall；[07 工具、审批与沙箱](dsh-tools-approval-sandbox.md) 里的审批「无应答者则 fail-closed」，本质就是没人调 `next` 的默认行为。
 
 ### Service：provide / inject 怎么形成 seam
 
@@ -496,7 +496,7 @@ Run commands in a bash shell
 
 文件系统那一段（`:46-62`）用 `isolate: { fs: true }` 把 host 的沙箱化 provider 换成裸的 `fs-local`（`cwd` 取 `DSH_CWD` 或 `process.cwd()`），`str_replace_editor` 与它共享 realm，`maxOutputChars: 16000`。
 
-**没有 compaction 组、没有 fs-sandbox、没有 skill、没有 plan mode、没有 subagent。** 这个组合就是 `BENCHMARK.md` 指向的那一个，同样的配方以 `examples/jsonrpc-agent/minimal.cordis.yml` 的形式交给 Python SDK 使用，细节见 [12 产品表面与协议](12-surfaces-and-protocols.md)。它同时也说明了一件事：dsh 的「全部功能」和「跑分用的组合」是两个可以差得很远的东西，而它们的差别是一个 62 行 vs 251 行的 YAML 文件，不是编译开关。
+**没有 compaction 组、没有 fs-sandbox、没有 skill、没有 plan mode、没有 subagent。** 这个组合就是 `BENCHMARK.md` 指向的那一个，同样的配方以 `examples/jsonrpc-agent/minimal.cordis.yml` 的形式交给 Python SDK 使用，细节见 [12 产品表面与协议](dsh-surfaces-and-protocols.md)。它同时也说明了一件事：dsh 的「全部功能」和「跑分用的组合」是两个可以差得很远的东西，而它们的差别是一个 62 行 vs 251 行的 YAML 文件，不是编译开关。
 
 ### cordis：让 agent 写 agent
 
@@ -516,7 +516,7 @@ Run commands in a bash shell
 
 上面 YAML 里出现过、但很容易被当成噪音的几行，实际承担了这套组合能工作的前提。
 
-**`packages/typert`（8,433 行非测试源码，在 50 个包组里排第七）** 组 README 列了三个包（`packages/typert/README.md:5-11`）：`registry`（`ctx.typert`，运行时的包反射与 schema 存储）、`loader`（扫描 Loader entry，把生成的 host 契约注册进去）、`generator`（构建期从源码类型生成产物）；目录下还有第四个 `protocol`，它只放两端共享的声明（Remote 基类、装饰器、编解码器、协议映射表），不做类型分析也不注册 Cordis 服务，所以组 README 的表里没列它。它在 base 里是三行（`packages/bundle/base/cordis.patch.yml:30-37`），加上 `api-gateway`。它解决的问题是：浏览器要调 host 上某个服务的方法，谁来保证两端签名一致？答案是从 TypeScript 源码类型生成 Remote 契约，而不是手写 DTO。详见 [11 Web 客户端与 host](11-web-client-and-host.md)。
+**`packages/typert`（8,433 行非测试源码，在 50 个包组里排第七）** 组 README 列了三个包（`packages/typert/README.md:5-11`）：`registry`（`ctx.typert`，运行时的包反射与 schema 存储）、`loader`（扫描 Loader entry，把生成的 host 契约注册进去）、`generator`（构建期从源码类型生成产物）；目录下还有第四个 `protocol`，它只放两端共享的声明（Remote 基类、装饰器、编解码器、协议映射表），不做类型分析也不注册 Cordis 服务，所以组 README 的表里没列它。它在 base 里是三行（`packages/bundle/base/cordis.patch.yml:30-37`），加上 `api-gateway`。它解决的问题是：浏览器要调 host 上某个服务的方法，谁来保证两端签名一致？答案是从 TypeScript 源码类型生成 Remote 契约，而不是手写 DTO。详见 [11 Web 客户端与 host](dsh-web-client-and-host.md)。
 
 **`settings`**：`ctx.settings` 是「命名空间 + schema」的注册表，解析分三层：schema 默认值 → 注册者所在组合的 `base`（它自己的 cordis.yml entry config 子集）→ 用户文档里的那一段（`packages/settings/settings/README.md:5`）。所以 base 里 `llm-deepseek` 那一行不内联 key 和 endpoint（`packages/bundle/base/cordis.patch.yml:446-449` 的注释），它们每次请求从 `llm-deepseek:` 设置段解析。**没挂 provider 时消费者退回只读 entry config**，组合照常工作。
 
@@ -526,7 +526,7 @@ Run commands in a bash shell
 
 **`workspace`**：`ctx.workspaceRegistry`，目录的稳定 id、标题、会话成员顺序（`packages/workspace/workspace/README.md:5`）。只有 web-app 层挂（`packages/bundle/web-app/cordis.patch.yml:73-74`），因为 headless 没有「多个工作区」这个概念。
 
-**`storage`**：`ctx.storage` 是非会话数据的中枢：命名后端注册表 + 数据形态挂载，**中枢自己不做 IO**（`packages/storage/storage/README.md:5`）。web-app 挂了 `storage` + `storage-json`（根在 `dshHomePath('storages')`）+ `storage-domain`（路由到 `json`）三行（`packages/bundle/web-app/cordis.patch.yml:51-62`）。会话日志不走这里，它有自己的 append-only 通道，见 [05 Session](05-session.md)。
+**`storage`**：`ctx.storage` 是非会话数据的中枢：命名后端注册表 + 数据形态挂载，**中枢自己不做 IO**（`packages/storage/storage/README.md:5`）。web-app 挂了 `storage` + `storage-json`（根在 `dshHomePath('storages')`）+ `storage-domain`（路由到 `json`）三行（`packages/bundle/web-app/cordis.patch.yml:51-62`）。会话日志不走这里，它有自己的 append-only 通道，见 [05 Session](dsh-session.md)。
 
 ---
 
@@ -588,7 +588,7 @@ Run commands in a bash shell
 |---|---|---|---|
 | dsh | 若干层 `cordis.patch.yml` 补丁，每行一个 npm 包 | 能：agent preset 是一个目录一个 YAML，`$DSH_HOME/.agent-presets/` 下用户自己写 | 能：`dsh plugin --profile <name> add <package>`（把参数原样转给 profile 目录里的 pnpm，`apps/cli/src/args.ts:171-179`），再在 patch 里加一行 |
 | Claude Code | 内置工具集固定，配置项 + MCP + hooks + subagents 定义文件 | 部分：subagent 定义可换模型与工具子集 | MCP server、hooks、skills、plugins |
-| Codex | Rust 内建工具集，`config.toml` 配置项 + agent role 的 toml | 部分：agent role 可带模型、reasoning effort 与 developer instructions | MCP（作为 client）、hooks（11 个事件，`codex!codex-rs/app-server-protocol/src/protocol/v2/hook.rs:20`）、Extension API 的 `context_contributors()`；反方向 Codex 自己还发一个 `codex-mcp-server` 二进制，把整个 agent 包成一个名叫 `codex` 的 MCP 工具（`codex!codex-rs/mcp-server/src/codex_tool_config.rs:104`），细节见 [12](12-surfaces-and-protocols.md) |
+| Codex | Rust 内建工具集，`config.toml` 配置项 + agent role 的 toml | 部分：agent role 可带模型、reasoning effort 与 developer instructions | MCP（作为 client）、hooks（11 个事件，`codex!codex-rs/app-server-protocol/src/protocol/v2/hook.rs:20`）、Extension API 的 `context_contributors()`；反方向 Codex 自己还发一个 `codex-mcp-server` 二进制，把整个 agent 包成一个名叫 `codex` 的 MCP 工具（`codex!codex-rs/mcp-server/src/codex_tool_config.rs:104`），细节见 [12](dsh-surfaces-and-protocols.md) |
 | OpenCode | TypeScript 内建工具 + `agent/agent.ts` 里的 agent 定义 | 能：agent 配置可定制工具与权限 | npm/本地插件，`Hooks` 接口 21 个键（`opencode!packages/plugin/src/index.ts:222-334`）；MCP |
 | pi | 内建 7 个工具（`bash`/`edit`/`find`/`grep`/`ls`/`read`/`write`，`pi!packages/coding-agent/src/core/tools/bash.ts:331`） | 部分：扩展可在 `before_agent_start` 里换 systemPrompt | Extension API（33 个事件、`registerTool`/`registerCommand`/`registerProvider`）、Packages；无 MCP |
 | mini-swe-agent | `mini.yaml` 151 行 + `DefaultAgent` 190 行（`mini-swe-agent!src/minisweagent/agents/default.py:38`），只有一个 bash 工具 | 换 yaml 就是换一切 | 不适用 |
@@ -655,4 +655,4 @@ dsh --profile web --dump-config            # 加上用户层与 --patch 叠加�
 
 ---
 
-相关：[00 总览](00-overview.md) 给出整体地图；[01 System Prompt](01-system-prompt.md) 讲 persona 与 section 如何装配成最终字符串；[03 Agent Loop](03-agent-loop.md) 讲这棵树跑起来之后一个 turn 怎么走；[09 扩展与 Code Mode](09-extensions-and-code-mode.md) 讲 `tool-cordis` 与 `code` preset 背后的机制；[14 横向对比](14-comparison.md) 有更完整的六家对照。术语见[附录 A 术语表](appendix-a-glossary.md)。
+相关：[00 总览](dsh-overview.md) 给出整体地图；[01 System Prompt](dsh-system-prompt.md) 讲 persona 与 section 如何装配成最终字符串；[03 Agent Loop](dsh-agent-loop.md) 讲这棵树跑起来之后一个 turn 怎么走；[09 扩展与 Code Mode](dsh-extensions-and-code-mode.md) 讲 `tool-cordis` 与 `code` preset 背后的机制；[14 横向对比](../00-overview.md) 有更完整的六家对照。术语见[附录 A 术语表](../appendix-a-glossary.md)。

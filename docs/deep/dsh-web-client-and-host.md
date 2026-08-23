@@ -173,7 +173,7 @@ Chat 视图把事件折叠成对话：分组的步骤摘要流、流式尾部隔
 | 设置 | `ui-settings` / `-general` / `-models` / `-plugins` / `-plugin-inventory` | 910 / 718 / 3,452 / 1,672 / 322 | 设置域，schema 服务已并入基础包 |
 | 目录选择 | `ui-directory-picker-native` / `-browse` | 146 / 1,224 | 与 host 的两种 picker 后端配对 |
 
-表里这 40 个包就是 `packages/client/` 的全部内容（有几行合并了同类包，`ls -d packages/client/*/` 数出来正好 40）。另有一个 `ui-cordis` 也是浏览器插件，但它住在 `packages/extensions/ui-cordis`：它是 `tool-cordis` 的浏览器半，属于「agent 修改自身运行时」那一组，见 [09 扩展与 Code Mode](09-extensions-and-code-mode.md)。
+表里这 40 个包就是 `packages/client/` 的全部内容（有几行合并了同类包，`ls -d packages/client/*/` 数出来正好 40）。另有一个 `ui-cordis` 也是浏览器插件，但它住在 `packages/extensions/ui-cordis`：它是 `tool-cordis` 的浏览器半，属于「agent 修改自身运行时」那一组，见 [09 扩展与 Code Mode](dsh-extensions-and-code-mode.md)。
 
 40 个包**全部**有 README。绝大多数是**双面包**：`src/index.ts` 是运行在 Node 上的 host 半，`src/client/index.ts` 是浏览器半，由 package.json 里的 `dsh.client` 字段声明。这个设计让「一个功能」始终是一个包，而不是拆成前后端两个包再靠命名约定对齐。
 
@@ -259,7 +259,7 @@ export type ChainSelect<O extends object, M> = (owner: O) => M | null
 
 ## 四、hmr：热重载的真实条件
 
-`packages/client/hmr` 让客户端插件在不刷新页面的情况下重新加载。机制是：Node 半用一个定时器 stat 轮询每个 client bundle（`packages/client/hmr/src/index.ts:139` 的 `setInterval`，默认 500ms，`:37`；轮询而非 inotify 是刻意的，模块注释 `:2-4` 写了理由：网络挂载不发文件事件），变化时通过 `/plugins/events` 这条 SSE 通道通知浏览器（`packages/client/hmr/src/events.ts:16`）。浏览器半收到之后换 fiber——fiber 是 cordis 里「一行 entry 的活实例」，见 [10 Cordis、启动、bundle 与 preset](10-cordis-boot-preset.md)：
+`packages/client/hmr` 让客户端插件在不刷新页面的情况下重新加载。机制是：Node 半用一个定时器 stat 轮询每个 client bundle（`packages/client/hmr/src/index.ts:139` 的 `setInterval`，默认 500ms，`:37`；轮询而非 inotify 是刻意的，模块注释 `:2-4` 写了理由：网络挂载不发文件事件），变化时通过 `/plugins/events` 这条 SSE 通道通知浏览器（`packages/client/hmr/src/events.ts:16`）。浏览器半收到之后换 fiber——fiber 是 cordis 里「一行 entry 的活实例」，见 [10 Cordis、启动、bundle 与 preset](dsh-cordis-boot-preset.md)：
 
 ```ts
     modLoader.invalidate(id)
@@ -338,7 +338,7 @@ const STANDALONE_ERROR = 'apps/web is not a standalone application: bare Vite ca
 
 shell 的启动是两阶段的（`packages/client/web/README.md:5`）：阶段一建模块系统并并行预取 `immediately` 那一档——**执行 bundle 只注册工厂函数，不执行模块体**；阶段二挂 vendored cordis Loader，把模块系统通过它的 `internal` 契约注入，每行 graph 建一个 loader entry，然后**等 Loader 静默且每个 entry fiber 都 ACTIVE，才一次性把整个 UI 切出来**。没有半成品界面。
 
-这里有一个漂亮的复用：浏览器里跑的是**同一个 vendored Cordis Loader**（见 [10 Cordis、启动、bundle 与 preset](10-cordis-boot-preset.md)）。它对「插件代码怎么到达」这件事是可替换的：Node 上是 ESM import，浏览器上是 `packages/client/modules` 提供的惰性 CJS 表。替换点只有一个：`EntryTree.import`（`packages/client/modules/README.md:5`）。
+这里有一个漂亮的复用：浏览器里跑的是**同一个 vendored Cordis Loader**（见 [10 Cordis、启动、bundle 与 preset](dsh-cordis-boot-preset.md)）。它对「插件代码怎么到达」这件事是可替换的：Node 上是 ESM import，浏览器上是 `packages/client/modules` 提供的惰性 CJS 表。替换点只有一个：`EntryTree.import`（`packages/client/modules/README.md:5`）。
 
 ---
 
@@ -474,7 +474,7 @@ rehydrate(serialized: unknown): SchemaNode {
 
 这是一个很干净的因果链：**因为界面要把文件路径变成链接，所以要教模型用行内代码写路径**。而且这两件事被绑在同一个包、同一行 `cordis.patch.yml` 上，README 明说（`packages/client/ui-deliverables/README.md:5`）：删掉那一行 entry，提示词、那一行界面、以及散文里的链接一起消失。
 
-KV cache 的影响也写清了（`:29`）：这个 section 在包挂载期间是静态的、order 190，所以它留在可复用的 prompt 前缀里，不随 turn 变化。这条纪律见 [02 KV Cache](02-kv-cache.md)。
+KV cache 的影响也写清了（`:29`）：这个 section 在包挂载期间是静态的、order 190，所以它留在可复用的 prompt 前缀里，不随 turn 变化。这条纪律见 [02 KV Cache](dsh-kv-cache.md)。
 
 ---
 
@@ -569,4 +569,4 @@ sed -n '95,106p' packages/bundle/web-app/src/index.ts
 
 ---
 
-相关：[10 Cordis、启动、bundle 与 preset](10-cordis-boot-preset.md) 讲这些 `ui-*` 行从哪来；[05 Session](05-session.md) 讲事件日志与投影本身；[12 产品表面与协议](12-surfaces-and-protocols.md) 讲不经浏览器的那些入口；[14 横向对比](14-comparison.md) 有完整对照。术语见[附录 A 术语表](appendix-a-glossary.md)。
+相关：[10 Cordis、启动、bundle 与 preset](dsh-cordis-boot-preset.md) 讲这些 `ui-*` 行从哪来；[05 Session](dsh-session.md) 讲事件日志与投影本身；[12 产品表面与协议](dsh-surfaces-and-protocols.md) 讲不经浏览器的那些入口；[14 横向对比](../00-overview.md) 有完整对照。术语见[附录 A 术语表](../appendix-a-glossary.md)。

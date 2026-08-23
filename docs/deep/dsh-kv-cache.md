@@ -409,7 +409,7 @@ function compareToolNames(a: ToolSchema, b: ToolSchema): number {
 
 这个「指令放尾部」是一次专门的 bug 修复（`.agents/notes/implemented/bug-fix/2026-07-21-compaction-summary-prefix-cache-reuse.md:9`），原来的实现用独立的 summarizer system prompt，结果是「Every compaction therefore paid full prompt-processing cost for the whole replayed history twice」（意思是：于是每一次压缩，整段被重放的历史都要按全价付两遍 prompt 处理费）。两遍指的是：一遍付给触发压力的那次对话请求，一遍付给紧接着的摘要请求，而且偏偏发生在历史最长、最贵的时候。修复里有一个反直觉的细节：**即使摘要器一个工具都不会调，`tools` 也必须带上**，否则 token 序列变短、对不齐（`:17`）。
 
-完整的代码、指令原文、以及「哪些情形保证复用、哪些只是正确但不复用」，见 [06 压缩](06-compaction.md)。
+完整的代码、指令原文、以及「哪些情形保证复用、哪些只是正确但不复用」，见 [06 压缩](dsh-compaction.md)。
 
 ---
 
@@ -470,7 +470,7 @@ export function cacheHitPercent(usage: TokenUsageProjection): string | null {
 
 有两点要说准确。**第一，它承诺的很有限**：cookbook 的原文是「"Does not invalidate" means the package preserves an already-reusable prefix; provider cache availability and eviction remain outside the package contract」（`docs/cookbook/adding-a-package.md:105`）（意思是：README 里写「不会使缓存失效」，只表示这个包会保住一段本来就可复用的前缀；至于 provider 那边缓存还在不在、有没有被淘汰，都不在这个包的承诺范围内）：只承诺「不主动破坏」，不承诺真的命中。**第二，校验器校的是结构不是分类**：它检查标题层级、字段非空、锚链接这些，那四种缓存情形是写作指引，不是被机器强制的受控词汇表。
 
-这一层的价值真实：「哪个包会打断前缀」变得可审计。但它是文档纪律，跟运行时一个 token 都没关系。这套自证体系（连同 227 个 `invariant.ts`，其中真装了检查的是 37 个，以及测试门禁）见 [13 自证与工程化](13-self-verification.md)。
+这一层的价值真实：「哪个包会打断前缀」变得可审计。但它是文档纪律，跟运行时一个 token 都没关系。这套自证体系（连同 227 个 `invariant.ts`，其中真装了检查的是 37 个，以及测试门禁）见 [13 自证与工程化](dsh-self-verification.md)。
 
 ---
 
@@ -562,7 +562,7 @@ sed -n '145,163p' packages/compaction/compaction-basic/src/summarizer.ts
 
 需要 key 的只有一个：`packages/core/agent-loop/tests/request-cache.e2e.ts`，用 `describe.skipIf(!process.env.DEEPSEEK_API_KEY)` 门控（`:71`），跑 `deepseek-v4-flash`，一个含工具调用的 turn 加一个后续 turn，断言除第一次外每次请求的 `cacheReadTokens > 0`（`:92`）。它存在的意义在文件头注释里写着：mock 测试确立的是「append-extension」（追加扩展，指本次请求的字节等于上次请求原样加上一截尾巴）这个结构性质，这个测试确立的是「provider 真的命中了」。两件事得分开证：形状对不代表对面真给你命中，只有带 key 打真接口才知道。
 
-**这个测试我们跑过了，通过**（Node 22，`deepseek-v4-flash`，2.03 秒真实 API 调用；把 key 从环境里去掉再跑，结果是 `1 skipped`，说明上一次是真跑）。完整命令与输出见 [research/runtime-evidence](../research/runtime-evidence/2026-08-16-deepseek-cache-probe.md)。
+**这个测试我们跑过了，通过**（Node 22，`deepseek-v4-flash`，2.03 秒真实 API 调用；把 key 从环境里去掉再跑，结果是 `1 skipped`，说明上一次是真跑）。完整命令与输出见 [research/runtime-evidence](../../research/runtime-evidence/2026-08-16-deepseek-cache-probe.md)。
 
 真跑起来之后的诊断法就是前面说的那条：逐 step 看 `cacheReadTokens`，掉到接近 0 的那一步，往前找最近的 `request/header{reason:'change'}` 或 `compaction/*` 事件；记得先排除掉那些只改了 `temperature` 之类采样标量的假阳性。
 
@@ -590,4 +590,4 @@ fork 相对 spawn 的唯一收益，就是继承来的那段历史能命中父�
 
 ---
 
-相关阅读：请求头部的另一半怎么拼见 [01 系统提示](01-system-prompt.md)；日志与 surface 的完整模型见 [05 会话](05-session.md)；压缩的触发阈值、事务与失败分类见 [06 压缩](06-compaction.md)；适配器的 SSE、错误码与重试见 [04 LLM 适配器](04-llm-adapter.md)；横向对照的完整矩阵见 [14 对比](14-comparison.md)。
+相关阅读：请求头部的另一半怎么拼见 [01 系统提示](dsh-system-prompt.md)；日志与 surface 的完整模型见 [05 会话](dsh-session.md)；压缩的触发阈值、事务与失败分类见 [06 压缩](dsh-compaction.md)；适配器的 SSE、错误码与重试见 [04 LLM 适配器](dsh-llm-adapter.md)；横向对照的完整矩阵见 [14 对比](../00-overview.md)。

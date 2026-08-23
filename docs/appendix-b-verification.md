@@ -35,12 +35,12 @@ status: reviewed
 本仓库自带 bootstrap：
 
 ```bash
-git clone https://github.com/plwslpld-arch/deepseek-harness-internals.git
-cd deepseek-harness-internals
+git clone https://github.com/plwslpld-arch/harness-internals.git
+cd harness-internals
 npm run bootstrap
 ```
 
-三条命令分别做：把分析仓库克隆下来、进到目录里、让它自己去把五个上游来源拉齐。`scripts/bootstrap.mjs` 按 `sources/sources.lock.yml` 逐个初始化 submodule 或 `git clone --filter=blob:none`（只下历史元数据，文件内容用到才拉），然后 detach 到锁定 commit（不落在任何分支上，就停在那个 commit）。5 个来源：`deepseek-harness`、`codex`、`opencode`、`pi`、`mini-swe-agent`。
+三条命令分别做：把分析仓库克隆下来、进到目录里、让它自己去把 11 个上游来源拉齐。`scripts/bootstrap.mjs` 按 `sources/sources.lock.yml` 逐个初始化 submodule 或 `git clone --filter=blob:none`（只下历史元数据，文件内容用到才拉），然后 detach 到锁定 commit（不落在任何分支上，就停在那个 commit）。来源覆盖四个主要 agent harness 证据面、三个补充 agent 样本和四个 eval harness 样本；完整名单以 lock 为准。
 
 不想要整个分析仓库、只想看 dsh 的话：
 
