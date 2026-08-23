@@ -1,0 +1,20 @@
+{
+  "id": "deepseek-harness.security.approval-sandbox-separation",
+  "harness": "deepseek-harness",
+  "dimension": "security.approval-sandbox-separation",
+  "statement": "在锁定 DSH 中，权限升级会先验证本次调用是否严格变宽，再请求一次性审批；获批只把目标模式交给当前调用，实际文件与进程边界仍由平台 Sandbox Provider 执行，且各平台必须按自身执行强度单独验证。",
+  "capability": "default",
+  "version": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+  "surface": "tool-policy-approval-platform-sandbox",
+  "platform": "linux-macos-windows",
+  "mode": "read-only-to-workspace-write-escalation",
+  "evidence_level": "D",
+  "evidence": [
+    {"type":"source","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/sandbox/sandbox/src/escalation.ts","lines":"162-186","excerpt":"case 'allowed-once': return mode as SandboxMode"},
+    {"type":"upstream-test","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/sandbox/sandbox/tests/escalation.spec.ts","lines":"77-106","excerpt":"expect(granted).toBe('workspace-write')"},
+    {"type":"upstream-test","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/sandbox/sandbox-local/tests/bwrap.e2e.ts","lines":"53-101","excerpt":"expect(confined.enforcement).toBe('full')"},
+    {"type":"upstream-test","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/sandbox/sandbox-windows-acl/tests/provider-chain.spec.ts","lines":"27-56","excerpt":"expect(confined.enforcement).toBe('partial')"}
+  ],
+  "inference": "审批模块决定是否将更宽模式授予一次调用，Sandbox Provider 再把该模式转换成平台运行器约束；这是跨模块的安全分层推断。Linux 的真实实验带可用性跳过条件，Windows 链测试明确是部分执行，因此结论不外推为所有平台或当前部署的完整隔离证明。",
+  "last_verified": "2026-08-24"
+}

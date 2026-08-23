@@ -120,6 +120,14 @@
       "scope": "docs/harnesses/deepseek-harness/03-loop-model-tool.md",
       "alt": "DSH 从模型流式响应、工具并发与有序提交到下一次请求和终止原因的中文时序图",
       "claims": ["deepseek-harness.loop.tool-results-before-next-request"]
+    },
+    {
+      "id": "deepseek-harness-tools-security",
+      "path": "assets/diagrams/deepseek-harness/04-tools-security.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/deepseek-harness/04-tools-security.md",
+      "alt": "DSH 工具调用经过注册、策略、单调防护、一次性审批和多平台执行后端的中文安全边界图",
+      "claims": ["deepseek-harness.security.approval-sandbox-separation"]
     }
   ]
 }

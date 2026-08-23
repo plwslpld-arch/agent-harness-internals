@@ -88,10 +88,10 @@
 
 ### Task 6：工具、Guard、审批与多平台 Sandbox
 
-- [ ] 完成 `04-tools-security.md`、中文安全边界图和平台限定 Claim。
-- [ ] 覆盖工具定义、参数校验、Guard、审批瀑布、策略、实际执行和平台降级。
-- [ ] 不把弹窗、Hook、容器或某个平台测试写成完整安全保证。
-- [ ] 提交：`docs(dsh): 发布工具安全课程`。
+- [x] 完成 `04-tools-security.md`、中文安全边界图和平台限定 Claim。
+- [x] 覆盖工具定义、参数校验、Guard、审批瀑布、策略、实际执行和平台降级。
+- [x] 不把弹窗、Hook、容器或某个平台测试写成完整安全保证。
+- [x] 提交：`docs(dsh): 发布工具安全课程`。
 
 ### Task 7：Session、持久化、Compaction 与 Spill
 
