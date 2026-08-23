@@ -120,6 +120,9 @@ git commit -m "feat(sources): 增加来源配置选择器"
 - Modify: `scripts/tests/license-hash.test.mjs`
 - Modify: `scripts/tests/gitlink.test.mjs`
 - Modify: `scripts/tests/source-profiles.test.mjs`
+- Modify: `scripts/check-coverage.mjs`
+- Modify: `scripts/tests/coverage.test.mjs`
+- Modify: current `docs/**/*.md` references bound to `claude-agent-sdk`
 - Move: `sources/checkouts/claude-agent-sdk` → `sources/checkouts/claude-agent-sdk-python`
 - Create submodule: `sources/checkouts/claude-agent-sdk-typescript`
 
@@ -139,7 +142,7 @@ Expected: FAIL，现有 Manifest 没有 `profiles`，Claude 来源 ID 仍为旧�
 
 - [ ] **Step 3: 升级 Manifest 并移动 Python SDK gitlink**
 
-把 Schema 升为 2，为现有来源增加 Profile：六条主线相关来源设为 `core`，mini-swe-agent 设为 `samples`，四个评测来源设为 `eval`。将 Claude Python SDK ID、Checkout 路径、Lock 和 `.gitmodules` 名称统一为 `claude-agent-sdk-python`。
+把 Schema 升为 2，为现有来源增加 Profile：六条主线相关来源设为 `core`，mini-swe-agent 设为 `samples`，四个评测来源设为 `eval`。将 Claude Python SDK ID、Checkout 路径、Lock 和 `.gitmodules` 名称统一为 `claude-agent-sdk-python`。同步迁移当前正文 Frontmatter、正文跨仓锚点、覆盖率脚本和单元测试中的旧 ID，保证改名提交自身可验证。
 
 Run: `git mv sources/checkouts/claude-agent-sdk sources/checkouts/claude-agent-sdk-python`
 
@@ -171,7 +174,7 @@ Expected: 全部 PASS，输出核心来源数量和已验证 Checkout 数量。
 
 - [ ] **Step 8: 反向检查并提交**
 
-检查旧 ID `claude-agent-sdk` 在 Manifest、Lock、`.gitmodules` 和许可证文件中没有残留；正文锚点迁移由后续内容阶段处理，当前旧正文允许因来源重命名进入 `stale`。
+检查旧 ID `claude-agent-sdk` 在 Manifest、Lock、`.gitmodules`、许可证文件、正文 Frontmatter、正文锚点和脚本中没有残留。旧正文只做来源 ID 的机械迁移，不借此提升内容状态或宣称已经完成新 Claude 主线。
 
 ```bash
 git add .gitmodules sources THIRD_PARTY.md NOTICE.md scripts
@@ -441,7 +444,7 @@ Run: `node --test scripts/tests/visuals.test.mjs`
 
 Run: `npm run check:visuals`
 
-Expected: PASS；空 Manifest 合法，正式资产加入后必须逐项登记。
+Expected: PASS；Manifest 固定写成 `{"schemaVersion":1,"diagrams":[]}`；零项清单合法，正式资产加入后必须逐项登记。
 
 - [ ] **Step 5: 反向检查并提交**
 
@@ -605,4 +608,3 @@ Run: `npm run check`
 Run: `git status --short`
 
 Expected: 检查全部通过，工作树干净。
-
