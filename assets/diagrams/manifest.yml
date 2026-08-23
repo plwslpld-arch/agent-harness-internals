@@ -112,6 +112,14 @@
       "scope": "docs/harnesses/deepseek-harness/02-prompt-context-cache.md",
       "alt": "DSH 稳定提示前缀、运行时上下文尾部、请求头变化与服务端前缀缓存的中文数据流图",
       "claims": ["deepseek-harness.context.stable-prefix-runtime-tail"]
+    },
+    {
+      "id": "deepseek-harness-loop-model-tool",
+      "path": "assets/diagrams/deepseek-harness/03-loop-model-tool.svg",
+      "type": "sequence",
+      "scope": "docs/harnesses/deepseek-harness/03-loop-model-tool.md",
+      "alt": "DSH 从模型流式响应、工具并发与有序提交到下一次请求和终止原因的中文时序图",
+      "claims": ["deepseek-harness.loop.tool-results-before-next-request"]
     }
   ]
 }

@@ -1,0 +1,18 @@
+{
+  "id": "deepseek-harness.loop.tool-results-before-next-request",
+  "harness": "deepseek-harness",
+  "dimension": "loop.tool-results-before-next-request",
+  "statement": "在锁定 DSH 中，并发安全工具可以乱序完成，但 tool/result 只按模型调用顺序提交到 Session；派生历史保持相同顺序，完整结果随后进入下一次模型请求。",
+  "capability": "default",
+  "version": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+  "surface": "agent-loop-tool-scheduler",
+  "platform": "all",
+  "mode": "parallel-safe-tools",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/core/agent-loop/src/tool-calls.ts","lines":"145-159","excerpt":"`committed` advances only across contiguous model-order slots."},
+    {"type":"upstream-test","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/core/agent-loop/tests/tool-calls.spec.ts","lines":"220-241","excerpt":"commits tool/result in model order even when a later call settles first"},
+    {"type":"upstream-test","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/core/agent-loop/tests/tool-calls.spec.ts","lines":"244-260","excerpt":"expect(toolResults.map(b => b.toolCallId)).toEqual([CallId('c1'), CallId('c2')])"}
+  ],
+  "last_verified": "2026-08-24"
+}

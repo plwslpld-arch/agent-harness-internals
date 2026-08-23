@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 980" role="img" aria-labelledby="title desc">
+  <title id="title">DSH 模型流与工具闭环</title><desc id="desc">一个轮次内模型流先合成消息，多项工具可并发执行但按模型顺序提交结果，随后继续模型请求或形成分层终止原因。</desc>
+  <defs><marker id="a" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0l14 7-14 7z" fill="#087F7C"/></marker><filter id="s"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#17324D" flood-opacity=".12"/></filter></defs>
+  <rect width="1400" height="980" rx="34" fill="#F7FAFC"/>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif"><text x="700" y="55" text-anchor="middle" fill="#17324D" font-size="36" font-weight="760">DSH 工具闭环：执行可以并发，提交必须有序</text><text x="700" y="91" text-anchor="middle" fill="#50677D" font-size="19">模型请求重试、工具恢复、轮次终止和评测尝试分别计数</text>
+  <g font-size="18" text-anchor="middle" filter="url(#s)">
+    <rect x="70" y="150" width="230" height="95" rx="18" fill="#E9F2FF" stroke="#3569A8"/><text x="185" y="184" fill="#17324D" font-weight="760">一　开始步骤</text><text x="185" y="215" fill="#50677D">认领消息并冻结请求</text>
+    <rect x="345" y="150" width="230" height="95" rx="18" fill="#F0ECF8" stroke="#795DA7"/><text x="460" y="184" fill="#17324D" font-weight="760">二　模型流</text><text x="460" y="215" fill="#50677D">逐块记录与合并</text>
+    <rect x="620" y="150" width="230" height="95" rx="18" fill="#FFF2D4" stroke="#C57A0B"/><text x="735" y="184" fill="#17324D" font-weight="760">三　完整助手消息</text><text x="735" y="215" fill="#50677D">文本或工具调用</text>
+    <rect x="895" y="150" width="230" height="95" rx="18" fill="#E7F5F3" stroke="#087F7C"/><text x="1010" y="184" fill="#17324D" font-weight="760">四　终止分支</text><text x="1010" y="215" fill="#50677D">无工具／截断／错误</text>
+    <rect x="1170" y="150" width="160" height="95" rx="18" fill="#17324D"/><text x="1250" y="184" fill="#FFFFFF" font-weight="760">结束原因</text><text x="1250" y="215" fill="#D3E1EA">保持原语义</text>
+  </g><g fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#a)"><path d="M300 198h37"/><path d="M575 198h37"/><path d="M850 198h37"/><path d="M1125 198h37"/></g>
+  <rect x="70" y="305" width="1260" height="405" rx="26" fill="#E7F5F3" stroke="#087F7C" stroke-width="3"/><text x="100" y="348" fill="#086E6B" font-size="24" font-weight="760">存在工具调用时：模型顺序是权威坐标</text>
+  <g font-size="18" text-anchor="middle" filter="url(#s)">
+    <rect x="110" y="390" width="245" height="95" rx="18" fill="#FFFFFF"/><text x="232" y="424" fill="#17324D" font-weight="760">五　解析与安全前置</text><text x="232" y="454" fill="#50677D">调用标识、参数、执行模式</text>
+    <rect x="405" y="390" width="245" height="95" rx="18" fill="#FFFFFF"/><text x="527" y="424" fill="#17324D" font-weight="760">六　有界并发池</text><text x="527" y="454" fill="#50677D">安全调用可以重叠</text>
+    <rect x="700" y="390" width="245" height="95" rx="18" fill="#FFFFFF"/><text x="822" y="424" fill="#17324D" font-weight="760">七　乱序完成槽位</text><text x="822" y="454" fill="#50677D">后一个可以先结束</text>
+    <rect x="995" y="390" width="295" height="95" rx="18" fill="#17324D"/><text x="1142" y="424" fill="#FFFFFF" font-weight="760">八　按模型顺序提交</text><text x="1142" y="454" fill="#D3E1EA">前序未就绪时等待</text>
+    <rect x="250" y="555" width="350" height="105" rx="18" fill="#FFFFFF"/><text x="425" y="591" fill="#17324D" font-weight="760">九　持久工具结果</text><text x="425" y="622" fill="#50677D">引用原调用并附加上下文</text>
+    <rect x="800" y="555" width="350" height="105" rx="18" fill="#FFF2D4" stroke="#C57A0B"/><text x="975" y="591" fill="#17324D" font-weight="760">十　下一次模型请求</text><text x="975" y="622" fill="#50677D">历史包含全部有序结果</text>
+  </g><g fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#a)"><path d="M355 438h42"/><path d="M650 438h42"/><path d="M945 438h42"/><path d="M1142 485v38q0 32-32 32H608"/><path d="M600 608h192"/></g>
+  <rect x="70" y="755" width="1260" height="165" rx="25" fill="#FCE9E5" stroke="#B34A3C" stroke-width="2.5"/><text x="100" y="797" fill="#8A3D2F" font-size="23" font-weight="760">失败语义不能合并</text><g font-size="17" fill="#17324D"><text x="110" y="842">模型请求错误：当前步骤可按策略重试</text><text x="110" y="878">用户取消：等待已开始调用，未开始调用补闭合结果</text><text x="720" y="842">输出截断：不执行可能残缺的工具调用</text><text x="720" y="878">工具错误：形成正式结果，可由下一模型请求恢复</text></g>
+  <path d="M975 660v42q0 25-25 25H185q-25 0-25-25V253" fill="none" stroke="#087F7C" stroke-width="4" stroke-dasharray="10 7" marker-end="url(#a)"/><text x="700" y="739" text-anchor="middle" fill="#086E6B" font-size="16">未终止时进入下一步骤</text><text x="700" y="956" text-anchor="middle" fill="#17324D" font-size="17">轮次正常收敛只说明状态机结束；任务是否通过仍由独立评测检查产物</text></g>
+</svg>

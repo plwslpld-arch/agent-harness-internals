@@ -81,10 +81,10 @@
 
 ### Task 5：Agent Loop、LLM Adapter 与工具闭环
 
-- [ ] 完成 `03-loop-model-tool.md`、中文时序图和终止 Claim。
-- [ ] 覆盖消息序列化、SSE、重试、工具并行、有序结算、取消与最终原因。
-- [ ] 区分 Provider 重试、工具恢复、Turn 结束和 Eval Attempt。
-- [ ] 提交：`docs(dsh): 发布循环模型与工具闭环课程`。
+- [x] 完成 `03-loop-model-tool.md`、中文时序图和终止 Claim。
+- [x] 覆盖消息序列化、SSE、重试、工具并行、有序结算、取消与最终原因。
+- [x] 区分 Provider 重试、工具恢复、Turn 结束和 Eval Attempt。
+- [x] 提交：`docs(dsh): 发布循环模型与工具闭环课程`。
 
 ### Task 6：工具、Guard、审批与多平台 Sandbox
 
