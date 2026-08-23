@@ -1,0 +1,48 @@
+{
+  "id": "foundation.turn.continue-or-stop",
+  "harness": "foundation",
+  "dimension": "turn.continue-or-stop",
+  "statement": "Agent 循环不会仅凭界面上出现一段文本就统一终止；Harness 会根据模型事件、工具调用与结果、显式停止条件以及排队输入决定继续采样还是结束，具体事件名和优先级必须按项目核对。",
+  "capability": "not-applicable",
+  "version": "locked-sources-2026-08-23",
+  "surface": "agent-loop",
+  "platform": "all",
+  "mode": "cross-implementation-analysis",
+  "evidence_level": "D",
+  "inference": "pi 的锁定源码根据工具批次是否要求 terminate 更新 hasMoreToolCalls，并在无后续工具后检查排队消息；对应测试构造首次 toolUse、执行工具、第二次 stop 的完整链。Gemini CLI 的 Turn 则分别产生工具调用请求，并只在响应含 finishReason 时产生 Finished 事件，测试覆盖 STOP、MAX_TOKENS 与 SAFETY。由此可推断继续或终止是 Harness 对多类事件的解释，而不是一个跨项目统一的单字段规则；各项目对 Turn、Finished 和 stopReason 的命名范围不同。",
+  "evidence": [
+    {
+      "type": "source",
+      "source": "pi",
+      "commit": "c1279a65b3ef6b0b19950ed1771d5933241c240f",
+      "path": "packages/agent/src/agent-loop.ts",
+      "lines": "202-224",
+      "excerpt": "hasMoreToolCalls = !executedToolBatch.terminate"
+    },
+    {
+      "type": "upstream-test",
+      "source": "pi",
+      "commit": "c1279a65b3ef6b0b19950ed1771d5933241c240f",
+      "path": "packages/agent/test/agent-loop.test.ts",
+      "lines": "326-368",
+      "excerpt": "stream.push({ type: \"done\", reason: \"toolUse\", message })"
+    },
+    {
+      "type": "source",
+      "source": "gemini-cli",
+      "commit": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+      "path": "packages/core/src/core/turn.ts",
+      "lines": "380-413",
+      "excerpt": "Only yield 'Finished' if there is a finishReason"
+    },
+    {
+      "type": "upstream-test",
+      "source": "gemini-cli",
+      "commit": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+      "path": "packages/core/src/core/turn.test.ts",
+      "lines": "357-415",
+      "excerpt": "type: GeminiEventType.Finished"
+    }
+  ],
+  "last_verified": "2026-08-23"
+}

@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-labelledby="turn-title turn-desc">
+  <title id="turn-title">一次真实智能体交互的继续与终止时序</title>
+  <desc id="turn-desc">用户目标进入编排器，模型先返回工具调用，编排器校验并在环境执行，再把结果送回模型；模型返回最终内容后，编排器结合停止条件结束。</desc>
+  <defs>
+    <marker id="turn-arrow" markerUnits="userSpaceOnUse" markerWidth="13" markerHeight="13" refX="12" refY="6.5" orient="auto">
+      <path d="M0 0l13 6.5L0 13z" fill="#0B8F8C"/>
+    </marker>
+    <marker id="turn-return" markerUnits="userSpaceOnUse" markerWidth="13" markerHeight="13" refX="12" refY="6.5" orient="auto">
+      <path d="M0 0l13 6.5L0 13z" fill="#C97A00"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="900" rx="32" fill="#F7FAFC"/>
+  <text x="600" y="54" text-anchor="middle" fill="#17324D" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="34" font-weight="760">一次真实智能体交互：先调用工具，再决定是否终止</text>
+  <text x="600" y="86" text-anchor="middle" fill="#496179" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="18">时序名称是分析用语；各项目对交互轮次的范围并不相同</text>
+
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif" text-anchor="middle">
+    <g transform="translate(42 116)">
+      <rect width="174" height="64" rx="18" fill="#17324D"/>
+      <text x="87" y="40" fill="#FFFFFF" font-size="22" font-weight="720">用户</text>
+    </g>
+    <g transform="translate(300 116)">
+      <rect width="214" height="64" rx="18" fill="#E8F6F5" stroke="#0B8F8C" stroke-width="3"/>
+      <text x="107" y="40" fill="#0B7775" font-size="22" font-weight="720">Agent Harness</text>
+    </g>
+    <g transform="translate(610 116)">
+      <rect width="174" height="64" rx="18" fill="#E8F1FF" stroke="#3569A8" stroke-width="3"/>
+      <text x="87" y="40" fill="#285383" font-size="22" font-weight="720">模型</text>
+    </g>
+    <g transform="translate(888 116)">
+      <rect width="270" height="64" rx="18" fill="#F0ECFA" stroke="#7155A5" stroke-width="3"/>
+      <text x="135" y="40" fill="#5C4588" font-size="22" font-weight="720">工具与执行环境</text>
+    </g>
+  </g>
+
+  <g stroke="#B8C7D4" stroke-width="2" stroke-dasharray="7 8">
+    <line x1="129" y1="180" x2="129" y2="790"/>
+    <line x1="407" y1="180" x2="407" y2="790"/>
+    <line x1="697" y1="180" x2="697" y2="790"/>
+    <line x1="1023" y1="180" x2="1023" y2="790"/>
+  </g>
+
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="17" fill="#17324D">
+    <path d="M129 224H395" fill="none" stroke="#0B8F8C" stroke-width="4" marker-end="url(#turn-arrow)"/>
+    <text x="262" y="214" text-anchor="middle">1　提交目标与约束</text>
+
+    <path d="M407 286H685" fill="none" stroke="#0B8F8C" stroke-width="4" marker-end="url(#turn-arrow)"/>
+    <text x="546" y="276" text-anchor="middle">2　装配上下文与工具说明</text>
+
+    <path d="M697 348H419" fill="none" stroke="#C97A00" stroke-width="4" marker-end="url(#turn-return)"/>
+    <text x="558" y="338" text-anchor="middle">3　返回工具调用与调用标识</text>
+
+    <path d="M407 410H1011" fill="none" stroke="#0B8F8C" stroke-width="4" marker-end="url(#turn-arrow)"/>
+    <text x="709" y="400" text-anchor="middle">4　校验参数、应用策略并执行</text>
+
+    <path d="M1023 472H419" fill="none" stroke="#C97A00" stroke-width="4" marker-end="url(#turn-return)"/>
+    <text x="721" y="462" text-anchor="middle">5　返回结果、错误与副作用证据</text>
+
+    <path d="M407 534H685" fill="none" stroke="#0B8F8C" stroke-width="4" marker-end="url(#turn-arrow)"/>
+    <text x="546" y="524" text-anchor="middle">6　关联调用并进入下一次模型请求</text>
+
+    <path d="M697 596H419" fill="none" stroke="#C97A00" stroke-width="4" marker-end="url(#turn-return)"/>
+    <text x="558" y="586" text-anchor="middle">7　返回最终内容或新的工具调用</text>
+
+    <rect x="292" y="626" width="230" height="64" rx="16" fill="#FFF3D3" stroke="#C97A00" stroke-width="2"/>
+    <text x="407" y="652" text-anchor="middle" fill="#9B5C00" font-weight="720">8　继续或终止？</text>
+    <text x="407" y="678" text-anchor="middle" fill="#6D5734" font-size="15">工具、停止条件、排队输入</text>
+
+    <path d="M407 748H141" fill="none" stroke="#0B8F8C" stroke-width="4" marker-end="url(#turn-arrow)"/>
+    <text x="274" y="738" text-anchor="middle">9　返回最终产物与状态</text>
+  </g>
+
+  <path d="M522 658C820 658 826 518 709 518" fill="none" stroke="#C97A00" stroke-width="4" stroke-dasharray="10 8" marker-end="url(#turn-return)"/>
+  <text x="806" y="642" fill="#9B5C00" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="16">未终止：继续模型请求</text>
+
+  <g transform="translate(42 802)" font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <rect width="1116" height="62" rx="18" fill="#FFFFFF" stroke="#B8C7D4" stroke-width="2"/>
+    <text x="22" y="39" fill="#17324D" font-size="17" font-weight="720">统计边界：</text>
+    <text x="126" y="39" fill="#496179" font-size="16">模型响应 ≠ 工具执行尝试 ≠ 编排交互轮次 ≠ 完整任务运行；记录时必须分别命名。</text>
+  </g>
+</svg>

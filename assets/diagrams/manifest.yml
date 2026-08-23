@@ -40,6 +40,14 @@
       "scope": "docs/foundations/01-boundaries.md",
       "alt": "一次 Agent 任务的模型、Agent Harness、执行环境与 Eval 四层职责和归因边界图",
       "claims": ["foundation.boundaries.four-layers"]
+    },
+    {
+      "id": "foundation-agent-turn-sequence",
+      "path": "assets/diagrams/foundations/02-agent-turn.svg",
+      "type": "sequence",
+      "scope": "docs/foundations/02-agent-turn.md",
+      "alt": "一次真实智能体交互从用户目标、模型工具调用到继续或终止的中文时序图",
+      "claims": ["foundation.turn.continue-or-stop"]
     }
   ]
 }
