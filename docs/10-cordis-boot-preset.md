@@ -111,9 +111,9 @@ status: stale
 
 关掉不是因为 Web 不要这些能力，而是因为在 Web 上**这些能力属于「某一个会话」而不是「整个进程」**。每一段禁用上面都有一段注释解释判据，写得很清楚。举 `tool-jobs` 那段（`:299-307`）：后台任务的**注册表**留在 host 平面，只有模型能看见的 `job_*` 控制工具搬走；理由是注册表的生产者（`tool-bash` 等）在 preset 的 realm 之外，用 `ctx.get` 取它；如果注册表被关进 preset 的 realm，那些兄弟行看不见它，`run_in_background` 会回答「background jobs unavailable」（后台任务不可用）而控制工具却好端端挂在目录里。
 
-判据被反复陈述成两句互补的话：**一个被 preset 之外的行 inject 的服务，属于 host 平面**（`shell-env` 那段，`:287-291`）；**一个被 preset 之外的行 read 的服务，也属于 host 平面**（`goals` 那段，`:336-343`）。上游把这条判据的唯一出处写在 `.agents/notes/implemented/architecture/2026-08-10-host-plane-ownership-after-presets.md`（在 `:356` 被引用）。
+判据被反复陈述成两句互补的话：**一个被 preset 之外的行 inject 的服务，属于 host 平面**（`packages/bundle/web-app/cordis.patch.yml:308-312` 的 `shell-env` 注释）；**一个被 preset 之外的行 read 的服务，也属于 host 平面**（`packages/bundle/web-app/cordis.patch.yml:320-328` 的 jobs registry 注释）。设计记录后来被压缩成结论索引，当前组合文件里的注释才是这两个判据最直接的证据。
 
-最后一段 `insert` 只有一行（`:420-424`）：
+最后一段 `insert` 只有一行（`packages/bundle/web-app/cordis.patch.yml:431-443`）：
 
 ```yaml
 - insert:
