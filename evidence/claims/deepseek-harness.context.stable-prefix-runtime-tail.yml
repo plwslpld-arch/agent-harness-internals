@@ -1,0 +1,47 @@
+{
+  "id": "deepseek-harness.context.stable-prefix-runtime-tail",
+  "harness": "deepseek-harness",
+  "dimension": "context.stable-prefix-runtime-tail",
+  "statement": "在锁定 DSH Agent Loop 中，System Prompt 与有序工具进入 canonical request header；运行时 Context 的语义变化作为插件来源的 user message 写在会话历史尾部，因此动态 Context 可以更新而不重写稳定的 system header。",
+  "capability": "default",
+  "version": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+  "surface": "model-request",
+  "platform": "all",
+  "mode": "runtime-context-enabled",
+  "evidence_level": "B",
+  "evidence": [
+    {
+      "type": "source",
+      "source": "deepseek-harness",
+      "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+      "path": "packages/core/agent-loop/src/agent.ts",
+      "lines": "225-242",
+      "excerpt": "messages: context === undefined ? claimed : [...claimed, context]"
+    },
+    {
+      "type": "source",
+      "source": "deepseek-harness",
+      "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+      "path": "packages/core/session/src/request-header.ts",
+      "lines": "44-53",
+      "excerpt": "|| a.system !== b.system"
+    },
+    {
+      "type": "upstream-test",
+      "source": "deepseek-harness",
+      "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+      "path": "packages/core/agent-loop/tests/loop.spec.ts",
+      "lines": "357-410",
+      "excerpt": "materializes changed runtime context at the history tail without rewriting the system header"
+    },
+    {
+      "type": "upstream-test",
+      "source": "deepseek-harness",
+      "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+      "path": "packages/core/system-prompt/tests/system-prompt.spec.ts",
+      "lines": "80-100",
+      "excerpt": "expect(assembly.sections.map(s => s.name)).toEqual(['harness:identity', 'deployment:persona', 'rules', 'cwd'])"
+    }
+  ],
+  "last_verified": "2026-08-24"
+}

@@ -74,10 +74,10 @@
 
 ### Task 4：System Prompt、Context 与 KV Cache
 
-- [ ] 完成 `02-prompt-context-cache.md`、中文数据流图和限定 Claim。
-- [ ] 展示真实 section 排序、稳定前缀、运行时消息和导致缓存断裂的变化。
-- [ ] 分开 Provider Cache、Session Memory 和 Compaction，不从命中推断质量。
-- [ ] 提交：`docs(dsh): 发布提示上下文与缓存课程`。
+- [x] 完成 `02-prompt-context-cache.md`、中文数据流图和限定 Claim。
+- [x] 展示真实 section 排序、稳定前缀、运行时消息和导致缓存断裂的变化。
+- [x] 分开 Provider Cache、Session Memory 和 Compaction，不从命中推断质量。
+- [x] 提交：`docs(dsh): 发布提示上下文与缓存课程`。
 
 ### Task 5：Agent Loop、LLM Adapter 与工具闭环
 

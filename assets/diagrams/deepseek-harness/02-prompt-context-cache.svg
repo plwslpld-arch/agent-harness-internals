@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 950" role="img" aria-labelledby="title desc">
+  <title id="title">DSH 提示、运行时上下文与前缀缓存</title>
+  <desc id="desc">稳定提示和有序工具形成请求前部，动态上下文与会话事件追加在历史尾部，服务端是否复用前缀要以用量观测为准。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0l14 7-14 7z" fill="#087F7C"/></marker>
+    <marker id="break" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0l14 7-14 7z" fill="#B34A3C"/></marker>
+    <filter id="shadow" x="-12%" y="-12%" width="124%" height="135%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#17324D" flood-opacity=".12"/></filter>
+  </defs>
+  <rect width="1400" height="950" rx="34" fill="#F7FAFC"/>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <text x="700" y="55" text-anchor="middle" fill="#17324D" font-size="36" font-weight="760">DSH 请求前缀：稳定布局创造复用条件，服务端用量证明命中</text>
+    <text x="700" y="91" text-anchor="middle" fill="#50677D" font-size="19">会话记忆、上下文压缩和模型服务前缀缓存是三种不同机制</text>
+
+    <rect x="55" y="132" width="1290" height="190" rx="25" fill="#E9F2FF" stroke="#3569A8" stroke-width="2.5"/>
+    <text x="83" y="170" fill="#285383" font-size="23" font-weight="760">一　每个步骤重新装配，但必须得到可重复顺序</text>
+    <g font-size="18" text-anchor="middle" filter="url(#shadow)">
+      <rect x="91" y="203" width="230" height="82" rx="17" fill="#FFFFFF"/><text x="206" y="234" fill="#17324D" font-weight="760">固定提示段落</text><text x="206" y="261" fill="#50677D">身份、角色、长期规则</text>
+      <rect x="361" y="203" width="230" height="82" rx="17" fill="#FFFFFF"/><text x="476" y="234" fill="#17324D" font-weight="760">作用域变量</text><text x="476" y="261" fill="#50677D">近端同名值优先</text>
+      <rect x="631" y="203" width="230" height="82" rx="17" fill="#FFFFFF"/><text x="746" y="234" fill="#17324D" font-weight="760">有序工具结构</text><text x="746" y="261" fill="#50677D">名称、说明、参数</text>
+      <rect x="901" y="203" width="400" height="82" rx="17" fill="#FFFFFF"/><text x="1101" y="234" fill="#17324D" font-weight="760">动态运行时上下文</text><text x="1101" y="261" fill="#50677D">权限、目录、临时状态；单独投影</text>
+    </g>
+
+    <rect x="55" y="366" width="1290" height="258" rx="25" fill="#E7F5F3" stroke="#087F7C" stroke-width="3"/>
+    <text x="83" y="406" fill="#086E6B" font-size="23" font-weight="760">二　模型请求坐标：前部身份与历史尾部各守自己的位置</text>
+    <g font-size="18" text-anchor="middle" filter="url(#shadow)">
+      <rect x="91" y="446" width="245" height="112" rx="17" fill="#17324D"/><text x="213" y="480" fill="#FFFFFF" font-weight="760">系统消息</text><text x="213" y="509" fill="#D3E1EA">按顺序连接提示段落</text><text x="213" y="535" fill="#F3C4BA">前部变化会断前缀</text>
+      <rect x="373" y="446" width="245" height="112" rx="17" fill="#FFF2D4" stroke="#C57A0B"/><text x="495" y="480" fill="#955A00" font-weight="760">有序工具结构</text><text x="495" y="509" fill="#50677D">也是请求头身份</text><text x="495" y="535" fill="#8A3D2F">顺序与字段都敏感</text>
+      <rect x="655" y="446" width="300" height="112" rx="17" fill="#FFFFFF" stroke="#51A9A5"/><text x="805" y="480" fill="#17324D" font-weight="760">已有会话历史</text><text x="805" y="509" fill="#50677D">用户、助手、工具结果</text><text x="805" y="535" fill="#50677D">由持久事件投影</text>
+      <rect x="992" y="446" width="309" height="112" rx="17" fill="#FFFFFF" stroke="#51A9A5"/><text x="1146" y="480" fill="#17324D" font-weight="760">本步动态快照</text><text x="1146" y="509" fill="#50677D">作为插件来源消息</text><text x="1146" y="535" fill="#50677D">变化时追加在尾部</text>
+    </g>
+    <g fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"><path d="M336 502h29"/><path d="M618 502h29"/><path d="M955 502h29"/></g>
+    <text x="213" y="590" text-anchor="middle" fill="#086E6B" font-size="16">稳定前缀起点</text>
+    <path d="M92 575H951" fill="none" stroke="#087F7C" stroke-width="5"/>
+    <text x="1146" y="590" text-anchor="middle" fill="#50677D" font-size="16">动态延长区域</text>
+
+    <rect x="55" y="668" width="850" height="220" rx="25" fill="#F0ECF8" stroke="#795DA7" stroke-width="2.5"/>
+    <text x="83" y="708" fill="#60458C" font-size="23" font-weight="760">三　可观测边界：请求头事件与服务端用量分工</text>
+    <rect x="91" y="748" width="350" height="100" rx="17" fill="#FFFFFF" stroke="#9C83BF"/>
+    <text x="266" y="781" text-anchor="middle" fill="#17324D" font-size="19" font-weight="760">请求头身份</text>
+    <text x="266" y="809" text-anchor="middle" fill="#50677D" font-size="16">配置、系统消息、有序工具</text>
+    <text x="266" y="833" text-anchor="middle" fill="#8A3D2F" font-size="15">变化说明前部身份改变</text>
+    <rect x="495" y="748" width="370" height="100" rx="17" fill="#17324D"/>
+    <text x="680" y="781" text-anchor="middle" fill="#FFFFFF" font-size="19" font-weight="760">模型服务用量</text>
+    <text x="680" y="809" text-anchor="middle" fill="#D3E1EA" font-size="16">命中读取量来自服务端返回</text>
+    <text x="680" y="833" text-anchor="middle" fill="#F3C4BA" font-size="15">缺失字段不能伪造命中</text>
+    <path d="M441 798h46" fill="none" stroke="#795DA7" stroke-width="4" marker-end="url(#arrow)"/>
+
+    <rect x="945" y="668" width="400" height="220" rx="25" fill="#FCE9E5" stroke="#B34A3C" stroke-width="2.5"/>
+    <text x="973" y="708" fill="#8A3D2F" font-size="23" font-weight="760">四　常见误判</text>
+    <g fill="#17324D" font-size="17">
+      <text x="985" y="754">请求头没变　≠　一定命中</text>
+      <text x="985" y="791">缓存命中　　≠　回答正确</text>
+      <text x="985" y="828">会话保存　　≠　前缀缓存</text>
+      <text x="985" y="865">测试存在　　≠　本次已运行</text>
+    </g>
+    <path d="M495 558v96" fill="none" stroke="#B34A3C" stroke-width="4" stroke-dasharray="9 7" marker-end="url(#break)"/>
+    <text x="510" y="648" fill="#8A3D2F" font-size="15">任一前部字节变化都会移动可复用边界</text>
+
+    <text x="700" y="925" text-anchor="middle" fill="#17324D" font-size="17">验证顺序：先比较请求字节与请求头，再读取服务端用量，最后用独立任务评测判断质量</text>
+  </g>
+</svg>

@@ -104,6 +104,14 @@
       "scope": "docs/harnesses/deepseek-harness/01-boot-preset.md",
       "alt": "DSH 从启动输入、分层补丁、插件激活到智能体预设和会话加入的中文装配图",
       "claims": ["deepseek-harness.boot.profile-preset-composition"]
+    },
+    {
+      "id": "deepseek-harness-prompt-context-cache",
+      "path": "assets/diagrams/deepseek-harness/02-prompt-context-cache.svg",
+      "type": "data-flow",
+      "scope": "docs/harnesses/deepseek-harness/02-prompt-context-cache.md",
+      "alt": "DSH 稳定提示前缀、运行时上下文尾部、请求头变化与服务端前缀缓存的中文数据流图",
+      "claims": ["deepseek-harness.context.stable-prefix-runtime-tail"]
     }
   ]
 }
