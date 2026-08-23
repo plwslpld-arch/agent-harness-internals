@@ -1,8 +1,8 @@
 ---
 title: 编排层：子代理、计划、待办、目标、钩子、工作流、任务与技能
-sources: [{"repo":"deepseek-harness","path":"packages/subagent/README.md","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
-last_verified: 2026-08-16
-status: stale
+sources: [{"repo":"deepseek-harness","path":"packages/subagent/README.md","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}]
+last_verified: 2026-08-23
+status: reviewed
 ---
 
 # 编排层：子代理、计划、待办、目标、钩子、工作流、任务与技能
@@ -49,7 +49,7 @@ dsh 里这些能力全部通过两条通道之一到达模型。
 
 包分工见 `packages/subagent/README.md:9-19`：`subagent`（服务 `ctx.subagents`）、`subagent-in-process-driver`（共享的进程内驱动器）、六个 provider（`spawn-in-process`、`fork-in-process`、`acp`、`codex`、`claude-code`、`dsh-sdk`）、三个工具包（`tool-subagent`、`tool-subagent-control`、`tool-subagent-report`）。
 
-provider 只需要实现一个 `start(request): Promise<SubagentRun>`（`packages/subagent/subagent/src/types.ts:314`），外加一张能力表 `SubagentCapabilities`（`packages/subagent/subagent/src/types.ts:86-91`：`outputSchema` / `depthLimit` / `toolFilter` / `persona`）和一个描述性布尔量 `inheritsParentContext`（`:295`）。服务在 `start()` 里先按能力表校验请求（`packages/subagent/subagent/src/index.ts:497-512`），要不到的能力**报错而不是静默忽略**。
+provider 只需要实现一个 `start(request): Promise<SubagentRun>`（`packages/subagent/subagent/src/types.ts:314`），外加一张能力表 `SubagentCapabilities`（`packages/subagent/subagent/src/types.ts:86-91`：`outputSchema` / `depthLimit` / `toolFilter` / `persona`）和一个描述性布尔量 `inheritsParentContext`（`:295`）。服务在 `start()` 里先按能力表校验请求（`packages/subagent/subagent/src/index.ts:430-434`，具体拒绝逻辑在 `:496-512`），要不到的能力**报错而不是静默忽略**。
 
 ### 2.1 一次 one-shot 委派：setup 的四步
 
@@ -197,7 +197,7 @@ fork 是唯一 `inheritsParentContext = true` 的 provider（`packages/subagent/
 
 这是 dsh 最不像别家的一块。三个 provider 各自接一个真实的外部 agent：
 
-**`subagent-claude-code`** 用的是官方 SDK：`import { query as officialQuery, ... } from '@anthropic-ai/claude-agent-sdk'`（`packages/subagent/subagent-claude-code/src/run.ts:10-17`，`package.json` 里 pin 在 `0.3.220`）。provider 名固定为 `'claude-code'`（`packages/subagent/subagent-claude-code/src/index.ts:53`），能力表是全 false 的共享常量 `NO_START_CAPABILITIES`（`packages/subagent/subagent/src/out-of-process.ts:50-55`）：persona、工具过滤、深度、结构化输出一个都要不到，服务层会直接拒绝这些请求，而不是悄悄忽略。
+**`subagent-claude-code`** 用的是官方 SDK：`import { query as officialQuery, ... } from '@anthropic-ai/claude-agent-sdk'`（`packages/subagent/subagent-claude-code/src/run.ts:10-17`，`package.json` 里 pin 在 `0.3.220`）。provider 默认名是 `'claude-code'`，但 profile 可以用 `providerName` 改名并挂多个实例（`packages/subagent/subagent-claude-code/src/index.ts:29-55`）。能力表是全 false 的共享常量 `NO_START_CAPABILITIES`（`packages/subagent/subagent/src/out-of-process.ts:50-55`）：persona、工具过滤、深度、结构化输出一个都要不到，服务层会直接拒绝这些请求，而不是悄悄忽略。
 
 传给 SDK 的选项在 `packages/subagent/subagent-claude-code/src/run.ts:309-368`，几行逐条看：
 
@@ -208,9 +208,9 @@ fork 是唯一 `inheritsParentContext = true` 的 provider（`packages/subagent/
 - `canUseTool`、`onElicitation`、`onUserDialog`（`packages/subagent/subagent-claude-code/src/run.ts:327-359`）：除了显式的 bypass 档，工具审批一律拒绝；MCP elicitation 与阻塞式用户对话也分别 decline / cancel。
 - `spawnClaudeCodeProcess`（`packages/subagent/subagent-claude-code/src/run.ts:362-367`）：自己接管进程 spawn，好让 dispose 时能真正杀掉。SDK 给出的 command、args、cwd、env 与 signal 会在 `packages/subagent/subagent-claude-code/src/process.ts:46-60` 转成 dsh 的共享 subprocess 请求，进程树仍由 dsh 统一托管。
 
-结果映射很严：只有 `subtype === 'success'`、非 `is_error`、且结果非空白才算成功，否则抛 `subagent-claude-code: Claude Code failed: <detail>`（意思就是「Claude Code 跑挂了」，后面跟具体原因）。**Claude Code 的推理、工具活动、中间消息、stderr、用量、产品 id 一律不复制进父会话**（`packages/subagent/subagent-claude-code/README.md:79`）。模型只拿到最终那段文本。
+结果映射很严：只有 `subtype === 'success'`、非 `is_error`、结果非空白、并且迭代器正常结束才算成功；其余结果被分类成固定的失败类别和生命周期阶段，原始产品错误只留在内部 cause 与 Host 日志。**Claude Code 的推理、工具活动、中间消息、stderr、用量、产品 id 一律不复制进父会话**；前台调用只给最终答案或带安全诊断的错误，后台调用另带 Job 的确认与通知（`packages/subagent/subagent-claude-code/README.md:129-137`）。
 
-**`subagent-codex`** 走的是 Codex 自己的 app-server 协议：`['codex', 'app-server', '--stdio']`（`packages/subagent/subagent-codex/src/run.ts:41`；Windows 上前面加 `cmd.exe /d /s /c`）。argv 是常量，所以任务文本永远不经过 shell。握手三步（`packages/subagent/subagent-codex/src/wire.ts`）：`initialize` 带 `clientInfo: { name: 'deepseek-harness', ... }`（`:134`），`thread/start { cwd, ephemeral: true }`（`:154`，非 ephemeral 直接拒），`turn/start { threadId, input }`（`:180`）。
+**`subagent-codex`** 走的是 Codex 自己的 app-server 协议。它不再从 `PATH` 直接找 `codex`，而是从依赖包的 manifest 解析出官方 JS wrapper，再用当前 Node 启动：`[process.execPath, CODEX_PACKAGE_BIN, 'app-server', '--stdio']`（`packages/subagent/subagent-codex/src/run.ts:43-52`、`:129-133`）。argv 是固定数组，任务文本永远不经过 shell。握手三步（`packages/subagent/subagent-codex/src/wire.ts`）：`initialize` 带 `clientInfo: { name: 'deepseek-harness', ... }`（`:287-295`），`thread/start { cwd, ephemeral: true }`（`:308-319`，非 ephemeral 直接拒），`turn/start { threadId, input }`（`:338-345`）。
 
 **无人值守审批**（`packages/subagent/subagent-codex/src/wire.ts:612-636`）是这样：Codex 会反过来向客户端请求批准，而 dsh 这一侧没有人。于是命令执行/文件修改的审批请求一律回 `cancel` 或 `decline`，权限请求回空权限，用户输入请求回空答案，MCP elicitation 回 `{ action: 'decline' }`（`:309`），任何**没列举到**的方法直接让整次运行失败。fail-closed，和 dsh 自己审批接缝的姿态一致。
 
@@ -685,7 +685,7 @@ const SKILL_GESTURE = /(^|\s)\/([a-z0-9]+(?:-[a-z0-9]+)*)(?=\s|$)/g
 
 ## 十二、怎么自己核
 
-以下命令都在 dsh checkout 根目录跑（`C:/w/dshi/sources/checkouts/deepseek-harness`，commit `47f9438`）。
+以下命令都在 dsh checkout 根目录跑（`C:/w/dshi/sources/checkouts/deepseek-harness`，commit `b150a55`）。
 
 ```bash
 # 1. 四个委派工具的完整 schema（Codex / Claude Code 与本地 subagent 描述几乎一致）

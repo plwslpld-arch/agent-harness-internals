@@ -1,8 +1,8 @@
 ---
 title: LLM 层：从 Message 到 SSE 帧，再到重试
-sources: [{"repo":"deepseek-harness","path":"packages/llm/llm/src/index.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/llm/llm-deepseek/src/serialize.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/llm/llm-retry/src/index.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/llm/token-meter/src/index.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
-last_verified: 2026-08-16
-status: stale
+sources: [{"repo":"deepseek-harness","path":"packages/llm/llm/src/index.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}, {"repo":"deepseek-harness","path":"packages/llm/llm-deepseek/src/serialize.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}, {"repo":"deepseek-harness","path":"packages/llm/llm-retry/src/index.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}, {"repo":"deepseek-harness","path":"packages/llm/token-meter/src/index.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}]
+last_verified: 2026-08-23
+status: reviewed
 ---
 
 # LLM 层：从 Message 到 SSE 帧，再到重试
@@ -179,16 +179,16 @@ wire body 上可能出现的字段就这九类，一个不多。注意「规则�
 | `tools` | `options.tools` 映射 | **空数组不发**（`packages/llm/llm-deepseek/src/serialize.ts:344-351, 182`） |
 | `temperature` / `max_tokens` / `stop` | 同名 config 字段 | 缺省即不发，让 provider 用自己的默认（`packages/llm/llm-deepseek/src/serialize.ts:363-365`） |
 
-没有映射的字段包括 `tool_choice`、`response_format`、`top_p`；核心词汇 `GenerateOptions`（`packages/llm/llm/src/types.ts:341-377`）里根本没有它们。
+没有映射的字段包括 `tool_choice`、`response_format`、`top_p`；核心词汇 `GenerateOptions`（`packages/llm/llm/src/types.ts:341-378`）里根本没有它们。
 
 `resolveThinking`（`packages/llm/llm-deepseek/src/serialize.ts:81-97`）的判定顺序：
 
-1. `purpose === 'session-title'` → 直接返回 `thinking: disabled`，后面全不看（`:38`）。理由在调用处的注释里（`packages/llm/llm-deepseek/src/serialize.ts:169-170`）：短标题必须产出可见文本，思维链会把预算吃光。
-2. 解析出本次的 effort：请求里给了就用请求的，没给就用配置默认（`:39-41`）。
-3. **部署配置是 `thinking:'disabled'` 而这个 effort 既存在又不是 `off` → 当场抛 `UNSUPPORTED_REASONING_EFFORT`（`:42-47`）。** 这一步在下面两步**之前**，所以在一个禁用了思维链的部署上传 `effort: 'high'`，得到的是异常，不是悄悄开启思维链。
-4. effort 为 `off` → `thinking: disabled`（`:48`）。
-5. effort 为 `high` / `max` → `thinking: enabled` + 对应 `reasoning_effort`（`:49-51`）。
-6. 以上都不是（effort 压根没定）→ 只发配置里的 `thinking`（若有）（`:52`）。
+1. `purpose === 'session-title'` → 直接返回 `thinking: disabled`，后面全不看（`:82`）。效果是让预算很小的标题调用直接产出可见文本，不把预算花在思维链上。
+2. 解析出本次的 effort：请求里给了就用请求的，没给就用配置默认（`:83-85`）。
+3. **部署配置是 `thinking:'disabled'` 而这个 effort 既存在又不是 `off` → 当场抛 `UNSUPPORTED_REASONING_EFFORT`（`:86-90`）。** 这一步在下面两步**之前**，所以在一个禁用了思维链的部署上传 `effort: 'high'`，得到的是异常，不是悄悄开启思维链。
+4. effort 为 `off` → `thinking: disabled`（`:92`）。
+5. effort 为 `low` / `high` / `max` → `thinking: enabled` + 对应 `reasoning_effort`（`:93-95`）。
+6. 以上都不是（effort 压根没定）→ 只发配置里的 `thinking`（若有）（`:96`）。
 
 每种内部消息转成什么 wire 消息（`packages/llm/llm-deepseek/src/serialize.ts:242-271`）：
 
@@ -218,13 +218,15 @@ wire body 上可能出现的字段就这九类，一个不多。注意「规则�
 翻译成人话就是：这条消息会永久留在会话日志里，写进去一个 `null`，之后这个会话的每一轮都发不出去。所以 assistant 的 `content` 永远是字符串。
 
 ```ts
-    // Official passback rule (guides/thinking_mode.mdx): reasoning_content
-    // must return on tool-call turns; it is ignored on plain turns, so we
-    // drop it there to save tokens.
-    ...toolCalls.length > 0 && reasoning.length > 0 ? { reasoning_content: reasoning } : {},
+    // CoT passback on every reasoning-carrying turn. The official rule
+    // (guides/thinking_mode.mdx) requires it on tool-call turns and ignores it
+    // elsewhere; a gateway re-encoding the conversation for another vendor
+    // recovers that turn's upstream thinking signature by hashing this exact
+    // text, which a tool-call-free turn carries nowhere else.
+    ...reasoning.length > 0 ? { reasoning_content: reasoning } : {},
 ```
 
-（`packages/llm/llm-deepseek/src/serialize.ts:96-99`）。注释引的是官方 `guides/thinking_mode.mdx` 里的回传规则：工具调用的回合必须把 `reasoning_content` 传回去，普通回合传了也会被忽略，所以这里干脆不传，省 token。落到代码上就是那个条件：`reasoning_content` 只出现在带 `tool_calls` 的 assistant 历史消息上。
+（`packages/llm/llm-deepseek/src/serialize.ts:224-230`）。注释引的是官方 `guides/thinking_mode.mdx` 里的回传规则：工具调用回合必须带回 `reasoning_content`，普通回合对 DeepSeek 自己会被忽略。当前实现仍然在**每个含 reasoning 的 assistant 回合**带回它，因为中间网关若把会话转成另一家协议，需要用这段原文恢复上游 thinking signature；没有工具调用的回合在别处不携带这份签名材料。
 
 空工具输出会被替换成 `'(no output)'`（`packages/llm/llm-deepseek/src/serialize.ts:265-266`），注释理由是「空输出在 wire 上仍然需要 SOME content」。
 

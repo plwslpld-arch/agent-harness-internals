@@ -1,8 +1,8 @@
 ---
 title: KV-Cache：没有一行缓存管理代码，为什么还能一直命中
-sources: [{"repo":"deepseek-harness","path":"packages/llm/llm-deepseek/src/serialize.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-harness","path":"packages/core/agent-loop/src/agent.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-harness","path":"packages/core/session/src/request-header.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-harness","path":"packages/compaction/compaction-basic/src/region.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"},{"repo":"deepseek-harness","path":"packages/core/agent-loop/tests/request-cache.e2e.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
-last_verified: 2026-08-16
-status: stale
+sources: [{"repo":"deepseek-harness","path":"packages/llm/llm-deepseek/src/serialize.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"},{"repo":"deepseek-harness","path":"packages/core/agent-loop/src/agent.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"},{"repo":"deepseek-harness","path":"packages/core/session/src/request-header.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"},{"repo":"deepseek-harness","path":"packages/compaction/compaction-basic/src/region.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"},{"repo":"deepseek-harness","path":"packages/core/agent-loop/tests/request-cache.e2e.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}]
+last_verified: 2026-08-23
+status: reviewed
 ---
 
 # KV-Cache：没有一行缓存管理代码，为什么还能一直命中
@@ -71,7 +71,7 @@ export function serializeRequest(
 
 - **system prompt 永远是 `messages[0]`**（`serialize.ts:157`），不是什么单独的顶层字段。它一个 token 变，整条消息序列的第一个 token 就变了。
 - **`tools` 是 JSON 顶层字段**，排在 `messages` 之后；空数组不发（`serialize.ts:183` 的展开条件是 `tools.length > 0`）。服务端把工具定义渲染到 chat template 的哪个位置由 provider 决定，仓库里没有说明；但 dsh 的所有设计记录都把 tools 和 system 一起当作「请求头部」处理。
-- **对象字面量的字段顺序是写死的**。`adapter.ts` 拿到这个对象就直接 `JSON.stringify`（`packages/llm/llm-deepseek/src/adapter.ts:279`、`:282`），所以同样的输入必然产生同样的字节串：没有 Map 遍历顺序、没有时间戳、没有随机数。
+- **对象字面量的字段顺序是写死的**。`adapter.ts` 在无图像路径调用 `serializeRequest`（`packages/llm/llm-deepseek/src/adapter.ts:552-555`），随后直接 `JSON.stringify`（`:601`），所以同样的输入必然产生同样的字节串：没有 Map 遍历顺序、没有时间戳、没有随机数。
 
 再看消息本身怎么转。`serializeMessages`（`serialize.ts:112`）有四条容易踩坑、又直接决定前缀稳不稳的规则：
 
@@ -442,7 +442,7 @@ fork 那一条要多说两句，因为它把这套推理用到了极致。设计
 
 1. **适配器映射**：`mapUsage`（`packages/llm/llm-deepseek/src/translate.ts:53`）产出不相交的 `TokenUsage`。
 2. **落盘**：usage 随 `assistant/chunk{type:'usage'}` 和 `assistant/message.usage` 进日志（`packages/core/agent-loop/src/agent.ts:400`）；压缩的辅助请求用量记在 `compaction/summary.usage`（`packages/compaction/compaction-basic/src/region.ts:460`）。
-3. **投影**：`packages/llm/token-meter/src/usage-projection.ts:107` 起的 `tokenUsageProjectionDefinition` 按 (turn, step) 去重累加四个桶。去重是必要的：同一步会先收到一个 usage chunk、后收到 message 上的最终 usage，重复样本替换而不是累加（`usage-projection.ts:126`）。另外 `pressureFrom = inputTokens + cacheRead + cacheWrite`（`usage-projection.ts:71`）被当作上下文压力的分子。
+3. **投影**：`packages/llm/token-meter/src/usage-projection.ts:119` 起的 `tokenUsageProjectionDefinition` 按 (turn, step) 去重累加四个桶。去重是必要的：同一步会先收到一个 usage chunk、后收到 message 上的最终 usage，重复样本替换而不是累加（`usage-projection.ts:137-148`）。另外 `pressureFrom = inputTokens + cacheRead + cacheWrite`（`usage-projection.ts:76-77`）被当作上下文压力的分子。
 4. **UI**：命中率的公式在 `packages/client/ui-conversation/src/client/chat/StatsLine.tsx:131`：
 
 ```ts
@@ -466,11 +466,11 @@ export function cacheHitPercent(usage: TokenUsageProjection): string | null {
 
 ## 十、一层容易被误当成机制的东西：文档纪律
 
-到这里为止讲的都是代码。dsh 另外有一层制度：每个模型相关的包 README 必须以 `## Model Experience` 段结尾，其中一个固定小节叫 `KV Cache effect`，要求写清「本包的哪些改动会让已有前缀作废」（`.agents/notes/implemented/process/2026-07-12-package-model-experience-contract.md:15`）。219 个包里 215 个有这一段，剩下 4 个写在校验器的豁免表里并附了理由。
+到这里为止讲的都是代码。dsh 另外有一层制度：每个模型相关的包 README 必须以 `## Model Experience` 段结尾，其中一个固定小节叫 `KV Cache effect`，要求写清「本包的哪些改动会让已有前缀作废」（`.agents/notes/implemented/process/2026-07-12-package-model-experience-contract.md:15`）。227 个包里 223 个有这一段，剩下 4 个写在校验器的豁免表里并附了理由。
 
 有两点要说准确。**第一，它承诺的很有限**：cookbook 的原文是「"Does not invalidate" means the package preserves an already-reusable prefix; provider cache availability and eviction remain outside the package contract」（`docs/cookbook/adding-a-package.md:105`）（意思是：README 里写「不会使缓存失效」，只表示这个包会保住一段本来就可复用的前缀；至于 provider 那边缓存还在不在、有没有被淘汰，都不在这个包的承诺范围内）：只承诺「不主动破坏」，不承诺真的命中。**第二，校验器校的是结构不是分类**：它检查标题层级、字段非空、锚链接这些，那四种缓存情形是写作指引，不是被机器强制的受控词汇表。
 
-这一层的价值真实：「哪个包会打断前缀」变得可审计。但它是文档纪律，跟运行时一个 token 都没关系。这套自证体系（连同 219 个 `invariant.ts`，其中真装了检查的是 35 个，以及测试门禁）见 [13 自证与工程化](13-self-verification.md)。
+这一层的价值真实：「哪个包会打断前缀」变得可审计。但它是文档纪律，跟运行时一个 token 都没关系。这套自证体系（连同 227 个 `invariant.ts`，其中真装了检查的是 37 个，以及测试门禁）见 [13 自证与工程化](13-self-verification.md)。
 
 ---
 
@@ -538,7 +538,7 @@ cd sources/checkouts/deepseek-harness
 #    预期：非测试代码 0 行；不加 grep -v 会多出一行 Codex 的响应 fixture
 grep -rn "cache_control\|cacheControl\|prompt_cache_key" packages --include=*.ts | grep -v /tests/
 
-# 2. Model Experience 覆盖：219 个包，215 个带段，4 个在豁免表里
+# 2. Model Experience 覆盖：227 个包，223 个带段，4 个在豁免表里
 ls packages/*/*/package.json | wc -l
 grep -rl '^## Model Experience' packages --include=README.md | wc -l
 sed -n '32,37p' scripts/verify-package-readme-model-experience.ts   # 豁免表与理由

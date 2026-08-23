@@ -1,8 +1,8 @@
 ---
 title: 工具、审批与沙箱：到底什么时候会弹窗
-sources: [{"repo":"deepseek-harness","path":"packages/core/tools/src/index.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/sandbox/sandbox/src/escalation.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/interaction/user-approval/src/index.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
-last_verified: 2026-08-16
-status: stale
+sources: [{"repo":"deepseek-harness","path":"packages/core/tools/src/index.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}, {"repo":"deepseek-harness","path":"packages/sandbox/sandbox/src/escalation.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}, {"repo":"deepseek-harness","path":"packages/interaction/user-approval/src/index.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}]
+last_verified: 2026-08-23
+status: reviewed
 ---
 
 # 工具、审批与沙箱：到底什么时候会弹窗
@@ -20,7 +20,7 @@ status: stale
 在默认组合下（`packages/bundle/base/cordis.patch.yml` 那套，沙箱 `workspace-write` + 审批 `ask`），模型调 `write`、`edit`、`bash` 都**不会弹窗**。安全边界不是弹窗，是沙箱：`bash` 的 argv 被 bwrap / Landlock / Seatbelt / Windows 受限令牌包住，`write`/`edit` 在进程内被路径围栏挡住。（**bwrap** 是 Linux 上的 bubblewrap，用 mount namespace 把工作区外的路径挂成只读；**Landlock** 是 Linux 内核自带的文件访问限制，不需要 namespace 权限；**Seatbelt** 是 macOS 的 `sandbox-exec` 策略；**Windows 受限令牌**靠 ACL 限制进程能碰到的对象。四个后端能兑现的承诺不一样，见后面「沙箱后端」一节。）弹窗只在两种情况下出现：
 
 1. **沙箱真的拒绝了，模型请求升级**：它在同一个工具调用里带上 `sandbox_permissions` + `justification` 重试，这次重试会问人；
-2. **`tools/pre-execute` 有插件返回了 `ask`**：在 commit 47f9438 的整个仓库里，唯一会返回 `ask` 的是 Claude Code 方言的 hook 桥（`packages/hooks/hooks-claude-code/src/index.ts:242`），而默认组合**没有挂任何 hooks 桥**。
+2. **`tools/pre-execute` 有插件返回了 `ask`**：在 commit `b150a55` 的整个仓库里，唯一会返回 `ask` 的是 Claude Code 方言的 hook 桥（`packages/hooks/hooks-claude-code/src/index.ts:242`），而默认组合**没有挂任何 hooks 桥**。
 
 所以「审批」在 dsh 里不是一个逐调用的确认流程，而是一个**升级通道**。下面这篇讲清楚这三层（工具、审批、沙箱）各自管什么、代码在哪、模型看到什么。
 

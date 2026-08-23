@@ -1,8 +1,8 @@
 ---
 title: 横向对照：六个 harness 在同一件事上的不同做法
-sources: [{"repo":"deepseek-harness","path":"packages/core/system-prompt/src/index.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"codex","path":"codex-rs/core/src/client.rs","commit":"c4941302c73c6322b153bba13ac0a9f4396301d6"}, {"repo":"opencode","path":"packages/opencode/src/session/system.ts","commit":"4643e65ad6334de3e4e68dedc201d5fbb828c9fe"}, {"repo":"pi","path":"packages/coding-agent/src/core/system-prompt.ts","commit":"086c32e74530564922d011ade23ff582c9d63116"}, {"repo":"mini-swe-agent","path":"src/minisweagent/models/utils/cache_control.py","commit":"a83fcae82d2a08f0ee0c688f9d137b3566c097f8"}]
-last_verified: 2026-08-16
-status: stale
+sources: [{"repo":"deepseek-harness","path":"packages/core/system-prompt/src/index.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}, {"repo":"codex","path":"codex-rs/core/src/client.rs","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29"}, {"repo":"opencode","path":"packages/opencode/src/session/system.ts","commit":"3a31c4ea801915c0b050df4b3842997ea62b6e93"}, {"repo":"pi","path":"packages/coding-agent/src/core/system-prompt.ts","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f"}, {"repo":"mini-swe-agent","path":"src/minisweagent/models/utils/cache_control.py","commit":"25941c89cfbc91eb40b3f8756348c91d9977d57e"}]
+last_verified: 2026-08-23
+status: reviewed
 ---
 
 # 横向对照：六个 harness 在同一件事上的不同做法
@@ -17,7 +17,7 @@ status: stale
 
 | 项目 | 形态 | 本篇证据来源 |
 | --- | --- | --- |
-| **dsh**（DeepSeek Harness） | 开源，Cordis 插件树，219 个包 | 源码，commit `47f9438` |
+| **dsh**（DeepSeek Harness） | 开源，Cordis 插件树，227 个包 | 源码，commit `b150a55` |
 | **Codex**（OpenAI） | 开源，Rust 核心 `codex-rs` | 源码，commit `c494130` |
 | **OpenCode**（anomalyco） | 开源，TypeScript | 源码，commit `4643e65` |
 | **pi**（earendil-works） | 开源，TypeScript，刻意极简 | 源码，commit `086c32e` |
