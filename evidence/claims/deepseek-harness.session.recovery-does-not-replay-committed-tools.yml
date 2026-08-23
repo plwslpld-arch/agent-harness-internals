@@ -1,0 +1,19 @@
+{
+  "id": "deepseek-harness.session.recovery-does-not-replay-committed-tools",
+  "harness": "deepseek-harness",
+  "dimension": "session.recovery-does-not-replay-committed-tools",
+  "statement": "在锁定 DSH 的冷恢复路径中，持久化协调器保留已存事件并仅追加缺失闭合项；已有 tool/result 的调用不会得到第二个合成结果，已开始但无结果的调用被标成结果未知，而不是在恢复阶段重新执行。",
+  "capability": "default",
+  "version": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+  "surface": "cold-session-recovery",
+  "platform": "all",
+  "mode": "interrupted-turn-repair",
+  "evidence_level": "D",
+  "evidence": [
+    {"type":"source","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/session/session-persistence/src/coordinator.ts","lines":"902-904","excerpt":"const closers = interruptedTurnClosers(storedEvents).map(adoptSessionEvent)"},
+    {"type":"upstream-test","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/core/session/tests/repair.spec.ts","lines":"88-116","excerpt":"does NOT synthesize a result for a tool-call that already has one"},
+    {"type":"upstream-test","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/core/session/tests/repair.spec.ts","lines":"229-259","excerpt":"retry only if the operation is read-only or idempotent"}
+  ],
+  "inference": "协调器的冷准备路径只调用事件闭合函数并构造平衡 seed，恢复测试又限定了已有结果、未开始和结果未知三种分支；跨模块合并后可判断冷恢复本身不调用工具运行时。新的 Turn 仍可能在恢复之后显式重试，因此结论不扩展到所有后续执行。",
+  "last_verified": "2026-08-24"
+}

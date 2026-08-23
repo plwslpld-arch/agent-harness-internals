@@ -128,6 +128,14 @@
       "scope": "docs/harnesses/deepseek-harness/04-tools-security.md",
       "alt": "DSH 工具调用经过注册、策略、单调防护、一次性审批和多平台执行后端的中文安全边界图",
       "claims": ["deepseek-harness.security.approval-sandbox-separation"]
+    },
+    {
+      "id": "deepseek-harness-session-compaction",
+      "path": "assets/diagrams/deepseek-harness/05-session-compaction.svg",
+      "type": "state",
+      "scope": "docs/harnesses/deepseek-harness/05-session-compaction.md",
+      "alt": "DSH 从追加事件日志派生模型表面、压缩替换、持久化恢复与外部大文本存储的中文状态图",
+      "claims": ["deepseek-harness.session.log-surface-separation", "deepseek-harness.session.recovery-does-not-replay-committed-tools"]
     }
   ]
 }

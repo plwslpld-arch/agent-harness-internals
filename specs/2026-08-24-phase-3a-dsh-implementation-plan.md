@@ -95,10 +95,10 @@
 
 ### Task 7：Session、持久化、Compaction 与 Spill
 
-- [ ] 完成 `05-session-compaction.md`、中文状态图和恢复 Claim。
-- [ ] 覆盖事件日志、surface 投影、持久化、冷恢复、半截工具调用、摘要和 Spill。
-- [ ] 明确原始记录、派生 Context、摘要和外部文件之间的权威关系。
-- [ ] 提交：`docs(dsh): 发布会话压缩与恢复课程`。
+- [x] 完成 `05-session-compaction.md`、中文状态图和恢复 Claim。
+- [x] 覆盖事件日志、surface 投影、持久化、冷恢复、半截工具调用、摘要和 Spill。
+- [x] 明确原始记录、派生 Context、摘要和外部文件之间的权威关系。
+- [x] 提交：`docs(dsh): 发布会话压缩与恢复课程`。
 
 ### Task 8：编排、Subagent、Skill、Extension 与 Code Runtime
 

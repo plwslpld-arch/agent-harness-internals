@@ -1,0 +1,18 @@
+{
+  "id": "deepseek-harness.session.log-surface-separation",
+  "harness": "deepseek-harness",
+  "dimension": "session.log-surface-separation",
+  "statement": "在锁定 DSH 中，追加事件日志是会话内事实源；模型可见 Surface 是按 surfaceOp 从日志折叠的派生视图，压缩替换会遮蔽旧节点但不删除其来源事件。",
+  "capability": "default",
+  "version": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+  "surface": "session-log-and-model-surface",
+  "platform": "all",
+  "mode": "append-and-replace",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/core/session/src/surface.ts","lines":"1-47","excerpt":"The append-only log remains the source of truth."},
+    {"type":"source","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/compaction/compaction-basic/src/region.ts","lines":"438-465","excerpt":"surfaceOp: { op: 'replace', start, end }"},
+    {"type":"upstream-test","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/core/session/tests/surface.spec.ts","lines":"472-484","excerpt":"expect(replayed.deriveMessages()).toEqual(original.deriveMessages())"}
+  ],
+  "last_verified": "2026-08-24"
+}
