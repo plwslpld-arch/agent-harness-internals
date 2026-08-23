@@ -8,7 +8,7 @@
 
 ## 阶段与独立计划
 
-- [ ] 阶段 0：地基、来源配置、证据模型和门禁。
+- [x] 阶段 0：地基、来源配置、证据模型和门禁。
   - 计划：`specs/2026-08-23-phase-0-foundation-implementation-plan.md`
   - 验收：新 Schema 和门禁有单元测试，旧双 Harness 规则退出，阶段复核通过。
 - [ ] 阶段 1：品牌、Logo、中文视觉、README 和 GitHub 对外信息。

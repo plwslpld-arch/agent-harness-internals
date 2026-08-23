@@ -1,0 +1,54 @@
+{
+  "stage": "phase-0-foundation",
+  "date": "2026-08-23",
+  "commit": "61bc00d84715c2a6f1e79b3245ef092503e6f168",
+  "promises": [
+    {"id": "p-source-profiles", "statement": "来源按 core、samples、eval 分组，默认只要求核心来源。"},
+    {"id": "p-claude-dual-sdk", "statement": "Claude Python 与 TypeScript SDK 使用独立来源 ID、Commit 和许可证边界。"},
+    {"id": "p-article-status", "statement": "新文章类型和五种发布状态具有机器契约。"},
+    {"id": "p-claims", "statement": "关键公开结论具有能力状态、证据等级和可核对证据。"},
+    {"id": "p-navigation", "statement": "正式导航只接受 reviewed 和 verified。"},
+    {"id": "p-content", "statement": "新结构文章不能以短正文、长空话或源码堆砌冒充完成。"},
+    {"id": "p-visuals", "statement": "正式 SVG 具有中文可访问元数据、中文说明和 Manifest 登记。"},
+    {"id": "p-reviews", "statement": "每阶段承诺、证据、发现、处理和命令可审计。"},
+    {"id": "p-governance", "statement": "仓库治理切换为 Agent Harness 单主线并退出冲突规则。"},
+    {"id": "p-node-aggregate", "statement": "完整门禁由当前 Node 24 进程零依赖聚合，不调用 NVM。"}
+  ],
+  "evidence": [
+    {"id": "e-source-profiles", "promise": "p-source-profiles", "type": "test", "reference": "scripts/tests/source-profiles.test.mjs", "summary": "覆盖默认 core、多配置、all、非法值和实际 Manifest 分组。"},
+    {"id": "e-claude-manifest", "promise": "p-claude-dual-sdk", "type": "file", "reference": "sources/sources.yml", "summary": "两个 Claude SDK 分开登记，TypeScript SDK 按 Anthropic 商业条款处理。"},
+    {"id": "e-article-contract", "promise": "p-article-status", "type": "test", "reference": "scripts/tests/article-contract.test.mjs", "summary": "覆盖文章类型、Harness 标识、空来源和官方文档来源。"},
+    {"id": "e-claims", "promise": "p-claims", "type": "test", "reference": "scripts/tests/claims.test.mjs", "summary": "覆盖 Lock、摘录、限定条件、A/D/U 等级与实验记录。"},
+    {"id": "e-navigation", "promise": "p-navigation", "type": "test", "reference": "scripts/tests/navigation.test.mjs", "summary": "覆盖草稿、提纲、过期状态、缺失目标、标记嵌套和 URL 编码。"},
+    {"id": "e-content", "promise": "p-content", "type": "test", "reference": "scripts/tests/content-contract.test.mjs", "summary": "覆盖真实输入输出、三步调用链、深度、完整自检和源码堆砌反例。"},
+    {"id": "e-visuals", "promise": "p-visuals", "type": "test", "reference": "scripts/tests/visuals.test.mjs", "summary": "覆盖中文 title、desc、alt、中英混合绕过、缺失文件和不安全 SVG。"},
+    {"id": "e-reviews", "promise": "p-reviews", "type": "test", "reference": "scripts/tests/reviews.test.mjs", "summary": "覆盖 Promise-Evidence 映射、高优先级伪通过和非零命令。"},
+    {"id": "e-governance", "promise": "p-governance", "type": "test", "reference": "scripts/tests/project-files.test.mjs", "summary": "验证六条主线、五种状态、三组来源、中文视觉、Node 24 和旧规则退出。"},
+    {"id": "e-node-aggregate", "promise": "p-node-aggregate", "type": "command", "reference": "node scripts/check-all.mjs", "summary": "Node 24.19.0 下 16 组聚合检查和 68 项测试退出码为 0。"}
+  ],
+  "findings": [
+    {"id": "f-duplicate-gitmodules", "priority": "high", "status": "resolved", "summary": "TypeScript SDK 子模块条目曾因命令自动追加和手工插入而重复。"},
+    {"id": "f-navigation-marker-bypass", "priority": "high", "status": "resolved", "summary": "缺失结束标记或嵌套标记曾可能让正式导航区域静默跳过。"},
+    {"id": "f-visual-mixed-language", "priority": "high", "status": "resolved", "summary": "英文说明句前加少量中文曾可能绕过视觉语言检查。"},
+    {"id": "f-review-nonzero-pass", "priority": "high", "status": "resolved", "summary": "复核记录的 pass 曾未拒绝非零最终命令。"},
+    {"id": "f-package-manager-nesting", "priority": "high", "status": "resolved", "summary": "聚合脚本曾递归调用 npm，不能保证始终使用当前 Node 24。"},
+    {"id": "f-no-published-new-content", "priority": "medium", "status": "open", "summary": "新结构正式文章、Claim、正式导航和正式 SVG 当前仍为 0；阶段 1 至 5 必须完成内容主体。"},
+    {"id": "f-contributors-history", "priority": "medium", "status": "open", "summary": "历史提交仍含 Codex/Claude Co-Authored-By；最终提交完成后再受控重写并复核 GitHub Contributors。"},
+    {"id": "f-legacy-style-warnings", "priority": "low", "status": "open", "summary": "旧 README 和正文仍有 3 条非阻断句长提醒，正文重写时处理。"}
+  ],
+  "resolutions": [
+    {"id": "f-duplicate-gitmodules", "action": "删除重复 stanza，并用 Manifest、gitlink 和全来源验证共同确认唯一性。", "evidence": ["e-source-profiles", "e-claude-manifest"]},
+    {"id": "f-navigation-marker-bypass", "action": "导航解析器改为严格状态机，拒绝缺失、逆序或嵌套标记。", "evidence": ["e-navigation"]},
+    {"id": "f-visual-mixed-language", "action": "标题、描述、alt 和可见文字统一检查去除中文与专名后的普通英文词。", "evidence": ["e-visuals"]},
+    {"id": "f-review-nonzero-pass", "action": "result=pass 时所有最终命令退出码必须为 0。", "evidence": ["e-reviews"]},
+    {"id": "f-package-manager-nesting", "action": "使用 process.execPath 启动所有子检查，并动态发现测试文件。", "evidence": ["e-node-aggregate"]}
+  ],
+  "commands": [
+    {"command": "node --version", "exit_code": 0, "summary": "输出 v24.19.0。"},
+    {"command": "node scripts/check-all.mjs", "exit_code": 0, "summary": "16 组聚合检查、68 项单元测试和 1607 处源码锚点通过。"},
+    {"command": "node scripts/verify-sources.mjs --profile all", "exit_code": 0, "summary": "12 个来源定义和 12 个 Checkout 全量通过。"},
+    {"command": "node --test scripts/tests/source-profiles.test.mjs scripts/tests/navigation.test.mjs scripts/tests/content-contract.test.mjs scripts/tests/visuals.test.mjs scripts/tests/reviews.test.mjs scripts/tests/project-files.test.mjs scripts/tests/check-all.test.mjs", "exit_code": 0, "summary": "33 项阶段承诺与主动反例测试通过。"},
+    {"command": "git diff --check", "exit_code": 0, "summary": "没有空白错误。"}
+  ],
+  "result": "pass"
+}
