@@ -1,0 +1,39 @@
+name: Drift
+
+# 结论绑在固定 commit 上，上游怎么变都不会让 Verify 变红。代价是漂移无声。
+# 这个 workflow 每周量一次差距，超过阈值就让 job 失败，把「该重新锁定了」
+# 变成一件收得到通知的事。它不参与 PR 门禁，只做体检。
+on:
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      maxAnchorRatio:
+        description: 锚点受影响比例上限，超过即失败
+        required: false
+        default: '0.25'
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          submodules: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .nvmrc
+      - name: Bootstrap fixed source checkouts
+        run: npm run bootstrap
+      - name: Measure drift
+        run: node scripts/check-drift.mjs --fetch --write
+      - name: Publish report to job summary
+        if: always()
+        run: cat research/drift/latest.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Fail when drift exceeds the threshold
+        run: node scripts/check-drift.mjs --max-anchor-ratio "${{ inputs.maxAnchorRatio || '0.25' }}"
