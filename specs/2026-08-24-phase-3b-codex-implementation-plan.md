@@ -58,10 +58,10 @@
 
 ### Task 4：Thread、Task、Turn、Session 与内部状态
 
-- [ ] 完成 `02-thread-task-turn.md`、中文生命周期图和状态边界 Claim。
-- [ ] 覆盖 ThreadConfigSnapshot、Session、TurnContext、Task、Op/Event、暂停、取消和空闲。
-- [ ] 分开持久身份、活动执行、单轮输入与界面任务状态，不从同名字段猜等价关系。
-- [ ] 提交：`docs(codex): 发布线程任务与轮次课程`。
+- [x] 完成 `02-thread-task-turn.md`、中文生命周期图和状态边界 Claim。
+- [x] 覆盖 ThreadConfigSnapshot、Session、TurnContext、Task、Op/Event、暂停、取消和空闲。
+- [x] 分开持久身份、活动执行、单轮输入与界面任务状态，不从同名字段猜等价关系。
+- [x] 提交：`docs(codex): 发布线程任务与轮次课程`。
 
 ### Task 5：Responses、模型流与工具闭环
 

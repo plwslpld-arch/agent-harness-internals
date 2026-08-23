@@ -1,0 +1,20 @@
+{
+  "id": "codex.thread.turn-task-state-separation",
+  "harness": "codex",
+  "dimension": "thread.turn-task-state-separation",
+  "statement": "在锁定 Codex 中，Thread 是持久会话身份，CodexThread 与 Session 构成活动运行时；Session 同时至多有一个 ActiveTurn，ActiveTurn 可运行不同 TaskKind 的后台任务，而同一 Turn 可包含多次模型请求。Op/Event 负责提交和观测这些状态，不与任一内部对象等价。",
+  "capability": "default",
+  "version": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+  "surface": "core-protocol",
+  "platform": "all",
+  "mode": "regular-review-compact-task-dependent",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/src/session/session.rs","lines":"37-67","excerpt":"A session has at most 1 running task at a time"},
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/src/state/turn.rs","lines":"31-84","excerpt":"pub(crate) struct ActiveTurn"},
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/src/tasks/mod.rs","lines":"172-204","excerpt":"pub(crate) trait SessionTask"},
+    {"type":"upstream-test","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/tests/suite/turn_state.rs","lines":"23-86","excerpt":"assert_eq!(first_turn_id, second_turn_id);"},
+    {"type":"upstream-test","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/tests/suite/turn_input_submission.rs","lines":"300-350","excerpt":"reason: NotSubmittedReason::NoActiveTurn"}
+  ],
+  "last_verified": "2026-08-24"
+}

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 940" role="img" aria-labelledby="title desc">
+  <title id="title">Codex 线程、任务与轮次生命周期</title>
+  <desc id="desc">持久线程身份、活动会话、后台任务、单轮状态、模型后续请求和协议事件之间所有权与生命周期边界的中文状态图。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0l14 7-14 7z" fill="#087F7C"/></marker>
+    <marker id="dash" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0l14 7-14 7z" fill="#76559B"/></marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#17324D" flood-opacity=".12"/></filter>
+  </defs>
+  <rect width="1400" height="940" rx="34" fill="#F6F9FC"/>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <text x="700" y="55" text-anchor="middle" fill="#17324D" font-size="36" font-weight="760">线程不是任务，轮次也不是一次模型请求</text>
+    <text x="700" y="91" text-anchor="middle" fill="#50677D" font-size="19">先按所有权区分身份、运行时和执行体，再解释启动、转向、中断、挂起与恢复</text>
+
+    <rect x="55" y="132" width="1290" height="112" rx="23" fill="#E9F2FF" stroke="#3569A8" stroke-width="2.5" filter="url(#shadow)"/>
+    <text x="84" y="169" fill="#285383" font-size="23" font-weight="760">一　持久线程身份</text>
+    <text x="315" y="169" fill="#17324D" font-size="20">线程标识、元数据、运行记录引用；可在没有活动任务时继续存在</text>
+    <text x="84" y="211" fill="#50677D" font-size="18">线程管理器负责创建、定位和维护活动线程句柄；存储后端负责持久解析</text>
+
+    <rect x="55" y="292" width="390" height="420" rx="25" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2.5" filter="url(#shadow)"/>
+    <text x="84" y="332" fill="#955A00" font-size="23" font-weight="760">二　活动线程与会话</text>
+    <g font-size="18" text-anchor="middle">
+      <rect x="92" y="365" width="316" height="72" rx="16" fill="#FFFFFF"/><text x="250" y="394" fill="#17324D" font-weight="760">活动线程句柄</text><text x="250" y="421" fill="#50677D">会话、通道、来源、记录路径</text>
+      <rect x="92" y="466" width="316" height="92" rx="16" fill="#FFFFFF"/><text x="250" y="496" fill="#17324D" font-weight="760">会话运行时</text><text x="250" y="524" fill="#50677D">共享服务、配置、输入队列</text><text x="250" y="548" fill="#8A3D2F">同时至多一个活动轮次</text>
+      <rect x="92" y="588" width="316" height="86" rx="16" fill="#FFFFFF"/><text x="250" y="618" fill="#17324D" font-weight="760">空闲或活动</text><text x="250" y="646" fill="#50677D">线程存在不表示任务运行</text>
+    </g>
+    <g fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"><path d="M250 437v21"/><path d="M250 558v22"/></g>
+
+    <rect x="505" y="292" width="840" height="420" rx="25" fill="#E7F5F3" stroke="#087F7C" stroke-width="3" filter="url(#shadow)"/>
+    <text x="534" y="332" fill="#086E6B" font-size="24" font-weight="760">三　活动轮次：状态与后台任务共同构成执行边界</text>
+    <g font-size="18" text-anchor="middle">
+      <rect x="542" y="365" width="235" height="104" rx="17" fill="#17324D"/><text x="659" y="397" fill="#FFFFFF" font-weight="760">单轮上下文</text><text x="659" y="426" fill="#D3E1EA">轮次标识、有效设置</text><text x="659" y="451" fill="#D3E1EA">模型、环境与时间状态</text>
+      <rect x="807" y="365" width="235" height="104" rx="17" fill="#FFFFFF" stroke="#51A9A5"/><text x="924" y="397" fill="#17324D" font-weight="760">后台任务</text><text x="924" y="426" fill="#50677D">常规、复核或压缩</text><text x="924" y="451" fill="#50677D">取消令牌与清理</text>
+      <rect x="1072" y="365" width="235" height="104" rx="17" fill="#FFFFFF" stroke="#51A9A5"/><text x="1189" y="397" fill="#17324D" font-weight="760">可变轮次状态</text><text x="1189" y="426" fill="#50677D">审批、权限、用户输入</text><text x="1189" y="451" fill="#50677D">工具与消息投递阶段</text>
+
+      <rect x="542" y="532" width="235" height="108" rx="17" fill="#FFFFFF" stroke="#51A9A5"/><text x="659" y="565" fill="#17324D" font-weight="760">首次模型请求</text><text x="659" y="595" fill="#50677D">可返回消息或工具调用</text><text x="659" y="620" fill="#50677D">仍属于当前轮次</text>
+      <rect x="807" y="532" width="235" height="108" rx="17" fill="#FFFFFF" stroke="#51A9A5"/><text x="924" y="565" fill="#17324D" font-weight="760">同轮后续请求</text><text x="924" y="595" fill="#50677D">工具结果或转向输入</text><text x="924" y="620" fill="#50677D">复用轮次标识</text>
+      <rect x="1072" y="532" width="235" height="108" rx="17" fill="#F0ECF8" stroke="#76559B"/><text x="1189" y="565" fill="#60458C" font-weight="760">轮次终态</text><text x="1189" y="595" fill="#50677D">完成或中断</text><text x="1189" y="620" fill="#8A3D2F">挂起刻意不写终态</text>
+    </g>
+    <g fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"><path d="M777 417h22"/><path d="M1042 417h22"/><path d="M659 469v55"/><path d="M777 586h22"/><path d="M1042 586h22"/></g>
+    <path d="M924 532v-35c0-24-265-24-265 27" fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"/>
+    <path d="M445 505h52" fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"/>
+    <path d="M700 244v40" fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"/>
+
+    <rect x="55" y="770" width="1290" height="122" rx="22" fill="#17324D" filter="url(#shadow)"/>
+    <text x="84" y="808" fill="#FFFFFF" font-size="22" font-weight="760">四　协议操作与事件是边界，不是内部对象别名</text>
+    <text x="84" y="845" fill="#D3E1EA" font-size="18">启动或转向：按活动状态路由　｜　中断：记录中断事件　｜　挂起：刷新并移交，不伪造终态　｜　恢复：保留原轮次标识</text>
+    <text x="84" y="875" fill="#7FE0D5" font-size="17">验证时同时记录线程标识、轮次标识、提交标识、任务种类和模型请求序号，不能只看界面“完成”。</text>
+    <path d="M1189 640v122" fill="none" stroke="#76559B" stroke-width="4" stroke-dasharray="10 8" marker-end="url(#dash)"/>
+  </g>
+</svg>

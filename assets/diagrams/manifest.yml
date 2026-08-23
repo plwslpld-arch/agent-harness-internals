@@ -184,6 +184,14 @@
       "scope": "docs/harnesses/codex/01-config-prompt-context.md",
       "alt": "Codex 配置来源、有效线程设置、稳定提示前缀、动态上下文片段和模型可见请求的中文数据流图",
       "claims": ["codex.config.layered-and-thread-scoped", "codex.context.fragments-are-bounded"]
+    },
+    {
+      "id": "codex-thread-task-turn",
+      "path": "assets/diagrams/codex/02-thread-task-turn.svg",
+      "type": "state",
+      "scope": "docs/harnesses/codex/02-thread-task-turn.md",
+      "alt": "Codex 从持久线程身份、活动会话、后台任务到轮次状态和协议事件的中文生命周期图",
+      "claims": ["codex.thread.turn-task-state-separation"]
     }
   ]
 }
