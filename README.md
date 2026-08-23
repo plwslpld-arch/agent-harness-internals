@@ -1,107 +1,164 @@
 <p align="center">
-  <img src="assets/harness-internals.svg" width="168" alt="Harness Internals">
+  <img src="assets/brand/logo-lockup.svg" width="760" alt="Agent Harness 内部原理中文组合标">
 </p>
 
-<h1 align="center">Harness Internals</h1>
+<h1 align="center">Agent Harness 内部原理</h1>
 
-<p align="center">两种 harness，一个可核对的源码知识库</p>
+<p align="center">从公开源码、上游测试与可复现实验，理解模型如何被变成能够完成真实任务的 Agent</p>
 
-<p align="center">
-  <a href="README.en.md">English</a> ·
-  <a href="https://github.com/plwslpld-arch/harness-internals/actions/workflows/verify.yml"><img alt="Verify" src="https://github.com/plwslpld-arch/harness-internals/actions/workflows/verify.yml/badge.svg?branch=main"></a>
-  <a href="LICENSE-CODE"><img alt="Code MIT" src="https://img.shields.io/badge/code-MIT-2F855A"></a>
-  <a href="LICENSE-DOCS"><img alt="Docs CC BY 4.0" src="https://img.shields.io/badge/docs-CC_BY_4.0-D97706"></a>
-</p>
+这个仓库是一套中文、源码级、可核对的 Agent Harness 知识库。它关心机制，也关心边界。这里不按厂商宣传词罗列功能，而是沿着一次真实任务的生命周期，解释上下文怎样装配、模型怎样请求、工具怎样执行、权限怎样约束、会话怎样保存、失败怎样恢复，以及运行结果怎样进入评测与反馈闭环。
 
-> 原名 `deepseek-harness-internals`。DeepSeek Harness 的逐包深读完整保留在 [`docs/deep/`](docs/deep/)。
+**Agent Harness 是唯一主线；Eval 是横切验证能力。** 仓库不会再建设一套与 Agent Harness 并列的 Eval Harness 百科。Inspect AI、SWE-bench、Terminal-Bench 和 LM Evaluation Harness 只在需要回答「任务怎样定义、轨迹怎样收集、结果怎样评分、失败能否重试」时作为外部参照出现。缺少证据，就保留未知。
 
-## 这是什么
+> 当前状态：仓库正在覆盖式重建。治理、证据门禁和正式品牌已经完成阶段复核；共同基础与六条一级主线尚未进入正式课程导航。下表会随每篇文章从 `outline` 推进到 `reviewed` 或 `verified` 而更新，未完成内容不会以链接冒充成品。
 
-模型不会自己读文件、调工具、保留会话，也不会决定一个 benchmark 怎样判分。包在模型外面的两层软件，决定了任务如何执行、结果如何被解释：
+## 这里研究的不是「模型排行榜」
 
-- **agent harness** 把模型变成可行动的 agent：装配上下文、暴露工具、执行循环、处理权限、保存轨迹、恢复失败。
-- **eval harness** 把一次运行变成可比较的证据：定义任务与环境、调度 Trial、收集产物、执行 scorer、冻结统计口径。
+语言模型只负责根据输入生成下一段输出。把输出变成可观察、可控制、可恢复的行动，需要模型之外的一整套运行系统：
 
-它们不能分开研究。最终分数同时受模型、agent harness、eval harness 和环境影响；只报模型名与一个 pass@1，会把这些变量压成一个无法归因的数字。这个仓库把四种 agent harness 与四种 eval harness 放在同一套维度、同一套 commit 锁和同一套 CI 证据门禁下。
+```text
+用户目标
+  → 上下文与策略装配
+  → 模型请求
+  → 工具选择与参数校验
+  → 权限、沙箱与执行
+  → 结果回送与会话持久化
+  → 终止、恢复或继续循环
+  → Trace、Feedback 与独立评测
+```
 
-![Agent harness 与 eval harness 的耦合](assets/harness-coupling.svg)
+这个外层系统就是本仓库所说的 Agent Harness。它会直接改变模型看见什么、能做什么、何时停止、失败后如何继续，也会改变一次评测到底测到了模型、Harness 还是环境。因此，只拿一个模型名和一个分数无法解释真实任务表现。
 
-## 从哪读
+分数不是答案。
 
-| 你的问题 | 入口 | 是否读代码 |
+仓库坚持三个分离：
+
+1. 训练奖励只回答「训练时优化了什么」。
+2. Checkpoint 选择只回答「候选模型怎样被筛选」。
+3. 独立发布评测才回答「在预先冻结的任务和统计口径下是否达到发布门槛」。
+
+同样，Trial 是统计单位；Attempt 只用于恢复基础设施错误，不能把产品失败不断重试成通过。产品失败仍然是失败。
+
+## 六条一级主线
+
+每条主线都会形成独立、连续的课程，而不是被一张横向矩阵压成几行摘要。每条课程至少覆盖：入口与配置、上下文、Agent Loop、工具与权限、会话与恢复、扩展协议，以及 Trace、Feedback 和评测接入。
+
+| 主线 | 主要证据面 | 将回答的核心问题 | 当前状态 |
+| --- | --- | --- | --- |
+| DSH | DeepSeek Harness 锁定源码与上游测试 | 多包 TypeScript Harness 怎样组织模型、工具、会话、Code Mode 与评测能力 | `outline` |
+| Codex | Rust 核心源码、协议、测试与官方文档 | CLI、工具、沙箱、审批、会话、压缩和多表面怎样连接 | `outline` |
+| Gemini CLI | Core/CLI 源码、Policy、Safety、Confirmation 与测试 | 工具调度、策略确认、会话和扩展怎样形成完整执行链 | `outline` |
+| Claude | 官方公开文档、Python SDK、TypeScript SDK 与示例 | Claude Code 的公开契约与 Agent SDK 的可见实现边界分别在哪里 | `outline` |
+| pi | AI、Agent、Coding Agent、Protocol、Session、Telemetry 与 Evals 源码 | 极简核心怎样向编码 Agent 和协议表面逐层扩展 | `outline` |
+| OpenCode | Provider、Session、Permission、Server、Protocol 与多客户端源码 | 服务化会话、权限决策和多前端怎样共享同一 Harness 核心 | `outline` |
+
+`Claude` 主线需要特别说明证据边界：Claude Code 本体不是公开源码，仓库不会从 SDK 反推闭源内部实现。Python 与 TypeScript SDK 分别锁定版本和许可证；确定性实现结论只落在公开源码真正覆盖的范围内，其他内容只能引用官方文档或标成推断与未知。
+
+边界必须写清。
+
+## Eval 在哪里
+
+Eval 不与六条主线争夺主导航，而是在每条主线中重复回答同一组质量问题：
+
+- 任务输入、初始仓库、容器和网络条件由谁冻结。
+- 一次 Trial 允许哪些 Attempt，哪些失败属于基础设施，哪些属于产品结果。
+- Trace、补丁、日志、工具结果和资源消耗怎样成为可核对产物。
+- Scorer 判断最终状态还是中间轨迹，评分失败与执行失败怎样区分。
+- 训练反馈、候选选择和独立发布门槛是否使用了相互隔离的数据。
+
+| 外部参照 | 在本仓库中的角色 | 不会被扩大解释成什么 |
 | --- | --- | --- |
-| 第一次听到 harness | [概念入门](docs/concepts.md) | 不需要 |
-| 做产品与交互 | [产品视角](docs/for-product.md) | 不需要 |
-| 做成本、安全与部署决策 | [运维与风险](docs/for-ops.md) | 不需要 |
-| 想理解 agent 是怎样跑起来的 | [Part A 总览](docs/00-overview.md#part-aagent-harness) | 可选 |
-| 想理解 benchmark 分数怎样产生 | [Part B 总览](docs/00-overview.md#part-beval-harness) | 可选 |
-| 深挖 DeepSeek Harness | [DSH 深度层](docs/deep/dsh-overview.md) | 需要 TypeScript |
-| 自己复核结论 | [验证手册](docs/appendix-b-verification.md) | 需要命令行 |
+| Inspect AI | 任务、Sandbox、Agent、Scorer 和运行记录的设计参照 | 通用生产发布授权 |
+| SWE-bench | 真实仓库修复任务、补丁与测试判定参照 | 单独证明某个 Harness 更强 |
+| Terminal-Bench | 终端环境、任务容器和判分接口参照 | 所有交互式 Agent 的统一标准 |
+| LM Evaluation Harness | 模型评测任务与请求抽象参照 | Agent Harness 的替代实现 |
 
-## Part A：agent harness
+失败不能混淆。
 
-对照主角是 DeepSeek Harness、OpenAI Codex、Gemini CLI，以及 Claude Agent SDK 所公开的 Claude 契约面。Claude Code 本体闭源；契约面之外不作源码级推断。
+## 阅读路径
 
-| 维度 | 文章 | 核心问题 |
+正式课程导航只会出现 `reviewed` 和 `verified` 页面。在共同基础完成前，可以先按下表理解最终阅读结构；没有链接意味着内容尚未达到发布门槛，而不是文件不存在就被隐藏。
+
+| 你的目标 | 建议路径 | 需要的背景 |
 | --- | --- | --- |
-| A1 | [System Prompt](docs/a1-system-prompt.md) | 模型第一眼看见什么，谁决定顺序 |
-| A2 | [KV-Cache](docs/a2-kv-cache.md) | 前缀怎样保持稳定，何时失效 |
-| A3 | [Agent Loop](docs/a3-agent-loop.md) | 请求、工具和恢复怎样形成闭环 |
-| A4 | [Compaction](docs/a4-compaction.md) | 超长轨迹怎样压缩，丢掉什么 |
-| A5 | [Tools、Approval、Sandbox](docs/a5-tools-approval-sandbox.md) | 能做什么、谁批准、边界在哪里 |
-| A6 | [Session](docs/a6-session.md) | 事件、轨迹与恢复怎样落盘 |
-| A7 | [Extensions](docs/a7-extensions.md) | 插件与协议如何扩展能力面 |
-| A8 | [Code Mode](docs/a8-code-mode.md) | 让模型写代码驱动工具意味着什么 |
-| A9 | [Surfaces](docs/a9-surfaces.md) | CLI、Web、SDK 与协议怎样接入 |
-| A10 | [Orchestration](docs/a10-orchestration.md) | 子代理、计划和工作流挂在哪里 |
+| 第一次理解 Agent Harness | 一次模型调用 → Agent Loop → 工具与权限 → 会话与恢复 → Eval 接入 | 无需先读源码 |
+| 实现自己的 Harness | 共同基础 → 选择一条主线完整跟读 → 控制实验 → 接入独立评测 | 熟悉一种编程语言 |
+| 做安全与平台治理 | 工具契约 → 权限决策 → Sandbox → Hook/Policy → 失败语义 | 了解进程和文件权限 |
+| 做产品和交互设计 | 会话生命周期 → 审批体验 → 压缩与恢复 → 多表面协议 | 了解 Agent 产品流程 |
+| 做评测与质量工程 | Trial/Attempt → Trace/Artifact → Scorer → 反馈适配 → 发布门槛 | 基础统计与测试经验 |
+| 做源码研究或技术选型 | 六条独立主线 → 共同维度比较 → 适用边界与未知项 | 能阅读对应语言源码 |
 
-![四种 agent harness 的维度矩阵](assets/agent-harness-matrix.svg)
+文章状态具有固定含义：
 
-DeepSeek Harness 的 15 篇原始逐包分析已经迁入 [`docs/deep/`](docs/deep/)；它们不是被压成摘要，而是作为单一实现的深度证据层继续维护。另有一张 [DSH 包组与 Codex crate 的子系统映射](assets/dsh-codex-subsystems.svg)，用于看不同目录结构如何落到共同抽象。
+- `outline`：只有证据清单和提纲，不能进入正式导航。
+- `draft`：已有可读正文，但深度、证据或复核尚未完成。
+- `reviewed`：正文、来源、图示和边界已经完成对抗复核，可以进入正式导航。
+- `verified`：在 `reviewed` 基础上，相关运行实验也已复现。
+- `stale`：上游版本漂移或证据失效，需要退出正式导航并重新审核。
 
-## Part B：eval harness
+## 结论怎样做到可核对
 
-| 维度 | 文章 | 核心问题 |
+### 锁定来源
+
+仓库不按「最新分支大概如此」写结论。每个上游来源都具有稳定 ID、仓库地址、锁定 Commit、许可证和来源分组。默认本地验证只要求六条主线所需的 `core` 来源；扩展样本使用 `samples`，外部评测参照使用 `eval`，全量复核使用 `all`。
+
+当前来源清单包含 12 个定义：DSH、Codex、Gemini CLI、Claude Python SDK、Claude TypeScript SDK、pi、OpenCode、mini-swe-agent，以及四个外部评测参照。机器可读配置见 [`sources/sources.yml`](sources/sources.yml) 和 [`sources/sources.lock.yml`](sources/sources.lock.yml)。
+
+### 证据等级
+
+关键公开结论进入独立注册表，并按证据强度分级：
+
+只有当读者能够从公开结论一路回到锁定版本中的具体文件与行号，确认对应测试确实约束了同一行为，再根据实验记录复现输入、环境、命令、产物与失败条件，这项结论才具有超越文字摘要的核对价值；任何一环缺失，都必须降低证据等级或明确保留未知。
+
+| 等级 | 最低证据 | 可以怎样表述 |
 | --- | --- | --- |
-| E1 | [什么是 eval harness](docs/e1-what-is-eval-harness.md) | 它与 benchmark、agent runner 有何区别 |
-| E2 | [Tasks 与 Environments](docs/e2-tasks-and-envs.md) | 输入、镜像、状态和隔离如何固定 |
-| E3 | [Run 与 Score](docs/e3-run-and-score.md) | Trial、Attempt、产物和 scorer 如何连接 |
-| E4 | [Harness 如何改变分数](docs/e4-harness-decides-score.md) | 模型、agent harness 与 eval harness 如何耦合 |
+| A | 锁定源码、对应上游测试和可复现实验同时成立 | 可以描述已在锁定环境复现的确定行为 |
+| B | 锁定源码与对应上游测试同时成立 | 可以描述源码和测试共同约束的行为 |
+| C | 锁定源码或官方公开文档直接支持 | 只能描述证据直接覆盖的事实 |
+| D | 从多个事实推导，但不存在直接实现证据 | 必须明确写「这是推断」并给出推导链 |
+| U | 公开证据不足、相互冲突或不适用 | 必须保留未知，不能用猜测补齐矩阵 |
 
-公开研究的一个受控网格显示：在 SWE-bench Verified 的 100 题子集上，同一模型从最小 harness 换到完整 harness，平均 pass@1 可移动 8.5–13.0 个百分点；该实验的平均 harness 方差是模型方差的 7.80 倍。这里引用的是 2026-05-07 的 [arXiv:2605.23950](https://arxiv.org/abs/2605.23950)，本仓库没有复跑，也不把它外推成普遍规律。
+### 能力状态
 
-![Harness 与 model 的受控交叉](assets/harness-model-cross.svg)
+比较表不会用模糊的「支持/不支持」掩盖条件。每个能力状态只能取以下值：
 
-## 结论怎样被约束
+| 状态 | 含义 |
+| --- | --- |
+| `default` | 默认路径直接具备 |
+| `optional` | 官方实现存在，但需要配置启用 |
+| `extension` | 通过插件、Hook 或扩展协议提供 |
+| `external` | 需要 Harness 之外的系统提供 |
+| `absent` | 锁定版本中有充分证据表明不存在 |
+| `unknown` | 公开证据不足，不能判断 |
+| `not-applicable` | 该能力不适用于当前对象或比较维度 |
 
-每篇分析把依据分成四类：锁定 commit 下的源码、上游测试与 fixture、官方文档、以及正文明写的「这是推断」。仓库不会把 artifact 检查说成生产部署证明，也不会把第三方 benchmark pass 说成个人能力或发布授权。
+横向比较必须先完成各方独立证据，再汇总为矩阵；仓库不会给六个项目算一个脱离场景的总分。
 
-CI 在普通链接和测试之外执行三道专门门禁：
-
-1. **anchors**：逐条确认 `repo!path:line` 仍指向锁定源码中的真实行。
-2. **coverage**：每篇 A/E 文章必须达到 frontmatter 声明的跨仓最低覆盖数。
-3. **matrix**：标记过的对照矩阵中，每个数据格必须有源码锚点、官方 HTTPS 链接，或明确写「这是推断」。
-
-训练奖励、checkpoint 选择与独立发布评估在文档中严格分开。Trial 是统计单位；Attempt 只用于恢复基础设施错误，不能把产品失败重试成通过。
+未知就是未知。
 
 ## 本地验证
 
-需要 Node.js 22.19 或更高版本；CI 使用 Node 24。
+完整检查使用 Node 24 运行，不需要也不应调用 NVM。项目自动化只使用 Node.js 标准库；上游 Checkout 由 Git submodule 管理，不会被打包进正文。
 
 ```bash
-git clone https://github.com/plwslpld-arch/harness-internals.git
-cd harness-internals
-npm run bootstrap   # 按 lock 拉取 11 个上游 checkout
-npm run check       # 来源、证据、许可、链接、敏感信息与测试
+git clone https://github.com/plwslpld-arch/agent-harness-internals.git
+cd agent-harness-internals
+npm run bootstrap
+npm run check
 ```
 
-11 个来源按完整 commit 锁定，但不 vendor 到发布内容：DeepSeek Harness、Codex、Gemini CLI、Claude Agent SDK、OpenCode、pi、mini-swe-agent、lm-evaluation-harness、Inspect AI、Terminal-Bench 1、SWE-bench。机器可读清单见 [`sources/sources.lock.yml`](sources/sources.lock.yml)。
+`npm run bootstrap` 默认准备 `core` 来源；需要复核全部来源时显式传入 `--profile all`。`npm run check` 会依次检查来源锁、文章元数据、关键结论、正式导航、内容深度、中文视觉、阶段复核、源码锚点、许可证、链接、敏感信息和单元测试。
 
-## 边界与许可
+复现优先于口号。
 
-- 这不是 DeepSeek、OpenAI、Google、Anthropic 或任何 eval 项目的官方仓库、镜像或贡献入口。
-- Claude 相关确定性结论只覆盖 MIT SDK 的公开契约；闭源实现只引用官方公开资料，不使用泄露的 prompt 转储。
-- 本仓库不生产新的 benchmark 分数；公开结果会写明日期、来源、口径和是否复跑。
-- 原创代码按 [MIT](LICENSE-CODE) 授权，原创文档按 [CC BY 4.0](LICENSE-DOCS) 授权；第三方边界见 [THIRD_PARTY.md](THIRD_PARTY.md)。
+门禁只能证明「仓库自身声明的结构和证据目前一致」，不证明生产就绪，也不证明维护者拥有某种个人能力，更不构成任何上游项目的发布授权。
 
-维护规则见 [AGENTS.md](AGENTS.md)，贡献方式见 [CONTRIBUTING.md](CONTRIBUTING.md)，变更记录见 [CHANGELOG.md](CHANGELOG.md)。
+## 边界、许可与贡献
+
+- 本仓库不是任何上游项目的官方仓库、镜像或贡献入口。
+- 不使用泄露 Prompt、来源不明的转储、未授权逆向材料或私有会话内容。
+- 公开实验会说明日期、环境、样本、失败和是否由本仓库复跑；第三方结果不会冒充本地复现。
+- 原创代码按 [MIT](LICENSE-CODE) 授权，原创文档按 [CC BY 4.0](LICENSE-DOCS) 授权；第三方许可证边界见 [THIRD_PARTY.md](THIRD_PARTY.md) 和 [NOTICE.md](NOTICE.md)。
+- 贡献前请阅读 [贡献指南](CONTRIBUTING.md)；维护与证据规则见 [仓库治理](AGENTS.md)。
+
+仓库会逐阶段发布共同基础、六条主线、横向比较、角色路径、控制实验和扩展样本。每个阶段都必须先完成反向审查，再进入下一阶段；文件数量、测试数量或第三方评分都不能单独作为「已经完成」的证据。

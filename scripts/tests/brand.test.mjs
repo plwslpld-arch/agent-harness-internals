@@ -6,6 +6,7 @@ import {
   pngDimensions,
   validateBrandManifest,
   validateBrandPublication,
+  validateReadme,
   validateRepositoryMetadata,
 } from '../check-brand.mjs';
 import { readDocument, root } from '../lib.mjs';
@@ -88,4 +89,25 @@ test('正式品牌资产来自评审赢家且 Social preview 尺寸正确', () =
   assert.equal(actualBrand.winner, 'candidate-b-bracket');
   assert.deepEqual(pngDimensions(preview), { width: 1280, height: 640 });
   assert.deepEqual(validateBrandPublication(actualBrand, diagrams, { root }), []);
+});
+
+test('README 使用正式组合标并完整解释定位、状态和证据边界', () => {
+  const readme = readFileSync(join(root, 'README.md'), 'utf8');
+
+  assert.deepEqual(validateReadme(readme), []);
+});
+
+test('README 契约拒绝旧定位、英文入口和过度承诺', () => {
+  const bad = `<img src="assets/harness-internals.svg" alt="Harness Internals">
+# Harness Internals
+两种 harness，一个可核对的源码知识库
+[English](README.en.md)
+所有课程已经完整覆盖，可直接证明生产就绪。
+`;
+  const failures = validateReadme(bad).join('\n');
+
+  assert.match(failures, /正式中文组合标/u);
+  assert.match(failures, /旧定位/u);
+  assert.match(failures, /英文入口/u);
+  assert.match(failures, /过度承诺/u);
 });

@@ -112,12 +112,48 @@ export function validateBrandPublication(manifest, diagramManifest, options = {}
   return errors;
 }
 
+export function validateReadme(content) {
+  const errors = [];
+  if (typeof content !== 'string') return ['README 必须是文本'];
+  if (!/<img\b[^>]*src=["']assets\/brand\/logo-lockup\.svg["'][^>]*alt=["'][^"']*[\u3400-\u9fff][^"']*["']/iu.test(content)
+    && !/<img\b[^>]*alt=["'][^"']*[\u3400-\u9fff][^"']*["'][^>]*src=["']assets\/brand\/logo-lockup\.svg["']/iu.test(content)) {
+    errors.push('README 顶部必须使用带中文替代文本的正式中文组合标');
+  }
+  const required = [
+    'Agent Harness 内部原理', 'Agent Harness 是唯一主线', 'Eval 是横切验证能力', '当前状态', '阅读路径',
+    '证据等级', '能力状态', '锁定来源', 'Node 24', 'npm run check', '不证明生产就绪', '不是任何上游项目的官方仓库',
+  ];
+  for (const phrase of required) if (!content.includes(phrase)) errors.push(`README 缺少必要说明：${phrase}`);
+  for (const harness of ['DSH', 'Codex', 'Gemini CLI', 'Claude', 'pi', 'OpenCode']) {
+    if (!content.includes(harness)) errors.push(`README 缺少一级主线：${harness}`);
+  }
+  for (const status of ['outline', 'draft', 'reviewed', 'verified', 'stale']) {
+    if (!new RegExp(`\\b${status}\\b`, 'u').test(content)) errors.push(`README 缺少文章状态：${status}`);
+  }
+  for (const grade of ['A', 'B', 'C', 'D', 'U']) {
+    if (!new RegExp(`(?:^|[|、/ ])${grade}(?:$|[|、/ ])`, 'mu').test(content)) errors.push(`README 缺少证据等级：${grade}`);
+  }
+  const oldPatterns = [
+    /assets\/(?:harness-internals|harness-coupling|agent-harness-matrix|dsh-codex-subsystems|harness-model-cross)\.svg/u,
+    /README\.en\.md/u,
+    /两种 harness，一个可核对的源码知识库/iu,
+    /plwslpld-arch\/harness-internals/u,
+    /<h1[^>]*>\s*Harness Internals\s*<\/h1>/iu,
+  ];
+  if (oldPatterns.some((pattern) => pattern.test(content))) errors.push('README 仍含旧定位、旧仓库标识或旧视觉');
+  if (/\[(?:English|英文)\]\([^)]*\)/iu.test(content)) errors.push('README 不得提供英文入口');
+  if (/(?:可直接证明生产就绪|已经生产就绪|保证生产就绪|所有课程已经完整覆盖)/u.test(content)) errors.push('README 含过度承诺');
+  return errors;
+}
+
 function main() {
   const brand = readDocument(join(root, 'assets', 'brand', 'brand.yml'));
   const metadata = readDocument(join(root, '.github', 'repository-metadata.yml'));
+  const readme = readFileSync(join(root, 'README.md'), 'utf8');
   const errors = [
     ...validateBrandPublication(brand, readDocument(join(root, 'assets', 'diagrams', 'manifest.yml')), { root }),
     ...validateRepositoryMetadata(metadata),
+    ...validateReadme(readme),
   ];
   if (!fail(errors)) console.log(`品牌门禁：${brand.title}（${brand.status}），GitHub 元数据等待最终部署阶段应用`);
 }
