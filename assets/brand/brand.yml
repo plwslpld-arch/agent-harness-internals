@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "status": "designing",
+  "status": "published",
   "repository": "agent-harness-internals",
   "title": "Agent Harness 内部原理",
   "concept": "用抽象的约束边界、任务轨迹和核对点表达 Harness 内部结构。",
-  "winner": null,
+  "winner": "candidate-b-bracket",
   "assets": {
     "mark": "assets/brand/logo-mark.svg",
     "lockup": "assets/brand/logo-lockup.svg",
@@ -14,5 +14,10 @@
   "socialPreview": {
     "width": 1280,
     "height": 640
+  },
+  "renderer": {
+    "name": "sharp",
+    "version": "0.35.3",
+    "script": "scripts/render-brand.mjs"
   }
 }

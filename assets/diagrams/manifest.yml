@@ -1,4 +1,29 @@
 {
   "schemaVersion": 1,
-  "diagrams": []
+  "diagrams": [
+    {
+      "id": "brand-logo-mark",
+      "path": "assets/brand/logo-mark.svg",
+      "type": "brand",
+      "scope": "repository",
+      "alt": "Agent Harness 内部原理的约束边界与任务轨迹核心标记",
+      "claims": []
+    },
+    {
+      "id": "brand-logo-lockup",
+      "path": "assets/brand/logo-lockup.svg",
+      "type": "brand",
+      "scope": "repository",
+      "alt": "Agent Harness 内部原理中文组合标",
+      "claims": []
+    },
+    {
+      "id": "brand-social-preview",
+      "path": "assets/brand/social-preview.svg",
+      "type": "brand",
+      "scope": "repository",
+      "alt": "Agent Harness 内部原理 GitHub 中文社交预览图",
+      "claims": []
+    }
+  ]
 }

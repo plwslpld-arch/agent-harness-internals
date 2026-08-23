@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" role="img" aria-labelledby="social-title social-desc">
+  <title id="social-title">Agent Harness 内部原理 GitHub 社交预览</title>
+  <desc id="social-desc">以约束边界和任务轨迹为核心标记，介绍覆盖六条主线的中文源码级可核对知识库。</desc>
+  <rect width="1280" height="640" fill="#F7FAFC"/>
+  <path d="M0 528h1280" stroke="#D9E4EA" stroke-width="2"/>
+  <path d="M1000 0h280v280z" fill="#E8F6F5"/>
+  <path d="M0 640V472L168 640z" fill="#FFF1C7"/>
+  <g transform="translate(60 94) scale(.82)">
+    <g fill="none" stroke="#17324D" stroke-linecap="square" stroke-linejoin="round" stroke-width="42">
+      <path d="M210 88h-92v336h92"/>
+      <path d="M302 88h92v336h-92"/>
+    </g>
+    <path d="M176 348l80-92 80-92" fill="none" stroke="#0B8F8C" stroke-linecap="round" stroke-linejoin="round" stroke-width="34"/>
+    <g stroke="#17324D" stroke-width="12">
+      <circle cx="176" cy="348" r="24" fill="#FFF8E8"/>
+      <rect x="232" y="232" width="48" height="48" rx="10" fill="#FFB000" transform="rotate(45 256 256)"/>
+      <circle cx="336" cy="164" r="24" fill="#EF665B"/>
+    </g>
+  </g>
+  <text x="450" y="210" fill="#17324D" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="60" font-weight="760">Agent Harness 内部原理</text>
+  <text x="454" y="282" fill="#496179" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="29" font-weight="520">从公开源码、上游测试与实验理解行动循环</text>
+  <text x="454" y="374" fill="#0B7775" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="22" font-weight="700">六条主线：DSH · Codex · Gemini CLI · Claude · pi · OpenCode</text>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="23" font-weight="620" fill="#17324D">
+    <rect x="474" y="430" width="142" height="54" rx="27" fill="#E8F6F5"/>
+    <rect x="632" y="430" width="142" height="54" rx="27" fill="#FFF1C7"/>
+    <rect x="790" y="430" width="142" height="54" rx="27" fill="#FDE9E7"/>
+    <rect x="948" y="430" width="142" height="54" rx="27" fill="#E9EEF3"/>
+    <text x="545" y="465" text-anchor="middle">源码锁定</text>
+    <text x="703" y="465" text-anchor="middle">结论分级</text>
+    <text x="861" y="465" text-anchor="middle">中文图解</text>
+    <text x="1019" y="465" text-anchor="middle">可复核运行</text>
+  </g>
+  <text x="474" y="574" fill="#496179" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="22">Agent Harness 是唯一主线 · Eval 是横切验证能力</text>
+</svg>

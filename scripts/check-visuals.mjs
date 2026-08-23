@@ -17,6 +17,7 @@ const allowedPhrases = [
   'Gemini CLI',
   'Qwen Code',
   'Claude Code',
+  'Claude',
   'Agent Loop',
   'OpenHands',
   'OpenCode',

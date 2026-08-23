@@ -24,6 +24,10 @@ function svg(body = '<text>Codex</text><text>MCP</text><text>Session</text>') {
 
 test('中文可访问元数据和允许的专名通过', () => {
   assert.deepEqual(visualFailures({ path: entry.path, content: svg() }, entry), []);
+  assert.deepEqual(visualFailures({
+    path: entry.path,
+    content: svg('<text>六条主线：DSH、Codex、Gemini CLI、Claude、pi、OpenCode</text>'),
+  }, entry), []);
 });
 
 test('缺少中文 title 或 desc 会失败', () => {

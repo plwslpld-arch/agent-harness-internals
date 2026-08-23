@@ -1,9 +1,14 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import test from 'node:test';
 import {
+  pngDimensions,
   validateBrandManifest,
+  validateBrandPublication,
   validateRepositoryMetadata,
 } from '../check-brand.mjs';
+import { readDocument, root } from '../lib.mjs';
 
 const brand = {
   schemaVersion: 1,
@@ -72,4 +77,15 @@ test('GitHub 元数据要求中文 About、核心 Topics 和最终阶段应用',
 test('仓库元数据拒绝绝对路径和非法 Topic', () => {
   assert.match(validateRepositoryMetadata({ ...metadata, socialPreview: 'C:/temp/preview.png' }).join('\n'), /仓库相对路径/u);
   assert.match(validateRepositoryMetadata({ ...metadata, topics: [...metadata.topics, 'Agent Harness'] }).join('\n'), /Topic 非法/u);
+});
+
+test('正式品牌资产来自评审赢家且 Social preview 尺寸正确', () => {
+  const actualBrand = readDocument(join(root, 'assets', 'brand', 'brand.yml'));
+  const diagrams = readDocument(join(root, 'assets', 'diagrams', 'manifest.yml'));
+  const preview = readFileSync(join(root, actualBrand.assets.socialPng));
+
+  assert.equal(actualBrand.status, 'published');
+  assert.equal(actualBrand.winner, 'candidate-b-bracket');
+  assert.deepEqual(pngDimensions(preview), { width: 1280, height: 640 });
+  assert.deepEqual(validateBrandPublication(actualBrand, diagrams, { root }), []);
 });
