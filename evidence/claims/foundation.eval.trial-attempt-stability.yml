@@ -1,0 +1,48 @@
+{
+  "id": "foundation.eval.trial-attempt-stability",
+  "harness": "foundation",
+  "dimension": "eval.trial-attempt-stability",
+  "statement": "本仓库采用固定 Trial 分母：一个 Trial 对应一个预先登记的任务与环境实例，只有基础设施故障可以在同一 Trial 内产生恢复 Attempt；已经形成可评分产品结果的失败不得靠重复 Attempt 改写为通过。",
+  "capability": "not-applicable",
+  "version": "repository-contract-2026-08-23",
+  "surface": "evaluation-statistical-contract",
+  "platform": "all",
+  "mode": "repository-normative-analysis",
+  "evidence_level": "D",
+  "inference": "Terminal-Bench 的锁定模型同时出现 n_attempts、TrialResults、failure_mode 和按 task_id 聚合 pass@k，说明上游术语与重复采样指标有自身语义；其测试把同一 task_id 的多个 TrialResults 称为 attempts。Inspect AI 可以从已保存 sample events 重建 Transcript 并重新运行 Scorer，说明执行记录与评分阶段可以分离。这些证据不能直接推出本仓库的 Trial/Attempt 定义，因此本 Claim 明确登记为规范性 D 级契约：固定 Trial 作为统计单位，Attempt 仅用于基础设施恢复，并保留上游术语差异。",
+  "evidence": [
+    {
+      "type": "source",
+      "source": "terminal-bench",
+      "commit": "d28711d0da2675d0bb1d56de45ae5df6082438a3",
+      "path": "terminal_bench/harness/models.py",
+      "lines": "28-49",
+      "excerpt": "n_attempts: int = 1"
+    },
+    {
+      "type": "upstream-test",
+      "source": "terminal-bench",
+      "commit": "d28711d0da2675d0bb1d56de45ae5df6082438a3",
+      "path": "tests/unit/models/test_harness_models.py",
+      "lines": "26-39",
+      "excerpt": "Create 3 attempts for a single task, with 2 successful attempts"
+    },
+    {
+      "type": "source",
+      "source": "inspect-ai",
+      "commit": "5679e7e526c546c86fb8f831033eb0dcfc3dea64",
+      "path": "src/inspect_ai/_eval/score.py",
+      "lines": "438-493",
+      "excerpt": "load a copy of the current sample events into the transcript"
+    },
+    {
+      "type": "upstream-test",
+      "source": "inspect-ai",
+      "commit": "5679e7e526c546c86fb8f831033eb0dcfc3dea64",
+      "path": "tests/_eval/test_score.py",
+      "lines": "405-424",
+      "excerpt": "scored_log = await score_async("
+    }
+  ],
+  "last_verified": "2026-08-23"
+}

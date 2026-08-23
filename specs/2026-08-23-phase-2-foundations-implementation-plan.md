@@ -152,13 +152,13 @@
 - 修改：`assets/diagrams/manifest.yml`
 - 修改：`evidence/claims/foundations/evidence-map.yml`
 
-- [ ] 从 Agent Harness 和至少两个 Eval 参照分别锁定 Trace、Artifact、Trial、Attempt、Scorer 与 Feedback 的证据。
-- [ ] 用一个包含基础设施失败和产品失败的例子固定 Trial 分母，说明哪些 Attempt 可以恢复、哪些结果不能重试成通过。
-- [ ] 分开训练奖励、Checkpoint 选择和独立发布评测；Feedback Adapter 语义未实现或证据不足时，使用 `external`、`absent` 或 `unknown` 并写清条件，不能暗示已经接入。
-- [ ] 绘制评测接入图：任务与环境 → Trial/Attempt → Trace/Artifact → Scorer → 反馈或发布门槛。
-- [ ] 注册 Trial 与 Attempt 分离 Claim，并明确它是本仓库采用的统计契约还是某个上游的默认行为。
-- [ ] 运行全部局部门禁和渲染复核。
-- [ ] 提交：`docs(foundations): 发布 Trace 与评测接入基础`。
+- [x] 从 Agent Harness 和至少两个 Eval 参照分别锁定 Trace、Artifact、Trial、Attempt、Scorer 与 Feedback 的证据。
+- [x] 用一个包含基础设施失败和产品失败的例子固定 Trial 分母，说明哪些 Attempt 可以恢复、哪些结果不能重试成通过。
+- [x] 分开训练奖励、Checkpoint 选择和独立发布评测；Feedback Adapter 语义未实现或证据不足时，使用 `external`、`absent` 或 `unknown` 并写清条件，不能暗示已经接入。
+- [x] 绘制评测接入图：任务与环境 → Trial/Attempt → Trace/Artifact → Scorer → 反馈或发布门槛。
+- [x] 注册 Trial 与 Attempt 分离 Claim，并明确它是本仓库采用的统计契约还是某个上游的默认行为。
+- [x] 运行全部局部门禁和渲染复核。
+- [x] 提交：`docs(foundations): 发布 Trace 与评测接入基础`。
 
 ### Task 8：正式导航与旧共同入口退场
 

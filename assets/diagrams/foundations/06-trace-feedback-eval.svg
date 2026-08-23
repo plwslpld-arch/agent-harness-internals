@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 920" role="img" aria-labelledby="eval-title eval-desc">
+  <title id="eval-title">从固定试验到轨迹、制品、评分与反馈的评测接入流程</title>
+  <desc id="eval-desc">任务和环境先登记固定试验；仅基础设施故障可在试验内产生恢复尝试；规范尝试留下轨迹与制品供评分器计算结果；反馈可进入调试或显式训练适配器，独立发布评测使用隔离留出集。</desc>
+  <defs>
+    <marker id="eval-arrow" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto">
+      <path d="M0 0l14 7-14 7z" fill="#0B8F8C"/>
+    </marker>
+    <marker id="eval-warn" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto">
+      <path d="M0 0l14 7-14 7z" fill="#B34A3C"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="920" rx="32" fill="#F7FAFC"/>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <text x="600" y="54" text-anchor="middle" fill="#17324D" font-size="34" font-weight="760">固定试验分母，分离恢复、评分与反馈</text>
+    <text x="600" y="87" text-anchor="middle" fill="#496179" font-size="18">产品失败不能通过重复尝试改写成通过</text>
+
+    <g transform="translate(42 134)">
+      <rect width="214" height="172" rx="22" fill="#E8F1FF" stroke="#3569A8" stroke-width="3"/>
+      <text x="107" y="40" text-anchor="middle" fill="#285383" font-size="23" font-weight="760">任务与环境</text>
+      <text x="107" y="78" text-anchor="middle" fill="#17324D" font-size="17">输入、目标与初始状态</text>
+      <text x="107" y="108" text-anchor="middle" fill="#17324D" font-size="17">数据版本与随机种子</text>
+      <text x="107" y="142" text-anchor="middle" fill="#8A3D2F" font-size="15">执行前锁定</text>
+    </g>
+
+    <g transform="translate(302 118)">
+      <rect width="250" height="204" rx="24" fill="#E8F6F5" stroke="#0B8F8C" stroke-width="3"/>
+      <text x="125" y="42" text-anchor="middle" fill="#0B7775" font-size="24" font-weight="760">一个固定试验</text>
+      <text x="125" y="78" text-anchor="middle" fill="#17324D" font-size="17">唯一试验编号</text>
+      <text x="125" y="108" text-anchor="middle" fill="#17324D" font-size="17">固定任务与环境实例</text>
+      <text x="125" y="138" text-anchor="middle" fill="#17324D" font-size="17">只提交一个规范结果</text>
+      <text x="125" y="176" text-anchor="middle" fill="#8A3D2F" font-size="15" font-weight="700">始终占据一个分母</text>
+    </g>
+
+    <g transform="translate(602 118)">
+      <rect width="260" height="204" rx="24" fill="#FFF3D3" stroke="#C97A00" stroke-width="3"/>
+      <text x="130" y="42" text-anchor="middle" fill="#9B5C00" font-size="24" font-weight="760">试验内恢复尝试</text>
+      <text x="130" y="78" text-anchor="middle" fill="#17324D" font-size="17">基础设施故障才重试</text>
+      <text x="130" y="108" text-anchor="middle" fill="#17324D" font-size="17">保存原因与去重信息</text>
+      <text x="130" y="138" text-anchor="middle" fill="#17324D" font-size="17">原尝试不得悄悄消失</text>
+      <text x="130" y="176" text-anchor="middle" fill="#8A3D2F" font-size="15" font-weight="700">产品失败立即定稿</text>
+    </g>
+
+    <g transform="translate(912 134)">
+      <rect width="246" height="172" rx="22" fill="#F0ECFA" stroke="#7155A5" stroke-width="3"/>
+      <text x="123" y="40" text-anchor="middle" fill="#5C4588" font-size="23" font-weight="760">规范尝试</text>
+      <text x="123" y="78" text-anchor="middle" fill="#17324D" font-size="17">成功、失败或不可判定</text>
+      <text x="123" y="108" text-anchor="middle" fill="#17324D" font-size="17">原子提交与血缘</text>
+      <text x="123" y="142" text-anchor="middle" fill="#8A3D2F" font-size="15">不能择优挑选</text>
+    </g>
+
+    <path d="M256 220H302" fill="none" stroke="#0B8F8C" stroke-width="4" marker-end="url(#eval-arrow)"/>
+    <path d="M552 220H602" fill="none" stroke="#0B8F8C" stroke-width="4" marker-end="url(#eval-arrow)"/>
+    <path d="M862 220H912" fill="none" stroke="#0B8F8C" stroke-width="4" marker-end="url(#eval-arrow)"/>
+
+    <rect x="42" y="378" width="506" height="222" rx="24" fill="#FFFFFF" stroke="#3569A8" stroke-width="3"/>
+    <text x="295" y="420" text-anchor="middle" fill="#285383" font-size="24" font-weight="760">轨迹与制品证据</text>
+    <text x="78" y="461" fill="#17324D" font-size="18">轨迹：模型调用、工具事件、审批、时间与错误</text>
+    <text x="78" y="498" fill="#17324D" font-size="18">制品：补丁、文件、测试输出、环境快照与日志</text>
+    <text x="78" y="535" fill="#17324D" font-size="18">血缘：试验编号、尝试编号、版本与规范提交</text>
+    <text x="78" y="572" fill="#8A3D2F" font-size="16">显示层可裁剪，评分证据必须可核对</text>
+
+    <rect x="652" y="378" width="506" height="222" rx="24" fill="#FFFFFF" stroke="#0B8F8C" stroke-width="3"/>
+    <text x="905" y="420" text-anchor="middle" fill="#0B7775" font-size="24" font-weight="760">评分器与结果</text>
+    <text x="688" y="461" fill="#17324D" font-size="18">读取：目标、最终状态、轨迹或制品</text>
+    <text x="688" y="498" fill="#17324D" font-size="18">输出：分数、标签、理由与评分器版本</text>
+    <text x="688" y="535" fill="#17324D" font-size="18">聚合：保持固定分母并单列不可判定</text>
+    <text x="688" y="572" fill="#8A3D2F" font-size="16">重新评分不能改写原始执行证据</text>
+
+    <path d="M1035 306V346H295V378" fill="none" stroke="#0B8F8C" stroke-width="4" marker-end="url(#eval-arrow)"/>
+    <path d="M548 489H652" fill="none" stroke="#0B8F8C" stroke-width="4" marker-end="url(#eval-arrow)"/>
+
+    <rect x="42" y="660" width="340" height="200" rx="24" fill="#FFF3D3" stroke="#C97A00" stroke-width="3"/>
+    <text x="212" y="703" text-anchor="middle" fill="#9B5C00" font-size="23" font-weight="760">反馈去向</text>
+    <text x="75" y="744" fill="#17324D" font-size="17">人工备注与错误分析</text>
+    <text x="75" y="778" fill="#17324D" font-size="17">数据修复与提示改进</text>
+    <text x="75" y="812" fill="#8A3D2F" font-size="15">反馈本身不自动成为奖励</text>
+
+    <rect x="430" y="660" width="340" height="200" rx="24" fill="#F0ECFA" stroke="#7155A5" stroke-width="3"/>
+    <text x="600" y="703" text-anchor="middle" fill="#5C4588" font-size="23" font-weight="760">显式训练适配</text>
+    <text x="463" y="744" fill="#17324D" font-size="17">偏好对、标量奖励或可验证结果</text>
+    <text x="463" y="778" fill="#17324D" font-size="17">语义、归一化与版本必须声明</text>
+    <text x="463" y="812" fill="#8A3D2F" font-size="15">未实现时标记缺失或外部</text>
+
+    <rect x="818" y="660" width="340" height="200" rx="24" fill="#FDEDE8" stroke="#B34A3C" stroke-width="3"/>
+    <text x="988" y="703" text-anchor="middle" fill="#8A3D2F" font-size="23" font-weight="760">独立发布评测</text>
+    <text x="851" y="744" fill="#17324D" font-size="17">隔离留出集与冻结评分器</text>
+    <text x="851" y="778" fill="#17324D" font-size="17">独立于训练奖励和选点</text>
+    <text x="851" y="812" fill="#8A3D2F" font-size="15">达到门槛也不是生产授权</text>
+
+    <path d="M905 600V628H212V660" fill="none" stroke="#0B8F8C" stroke-width="4" marker-end="url(#eval-arrow)"/>
+    <path d="M382 760H430" fill="none" stroke="#C97A00" stroke-width="4" marker-end="url(#eval-arrow)"/>
+    <path d="M905 600V630H988V660" fill="none" stroke="#B34A3C" stroke-width="4" stroke-dasharray="10 8" marker-end="url(#eval-warn)"/>
+    <text x="962" y="624" text-anchor="middle" fill="#8A3D2F" font-size="14">隔离重跑</text>
+  </g>
+</svg>

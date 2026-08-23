@@ -72,6 +72,14 @@
       "scope": "docs/foundations/05-session-context-memory.md",
       "alt": "持久会话、单次模型上下文、压缩、外部记忆和恢复检查的中文状态生命周期图",
       "claims": ["foundation.state.session-is-not-context"]
+    },
+    {
+      "id": "foundation-trace-feedback-eval",
+      "path": "assets/diagrams/foundations/06-trace-feedback-eval.svg",
+      "type": "flow",
+      "scope": "docs/foundations/06-trace-feedback-eval.md",
+      "alt": "固定试验、恢复尝试、轨迹制品、评分反馈和独立发布评测的中文流程图",
+      "claims": ["foundation.eval.trial-attempt-stability"]
     }
   ]
 }
