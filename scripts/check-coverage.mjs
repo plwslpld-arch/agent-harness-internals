@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-// 多仓文章的证据覆盖率报告。P0 只报告，不设阈值、不让 CI 失败。
+// 多仓文章的证据覆盖率门禁。每篇 a/e 文章在 frontmatter 声明四个来源的最低锚点数。
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { analysisFiles, parseFrontmatter } from './analysis-metadata.mjs';
+import { fail } from './lib.mjs';
 
 export const AGENT_REPOS = [
   'deepseek-harness',
@@ -92,22 +93,40 @@ export function coverageRows(files = analysisFiles()) {
     return [{
       article: file.relativePath,
       counts: countCoverage(file.content, targets, boundRepo ?? targets[0]),
+      minimums: metadata?.coverage_min,
+      targets,
     }];
   });
+}
+
+export function coverageFailures(rows) {
+  const errors = [];
+  for (const { article, counts, minimums, targets = Object.keys(counts) } of rows) {
+    for (const repo of targets) {
+      const minimum = minimums?.[repo];
+      if (!Number.isInteger(minimum) || minimum < 1) {
+        errors.push(`${article}: coverage_min.${repo} must be a positive integer`);
+      } else if ((counts[repo] ?? 0) < minimum) {
+        errors.push(`${article}: ${repo}=${counts[repo] ?? 0} < ${minimum}`);
+      }
+    }
+  }
+  return errors;
 }
 
 function main() {
   const rows = coverageRows();
   if (rows.length === 0) {
-    console.log('覆盖率报告：当前没有 docs/aN-*.md 或 docs/eN-*.md 目标（P0 仅报告，不拦截）');
+    console.log('覆盖率门禁：当前没有 docs/aN-*.md 或 docs/eN-*.md 目标');
     return;
   }
 
-  console.log('覆盖率报告（P0 仅报告，不拦截）');
+  console.log('覆盖率门禁');
   for (const { article, counts } of rows) {
     const summary = Object.entries(counts).map(([repo, count]) => `${repo}=${count}`).join('  ');
     console.log(`${article}: ${summary}`);
   }
+  fail(coverageFailures(rows));
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();

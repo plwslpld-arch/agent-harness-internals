@@ -1,6 +1,6 @@
 # 仓库写作与维护规则
 
-这是一个中文源码分析仓库，研究对象是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（下称 dsh）。读者是想搞懂 agent harness 内部构造的工程师。
+这是一个中文源码分析仓库，研究 agent harness 怎么造、eval harness 怎么把它量出来。DeepSeek Harness（下称 dsh）保留为深度样本，Codex、Gemini CLI、Claude Agent SDK 与四个 eval harness 进入同一套证据门禁。
 
 ## 一条核心规则
 
@@ -75,7 +75,8 @@ cp -r shuorenhua ~/.claude/skills/shuorenhua
 | 路径 | 职责 |
 | --- | --- |
 | `README.md` | 唯一导航入口。不要新增平行的 QUICKSTART / LEARNING_PATH。 |
-| `docs/` | 正文，扁平结构，ASCII slug 文件名 + 中文标题。 |
+| `docs/` | 跨 harness 正文与入口，ASCII slug 文件名 + 中文标题。 |
+| `docs/deep/` | 单一实现的深读；当前保留 DSH 专属内容。 |
 | `sources/` | 上游 submodule 与 commit 锁定。 |
 | `research/runtime-evidence/` | 真实运行记录：环境、命令、退出码、产物。**没跑过的实验不要写进这里。** |
 | `scripts/` | 零依赖的校验脚本。 |
@@ -91,12 +92,15 @@ title: KV-Cache：没有一行缓存代码，为什么还能一直命中
 sources: [{"repo":"deepseek-harness","path":"packages/llm/llm-deepseek/src/serialize.ts","commit":"<40-hex>"}]
 last_verified: 2026-08-16
 status: draft
+coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk":1}
 ---
 ```
 
 - `status` 取 `draft` / `reviewed` / `stale`。
 - `sources[].commit` 必须等于 `sources/sources.lock.yml` 里的值（`stale` 除外）。
 - `sources[].path` 会被 `git cat-file -e` 实证。
+- `docs/aN-*.md` 的 `coverage_min` 必须覆盖四个 agent 主角；`docs/eN-*.md` 必须覆盖四个 eval 主角。值是该来源在本篇的最低源码锚点数，至少为 1。
+- 证据矩阵前写 `<!-- evidence-matrix -->`。首列是维度名，其余数据格必须含源码锚点、HTTPS 官方链接或正文明写「这是推断」。
 
 ## 校验
 
@@ -107,7 +111,8 @@ status: draft
 | `sources:verify` | submodule 与 lock 一致、无本地改动 |
 | `check:analysis` | frontmatter 完整、commit 与 lock 一致、路径存在 |
 | `check:anchors` | **正文里的 `文件:行号` 真的指向那一行**（行号越界或指向空行即失败）；引用后面跟了「原文片段」时，还会校验那段文字确实出现在被引区间里 |
-| `check:coverage` | 对未来的 `docs/aN-*.md` / `docs/eN-*.md` 按主角统计跨仓锚点；P0 只报告，不设阈值 |
+| `check:coverage` | 对 `docs/aN-*.md` / `docs/eN-*.md` 按主角统计跨仓锚点，低于 frontmatter 阈值即失败 |
+| `check:matrix` | 标记为 evidence-matrix 的对照表，每个数据格必须带锚点、官方链接或明确推断 |
 | `check:style` | 中文文风：破折号密度、禁用表达、对仗句、引号统一、英文引文带中文；句长节奏只报告不拦 |
 | `check:portability` | LF 换行、无机器绝对路径、零依赖 |
 | `check:licenses` | 许可证文件与哈希 |

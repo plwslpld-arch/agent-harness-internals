@@ -4,6 +4,7 @@ import {
   AGENT_REPOS,
   EVAL_REPOS,
   countCoverage,
+  coverageFailures,
   coverageTargets,
 } from '../check-coverage.mjs';
 
@@ -32,4 +33,12 @@ Gemini 示例：\`gemini-cli!packages/core/src/core/client.ts:9\`
     'gemini-cli': 0,
     'claude-agent-sdk': 1,
   });
+});
+
+test('reports every repository below its article threshold', () => {
+  assert.deepEqual(coverageFailures([{
+    article: 'docs/a1-system-prompt.md',
+    counts: { 'deepseek-harness': 2, codex: 1 },
+    minimums: { 'deepseek-harness': 2, codex: 2 },
+  }]), ['docs/a1-system-prompt.md: codex=1 < 2']);
 });
