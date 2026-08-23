@@ -15,7 +15,7 @@
   - 计划：`specs/2026-08-23-phase-1-brand-entry-implementation-plan.md`
   - 验收：三个 Logo 方向完成渲染比较，最佳方案及 Social preview 发布，入口不夸大完成度。
 - [ ] 阶段 2：共同基础课程。
-  - 计划在阶段 1 复核通过后编写。
+  - 计划：`specs/2026-08-23-phase-2-foundations-implementation-plan.md`
   - 验收：六篇基础课程达到 `reviewed`，图示、证据、中文和内容门禁通过。
 - [ ] 阶段 3A：DeepSeek Harness 主线。
   - 验收：现有长文逐篇重审，完整任务链、评测接口、图示和实验通过。
