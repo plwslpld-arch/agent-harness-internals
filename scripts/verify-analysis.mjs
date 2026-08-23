@@ -4,7 +4,13 @@
 // - 声明的路径必须在该 commit 下真实存在
 // - last_verified 必须是日期，status 必须在允许集合内
 import { join } from 'node:path';
-import { analysisFiles, parseFrontmatter } from './analysis-metadata.mjs';
+import {
+  analysisFiles,
+  articleKind,
+  articleMetadataFailures,
+  parseFrontmatter,
+  validOfficialDocumentSource,
+} from './analysis-metadata.mjs';
 import { checkoutsDir, fail, git, readManifest } from './lib.mjs';
 
 const { manifest, locks } = readManifest();
@@ -19,19 +25,30 @@ for (const file of files) {
     errors.push(`${file.relativePath}: 缺少 YAML frontmatter`);
     continue;
   }
-  for (const field of ['title', 'sources', 'last_verified', 'status']) {
-    if (!metadata[field] || (Array.isArray(metadata[field]) && !metadata[field].length)) {
-      errors.push(`${file.relativePath}: 缺少 ${field}`);
+  const kind = articleKind(file.relativePath);
+  if (kind) {
+    errors.push(...articleMetadataFailures(file.relativePath, metadata));
+  } else {
+    for (const field of ['title', 'sources', 'last_verified', 'status']) {
+      if (!metadata[field] || (Array.isArray(metadata[field]) && !metadata[field].length)) {
+        errors.push(`${file.relativePath}: 缺少 ${field}`);
+      }
     }
-  }
-  if (!/^\d{4}-\d{2}-\d{2}$/u.test(metadata.last_verified ?? '')) {
-    errors.push(`${file.relativePath}: last_verified 必须是 YYYY-MM-DD`);
-  }
-  if (!allowedStatus.has(metadata.status)) {
-    errors.push(`${file.relativePath}: status 非法（允许 ${[...allowedStatus].join(' / ')}）：${metadata.status}`);
+    if (!/^\d{4}-\d{2}-\d{2}$/u.test(metadata.last_verified ?? '')) {
+      errors.push(`${file.relativePath}: last_verified 必须是 YYYY-MM-DD`);
+    }
+    if (!allowedStatus.has(metadata.status)) {
+      errors.push(`${file.relativePath}: status 非法（允许 ${[...allowedStatus].join(' / ')}）：${metadata.status}`);
+    }
   }
   if (!Array.isArray(metadata.sources)) continue;
   for (const source of metadata.sources) {
+    if (source?.type === 'official-doc') {
+      if (!validOfficialDocumentSource(source)) {
+        errors.push(`${file.relativePath}: official-doc 来源必须包含标题、HTTPS URL 和 YYYY-MM-DD 访问日期`);
+      }
+      continue;
+    }
     if (!source || typeof source !== 'object' || !sourceIds.has(source.repo)) {
       errors.push(`${file.relativePath}: source 条目的 repo 不在 sources.yml 中`);
       continue;
