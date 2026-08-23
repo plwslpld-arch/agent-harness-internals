@@ -1,0 +1,90 @@
+{
+  "stage": "brand-selection",
+  "date": "2026-08-23",
+  "commit": "a66f350c84e846649541e11cb87dfa1529c3393c",
+  "promises": [
+    {"id": "p-three-directions", "statement": "三个 Logo 方向均有独立矢量源和多尺寸渲染证据。"},
+    {"id": "p-adversarial-scoring", "statement": "选择同时考虑辨识度、独特性、语义、中文组合、混淆风险、可访问性和可维护性。"},
+    {"id": "p-winner-pressure-test", "statement": "最高分候选经过小尺寸、深色、灰度和单色压力测试。"}
+  ],
+  "evidence": [
+    {"id": "e-candidate-sources", "promise": "p-three-directions", "type": "file", "reference": "evidence/reviews/brand-candidates/", "summary": "三个 SVG 候选和二十七张尺寸、背景、灰度及单色样张均已保存。"},
+    {"id": "e-contact-sheet", "promise": "p-adversarial-scoring", "type": "render", "reference": "evidence/reviews/brand-candidates/contact-sheet.png", "summary": "中文总对照图同时展示原色、六种尺寸、深色背景、灰度和单色结果。"},
+    {"id": "e-winner-renders", "promise": "p-winner-pressure-test", "type": "render", "reference": "evidence/reviews/brand-candidates/renders/b-bracket-16.png", "summary": "约束括架从 16 到 256 像素均保留左右边界和对角任务轨迹。"}
+  ],
+  "criteria": [
+    {"id": "small-size", "label": "小尺寸辨识度", "weight": 25},
+    {"id": "distinctiveness", "label": "独特性", "weight": 20},
+    {"id": "harness-relation", "label": "与 Harness 内部结构的关联", "weight": 20},
+    {"id": "chinese-lockup", "label": "中文标题组合效果", "weight": 15},
+    {"id": "confusion-risk", "label": "商标与产品混淆风险", "weight": 10},
+    {"id": "accessibility", "label": "非彩色可辨性", "weight": 5},
+    {"id": "maintainability", "label": "矢量可维护性", "weight": 5}
+  ],
+  "candidates": [
+    {
+      "id": "candidate-a-track",
+      "label": "并行轨道",
+      "scores": {"small-size": 3, "distinctiveness": 3, "harness-relation": 4, "chinese-lockup": 3, "confusion-risk": 4, "accessibility": 3, "maintainability": 4},
+      "weightedScore": 3.35,
+      "failureModes": [
+        "16 像素下三个输出箭头挤成一个色块。",
+        "整体容易被读成通用数据管道或网络路由。",
+        "灰度下中间轨道与上下轨道的语义差异明显减弱。",
+        "箭头比核对点更抢眼，会把重点误导为吞吐或导出。"
+      ]
+    },
+    {
+      "id": "candidate-b-bracket",
+      "label": "约束括架",
+      "scores": {"small-size": 4, "distinctiveness": 4, "harness-relation": 5, "chinese-lockup": 5, "confusion-risk": 4, "accessibility": 4, "maintainability": 5},
+      "weightedScore": 4.4,
+      "failureModes": [
+        "左右边界可能被误读成常见代码括号。",
+        "16 像素下三个核对点只能读成节奏点，无法分辨形状。",
+        "对角轨迹存在被误读成趋势图的轻微风险。",
+        "原色版本同时使用三种节点颜色，若继续加色会显得琐碎。"
+      ]
+    },
+    {
+      "id": "candidate-c-kernel",
+      "label": "分层内核",
+      "scores": {"small-size": 2, "distinctiveness": 3, "harness-relation": 4, "chinese-lockup": 3, "confusion-risk": 4, "accessibility": 3, "maintainability": 3},
+      "weightedScore": 3.05,
+      "failureModes": [
+        "三层结构容易被误读成数据库、服务器或技术栈。",
+        "16 和 24 像素下层间空隙接近消失。",
+        "纵向轨迹像穿过对象的固定针，行动循环语义较弱。",
+        "斜向层面与横排中文字标的视觉方向不一致。"
+      ]
+    }
+  ],
+  "selection": {
+    "winner": "candidate-b-bracket",
+    "reason": "约束括架是唯一同时明确表达边界、任务轨迹和核对点，并在单色及小尺寸下保留核心轮廓的方向。它与中文标题形成稳定的横向组合，且没有机器人或供应商视觉联想。",
+    "stressTest": {
+      "smallSize": "16 像素仍能辨认左右边界与对角轨迹；节点形状不作为小尺寸识别前提。",
+      "negativeSpace": "边界开口和中央留白在深色、灰度、单色版本中均未粘连。",
+      "lineWeight": "42 像素边界和 34 像素轨迹在 512 视口中形成稳定主次。",
+      "similarity": "保留非对称三节点轨迹和断开的左右边界，避免成为单纯代码括号图标。",
+      "lockup": "标记方形重心稳定，与中文标题横排时不需要缩小标题。"
+    }
+  },
+  "findings": [
+    {"id": "f-track-fragmentation", "priority": "medium", "status": "resolved", "summary": "并行轨道的小尺寸输出箭头碎裂，不能承担正式标记。"},
+    {"id": "f-kernel-generic", "priority": "medium", "status": "resolved", "summary": "分层内核容易与数据库和技术栈图标混淆。"},
+    {"id": "f-bracket-code-similarity", "priority": "medium", "status": "resolved", "summary": "约束括架可能接近通用代码括号，需要用非对称三节点轨迹保持差异。"},
+    {"id": "f-bracket-node-detail", "priority": "low", "status": "open", "summary": "16 像素下无法分辨三个节点形状；正式标记不应依赖节点形状传达语义。"}
+  ],
+  "resolutions": [
+    {"id": "f-track-fragmentation", "action": "淘汰并行轨道，不把其箭头结构带入正式资产。", "evidence": ["e-contact-sheet"]},
+    {"id": "f-kernel-generic", "action": "淘汰分层内核，不使用堆叠层面作为核心轮廓。", "evidence": ["e-contact-sheet"]},
+    {"id": "f-bracket-code-similarity", "action": "保留断开的左右边界、非对称对角轨迹和三个核对点，正式资产不得简化为纯括号。", "evidence": ["e-winner-renders"]}
+  ],
+  "commands": [
+    {"command": "使用固定渲染器生成三组 16、24、32、64、128、256 像素样张", "exit_code": 0, "summary": "共生成十八张尺寸样张。"},
+    {"command": "生成三组深色、灰度和单色压力样张", "exit_code": 0, "summary": "共生成九张视觉压力样张。"},
+    {"command": "打开 contact-sheet.png 执行逐项目视复核", "exit_code": 0, "summary": "未发现文字截断、字体缺失或背景粘连；约束括架得分最高。"}
+  ],
+  "result": "pass"
+}
