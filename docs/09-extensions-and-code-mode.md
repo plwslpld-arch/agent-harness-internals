@@ -2,7 +2,7 @@
 title: Extensions 与 Code Mode：让 agent 改自己的运行时，以及只给它一个 run_code
 sources: [{"repo":"deepseek-harness","path":"packages/extensions/README.md","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
 last_verified: 2026-08-16
-status: draft
+status: stale
 ---
 
 # Extensions 与 Code Mode：让 agent 改自己的运行时，以及只给它一个 run_code

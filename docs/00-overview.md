@@ -2,7 +2,7 @@
 title: 总览：一次请求是怎么拼出来、发出去、记下来的
 sources: [{"repo":"deepseek-harness","path":"packages/core/agent-loop/src/agent.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
 last_verified: 2026-08-16
-status: draft
+status: stale
 ---
 
 # 总览：一次请求是怎么拼出来、发出去、记下来的

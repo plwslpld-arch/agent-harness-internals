@@ -2,7 +2,7 @@
 title: 编排层：子代理、计划、待办、目标、钩子、工作流、任务与技能
 sources: [{"repo":"deepseek-harness","path":"packages/subagent/README.md","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
 last_verified: 2026-08-16
-status: draft
+status: stale
 ---
 
 # 编排层：子代理、计划、待办、目标、钩子、工作流、任务与技能
