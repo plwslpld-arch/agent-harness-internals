@@ -144,6 +144,14 @@
       "scope": "docs/harnesses/deepseek-harness/06-orchestration-extensions.md",
       "alt": "DSH 从当前会话控制、子智能体和批量编排到能力入口、代码编排与运行时修改的中文架构图",
       "claims": ["deepseek-harness.orchestration.extensions-share-core-loop"]
+    },
+    {
+      "id": "deepseek-harness-surfaces-feedback-eval",
+      "path": "assets/diagrams/deepseek-harness/07-surfaces-feedback-eval.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/deepseek-harness/07-surfaces-feedback-eval.md",
+      "alt": "DSH 多产品表面共享智能体核心，并将消息反馈、会话反馈、遥测、奖励适配和独立评测分层接入的中文架构图",
+      "claims": ["deepseek-harness.surfaces.protocol-adapters-not-identical", "deepseek-harness.feedback.is-not-training-reward"]
     }
   ]
 }

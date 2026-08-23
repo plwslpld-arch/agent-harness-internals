@@ -1,0 +1,20 @@
+{
+  "id": "deepseek-harness.surfaces.protocol-adapters-not-identical",
+  "harness": "deepseek-harness",
+  "dimension": "surfaces.protocol-adapters-not-identical",
+  "statement": "在锁定 DSH 中，Web、Headless、ACP 与 SDK 可以驱动或观察同一 Agent/Session 核心，但各自选择不同事件、停止语义和交互能力；跨表面评测必须保留原始 Session 并显式归一化，不能直接比较最终文本或协议 stopReason。",
+  "capability": "default",
+  "version": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+  "surface": "web-headless-acp-sdk",
+  "platform": "all",
+  "mode": "surface-projection",
+  "evidence_level": "D",
+  "evidence": [
+    {"type":"source","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/acp/acp/src/index.ts","lines":"218-226","excerpt":"if (event.type === 'assistant/message') {"},
+    {"type":"source","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/acp/acp/src/index.ts","lines":"538-544","excerpt":"throw invalidParams('mcpServers is not supported')"},
+    {"type":"source","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/bundle/headless/src/index.ts","lines":"127-133","excerpt":"io.exit(outcome.reason?.kind === 'completed' ? 0 : 1)"},
+    {"type":"source","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"python/sdk/src/deepseek_harness/client.py","lines":"138-155","excerpt":"\"session/prompt\""}
+  ],
+  "inference": "ACP 只发送已提交文本并拒绝客户端转入 MCP server，Headless 直接按内部 completed 决定退出码，Python SDK 通过桥接请求和通知工作；这些差异共同说明表面是不同协议投影。结论不扩展为所有字段的完整等价矩阵。",
+  "last_verified": "2026-08-24"
+}

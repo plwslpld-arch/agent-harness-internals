@@ -109,10 +109,10 @@
 
 ### Task 9：产品表面、反馈与评测接入
 
-- [ ] 完成 `07-surfaces-feedback-eval.md`、中文多表面图和反馈边界 Claim。
-- [ ] 覆盖 Web/Host、headless、ACP、MCP、SDK、Python 和无人值守入口的驱动关系。
-- [ ] 分开消息反馈、Session 反馈事件、遥测、内置 Benchmark、训练适配和独立发布 Eval。
-- [ ] 提交：`docs(dsh): 发布产品表面反馈与评测课程`。
+- [x] 完成 `07-surfaces-feedback-eval.md`、中文多表面图和反馈边界 Claim。
+- [x] 覆盖 Web/Host、headless、ACP、MCP、SDK、Python 和无人值守入口的驱动关系。
+- [x] 分开消息反馈、Session 反馈事件、遥测、内置 Benchmark、训练适配和独立发布 Eval。
+- [x] 提交：`docs(dsh): 发布产品表面反馈与评测课程`。
 
 ### Task 10：自验证、设计取舍与限制
 

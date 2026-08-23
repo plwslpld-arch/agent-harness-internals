@@ -1,0 +1,19 @@
+{
+  "id": "deepseek-harness.feedback.is-not-training-reward",
+  "harness": "deepseek-harness",
+  "dimension": "feedback.is-not-training-reward",
+  "statement": "在锁定 DSH 中，消息反馈保存针对一条助手消息的正负评价、可选备注和版本，Session 反馈追加自由文本事件；这些契约本身没有训练奖励、RewardAdapter 或独立发布评分语义。",
+  "capability": "optional",
+  "version": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+  "surface": "message-and-session-feedback",
+  "platform": "all",
+  "mode": "feedback-recording",
+  "evidence_level": "D",
+  "evidence": [
+    {"type":"source","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/feedback/message-feedback/src/types.ts","lines":"13-32","excerpt":"export type MessageFeedbackRating = 'positive' | 'negative'"},
+    {"type":"source","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/feedback/command-feedback/src/index.ts","lines":"62-75","excerpt":"session.append('feedback/record', { text: normalized })"},
+    {"type":"upstream-test","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"apps/web/tests/message-feedback.e2e.ts","lines":"59-112","excerpt":"persists a rating and its note across a reload, then retracts"}
+  ],
+  "inference": "公开反馈数据结构与端到端测试只覆盖记录、版本、冷读取和撤回，没有定义训练样本归因、数值奖励或发布 Scorer。将其用于训练需要仓库外或后续显式 RewardAdapter，因此当前反馈不能直接等同奖励。",
+  "last_verified": "2026-08-24"
+}
