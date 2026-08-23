@@ -64,6 +64,14 @@
       "scope": "docs/foundations/04-tools-permissions-sandbox.md",
       "alt": "工具调用依次通过暴露、策略、用户批准、平台隔离与真实执行的中文安全边界图",
       "claims": ["foundation.security.permission-is-not-sandbox"]
+    },
+    {
+      "id": "foundation-session-context-memory",
+      "path": "assets/diagrams/foundations/05-session-context-memory.svg",
+      "type": "state",
+      "scope": "docs/foundations/05-session-context-memory.md",
+      "alt": "持久会话、单次模型上下文、压缩、外部记忆和恢复检查的中文状态生命周期图",
+      "claims": ["foundation.state.session-is-not-context"]
     }
   ]
 }

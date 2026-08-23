@@ -134,13 +134,13 @@
 - 修改：`assets/diagrams/manifest.yml`
 - 修改：`evidence/claims/foundations/evidence-map.yml`
 
-- [ ] 为 Session 身份、持久事件、单次请求 Context、压缩摘要、外部 Memory 和恢复点分别寻找直接证据。
-- [ ] 用一次长会话例子展示原始事件仍存在、请求上下文被重建或压缩、恢复后副作用不能重复的条件。
-- [ ] 说明 Compaction 的信息损失、Cache 前缀变化和 Memory 检索不确定性，不把三者混成同一个“记忆”。
-- [ ] 绘制状态生命周期图，区分持久存储、派生上下文和外部记忆。
-- [ ] 注册 Session 与 Context 分离的限定 Claim，并保留无法跨项目统一的字段。
-- [ ] 运行全部局部门禁和渲染复核。
-- [ ] 提交：`docs(foundations): 发布会话上下文与记忆基础`。
+- [x] 为 Session 身份、持久事件、单次请求 Context、压缩摘要、外部 Memory 和恢复点分别寻找直接证据。
+- [x] 用一次长会话例子展示原始事件仍存在、请求上下文被重建或压缩、恢复后副作用不能重复的条件。
+- [x] 说明 Compaction 的信息损失、Cache 前缀变化和 Memory 检索不确定性，不把三者混成同一个“记忆”。
+- [x] 绘制状态生命周期图，区分持久存储、派生上下文和外部记忆。
+- [x] 注册 Session 与 Context 分离的限定 Claim，并保留无法跨项目统一的字段。
+- [x] 运行全部局部门禁和渲染复核。
+- [x] 提交：`docs(foundations): 发布会话上下文与记忆基础`。
 
 ### Task 7：Trace、Feedback 与评测接入
 
