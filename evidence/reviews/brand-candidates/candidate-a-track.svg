@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title-a desc-a">
+  <title id="title-a">候选甲：并行轨道</title>
+  <desc id="desc-a">三条任务轨道经过检查点后在同一输出边界汇合，表达模型、工具、状态与证据的受控编排。</desc>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M72 136h152c48 0 48 72 96 72h120" stroke="#17324D" stroke-width="36"/>
+    <path d="M72 256h368" stroke="#0B8F8C" stroke-width="36"/>
+    <path d="M72 376h152c48 0 48-72 96-72h120" stroke="#17324D" stroke-width="36"/>
+  </g>
+  <g fill="#FFF8E8" stroke="#17324D" stroke-width="14">
+    <circle cx="72" cy="136" r="25"/>
+    <circle cx="72" cy="256" r="25"/>
+    <circle cx="72" cy="376" r="25"/>
+  </g>
+  <path d="M290 256l30-30 30 30-30 30z" fill="#FFB000" stroke="#17324D" stroke-width="12"/>
+  <path d="M408 184l40 24-40 24zM408 232l40 24-40 24zM408 280l40 24-40 24z" fill="#EF665B"/>
+</svg>

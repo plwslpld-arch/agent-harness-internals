@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title-b desc-b">
+  <title id="title-b">候选乙：约束括架</title>
+  <desc id="desc-b">左右约束边界包住一条通过三个核对点的任务轨迹，表达 Harness 对行动循环的控制与复核。</desc>
+  <g fill="none" stroke="#17324D" stroke-linecap="square" stroke-linejoin="round" stroke-width="42">
+    <path d="M210 88h-92v336h92"/>
+    <path d="M302 88h92v336h-92"/>
+  </g>
+  <path d="M176 348l80-92 80-92" fill="none" stroke="#0B8F8C" stroke-linecap="round" stroke-linejoin="round" stroke-width="34"/>
+  <g stroke="#17324D" stroke-width="12">
+    <circle cx="176" cy="348" r="24" fill="#FFF8E8"/>
+    <rect x="232" y="232" width="48" height="48" rx="10" fill="#FFB000" transform="rotate(45 256 256)"/>
+    <circle cx="336" cy="164" r="24" fill="#EF665B"/>
+  </g>
+</svg>

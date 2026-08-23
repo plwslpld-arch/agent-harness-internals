@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title-c desc-c">
+  <title id="title-c">候选丙：分层内核</title>
+  <desc id="desc-c">三个错位层面由一条纵向轨迹贯穿，表达接口、编排、执行和证据之间的内部层次。</desc>
+  <g stroke="#17324D" stroke-linejoin="round" stroke-width="22">
+    <path d="M92 124l268-44 60 52-268 44z" fill="#EAF6F5"/>
+    <path d="M92 230l268-44 60 52-268 44z" fill="#0B8F8C"/>
+    <path d="M92 336l268-44 60 52-268 44z" fill="#FFF1C7"/>
+  </g>
+  <path d="M256 126v260" fill="none" stroke="#EF665B" stroke-linecap="round" stroke-width="30"/>
+  <g fill="#FFB000" stroke="#17324D" stroke-width="10">
+    <circle cx="256" cy="126" r="22"/>
+    <circle cx="256" cy="232" r="22"/>
+    <circle cx="256" cy="338" r="22"/>
+    <path d="M256 414l-30-44h60z"/>
+  </g>
+</svg>
