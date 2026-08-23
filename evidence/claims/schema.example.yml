@@ -1,0 +1,14 @@
+{
+  "id": "example-harness.runtime.placeholder",
+  "harness": "example-harness",
+  "dimension": "runtime.placeholder",
+  "statement": "这是结构示例，不代表任何真实 Harness 的能力结论。",
+  "capability": "unknown",
+  "version": "unverified",
+  "surface": "CLI",
+  "platform": "all",
+  "mode": "default",
+  "evidence_level": "U",
+  "evidence": [],
+  "last_verified": "2026-08-23"
+}
