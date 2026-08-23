@@ -1,0 +1,96 @@
+#!/usr/bin/env node
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, isAbsolute, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { parseFrontmatter } from './analysis-metadata.mjs';
+import { fail, listProjectFiles, posixPath, root } from './lib.mjs';
+
+const startMarker = '<!-- course-navigation:start -->';
+const endMarker = '<!-- course-navigation:end -->';
+const localLink = /(?<!!)\[[^\]]*\]\(([^)\s]+)(?:\s+["'][^"']*["'])?\)/gu;
+const publishableStatuses = new Set(['reviewed', 'verified']);
+
+function withoutFencedCode(content) {
+  let inFence = false;
+  return content.split('\n').map((line) => {
+    if (/^\s*```/u.test(line)) {
+      inFence = !inFence;
+      return '';
+    }
+    return inFence ? '' : line;
+  }).join('\n');
+}
+
+function navigationRegions(content) {
+  const clean = withoutFencedCode(content);
+  const regions = [];
+  const markers = new RegExp(`${startMarker}|${endMarker}`, 'gu');
+  let activeStart = null;
+  for (const match of clean.matchAll(markers)) {
+    if (match[0] === startMarker) {
+      if (activeStart !== null) return null;
+      activeStart = match.index + startMarker.length;
+    } else {
+      if (activeStart === null) return null;
+      regions.push(clean.slice(activeStart, match.index));
+      activeStart = null;
+    }
+  }
+  return activeStart === null ? regions : null;
+}
+
+export function navigationFailures(content, resolveDocument) {
+  const errors = [];
+  const regions = navigationRegions(content);
+  if (!regions) return ['正式导航标记不成对或发生嵌套'];
+  for (const region of regions) {
+    for (const match of region.matchAll(localLink)) {
+      const raw = match[1];
+      if (raw.startsWith('#') || /^(?:https?:|mailto:)/u.test(raw)) continue;
+      const pathPart = raw.split('#')[0].split('?')[0];
+      if (!pathPart || pathPart.endsWith('/') || !/\.md$/iu.test(pathPart)) continue;
+      let target;
+      try {
+        target = decodeURI(pathPart);
+      } catch {
+        errors.push(`${raw}: 正式导航链接 URL 编码非法`);
+        continue;
+      }
+      const document = resolveDocument(target);
+      if (typeof document !== 'string') {
+        errors.push(`${target}: 正式导航目标不存在`);
+        continue;
+      }
+      const { metadata } = parseFrontmatter(document);
+      if (!metadata) {
+        errors.push(`${target}: 正式导航目标缺少 Frontmatter`);
+        continue;
+      }
+      if (!publishableStatuses.has(metadata.status)) {
+        errors.push(`${target}: 正式导航不能链接 status=${metadata.status ?? '(缺失)'}`);
+      }
+    }
+  }
+  return errors;
+}
+
+function main() {
+  const files = listProjectFiles().filter((path) => path.endsWith('.md'));
+  const errors = [];
+  let checked = 0;
+  for (const path of files) {
+    const relativePath = posixPath(relative(root, path));
+    const content = readFileSync(path, 'utf8');
+    const fileErrors = navigationFailures(content, (target) => {
+      checked += 1;
+      const absolute = resolve(dirname(path), target);
+      const repositoryRelative = relative(root, absolute);
+      if (repositoryRelative.startsWith('..') || isAbsolute(repositoryRelative)) return undefined;
+      return existsSync(absolute) ? readFileSync(absolute, 'utf8') : undefined;
+    });
+    for (const error of fileErrors) errors.push(`${relativePath}: ${error}`);
+  }
+  if (!fail(errors)) console.log(`已检查 ${checked} 个正式导航文章链接（扫描 ${files.length} 个 Markdown 文件）`);
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();
