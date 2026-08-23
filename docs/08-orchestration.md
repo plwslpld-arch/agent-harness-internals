@@ -199,14 +199,14 @@ fork 是唯一 `inheritsParentContext = true` 的 provider（`packages/subagent/
 
 **`subagent-claude-code`** 用的是官方 SDK：`import { query as officialQuery, ... } from '@anthropic-ai/claude-agent-sdk'`（`packages/subagent/subagent-claude-code/src/run.ts:10-17`，`package.json` 里 pin 在 `0.3.220`）。provider 名固定为 `'claude-code'`（`packages/subagent/subagent-claude-code/src/index.ts:53`），能力表是全 false 的共享常量 `NO_START_CAPABILITIES`（`packages/subagent/subagent/src/out-of-process.ts:50-55`）：persona、工具过滤、深度、结构化输出一个都要不到，服务层会直接拒绝这些请求，而不是悄悄忽略。
 
-传给 SDK 的选项在 `packages/subagent/subagent-claude-code/src/run.ts:309-327`，几行逐条看：
+传给 SDK 的选项在 `packages/subagent/subagent-claude-code/src/run.ts:309-368`，几行逐条看：
 
-- `cwd: spec.cwd`（`:184`）：父会话的工作目录；父会话没有 cwd 就直接报错，不猜。
-- `pathToClaudeCodeExecutable: spec.executable`（`:185`）：路径来自 `ctx.subprocess.resolveExecutable('claude', ...)`（`packages/subagent/subagent-claude-code/src/index.ts:69-73`），也就是**走 dsh 自己的 subprocess 接缝、用清洗过的 PATH 解析**，而不是让 SDK 自己去找。
-- `env: { ...scrubbedParentEnv(), ...spec.env }`（`:186`）。
-- `persistSession: false`（`:187`）：不给宿主留会话文件。
-- `disallowedTools: ['AskUserQuestion']`（`:188`）：子代理不许向人提问。这与 §2.2 的「审批钉 never」是同一条纪律：被委派者不得自己去要授权。
-- `spawnClaudeCodeProcess`（`:189-193`）：自己接管进程 spawn，好让 dispose 时能真正杀掉。Windows 上还有一层 `.cmd`/`.bat` 的 shim，把可执行路径塞进环境变量再由 `cmd.exe` 展开（`packages/subagent/subagent-claude-code/src/process.ts:63`），避免路径进命令行被解析。
+- `cwd: spec.cwd`（`packages/subagent/subagent-claude-code/src/run.ts:320`）：父会话的工作目录；父会话没有 cwd 就直接报错，不猜。
+- `env: { ...scrubbedParentEnv(), ...spec.env }`（`packages/subagent/subagent-claude-code/src/run.ts:321`）。
+- `persistSession: false`（`packages/subagent/subagent-claude-code/src/run.ts:322`）：不给宿主留会话文件。
+- `disallowedTools`（`packages/subagent/subagent-claude-code/src/run.ts:323-325`）：任何档位都禁 `AskUserQuestion`，plan 档再禁 `ExitPlanMode`。这与 §2.2 的「审批钉 never」是同一条纪律：被委派者不得自己去要授权，也不能自行离开只规划不执行的档位。
+- `canUseTool`、`onElicitation`、`onUserDialog`（`packages/subagent/subagent-claude-code/src/run.ts:327-359`）：除了显式的 bypass 档，工具审批一律拒绝；MCP elicitation 与阻塞式用户对话也分别 decline / cancel。
+- `spawnClaudeCodeProcess`（`packages/subagent/subagent-claude-code/src/run.ts:362-367`）：自己接管进程 spawn，好让 dispose 时能真正杀掉。SDK 给出的 command、args、cwd、env 与 signal 会在 `packages/subagent/subagent-claude-code/src/process.ts:46-60` 转成 dsh 的共享 subprocess 请求，进程树仍由 dsh 统一托管。
 
 结果映射很严：只有 `subtype === 'success'`、非 `is_error`、且结果非空白才算成功，否则抛 `subagent-claude-code: Claude Code failed: <detail>`（意思就是「Claude Code 跑挂了」，后面跟具体原因）。**Claude Code 的推理、工具活动、中间消息、stderr、用量、产品 id 一律不复制进父会话**（`packages/subagent/subagent-claude-code/README.md:79`）。模型只拿到最终那段文本。
 
