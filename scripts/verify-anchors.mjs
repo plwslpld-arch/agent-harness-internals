@@ -35,12 +35,22 @@ function readLines(repo, path) {
 }
 
 const errors = [];
+// stale 的篇目照样查行号，只是查出来的问题降级成提醒。
+//
+// 原来的做法是整篇跳过，于是重锁之后全仓标 stale，这个脚本会报「已抽查
+// 0 处引用」而 CI 全绿——仓库最硬的那条保证被无声关掉了。stale 的语义是
+// 「结论待人复核」，该豁免的是 verify-analysis 里的 commit 一致性，不是
+// 行号本身。照查照报，才能拿到那份「哪些行号已经漂了」的清单；等这篇改回
+// reviewed，同一批问题立刻变成会让 CI 红的错误。
+const staleWarnings = [];
 let checked = 0;
+let staleChecked = 0;
 const files = analysisFiles();
 
 for (const file of files) {
   const { metadata } = parseFrontmatter(file.content);
-  if (metadata?.status === 'stale') continue;
+  const isStale = metadata?.status === 'stale';
+  const sink = isStale ? staleWarnings : errors;
   const boundRepos = new Set((metadata?.sources ?? []).map(({ repo }) => repo).filter(Boolean));
   const lines = file.content.split('\n');
   let inFence = false;
@@ -61,20 +71,21 @@ for (const file of files) {
       if (repo === undefined) {
         // checkout 未拉取时不误报；verify-sources 已经负责这件事。
         if (!candidates.every((id) => existsSync(join(checkoutsDir, id, '.git')))) continue;
-        errors.push(`${where}: ${candidates.join(' / ')} 中都没有 ${path}`);
+        sink.push(`${where}: ${candidates.join(' / ')} 中都没有 ${path}`);
         continue;
       }
       const source = readLines(repo, path);
       const start = Number(startRaw);
       const end = endRaw ? Number(endRaw) : start;
       checked += 1;
+      if (isStale) staleChecked += 1;
       if (start < 1 || end < start || end > source.length) {
-        errors.push(`${where}: ${path}:${startRaw}${endRaw ? `-${endRaw}` : ''} 越界（该文件共 ${source.length} 行）`);
+        sink.push(`${where}: ${path}:${startRaw}${endRaw ? `-${endRaw}` : ''} 越界（该文件共 ${source.length} 行）`);
         continue;
       }
       const window = source.slice(start - 1, Math.min(source.length, start - 1 + TOLERANCE + 1));
       if (!window.some((text) => text.trim().length > 0)) {
-        errors.push(`${where}: ${path}:${startRaw} 指向空行（其后 ${TOLERANCE} 行也为空），行号可能已经漂移`);
+        sink.push(`${where}: ${path}:${startRaw} 指向空行（其后 ${TOLERANCE} 行也为空），行号可能已经漂移`);
         continue;
       }
       // 可选的强校验：引用后面紧跟「原文片段」时，要求它真的出现在被引区间里。
@@ -85,11 +96,17 @@ for (const file of files) {
         const region = source.slice(start - 1, end).join('\n').replace(/\s+/gu, ' ');
         const needle = quoted[1].replace(/\s+/gu, ' ').trim();
         if (!region.includes(needle)) {
-          errors.push(`${where}: ${path}:${startRaw}${endRaw ? `-${endRaw}` : ''} 的引文「${needle}」在该区间里找不到`);
+          sink.push(`${where}: ${path}:${startRaw}${endRaw ? `-${endRaw}` : ''} 的引文「${needle}」在该区间里找不到`);
         }
       }
     }
   });
 }
 
-if (!fail(errors)) console.log(`已抽查 ${files.length} 篇文章中的 ${checked} 处行号引用`);
+for (const warning of staleWarnings) console.warn(`WARN(stale): ${warning}`);
+if (!fail(errors)) {
+  const note = staleChecked
+    ? `，其中 ${staleChecked} 处在 stale 篇目里，${staleWarnings.length} 处待修（只提醒不拦）`
+    : '';
+  console.log(`已抽查 ${files.length} 篇文章中的 ${checked} 处行号引用${note}`);
+}

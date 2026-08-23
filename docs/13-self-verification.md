@@ -2,7 +2,7 @@
 title: 自证与工程化：一个仓库如何证明自己没坏
 sources: [{"repo":"deepseek-harness","path":"packages/runtime-diagnostics/invariants/src/index.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
 last_verified: 2026-08-16
-status: draft
+status: stale
 ---
 
 # 自证与工程化：一个仓库如何证明自己没坏

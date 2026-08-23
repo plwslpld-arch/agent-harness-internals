@@ -2,7 +2,7 @@
 title: 横向对照：六个 harness 在同一件事上的不同做法
 sources: [{"repo":"deepseek-harness","path":"packages/core/system-prompt/src/index.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"codex","path":"codex-rs/core/src/client.rs","commit":"c4941302c73c6322b153bba13ac0a9f4396301d6"}, {"repo":"opencode","path":"packages/opencode/src/session/system.ts","commit":"4643e65ad6334de3e4e68dedc201d5fbb828c9fe"}, {"repo":"pi","path":"packages/coding-agent/src/core/system-prompt.ts","commit":"086c32e74530564922d011ade23ff582c9d63116"}, {"repo":"mini-swe-agent","path":"src/minisweagent/models/utils/cache_control.py","commit":"a83fcae82d2a08f0ee0c688f9d137b3566c097f8"}]
 last_verified: 2026-08-16
-status: draft
+status: stale
 ---
 
 # 横向对照：六个 harness 在同一件事上的不同做法

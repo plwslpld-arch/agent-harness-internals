@@ -2,7 +2,7 @@
 title: 压缩：什么时候触发、砍哪一段、怎么少付一次全价
 sources: [{"repo":"deepseek-harness","path":"packages/compaction/compaction-basic/src/region.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/compaction/compaction-basic/src/summarizer.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/compaction/compaction-basic/src/config.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/compaction/compaction-tool-result-pruner/src/index.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
 last_verified: 2026-08-16
-status: draft
+status: stale
 ---
 
 # 压缩：什么时候触发、砍哪一段、怎么少付一次全价

@@ -2,7 +2,7 @@
 title: 设计记录导读：683 篇 Agent Note 里最值得读的那些
 sources: [{"repo":"deepseek-harness","path":".agents/notes/README.md","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
 last_verified: 2026-08-16
-status: draft
+status: stale
 ---
 
 # 设计记录导读：683 篇 Agent Note 里最值得读的那些

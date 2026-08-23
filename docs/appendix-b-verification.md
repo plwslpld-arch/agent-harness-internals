@@ -2,7 +2,7 @@
 title: 附录 B：怎么自己核对这些结论
 sources: [{"repo":"deepseek-harness","path":"package.json","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
 last_verified: 2026-08-16
-status: draft
+status: stale
 ---
 
 # 附录 B：怎么自己核对这些结论

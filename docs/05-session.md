@@ -2,7 +2,7 @@
 title: Session：事件溯源、surface 与持久化
 sources: [{"repo":"deepseek-harness","path":"packages/core/session/src/types.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/core/session/src/surface.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/session/session-persistence/src/coordinator.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/session/session-checkpoint-policy/src/index.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
 last_verified: 2026-08-16
-status: draft
+status: stale
 ---
 
 # Session：事件溯源、surface 与持久化

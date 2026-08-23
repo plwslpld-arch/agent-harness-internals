@@ -2,7 +2,7 @@
 title: LLM 层：从 Message 到 SSE 帧，再到重试
 sources: [{"repo":"deepseek-harness","path":"packages/llm/llm/src/index.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/llm/llm-deepseek/src/serialize.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/llm/llm-retry/src/index.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/llm/token-meter/src/index.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
 last_verified: 2026-08-16
-status: draft
+status: stale
 ---
 
 # LLM 层：从 Message 到 SSE 帧，再到重试

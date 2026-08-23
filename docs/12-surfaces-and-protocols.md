@@ -2,7 +2,7 @@
 title: 产品表面与协议：Web / headless / ACP / MCP / SDK / Python
 sources: [{"repo":"deepseek-harness","path":"packages/acp/acp/src/index.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
 last_verified: 2026-08-16
-status: draft
+status: stale
 ---
 
 # 产品表面与协议：Web / headless / ACP / MCP / SDK / Python
@@ -454,7 +454,7 @@ DSML 属于 **DeepSeek V4 模型仓库**（`encoding_dsv4.py`），是模型侧�
 
 **ACP 面拒绝 `mcpServers` 和 `additionalDirectories`。** 一个通用 ACP 客户端按标准发过来会被 `invalidParams` 拒掉。上游把这个包定位成「automation-only」（`:2`），字面意思是「只面向自动化」，不是通用 ACP 实现。
 
-**两个协议面都不做版本协商，但不做的方式不同。** SDK 这边是**真的没有**：server 握手回一个 `serverInfo: { name, version: '0.0.1' }`（`packages/sdk/server/src/server.ts:124`），client 收到后只检查这两个字段是不是字符串（`packages/sdk/client/src/client.ts:270-274`），从不比对版本号，协议演进时两端对不上也没人会报错。ACP 这边不一样：`initialize` 是**返回** `protocolVersion` 的（`packages/acp/acp/src/index.ts:238`），只是这个实现刻意只支持一个版本，源码注释把这个选择写明了（`packages/acp/acp/src/index.ts:235`「Single-version agent」，译作「只认一个版本的 agent」；接着说 ACP 规范里「支持就回同一版本，否则回自己支持的最新版本」这两条分支在这里都落到同一个值上）。也就是说 ACP 面是「协商机制在、可选项只有一个」，客户端能从回包里发现不匹配；SDK 面是「连发现的手段都没有」。两者都属于 pre-release 姿态，没有兼容承诺，但排查成本差一个量级。
+**两个协议面都不做版本协商，但不做的方式不同。** SDK 这边是**真的没有**：server 握手回一个 `serverInfo: { name, version: '0.0.1' }`（`packages/sdk/server/src/server.ts:124`），client 收到后只检查这两个字段是不是字符串（`packages/sdk/client/src/client.ts:270-274`），从不比对版本号，协议演进时两端对不上也没人会报错。ACP 这边不一样：`initialize` 是**返回** `protocolVersion` 的（`packages/acp/acp/src/index.ts:295`），只是这个实现刻意只支持一个版本，源码注释把这个选择写明了（`packages/acp/acp/src/index.ts:291`「Single-version agent」，译作「只认一个版本的 agent」；接着说 ACP 规范里「支持就回同一版本，否则回自己支持的最新版本」这两条分支在这里都落到同一个值上）。也就是说 ACP 面是「协商机制在、可选项只有一个」，客户端能从回包里发现不匹配；SDK 面是「连发现的手段都没有」。两者都属于 pre-release 姿态，没有兼容承诺，但排查成本差一个量级。
 
 ---
 
