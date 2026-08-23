@@ -171,12 +171,12 @@
 - 修改：`.github/workflows/verify.yml`
 - 修改：`scripts/tests/brand.test.mjs`
 
-- [ ] 先测试包名、工作流徽章目标、仓库标识、About、Topics 和社交预览路径一致。
-- [ ] 将包名改为 `agent-harness-internals`，工作流与 README 不再引用旧远端名。
-- [ ] 固定中文 About 和 Topics 目标清单，记录最终阶段所需的远端应用与复核动作。
-- [ ] 不在功能分支提前修改远端仓库，以免公开元数据指向尚未发布内容。
-- [ ] 运行品牌、项目文件、链接和聚合检查。
-- [ ] 提交：`chore(github): 固定仓库对外元数据目标`。
+- [x] 先测试包名、工作流徽章目标、仓库标识、About、Topics 和社交预览路径一致。
+- [x] 将包名改为 `agent-harness-internals`，工作流与 README 不再引用旧远端名。
+- [x] 固定中文 About 和 Topics 目标清单，记录最终阶段所需的远端应用与复核动作。
+- [x] 不在功能分支提前修改远端仓库，以免公开元数据指向尚未发布内容。
+- [x] 运行品牌、项目文件、链接和聚合检查。
+- [x] 提交：`chore(github): 固定仓库对外元数据目标`。
 
 ### Task 9：阶段 1 全量对抗复核
 

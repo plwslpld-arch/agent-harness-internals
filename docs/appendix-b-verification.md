@@ -155,7 +155,7 @@ node node_modules/vitest/vitest.mjs run --config vitest.e2e.config.ts   packages
 
 结果：通过，2.03 秒真实 API 调用。同一条命令去掉 key 再跑，结果是 `1 skipped`。这一步很重要，它排除了「门控放行但其实没测」这种假通过。`packages/llm/llm-deepseek/tests/adapter.e2e.ts` 的 6 条也全过（含 thinking 开关切换、tool call 轮次的 reasoning 回传、SSE 顺序）。
 
-两个坑：**Node 必须 22 以上**（上游 `.nvmrc` 写 24；Node 20 缺 `Promise.withResolvers`，加载 agent-loop 就报错），以及 `pnpm install` 会改上游 checkout 的 `pnpm-lock.yaml`，不还原的话本仓库的 `sources:verify` 会报「checkout has local changes」，也就是这份 checkout 被你改过了。
+两个坑：**仓库检查固定使用 Node 24**；较旧版本缺少上游代码所需的运行时能力，可能在加载 Agent Loop 时直接报错。另一个问题是 `pnpm install` 会改上游 Checkout 的 `pnpm-lock.yaml`，不还原的话本仓库的 `sources:verify` 会报「Checkout 存在本地改动」，也就是这份 Checkout 已经不再等于锁定版本。
 
 **第二类：本仓库自己写的探针。** 证明力弱一些：它用手写的、模仿 dsh 请求形状的请求直接打 API，测的是 **provider 的行为**，不是 dsh 的实现。
 

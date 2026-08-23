@@ -2,14 +2,31 @@
   "schemaVersion": 1,
   "name": "agent-harness-internals",
   "visibility": "public",
-  "about": "以 Agent Harness 为主线的中文源码知识库，覆盖六种实现及其评测接入。",
+  "defaultBranch": "main",
+  "about": "以 Agent Harness 为主线的中文源码知识库，解析六种实现及其评测接入。",
   "topics": [
     "agent-harness",
     "coding-agents",
     "source-code-analysis",
     "ai-evaluation",
+    "deepseek-harness",
+    "openai-codex",
+    "gemini-cli",
+    "claude-code",
+    "pi-coding-agent",
+    "opencode",
     "chinese"
   ],
   "socialPreview": "assets/brand/social-preview.png",
-  "applyAt": "phase-6-deployment"
+  "applyAt": "phase-6-deployment",
+  "features": {
+    "issues": true,
+    "wiki": false,
+    "discussions": false
+  },
+  "branchProtection": {
+    "requiredStatusChecks": ["verify"],
+    "enforceAdmins": true,
+    "requiredApprovingReviewCount": 0
+  }
 }

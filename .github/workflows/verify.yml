@@ -1,4 +1,4 @@
-name: Verify
+name: 仓库验证
 
 on:
   pull_request:
@@ -14,14 +14,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - name: 检出仓库
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
           submodules: false
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+      - name: 配置 Node 24
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
-          node-version-file: .nvmrc
-      - name: Bootstrap fixed source checkouts
+          node-version: '24'
+      - name: 准备锁定来源
         run: npm run bootstrap
-      - name: Run repository checks
+      - name: 运行仓库检查
         run: npm run check

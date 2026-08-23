@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
 import {
@@ -7,6 +7,7 @@ import {
   validateBrandManifest,
   validateBrandPublication,
   validateReadme,
+  validateRepositoryIdentity,
   validateRepositoryMetadata,
 } from '../check-brand.mjs';
 import { readDocument, root } from '../lib.mjs';
@@ -31,16 +32,24 @@ const metadata = {
   schemaVersion: 1,
   name: 'agent-harness-internals',
   visibility: 'public',
+  defaultBranch: 'main',
   about: '以 Agent Harness 为主线的中文源码知识库，覆盖六种实现及其评测接入。',
   topics: [
     'agent-harness',
     'coding-agents',
     'source-code-analysis',
     'ai-evaluation',
+    'deepseek-harness',
+    'openai-codex',
+    'gemini-cli',
+    'claude-code',
+    'pi-coding-agent',
+    'opencode',
     'chinese',
   ],
   socialPreview: 'assets/brand/social-preview.png',
   applyAt: 'phase-6-deployment',
+  branchProtection: { requiredStatusChecks: ['verify'] },
 };
 
 test('阶段设计中的品牌与仓库元数据通过', () => {
@@ -110,4 +119,33 @@ test('README 契约拒绝旧定位、英文入口和过度承诺', () => {
   assert.match(failures, /旧定位/u);
   assert.match(failures, /英文入口/u);
   assert.match(failures, /过度承诺/u);
+});
+
+test('包名、Node 24 工作流和目标仓库标识一致', () => {
+  const packageJson = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+  const workflow = ['verify.yml', 'drift.yml']
+    .map((name) => readFileSync(join(root, '.github', 'workflows', name), 'utf8'))
+    .join('\n');
+  const readme = readFileSync(join(root, 'README.md'), 'utf8');
+
+  assert.deepEqual(validateRepositoryIdentity({
+    packageJson,
+    workflow,
+    readme,
+    nvmrcExists: existsSync(join(root, '.nvmrc')),
+  }), []);
+});
+
+test('仓库身份契约拒绝旧包名、NVM 和旧远端地址', () => {
+  const failures = validateRepositoryIdentity({
+    packageJson: { name: 'harness-internals', engines: { node: '>=22' } },
+    workflow: 'name: Verify\nnode-version-file: .nvmrc\n',
+    readme: 'https://github.com/plwslpld-arch/harness-internals',
+    nvmrcExists: true,
+  }).join('\n');
+
+  assert.match(failures, /包名/u);
+  assert.match(failures, /Node 24/u);
+  assert.match(failures, /NVM/u);
+  assert.match(failures, /旧远端地址/u);
 });

@@ -11,7 +11,10 @@ const requiredAssets = {
   socialSvg: 'assets/brand/social-preview.svg',
   socialPng: 'assets/brand/social-preview.png',
 };
-const requiredTopics = ['agent-harness', 'source-code-analysis', 'ai-evaluation'];
+const requiredTopics = [
+  'agent-harness', 'source-code-analysis', 'ai-evaluation',
+  'deepseek-harness', 'openai-codex', 'gemini-cli', 'claude-code', 'pi-coding-agent', 'opencode',
+];
 
 function safeRelativePath(value) {
   return typeof value === 'string'
@@ -60,6 +63,7 @@ export function validateRepositoryMetadata(metadata) {
   if (metadata.schemaVersion !== 1) errors.push('GitHub 元数据 schemaVersion 必须是 1');
   if (metadata.name !== 'agent-harness-internals') errors.push('GitHub 仓库名必须是 agent-harness-internals');
   if (metadata.visibility !== 'public') errors.push('GitHub 仓库必须保持 public');
+  if (metadata.defaultBranch !== 'main') errors.push('GitHub 默认分支必须是 main');
   if (typeof metadata.about !== 'string' || !han.test(metadata.about)) errors.push('必须提供中文 About');
   else if (metadata.about.length > 160) errors.push('中文 About 不能超过 160 个字符');
   if (!Array.isArray(metadata.topics)) {
@@ -76,6 +80,31 @@ export function validateRepositoryMetadata(metadata) {
     errors.push('Social preview 必须使用正式 PNG 的仓库相对路径');
   }
   if (metadata.applyAt !== 'phase-6-deployment') errors.push('GitHub 元数据只能在最终部署阶段应用');
+  if (!Array.isArray(metadata.branchProtection?.requiredStatusChecks)
+    || !metadata.branchProtection.requiredStatusChecks.includes('verify')) {
+    errors.push('分支保护必须要求 verify 状态检查');
+  }
+  return errors;
+}
+
+export function validateRepositoryIdentity({ packageJson, workflow, readme, nvmrcExists }) {
+  const errors = [];
+  if (packageJson?.name !== 'agent-harness-internals') errors.push('package.json 包名必须是 agent-harness-internals');
+  if (packageJson?.engines?.node !== '>=24.0.0 <25') errors.push('Node 版本契约必须固定为 Node 24');
+  if (typeof workflow !== 'string' || !/^name:\s*仓库验证\s*$/mu.test(workflow)
+    || !/^\s*node-version:\s*['"]?24['"]?\s*$/mu.test(workflow)) {
+    errors.push('GitHub 工作流必须使用中文名称并显式配置 Node 24');
+  }
+  for (const match of (workflow ?? '').matchAll(/^(?:name:|\s*-\s+name:)\s*(.+?)\s*$/gmu)) {
+    if (!han.test(match[1])) errors.push(`GitHub 工作流可见名称必须使用中文：${match[1]}`);
+  }
+  if (nvmrcExists || /(?:node-version-file\s*:|\.nvmrc|\bnvm\b)/iu.test(workflow ?? '')) {
+    errors.push('仓库不得依赖 NVM 或 .nvmrc');
+  }
+  if (typeof readme !== 'string' || !readme.includes('github.com/plwslpld-arch/agent-harness-internals')) {
+    errors.push('README 缺少新远端地址');
+  }
+  if (/github\.com\/plwslpld-arch\/harness-internals/u.test(readme ?? '')) errors.push('README 仍含旧远端地址');
   return errors;
 }
 
@@ -150,10 +179,15 @@ function main() {
   const brand = readDocument(join(root, 'assets', 'brand', 'brand.yml'));
   const metadata = readDocument(join(root, '.github', 'repository-metadata.yml'));
   const readme = readFileSync(join(root, 'README.md'), 'utf8');
+  const packageJson = readDocument(join(root, 'package.json'));
+  const workflow = ['verify.yml', 'drift.yml']
+    .map((name) => readFileSync(join(root, '.github', 'workflows', name), 'utf8'))
+    .join('\n');
   const errors = [
     ...validateBrandPublication(brand, readDocument(join(root, 'assets', 'diagrams', 'manifest.yml')), { root }),
     ...validateRepositoryMetadata(metadata),
     ...validateReadme(readme),
+    ...validateRepositoryIdentity({ packageJson, workflow, readme, nvmrcExists: existsSync(join(root, '.nvmrc')) }),
   ];
   if (!fail(errors)) console.log(`品牌门禁：${brand.title}（${brand.status}），GitHub 元数据等待最终部署阶段应用`);
 }
