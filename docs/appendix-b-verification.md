@@ -35,8 +35,8 @@ status: reviewed
 本仓库自带 bootstrap：
 
 ```bash
-git clone https://github.com/plwslpld-arch/harness-internals.git
-cd harness-internals
+git clone https://github.com/plwslpld-arch/agent-harness-internals.git
+cd agent-harness-internals
 npm run bootstrap
 ```
 

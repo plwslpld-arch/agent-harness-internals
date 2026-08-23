@@ -39,7 +39,7 @@ DeepSeek Harness（简称 dsh）就是 DeepSeek 在 2026 年 8 月开源的这�
 
 **一句话记住**：模型给出策略，agent harness 决定怎样行动，eval harness 决定这次行动怎样成为证据。最终分数是三者与环境的联合产物，不是模型的单独属性。
 
-![两种 harness 的耦合关系](../assets/harness-coupling.svg)
+![Agent Harness 主线与 Eval 横切验证关系图](../assets/diagrams/start/agent-harness-scope.svg)
 
 ---
 
