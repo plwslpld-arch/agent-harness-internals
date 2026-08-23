@@ -1,0 +1,145 @@
+{
+  "harness": "codex",
+  "source": "codex",
+  "commit": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+  "modules": [
+    {
+      "id": "codex-overview",
+      "article": "README.md",
+      "question": "Rust 多 crate 核心和多产品表面怎样完成一次真实 Turn？",
+      "evidence": [
+        {"path":"codex-rs/core/src/session/session.rs","type":"source","reason":"Session 主循环与 Turn 驱动入口。"},
+        {"path":"codex-rs/core/tests/suite/tool_harness.rs","type":"upstream-test","reason":"真实模型流、工具调用与结果回送测试。"},
+        {"path":"codex-rs/protocol/src/protocol.rs","type":"source","reason":"Op、Event、Turn 与 Thread 对外协议类型。"}
+      ],
+      "plannedClaims": ["codex.architecture.shared-core-multiple-surfaces", "codex.turn.tool-result-loop"]
+    },
+    {
+      "id": "codex-config-prompt-context",
+      "article": "01-config-prompt-context.md",
+      "question": "配置层、Prompt、AGENTS 与有界上下文片段怎样装配？",
+      "evidence": [
+        {"path":"codex-rs/config/src/config_toml.rs","type":"source","reason":"持久配置结构。"},
+        {"path":"codex-rs/core/src/config/mod.rs","type":"source","reason":"有效配置与覆盖解析。"},
+        {"path":"codex-rs/context-fragments/src/fragment.rs","type":"source","reason":"ContextualUserFragment 契约与边界。"},
+        {"path":"codex-rs/core/src/context_manager/history.rs","type":"source","reason":"模型可见历史与上下文管理。"},
+        {"path":"codex-rs/core/tests/suite/model_visible_layout.rs","type":"upstream-test","reason":"模型可见布局测试。"},
+        {"path":"codex-rs/core/tests/suite/prompt_caching.rs","type":"upstream-test","reason":"提示缓存与稳定性测试。"}
+      ],
+      "plannedClaims": ["codex.config.layered-and-thread-scoped", "codex.context.fragments-are-bounded"]
+    },
+    {
+      "id": "codex-thread-task-turn",
+      "article": "02-thread-task-turn.md",
+      "question": "Thread、Session、Task 与 Turn 怎样分层持有状态？",
+      "evidence": [
+        {"path":"codex-rs/core/src/codex_thread.rs","type":"source","reason":"持久 Thread 配置、存储和活动 Session 封装。"},
+        {"path":"codex-rs/core/src/session/session.rs","type":"source","reason":"Session 服务与事件处理。"},
+        {"path":"codex-rs/core/src/session/turn.rs","type":"source","reason":"Turn 输入与执行上下文。"},
+        {"path":"codex-rs/core/tests/suite/turn_state.rs","type":"upstream-test","reason":"Turn 状态转换测试。"},
+        {"path":"codex-rs/core/tests/suite/turn_input_submission.rs","type":"upstream-test","reason":"Turn 输入接纳与排队测试。"}
+      ],
+      "plannedClaims": ["codex.thread.turn-task-state-separation"]
+    },
+    {
+      "id": "codex-model-tool-loop",
+      "article": "03-model-tool-loop.md",
+      "question": "Responses 流与工具执行怎样形成可取消、可继续的闭环？",
+      "evidence": [
+        {"path":"codex-rs/core/src/client.rs","type":"source","reason":"Responses 请求与流式客户端。"},
+        {"path":"codex-rs/core/src/session/turn.rs","type":"source","reason":"模型输出消费与 Turn 结算。"},
+        {"path":"codex-rs/core/src/tools/router.rs","type":"source","reason":"工具调用路由。"},
+        {"path":"codex-rs/core/src/tools/mod.rs","type":"source","reason":"工具注册与执行模块入口。"},
+        {"path":"codex-rs/core/tests/suite/tool_parallelism.rs","type":"upstream-test","reason":"并行工具执行测试。"},
+        {"path":"codex-rs/core/tests/suite/tools.rs","type":"upstream-test","reason":"工具结果回送和继续采样测试。"}
+      ],
+      "plannedClaims": ["codex.loop.tool-results-before-continuation"]
+    },
+    {
+      "id": "codex-exec-policy-sandbox",
+      "article": "04-exec-policy-sandbox.md",
+      "question": "Policy、审批、升级和平台 Sandbox 怎样共同决定副作用？",
+      "evidence": [
+        {"path":"codex-rs/execpolicy/src/lib.rs","type":"source","reason":"命令执行策略入口。"},
+        {"path":"codex-rs/shell-escalation/src/lib.rs","type":"source","reason":"Shell 权限升级约定。"},
+        {"path":"codex-rs/sandboxing/src/manager.rs","type":"source","reason":"多平台 Sandbox 选择与命令变换。"},
+        {"path":"codex-rs/core/tests/suite/approvals.rs","type":"upstream-test","reason":"审批语义测试。"},
+        {"path":"codex-rs/core/tests/suite/exec_policy.rs","type":"upstream-test","reason":"执行策略测试。"},
+        {"path":"codex-rs/core/tests/suite/windows_sandbox.rs","type":"upstream-test","reason":"Windows Sandbox 边界测试。"}
+      ],
+      "plannedClaims": ["codex.security.approval-policy-sandbox-separation", "codex.security.platform-enforcement-differs"]
+    },
+    {
+      "id": "codex-rollout-history-memory",
+      "article": "05-rollout-history-memory.md",
+      "question": "Rollout、存储、模型上下文、压缩与长期记忆谁是权威？",
+      "evidence": [
+        {"path":"codex-rs/rollout/src/lib.rs","type":"source","reason":"Rollout 记录读写入口。"},
+        {"path":"codex-rs/thread-store/src/lib.rs","type":"source","reason":"Thread 元数据与历史存储契约。"},
+        {"path":"codex-rs/history/src/lib.rs","type":"source","reason":"消息历史持久接口。"},
+        {"path":"codex-rs/core/src/compact.rs","type":"source","reason":"本地 Compaction 流程。"},
+        {"path":"codex-rs/memories/write/src/lib.rs","type":"source","reason":"长期 Memory 写入模块。"},
+        {"path":"codex-rs/core/tests/suite/resume.rs","type":"upstream-test","reason":"恢复测试。"},
+        {"path":"codex-rs/core/tests/suite/compact.rs","type":"upstream-test","reason":"压缩测试。"},
+        {"path":"codex-rs/core/tests/suite/sqlite_state.rs","type":"upstream-test","reason":"SQLite 状态测试。"}
+      ],
+      "plannedClaims": ["codex.rollout.store-history-context-separation", "codex.compaction.resume-has-bounded-semantics"]
+    },
+    {
+      "id": "codex-extensions-code-mode",
+      "article": "06-extensions-code-mode.md",
+      "question": "多种扩展入口怎样改变模型可见能力与执行边界？",
+      "evidence": [
+        {"path":"codex-rs/skills/src/lib.rs","type":"source","reason":"Skill 发现与加载入口。"},
+        {"path":"codex-rs/hooks/src/lib.rs","type":"source","reason":"Hook 协议入口。"},
+        {"path":"codex-rs/plugin/src/lib.rs","type":"source","reason":"Plugin 数据与生命周期。"},
+        {"path":"codex-rs/codex-mcp/src/lib.rs","type":"source","reason":"MCP 服务入口。"},
+        {"path":"codex-rs/connectors/src/lib.rs","type":"source","reason":"Connector 能力入口。"},
+        {"path":"codex-rs/code-mode/src/lib.rs","type":"source","reason":"Code Mode 工具表面。"},
+        {"path":"codex-rs/core/tests/suite/plugins.rs","type":"upstream-test","reason":"Plugin 注入测试。"},
+        {"path":"codex-rs/core/tests/suite/skills.rs","type":"upstream-test","reason":"Skill 模型可见与审批测试。"},
+        {"path":"codex-rs/core/tests/suite/hooks.rs","type":"upstream-test","reason":"Hook 生命周期测试。"},
+        {"path":"codex-rs/core/tests/suite/code_mode.rs","type":"upstream-test","reason":"Code Mode 行为测试。"}
+      ],
+      "plannedClaims": ["codex.extensions.capabilities-are-dynamically-assembled", "codex.code-mode.changes-tool-surface"]
+    },
+    {
+      "id": "codex-subagents-orchestration",
+      "article": "07-subagents-orchestration.md",
+      "question": "子 Thread、活动 Agent 与线程图怎样形成可控编排？",
+      "evidence": [
+        {"path":"codex-rs/core/src/agent/control.rs","type":"source","reason":"Agent registry、状态、消息、取消和线程图。"},
+        {"path":"codex-rs/core/src/agent/control/spawn.rs","type":"source","reason":"子 Agent 创建与配置继承。"},
+        {"path":"codex-rs/core/src/agent_communication.rs","type":"source","reason":"跨线程消息事件。"},
+        {"path":"codex-rs/collaboration-mode-templates/src/lib.rs","type":"source","reason":"协作模式模板入口。"},
+        {"path":"codex-rs/core/tests/suite/multi_agent_mode.rs","type":"upstream-test","reason":"多智能体模式测试。"},
+        {"path":"codex-rs/core/tests/suite/subagent_notifications.rs","type":"upstream-test","reason":"子 Agent 通知测试。"}
+      ],
+      "plannedClaims": ["codex.orchestration.subagents-are-thread-scoped"]
+    },
+    {
+      "id": "codex-surfaces-trace-eval-design",
+      "article": "08-surfaces-trace-eval-design.md",
+      "question": "多产品表面和证据通道怎样共享核心而不共享全部语义？",
+      "evidence": [
+        {"path":"codex-rs/cli/src/main.rs","type":"source","reason":"CLI 命令入口。"},
+        {"path":"codex-rs/app-server/src/lib.rs","type":"source","reason":"App Server 协议实现入口。"},
+        {"path":"codex-rs/rollout-trace/src/lib.rs","type":"source","reason":"Rollout Trace 记录。"},
+        {"path":"codex-rs/otel/src/lib.rs","type":"source","reason":"遥测接口。"},
+        {"path":"codex-rs/feedback/src/lib.rs","type":"source","reason":"反馈数据入口。"},
+        {"path":"codex-rs/core/tests/suite/cli_stream.rs","type":"upstream-test","reason":"CLI 流输出投影测试。"},
+        {"path":"codex-rs/core/tests/suite/otel.rs","type":"upstream-test","reason":"遥测事件测试。"}
+      ],
+      "plannedClaims": ["codex.surfaces.protocol-projections-not-identical", "codex.feedback-trace.is-not-release-eval", "codex.architecture.multi-crate-boundaries-have-tradeoffs"]
+    }
+  ],
+  "risks": [
+    {"id":"current-app-source-drift","severity":"high","mitigation":"当前应用观察单独标注，不用于覆盖锁定 Commit 的实现结论。"},
+    {"id":"crate-presence-default-capability","severity":"high","mitigation":"逐项核对 Feature、配置、发现、注册、授权和实际调用链。"},
+    {"id":"approval-sandbox-collapse","severity":"high","mitigation":"Policy、审批、升级、文件、网络、进程和平台后端分层登记。"},
+    {"id":"state-surface-collapse","severity":"high","mitigation":"Rollout、Thread Store、History、Context、Compaction 与 Memory 分开说明权威和恢复语义。"},
+    {"id":"feedback-eval-collapse","severity":"high","mitigation":"Trace、OTel、Feedback、训练适配与独立发布 Eval 分开。"},
+    {"id":"protocol-stop-equivalence","severity":"high","mitigation":"各产品表面的停止、错误和取消映射回原始核心事件，不直接互证。"},
+    {"id":"rust-test-production-proof","severity":"medium","mitigation":"上游测试只证明固定平台和夹具约束，不扩大成生产就绪。"}
+  ]
+}
