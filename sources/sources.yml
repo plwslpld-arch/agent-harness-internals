@@ -35,6 +35,38 @@
       }
     },
     {
+      "id": "gemini-cli",
+      "name": "Gemini CLI",
+      "category": "reference-agents",
+      "url": "https://github.com/google-gemini/gemini-cli.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "license": {
+        "spdx": "Apache-2.0",
+        "file": "LICENSE"
+      },
+      "redistribution": {
+        "policy": "metadata-and-analysis-only",
+        "notes": "Official open-source agent harness; checkout locally and preserve attribution."
+      }
+    },
+    {
+      "id": "claude-agent-sdk",
+      "name": "Claude Agent SDK for Python",
+      "category": "reference-agents",
+      "url": "https://github.com/anthropics/claude-agent-sdk-python.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE"
+      },
+      "redistribution": {
+        "policy": "metadata-and-analysis-only",
+        "notes": "Official SDK contract surface only; do not infer closed-source Claude Code internals."
+      }
+    },
+    {
       "id": "opencode",
       "name": "OpenCode",
       "category": "comparison-agents",
@@ -80,6 +112,70 @@
       "redistribution": {
         "policy": "metadata-and-analysis-only",
         "notes": "Minimal agent-loop baseline; not a Harness dependency."
+      }
+    },
+    {
+      "id": "lm-evaluation-harness",
+      "name": "Language Model Evaluation Harness",
+      "category": "eval-harnesses",
+      "url": "https://github.com/EleutherAI/lm-evaluation-harness.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE.md"
+      },
+      "redistribution": {
+        "policy": "metadata-and-analysis-only",
+        "notes": "Evaluation harness reference; checkout locally and do not vendor source."
+      }
+    },
+    {
+      "id": "inspect-ai",
+      "name": "Inspect AI",
+      "category": "eval-harnesses",
+      "url": "https://github.com/UKGovernmentBEIS/inspect_ai.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE"
+      },
+      "redistribution": {
+        "policy": "metadata-and-analysis-only",
+        "notes": "Evaluation harness reference; checkout locally and do not vendor source."
+      }
+    },
+    {
+      "id": "terminal-bench",
+      "name": "Terminal-Bench 1",
+      "category": "eval-harnesses",
+      "url": "https://github.com/harbor-framework/terminal-bench-1.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "license": {
+        "spdx": "Apache-2.0",
+        "file": "LICENSE"
+      },
+      "redistribution": {
+        "policy": "metadata-and-analysis-only",
+        "notes": "Canonical successor of laude-institute/terminal-bench; preserve Apache attribution."
+      }
+    },
+    {
+      "id": "swe-bench",
+      "name": "SWE-bench",
+      "category": "eval-harnesses",
+      "url": "https://github.com/SWE-bench/SWE-bench.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE"
+      },
+      "redistribution": {
+        "policy": "metadata-and-analysis-only",
+        "notes": "Canonical successor of princeton-nlp/SWE-bench; checkout locally and do not vendor source."
       }
     }
   ]

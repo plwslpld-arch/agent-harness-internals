@@ -13,6 +13,16 @@
       "licenseSha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc"
     },
     {
+      "id": "gemini-cli",
+      "commit": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+      "licenseSha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd"
+    },
+    {
+      "id": "claude-agent-sdk",
+      "commit": "542fefb3b94be87760b2513fff889b91bb5b6672",
+      "licenseSha256": "cebdde8a8fb9ee59e5eaaed19578bf8085aa7047562259c31f38f225c26f6812"
+    },
+    {
       "id": "opencode",
       "commit": "3a31c4ea801915c0b050df4b3842997ea62b6e93",
       "licenseSha256": "625f0f619133f89bbbb2abe37369613dfa1885eba1e50d02170deb62bb42cb6b"
@@ -26,6 +36,26 @@
       "id": "mini-swe-agent",
       "commit": "25941c89cfbc91eb40b3f8756348c91d9977d57e",
       "licenseSha256": "0f796e58f91d1c07bb2c1b1d0f8bf3a83017c3a5dec1bdc6fae733b2cd2e875b"
+    },
+    {
+      "id": "lm-evaluation-harness",
+      "commit": "4e7e0d47f33bc71070c1d38394bafbb52b117163",
+      "licenseSha256": "a806e42547620dffbc2ec0333322c8b3523b4af11e059be14ef81aa5b1ae021f"
+    },
+    {
+      "id": "inspect-ai",
+      "commit": "5679e7e526c546c86fb8f831033eb0dcfc3dea64",
+      "licenseSha256": "c593c2afc81388521eaeb03f0d1a4b01bc3e5147ed9cb16c1f129e5be353b6af"
+    },
+    {
+      "id": "terminal-bench",
+      "commit": "d28711d0da2675d0bb1d56de45ae5df6082438a3",
+      "licenseSha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "id": "swe-bench",
+      "commit": "7a21e05772954cc81471ae19d56f436cecf43c54",
+      "licenseSha256": "2bd2e08df7147f67a69b42c10efae09bd4bf119df397371036187d5dd1b02f57"
     }
   ]
 }

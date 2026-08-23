@@ -23,24 +23,30 @@
 [submodule "sources/checkouts/gemini-cli"]
 	path = sources/checkouts/gemini-cli
 	url = https://github.com/google-gemini/gemini-cli.git
+	shallow = true
 	branch = main
 [submodule "sources/checkouts/claude-agent-sdk"]
 	path = sources/checkouts/claude-agent-sdk
 	url = https://github.com/anthropics/claude-agent-sdk-python.git
+	shallow = true
 	branch = main
 [submodule "sources/checkouts/lm-evaluation-harness"]
 	path = sources/checkouts/lm-evaluation-harness
 	url = https://github.com/EleutherAI/lm-evaluation-harness.git
+	shallow = true
 	branch = main
 [submodule "sources/checkouts/inspect-ai"]
 	path = sources/checkouts/inspect-ai
 	url = https://github.com/UKGovernmentBEIS/inspect_ai.git
+	shallow = true
 	branch = main
 [submodule "sources/checkouts/terminal-bench"]
 	path = sources/checkouts/terminal-bench
 	url = https://github.com/harbor-framework/terminal-bench-1.git
+	shallow = true
 	branch = main
 [submodule "sources/checkouts/swe-bench"]
 	path = sources/checkouts/swe-bench
 	url = https://github.com/SWE-bench/SWE-bench.git
+	shallow = true
 	branch = main
