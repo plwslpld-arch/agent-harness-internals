@@ -571,10 +571,11 @@ Logo 设计先产生三个可比较的矢量方向，按小尺寸辨识度、独
 - 全量复核结论、导航、图像和来源。
 - 使用 Node 24 运行完整检查，不调用 NVM。
 - 合并隔离分支。
+- 在最终提交完成后受控重写提交消息，移除 Codex/Claude 的 `Co-Authored-By` 尾注和 Claude Session 元数据；保留人类作者、文件内容和提交顺序，并在强推后恢复保护规则。
 - 推送 GitHub。
 - 完成仓库改名、Description、Topics、默认分支与保护规则核验。
 - 上传并验证 GitHub Social preview。
-- 验证公开仓库页面、About、Topics、README、相对链接和资产渲染。
+- 验证公开仓库页面、About、Topics、README、Contributors、相对链接和资产渲染；贡献者页不得再把 Codex 或 Claude 列为协作者。
 
 ## 十四、逐阶段对抗复核
 
@@ -616,5 +617,6 @@ Logo 设计先产生三个可比较的矢量方向，按小尺寸辨识度、独
 - 逐项人工审计没有关键矛盾或缺失。
 - 完整检查在 Node 24 下通过。
 - GitHub 仓库完成改名、About、Topics、Social preview、元数据更新、推送和公开页面核验。
+- GitHub 默认分支历史已移除 Codex/Claude 协作者尾注，Contributors 页面复核无 Codex 或 Claude 条目。
 
 最终完成声明必须附带验证命令、结果、Git 提交和 GitHub 公开状态，不能仅凭计划、文件数量或局部测试作出。

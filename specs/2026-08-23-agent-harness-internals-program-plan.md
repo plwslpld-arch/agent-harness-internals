@@ -34,7 +34,7 @@
 - [ ] 阶段 5：mini-swe-agent、OpenHands、Cline、goose、Aider、Qwen Code 扩展样本。
   - 验收：每个样本只讲独特机制，来源锁定和状态承诺准确。
 - [ ] 阶段 6：全仓审计、合并、推送和 GitHub 部署。
-  - 验收：Node 24 完整检查通过，仓库名、About、Topics、Social preview、保护规则和公开页面完成核验。
+  - 验收：Node 24 完整检查通过；历史提交消息中的 Codex/Claude `Co-Authored-By` 与 Claude Session 元数据已受控移除，人类作者和内容历史保留；仓库名、About、Topics、Social preview、保护规则、Contributors 和公开页面完成核验。
 
 ## 每阶段固定闭环
 
@@ -55,4 +55,3 @@
 - 不使用泄露材料或未经授权的逆向材料。
 - 不把测试、课程或第三方评测扩大解释为生产就绪或发布授权。
 - 不在六条主线完成前把扩展样本放入正式导航。
-
