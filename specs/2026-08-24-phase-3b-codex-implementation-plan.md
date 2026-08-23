@@ -51,10 +51,10 @@
 
 ### Task 3：配置、Prompt、AGENTS 与 Context Fragment
 
-- [ ] 完成 `01-config-prompt-context.md`、中文上下文装配图和配置/片段 Claim。
-- [ ] 覆盖配置来源、模型选择、基础指令、AGENTS、线程级环境与有界 Context Fragment。
-- [ ] 解释稳定前缀、缓存键、运行时更新、优先级冲突和超大上下文限制。
-- [ ] 提交：`docs(codex): 发布配置提示与上下文课程`。
+- [x] 完成 `01-config-prompt-context.md`、中文上下文装配图和配置/片段 Claim。
+- [x] 覆盖配置来源、模型选择、基础指令、AGENTS、线程级环境与有界 Context Fragment。
+- [x] 解释稳定前缀、缓存键、运行时更新、优先级冲突和超大上下文限制。
+- [x] 提交：`docs(codex): 发布配置提示与上下文课程`。
 
 ### Task 4：Thread、Task、Turn、Session 与内部状态
 

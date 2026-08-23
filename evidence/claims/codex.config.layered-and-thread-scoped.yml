@@ -1,0 +1,19 @@
+{
+  "id": "codex.config.layered-and-thread-scoped",
+  "harness": "codex",
+  "dimension": "config.layered-and-thread-scoped",
+  "statement": "在锁定 Codex 中，有效模型与指令由运行时覆盖、指令文件和持久配置逐字段合并；每次 Turn 还能携带环境、权限、协作模式等线程设置，工作目录变化会刷新模型可见的项目指令，而不是只读取一份固定配置。",
+  "capability": "default",
+  "version": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+  "surface": "config-session-turn",
+  "platform": "all",
+  "mode": "field-dependent-overrides",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/src/config/mod.rs","lines":"3824-3866","excerpt":"let base_instructions = base_instructions"},
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/src/config/mod.rs","lines":"4163-4172","excerpt":"project_doc_max_bytes: cfg.project_doc_max_bytes.unwrap_or(AGENTS_MD_MAX_BYTES)"},
+    {"type":"upstream-test","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/tests/suite/model_visible_layout.rs","lines":"387-476","excerpt":"expected second request to retain the original AGENTS.md item and append its replacement"},
+    {"type":"upstream-test","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/tests/suite/prompt_caching.rs","lines":"423-443","excerpt":"prompt_cache_key should not change across overrides"}
+  ],
+  "last_verified": "2026-08-24"
+}

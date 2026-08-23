@@ -1,0 +1,18 @@
+{
+  "id": "codex.context.fragments-are-bounded",
+  "harness": "codex",
+  "dimension": "context.fragments-are-bounded",
+  "statement": "在锁定 Codex 中，上下文片段必须声明响应角色、稳定内容分类、标记和正文，并可要求独立消息；历史在送入模型前还会正规化并按输入模态移除不适合的内容，因此片段来源存在不等于它会无边界地进入每次请求。",
+  "capability": "default",
+  "version": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+  "surface": "context-fragments-history",
+  "platform": "all",
+  "mode": "fragment-and-model-modality-dependent",
+  "evidence_level": "C",
+  "evidence": [
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/context-fragments/src/fragment.rs","lines":"55-77","excerpt":"pub trait ContextualUserFragment"},
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/context-fragments/src/fragment.rs","lines":"91-118","excerpt":"fn render_fragment(&self) -> RenderedFragment"},
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/src/context_manager/history.rs","lines":"203-220","excerpt":"normalization and drops un-suited items."}
+  ],
+  "last_verified": "2026-08-24"
+}

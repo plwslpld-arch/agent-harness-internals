@@ -176,6 +176,14 @@
       "scope": "docs/harnesses/codex/README.md",
       "alt": "Codex 端到端任务从用户输入、首次模型采样、工具执行到结果回送和轮次完成的中文流程图",
       "claims": ["codex.turn.tool-result-loop"]
+    },
+    {
+      "id": "codex-config-prompt-context",
+      "path": "assets/diagrams/codex/01-config-prompt-context.svg",
+      "type": "data-flow",
+      "scope": "docs/harnesses/codex/01-config-prompt-context.md",
+      "alt": "Codex 配置来源、有效线程设置、稳定提示前缀、动态上下文片段和模型可见请求的中文数据流图",
+      "claims": ["codex.config.layered-and-thread-scoped", "codex.context.fragments-are-bounded"]
     }
   ]
 }

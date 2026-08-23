@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 940" role="img" aria-labelledby="title desc">
+  <title id="title">Codex 配置、提示与上下文装配</title>
+  <desc id="desc">持久配置、运行时覆盖、线程设置、项目指令、上下文片段与会话历史经过分层合并和正规化后形成模型可见请求的中文数据流图。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0l14 7-14 7z" fill="#087F7C"/></marker>
+    <marker id="dash" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0l14 7-14 7z" fill="#76559B"/></marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#17324D" flood-opacity=".12"/></filter>
+  </defs>
+  <rect width="1400" height="940" rx="34" fill="#F6F9FC"/>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <text x="700" y="55" text-anchor="middle" fill="#17324D" font-size="36" font-weight="760">配置存在不等于模型看见：请求上下文要逐层核对</text>
+    <text x="700" y="91" text-anchor="middle" fill="#50677D" font-size="19">稳定前缀服务复用，轮次尾部表达当前环境；两者都受有效配置和模型能力约束</text>
+
+    <rect x="55" y="130" width="360" height="270" rx="24" fill="#E9F2FF" stroke="#3569A8" stroke-width="2.5" filter="url(#shadow)"/>
+    <text x="82" y="169" fill="#285383" font-size="23" font-weight="760">一　候选配置来源</text>
+    <g font-size="18" text-anchor="middle" fill="#17324D">
+      <rect x="90" y="195" width="290" height="48" rx="13" fill="#FFFFFF"/><text x="235" y="226">持久配置与所选配置组</text>
+      <rect x="90" y="258" width="290" height="48" rx="13" fill="#FFFFFF"/><text x="235" y="289">命令行与宿主加载覆盖</text>
+      <rect x="90" y="321" width="290" height="48" rx="13" fill="#FFFFFF"/><text x="235" y="352">指令文件与模型默认值</text>
+    </g>
+
+    <rect x="520" y="130" width="360" height="270" rx="24" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2.5" filter="url(#shadow)"/>
+    <text x="547" y="169" fill="#955A00" font-size="23" font-weight="760">二　有效线程与轮次设置</text>
+    <g font-size="18" text-anchor="middle" fill="#17324D">
+      <rect x="555" y="195" width="290" height="48" rx="13" fill="#FFFFFF"/><text x="700" y="226">模型、推理与协作模式</text>
+      <rect x="555" y="258" width="290" height="48" rx="13" fill="#FFFFFF"/><text x="700" y="289">工作目录与连接环境</text>
+      <rect x="555" y="321" width="290" height="48" rx="13" fill="#FFFFFF"/><text x="700" y="352">权限、审批与功能开关</text>
+    </g>
+
+    <rect x="985" y="130" width="360" height="270" rx="24" fill="#F0ECF8" stroke="#76559B" stroke-width="2.5" filter="url(#shadow)"/>
+    <text x="1012" y="169" fill="#60458C" font-size="23" font-weight="760">三　动态上下文来源</text>
+    <g font-size="18" text-anchor="middle" fill="#17324D">
+      <rect x="1020" y="195" width="290" height="48" rx="13" fill="#FFFFFF"/><text x="1165" y="226">项目指令与后备文档</text>
+      <rect x="1020" y="258" width="290" height="48" rx="13" fill="#FFFFFF"/><text x="1165" y="289">世界状态与扩展片段</text>
+      <rect x="1020" y="321" width="290" height="48" rx="13" fill="#FFFFFF"/><text x="1165" y="352">会话历史与当前输入</text>
+    </g>
+    <g fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"><path d="M415 265h97"/><path d="M880 265h97"/></g>
+
+    <rect x="55" y="464" width="1290" height="260" rx="26" fill="#E7F5F3" stroke="#087F7C" stroke-width="3" filter="url(#shadow)"/>
+    <text x="84" y="505" fill="#086E6B" font-size="24" font-weight="760">四　上下文装配与历史正规化</text>
+    <g font-size="18" text-anchor="middle">
+      <rect x="92" y="538" width="255" height="116" rx="18" fill="#FFFFFF" stroke="#51A9A5"/><text x="219" y="571" fill="#17324D" font-weight="760">基础指令</text><text x="219" y="601" fill="#50677D">运行时覆盖</text><text x="219" y="627" fill="#50677D">文件优先于内联配置</text>
+      <rect x="410" y="538" width="255" height="116" rx="18" fill="#FFFFFF" stroke="#51A9A5"/><text x="537" y="571" fill="#17324D" font-weight="760">项目与环境更新</text><text x="537" y="601" fill="#50677D">工作目录变化可追加</text><text x="537" y="627" fill="#50677D">大小和发现边界生效</text>
+      <rect x="728" y="538" width="255" height="116" rx="18" fill="#FFFFFF" stroke="#51A9A5"/><text x="855" y="571" fill="#17324D" font-weight="760">上下文片段</text><text x="855" y="601" fill="#50677D">角色、分类、标记</text><text x="855" y="627" fill="#50677D">可要求独立消息</text>
+      <rect x="1046" y="538" width="255" height="116" rx="18" fill="#17324D"/><text x="1173" y="571" fill="#FFFFFF" font-weight="760">模型可见历史</text><text x="1173" y="601" fill="#D3E1EA">正规化与模态过滤</text><text x="1173" y="627" fill="#D3E1EA">不等于原始记录</text>
+    </g>
+    <g fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"><path d="M347 596h55"/><path d="M665 596h55"/><path d="M983 596h55"/></g>
+    <path d="M1165 400v56" fill="none" stroke="#76559B" stroke-width="4" stroke-dasharray="10 8" marker-end="url(#dash)"/>
+    <path d="M700 400v56" fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"/>
+
+    <rect x="160" y="784" width="1080" height="88" rx="22" fill="#17324D" filter="url(#shadow)"/>
+    <text x="700" y="818" text-anchor="middle" fill="#FFFFFF" font-size="22" font-weight="760">五　模型请求：稳定前缀＋轮次更新＋当前用户输入</text>
+    <text x="700" y="850" text-anchor="middle" fill="#7FE0D5" font-size="18">缓存键与前缀结构只能证明复用可能；真实命中、费用和正确性需要独立观测</text>
+    <path d="M1173 654v70c0 42-473 24-473 52" fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"/>
+
+    <text x="700" y="915" text-anchor="middle" fill="#8A3D2F" font-size="18">验证顺序：先记录来源，再解析有效值，最后捕获请求体；不能从第一步直接跳到第三步结论</text>
+  </g>
+</svg>
