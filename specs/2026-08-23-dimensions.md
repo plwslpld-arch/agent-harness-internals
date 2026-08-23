@@ -14,7 +14,7 @@ status: draft
 
 | 主角 | 结构 | 已核实 |
 | --- | --- | --- |
-| dsh | `packages/` 下 49 个包组 | 是，`b150a55` |
+| dsh | `packages/` 下 50 个包组 | 是，`b150a55` |
 | Codex | `codex-rs/` 下 104 个 crate | 是，`83d1fe0` |
 | Gemini CLI | `packages/core/src/` 下 28 个目录 | 是 |
 | pi | `packages/` 10 个 + `coding-agent/src/core/` 50 余文件 | 是 |
@@ -131,7 +131,7 @@ status: draft
 | --- | --- | --- | --- | --- | --- |
 | A11.1 | 遥测与追踪 | `packages/runtime-diagnostics` | `otel` / `analytics` | `core/src/telemetry` | `packages/telemetry` |
 | A11.2 | 调试与 replay | 待核 | `response-debug-context` / `diagnostics` | 待核 | `core/diagnostics.ts` |
-| A11.3 | 自证：invariant、测试、门禁 | 219 个 `invariant.ts` | `clippy.toml` / `deny.toml` | 待核 | 待核 |
+| A11.3 | 自证：invariant、测试、门禁 | 227 个 `invariant.ts` | `clippy.toml` / `deny.toml` | 待核 | 待核 |
 | A11.4 | 启动、装配与 preset | `packages/boot` + `bundle` + `preset` | `arg0` / `cli` | 待核 | `packages/coding-agent/src/main.ts` |
 
 **Part A 合计 41 维，11 个域。**
@@ -249,7 +249,7 @@ status: draft
 | 10 扩展性 | dsh | Cordis 插件树，连 agent loop 自己都是插件 |
 | 11 编排 | dsh + symphony | dsh 把 `workflow`/`jobs`/`schedule` 收进 harness，symphony 把它推到 harness 外面，正好两极 |
 | 12 表面与协议 | Codex | `app-server` 摊了 6 个 crate，唯一把协议面做成一等公民 |
-| 13 工程与可观测 | dsh | 219 个 `invariant.ts`、测试多于源码 |
+| 13 工程与可观测 | dsh | 227 个 `invariant.ts`、测试多于源码 |
 
 T1 分布：dsh 6 次、Codex 5 次、pi 2 次、Gemini CLI 1 次、symphony 1 次。每家都至少当过一次主角。
 
@@ -314,7 +314,7 @@ depth: {dsh: T1, codex: T2, gemini: T2, pi: T2, claude: T3}
 | 10 扩展性 | 挂载点在循环哪个位置 | L2 挂载点标注在 loop 上 |
 | 11 编排 | 三层纵深 | L1 模型 → harness → 编排器 |
 | 12 表面与协议 | 谁驱动谁 | L1 协议拓扑，Codex `app-server` 六 crate |
-| 13 工程与可观测 | 怎么证明自己没坏 | L1 五家自证手段落位 + **L2 本仓库自己的门禁链** + L3 dsh 219 个 invariant 里只有 35 个真装了检查的分布 |
+| 13 工程与可观测 | 怎么证明自己没坏 | L1 五家自证手段落位 + **L2 本仓库自己的门禁链** + L3 dsh 227 个 invariant 里只有 37 个真装了检查的分布 |
 | Part B | 两种 harness 的耦合 | L3 耦合关系图 + harness × model 分数交叉 |
 
-域 13 那张「本仓库自己的门禁链」有元层次的用处：讲自证的一篇，自己就是被 11 道门禁校验的，图里标出每道门禁挡住过什么真实错误（伪代码冒充源码、行号漂移、683 这个过期数字）。
+域 13 那张「本仓库自己的门禁链」有元层次的用处：讲自证的一篇，自己就是被 11 道门禁校验的，图里标出每道门禁挡住过什么真实错误（伪代码冒充源码、行号漂移、过期的规模数字）。

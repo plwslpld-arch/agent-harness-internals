@@ -1,8 +1,8 @@
 ---
 title: Web 客户端与 host：40 个 UI 包如何把事件日志变成界面
-sources: [{"repo":"deepseek-harness","path":"packages/client","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
-last_verified: 2026-08-16
-status: stale
+sources: [{"repo":"deepseek-harness","path":"packages/client","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}]
+last_verified: 2026-08-23
+status: reviewed
 ---
 
 # Web 客户端与 host：40 个 UI 包如何把事件日志变成界面
@@ -307,16 +307,26 @@ void new AppWebEntry(el).run()
 **为什么 Vite 入口不是独立应用？** 因为组合不在这里。整个浏览器插件名册由 host 在运行时注入：
 
 ```ts
-  const script = `<script>window.__DSH_BOOT__ = ${json}</script>`
+  return [
+    { kind: 'script', placement: 'head', text: queue },
+    ...preload,
+    { kind: 'global', name: '__DSH_BOOT__', value: graph },
+  ]
 ```
 
-（`packages/client/modules/src/index.ts:170`）注入的内容是一张 boot graph：`{ rev, entries: [{ id, url, rev, inject?, immediately? }] }`。字段的意思是：`rev` 是这张图的版本号，`entries` 是插件名册，每条里 `id` 是插件标识、`url` 是去哪拿它的 bundle、`rev` 是这个 bundle 自己的版本号（HMR 靠它判断变没变）、`inject` 是要注入的样式等附加物、`immediately` 标记这条要在第一阶段就预取。每个 entry 对应 web-app bundle 补丁里的一行 `ui-*`。shell 启动时读它：
+（`packages/client/modules/src/index.ts:265-272`）host 现在把三类注入项交给 HTML 层：模块队列脚本、第一阶段要预载的 bundle，以及名为 `__DSH_BOOT__` 的全局 boot graph。graph 仍是 `{ rev, entries: [{ id, url, rev, inject?, immediately? }] }`：`rev` 是整张图的版本，`entries` 是插件名册，`id` 是插件标识，`url` 是 bundle 地址，entry 自己的 `rev` 给 HMR 判新旧，`inject` 带依赖等组合信息，`immediately` 决定第一阶段是否预取。每个 entry 对应 web-app bundle 补丁里的一行 `ui-*`。shell 启动时把这张图交给模块加载器：
 
 ```ts
-    this.manifest = parseBootManifest((globalThis as DshWindow).__DSH_BOOT__)
+      this.modules = moduleLoader.create({
+        boot: win.__DSH_BOOT__,
+        staticModules: getStaticModules(),
+        ...transport?.loadBundle === undefined ? {} : { loadBundle: transport.loadBundle },
+        ...this.seams,
+      })
+      this.manifest = this.modules.manifest
 ```
 
-（`packages/client/web/src/boot.tsx:98`）缺失就抛错（`packages/client/modules/src/client/manifest.ts:149`）。
+（`packages/client/web/src/boot.ts:46-68`）缺少 `window.__ModuleLoader__` 会当场抛错；`__DSH_BOOT__` 的缺失或结构错误则在模块系统解析 manifest 时拒绝（`packages/client/modules/src/client/manifest.ts:140-157`）。
 
 所以 `vite dev` 单独跑 `apps/web` 得到的是一个**没有任何插件的空壳**。Vite 配置里直接把这件事做成了显式错误：
 
@@ -410,6 +420,7 @@ export function resolveDirectoryPickerBackend(facts: DirectoryPickerHostFacts): 
 ```ts
 rehydrate(serialized: unknown): SchemaNode {
   return new Schema(serialized as Schema)
+}
 ```
 
 （`packages/client/ui-settings/src/client/schema.ts:50-52`）旧版独立的 `schema-form` 包已经并入 `ui-settings`。当前 README 把它列为 `ctx.settingsSchema` 服务（`packages/client/ui-settings/README.md:5`）：schema 从 host 的序列化信封重建，设置插件都走这个服务做同步校验和路径编辑，不再各自维护一份解释器。
@@ -489,7 +500,7 @@ KV cache 的影响也写清了（`:29`）：这个 section 在包挂载期间是
 
 | harness | 交互面 | 前后端边界 | 扩展 UI |
 |---|---|---|---|
-| dsh | 唯一一个 Web GUI（TUI 已删除） | host 算投影，浏览器只渲染；WebSocket 下行 + HTTP 上行 | 39 个插件包 + slot 声明表 |
+| dsh | 唯一一个 Web GUI（TUI 已删除） | host 算投影，浏览器只渲染；WebSocket 下行 + HTTP 上行 | 40 个插件包 + slot 声明表 |
 | Claude Code | CLI 为主，另有桌面端、Web、IDE 扩展 | 不开源 | 不适用（有 hooks/skills/plugins 但不是 UI 插件） |
 | Codex | Rust CLI，可选 UI 与 app server | rollout 记录 + 客户端全量重放历史 | Extension API 有 12 类 contributor（`context_contributors()` 等，`codex!codex-rs/ext/extension-api/src/registry.rs:146-157`），**一个都不是 UI** |
 | OpenCode | TUI + server；`Session.Event.*` 经 EventV2 总线推给 TUI/Web | 从 DB 消息重建，中断可续 | 两套：server 侧 `Hooks` 21 个键（`opencode!packages/plugin/src/index.ts:222`，无一个是 UI），另有独立的 `TuiPluginApi`，含 12 个具名 host slot + 对话框/toast/路由/keymap |

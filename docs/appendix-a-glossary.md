@@ -1,8 +1,8 @@
 ---
 title: 附录 A：术语表
-sources: [{"repo":"deepseek-harness","path":"docs/glossary.md","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
-last_verified: 2026-08-16
-status: stale
+sources: [{"repo":"deepseek-harness","path":"docs/glossary.md","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}]
+last_verified: 2026-08-23
+status: reviewed
 ---
 
 # 附录 A：术语表
@@ -120,9 +120,9 @@ status: stale
 
 | 术语 | 一句话 | 定义处 | 展开于 |
 | --- | --- | --- | --- |
-| **invariant** | 包自有的运行时契约断言，注册在 `ctx.invariants` 上，只断言「事件流或可变数据之间的关系」。219 个包各有一个 `invariant.ts`、全都调用 `ctx.invariants.register(...)`，但其中 **184 个装的是空实现**（统一带一句 `No runtime invariant:` 注释交代为什么不需要），**真正写了检查的是 35 个**（`grep -rl 'No runtime invariant:' packages --include=invariant.ts \| wc -l` 数得出来）。发行版默认不挂这套伴生插件。 | `packages/runtime-diagnostics/invariants/src/index.ts:94`；空实现的样板见 `packages/attachment/attachment/src/invariant.ts:12-13` | [13 自证与工程化](13-self-verification.md) |
-| **Model Experience** | 每个包 README 里强制的一节，回答三个问题：模型看见什么 / token 影响 / KV cache 影响。219 个包里 215 个必须有，4 个豁免包的理由写在门禁脚本里。 | `scripts/verify-package-readme-model-experience.ts:13` | [13](13-self-verification.md) |
-| **Agent Note** | 上游的设计记录体裁，路径编码状态（`{lifecycle}/{class}/yyyy-mm-dd-topic.md`），683 篇，`## Alternatives considered` 强制。 | `.agents/notes/README.md:9` | [15 设计记录导读](15-agent-notes-guide.md) |
+| **invariant** | 包自有的运行时契约断言，注册在 `ctx.invariants` 上，只断言「事件流或可变数据之间的关系」。227 个包各有一个 `invariant.ts`、全都调用 `ctx.invariants.register(...)`，但其中 **190 个装的是空实现**（统一带一句 `No runtime invariant:` 注释交代为什么不需要），**真正写了检查的是 37 个**（`grep -rl 'No runtime invariant:' packages --include=invariant.ts \| wc -l` 数得出来）。发行版默认不挂这套伴生插件。 | `packages/runtime-diagnostics/invariants/src/index.ts:94`；空实现的样板见 `packages/attachment/attachment/src/invariant.ts:12-13` | [13 自证与工程化](13-self-verification.md) |
+| **Model Experience** | 每个包 README 里强制的一节，回答三个问题：模型看见什么 / token 影响 / KV cache 影响。227 个包里 223 个必须有，4 个豁免包的理由写在门禁脚本里。 | `scripts/verify-package-readme-model-experience.ts:13` | [13](13-self-verification.md) |
+| **Agent Note** | 上游的设计记录体裁，路径编码状态（`{lifecycle}/{class}/yyyy-mm-dd-topic.md`），739 篇，`## Alternatives considered` 强制。 | `.agents/notes/README.md:9` | [15 设计记录导读](15-agent-notes-guide.md) |
 
 这一节的英文：invariant 是「不变量」，指一个始终该成立的断言；空实现里那句注释开头的 `No runtime invariant:` 意思是「本包没有运行时不变量」，冒号后面接的是为什么不需要。Model Experience 直译「模型体验」，问的是同一件事在模型那侧长什么样。Agent Note 强制的那一节标题 `## Alternatives considered` 意思是「考虑过的其它方案」，路径模板里的 `{lifecycle}` 是生命周期状态、`{class}` 是类别。
 

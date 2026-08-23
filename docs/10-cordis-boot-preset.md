@@ -1,8 +1,8 @@
 ---
 title: Cordis、启动、bundle 与 preset：默认到底装了什么
-sources: [{"repo":"deepseek-harness","path":"packages/bundle/base/cordis.patch.yml","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
-last_verified: 2026-08-16
-status: stale
+sources: [{"repo":"deepseek-harness","path":"packages/bundle/base/cordis.patch.yml","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}]
+last_verified: 2026-08-23
+status: reviewed
 ---
 
 # Cordis、启动、bundle 与 preset：默认到底装了什么
@@ -516,7 +516,7 @@ Run commands in a bash shell
 
 上面 YAML 里出现过、但很容易被当成噪音的几行，实际承担了这套组合能工作的前提。
 
-**`packages/typert`（8,430 行非测试源码，在 49 个包组里排第六）** 组 README 列了三个包（`packages/typert/README.md:5-11`）：`registry`（`ctx.typert`，运行时的包反射与 schema 存储）、`loader`（扫描 Loader entry，把生成的 host 契约注册进去）、`generator`（构建期从源码类型生成产物）；目录下还有第四个 `protocol`，它只放两端共享的声明（Remote 基类、装饰器、编解码器、协议映射表），不做类型分析也不注册 Cordis 服务，所以组 README 的表里没列它。它在 base 里是三行（`packages/bundle/base/cordis.patch.yml:30-37`），加上 `api-gateway`。它解决的问题是：浏览器要调 host 上某个服务的方法，谁来保证两端签名一致？答案是从 TypeScript 源码类型生成 Remote 契约，而不是手写 DTO。详见 [11 Web 客户端与 host](11-web-client-and-host.md)。
+**`packages/typert`（8,433 行非测试源码，在 50 个包组里排第七）** 组 README 列了三个包（`packages/typert/README.md:5-11`）：`registry`（`ctx.typert`，运行时的包反射与 schema 存储）、`loader`（扫描 Loader entry，把生成的 host 契约注册进去）、`generator`（构建期从源码类型生成产物）；目录下还有第四个 `protocol`，它只放两端共享的声明（Remote 基类、装饰器、编解码器、协议映射表），不做类型分析也不注册 Cordis 服务，所以组 README 的表里没列它。它在 base 里是三行（`packages/bundle/base/cordis.patch.yml:30-37`），加上 `api-gateway`。它解决的问题是：浏览器要调 host 上某个服务的方法，谁来保证两端签名一致？答案是从 TypeScript 源码类型生成 Remote 契约，而不是手写 DTO。详见 [11 Web 客户端与 host](11-web-client-and-host.md)。
 
 **`settings`**：`ctx.settings` 是「命名空间 + schema」的注册表，解析分三层：schema 默认值 → 注册者所在组合的 `base`（它自己的 cordis.yml entry config 子集）→ 用户文档里的那一段（`packages/settings/settings/README.md:5`）。所以 base 里 `llm-deepseek` 那一行不内联 key 和 endpoint（`packages/bundle/base/cordis.patch.yml:446-449` 的注释），它们每次请求从 `llm-deepseek:` 设置段解析。**没挂 provider 时消费者退回只读 entry config**，组合照常工作。
 
@@ -593,7 +593,7 @@ Run commands in a bash shell
 | pi | 内建 7 个工具（`bash`/`edit`/`find`/`grep`/`ls`/`read`/`write`，`pi!packages/coding-agent/src/core/tools/bash.ts:331`） | 部分：扩展可在 `before_agent_start` 里换 systemPrompt | Extension API（33 个事件、`registerTool`/`registerCommand`/`registerProvider`）、Packages；无 MCP |
 | mini-swe-agent | `mini.yaml` 151 行 + `DefaultAgent` 190 行（`mini-swe-agent!src/minisweagent/agents/default.py:38`），只有一个 bash 工具 | 换 yaml 就是换一切 | 不适用 |
 
-差别不在「能不能扩展」，每一家都有扩展点。差别在于**核心自己是不是用同一套扩展机制拼出来的**。Codex 的 `ToolRouter` 是 Rust 里的一个结构体，扩展通过 Extension API 往里加东西；dsh 的 `tools` 注册表本身就是补丁里的一行（`packages/bundle/base/cordis.patch.yml:424-425`），和一个第三方工具包在机制上没有区别。代价也从这里来：dsh 的 219 个包大部分是这个决定的直接后果，而 mini-swe-agent 用 341 行（190 行 agent 代码 + 151 行 yaml）做到了一个能跑 SWE-bench 的 agent。
+差别不在「能不能扩展」，每一家都有扩展点。差别在于**核心自己是不是用同一套扩展机制拼出来的**。Codex 的 `ToolRouter` 是 Rust 里的一个结构体，扩展通过 Extension API 往里加东西；dsh 的 `tools` 注册表本身就是补丁里的一行（`packages/bundle/base/cordis.patch.yml:424-425`），和一个第三方工具包在机制上没有区别。代价也从这里来：dsh 的 227 个包大部分是这个决定的直接后果，而 mini-swe-agent 用 341 行（190 行 agent 代码 + 151 行 yaml）做到了一个能跑 SWE-bench 的 agent。
 
 另一个可对照的点是「一次跑分用的组合」怎么表达。mini-swe-agent 的答案是「就是那个 yaml」；dsh 的答案是 `minimal` preset 那 62 行。两者形态惊人地接近，区别只在 dsh 的 62 行是从 451 行的 base 上**减**出来的，而 mini 的 151 行是全部。
 
@@ -601,7 +601,7 @@ Run commands in a bash shell
 
 ## 十一、怎么自己核
 
-在 dsh 仓库根目录（`47f94385`）：
+在 dsh 仓库根目录（`b150a551`）：
 
 ```bash
 # 三个 bundle 的补丁文件行数

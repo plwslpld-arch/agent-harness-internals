@@ -1,8 +1,8 @@
 ---
 title: 附录 B：怎么自己核对这些结论
-sources: [{"repo":"deepseek-harness","path":"package.json","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
-last_verified: 2026-08-16
-status: stale
+sources: [{"repo":"deepseek-harness","path":"package.json","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}]
+last_verified: 2026-08-23
+status: reviewed
 ---
 
 # 附录 B：怎么自己核对这些结论
@@ -19,9 +19,9 @@ status: stale
 
 | 依据 | 是什么 | 怎么核 |
 | --- | --- | --- |
-| **源码** | 锁定 commit `47f9438` 下的真实代码，带 `路径:行号` | `sed -n '<行号>p'` 一句就能验；行号本身由 CI 校验 |
+| **源码** | 锁定 commit `b150a55` 下的真实代码，带 `路径:行号` | `sed -n '<行号>p'` 一句就能验；行号本身由 CI 校验 |
 | **上游测试与 fixture** | fixture 指测试里预先存好的固定数据文件，尤其是 `system-prompt.expected.md`、`tool-schemas.expected.json`、`session.jsonl` 这类渲染快照 | 直接 `cat`，它们是纯文本 |
-| **官方文档** | 上游 110 篇英文文档、683 篇 Agent Note；涉及闭源产品（Claude Code）时只用公开文档 | 在 checkout 里读原文 |
+| **官方文档** | 上游 112 篇英文文档、739 篇 Agent Note；涉及闭源产品（Claude Code）时只用公开文档 | 在 checkout 里读原文 |
 | **作者推断** | 从前三者推出、但上游没明说的判断 | 正文里**直接写「这是推断」**，不用行内标签，不用脚注 |
 
 「推断在正文里是明写的」这条再说一次：本仓库不使用 `evidence: code`（意思是「这句的证据类型是源码」）这类行内证据标签。理由是标签会让人以为「没标签的句子就没证据」，而实际情况是每句话都该有证据，只是有的证据是行号，有的证据是「我从 A 和 B 推出来的」。后者写成中文句子比写成标签更诚实。
@@ -47,7 +47,7 @@ npm run bootstrap
 ```bash
 git clone https://github.com/deepseek-ai/deepseek-harness.git
 cd deepseek-harness
-git checkout 47f943859bef60e4160492346772ded9b24f765a
+git checkout b150a551b8d465e31e418e1b2eaf5e79bbb7d28e
 ```
 
 正文里所有行号都对应这一个 commit。上游是活的仓库，换个 commit 行号就会漂。
@@ -99,28 +99,28 @@ grep -o '"type":"request/header".\{0,300\}' examples/acp-agent/tests/snapshots/t
 正文里的每个数字都给了命令。几个常用的：
 
 ```bash
-ls -d packages/*/*/ | wc -l                                   # 219 个包
-find packages -name invariant.ts -path '*/src/*' | wc -l      # 219
-grep -l "^#### KV Cache effect" packages/*/*/README.md | wc -l   # 215
+ls -d packages/*/*/ | wc -l                                   # 227 个包
+find packages -name invariant.ts -path '*/src/*' | wc -l      # 227
+grep -l "^#### KV Cache effect" packages/*/*/README.md | wc -l   # 223
 
 # 源码行数与测试行数（注意 -print0，避免 xargs 分批只报最后一批）
 find packages \( -name '*.ts' -o -name '*.tsx' \) -not -path '*/node_modules/*' -print0 \
-  | grep -zv -E '/tests?/|__tests__' | xargs -0 cat | wc -l    # 228300
+  | grep -zv -E '/tests?/|__tests__' | xargs -0 cat | wc -l    # 244956
 find packages \( -name '*.ts' -o -name '*.tsx' \) -not -path '*/node_modules/*' -print0 \
-  | grep -z  -E '/tests?/|__tests__' | xargs -0 cat | wc -l    # 268040
+  | grep -z  -E '/tests?/|__tests__' | xargs -0 cat | wc -l    # 292314
 
 # 同一口径下的测试文件个数（把 cat|wc -l 换成数文件）
 find packages \( -name '*.ts' -o -name '*.tsx' \) -not -path '*/node_modules/*' -print0 \
-  | grep -z  -E '/tests?/|__tests__' | tr '\0' '\n' | wc -l    # 854
+  | grep -z  -E '/tests?/|__tests__' | tr '\0' '\n' | wc -l    # 909
 
 find .agents/notes -name '*.md' ! -name '*.zh.md' \
-  ! -name 'AGENTS.md' ! -name 'README.md' ! -name 'CLAUDE.md' | wc -l   # 683
-find docs -name '*.md' ! -name '*.zh.md' | wc -l               # 110
+  ! -name 'AGENTS.md' ! -name 'README.md' ! -name 'CLAUDE.md' | wc -l   # 739
+find docs -name '*.md' ! -name '*.zh.md' | wc -l               # 112
 ```
 
 这几条从上到下在数：包的个数、带 `invariant.ts` 的包个数、README 里写了 KV Cache 小节的包个数、非测试代码的总行数、测试代码的总行数、测试文件个数、Agent Note 篇数、上游英文文档篇数。`-print0` 和 `grep -z` 那一对是为了让文件名以 `\0` 分隔，`xargs` 才不会因为参数太长自己分批（分批的话 `wc -l` 会输出好几个数，你只看到最后一批）。
 
-口径必须跟着数字一起给，否则数字没有意义。举个反例：`packages/client` 只数 `src/` 下的 `.ts` 是 43,561 行，加上 `.tsx` 是 71,896 行；把范围放宽到「所有非 `tests/` 的文件」又变成 72,428 行。三个都对，但不说数了哪些后缀、范围是 `src/` 还是全包，就是误导。本仓库统一用「`src/` 下的 `.ts` + `.tsx`」，也就是 71,896。
+口径必须跟着数字一起给，否则数字没有意义。举个反例：`packages/client` 只数 `src/` 下的 `.ts`，和把 `.tsx` 也算进去，结果不会相同；把范围放宽到「所有非 `tests/` 的文件」还会再变。几个数字都可能对，但不说数了哪些后缀、范围是 `src/` 还是全包，就是误导。本仓库统一用「`src/` 下的 `.ts` + `.tsx`」，当前是 74,897 行。
 
 ### 2.5 跑上游的单元测试
 
@@ -172,7 +172,7 @@ node scripts/experiments/cache-probe.mjs --json probe.json
 
 自己跑的话，记录模板由 `npm run evidence:local` 生成，需要写清楚的字段是：
 
-- **来源基线**：本仓库 commit、dsh commit（`47f9438`）、生成时间（UTC）；
+- **来源基线**：本仓库 commit、dsh commit（`b150a55`）、生成时间（UTC）；
 - **环境**：os/arch、Node 版本、key 是否存在（**只记存在与否，绝不记值**）、网络状况；
 - **场景**：scenario 名、目的（success path / missing credential / tool denial / sandbox denial / cancel / repair，即正常走通、缺凭据、工具被拒、沙箱拦截、取消、修复）、profile、provider、model；
 - **命令**：脱敏后的完整命令行；

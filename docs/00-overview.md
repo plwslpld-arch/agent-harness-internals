@@ -1,19 +1,19 @@
 ---
 title: 总览：一次请求是怎么拼出来、发出去、记下来的
-sources: [{"repo":"deepseek-harness","path":"packages/core/agent-loop/src/agent.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
-last_verified: 2026-08-16
-status: stale
+sources: [{"repo":"deepseek-harness","path":"packages/core/agent-loop/src/agent.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}]
+last_verified: 2026-08-23
+status: reviewed
 ---
 
 # 总览：一次请求是怎么拼出来、发出去、记下来的
 
-*这一篇讲给第一次翻 dsh 源码的人。读完你能回答：一次请求从进程启动到落盘经过了哪些环节、219 个包里哪几组真正在这条路径上、其余的该去看本系列哪一篇。*
+*这一篇讲给第一次翻 dsh 源码的人。读完你能回答：一次请求从进程启动到落盘经过了哪些环节、227 个包里哪几组真正在这条路径上、其余的该去看本系列哪一篇。*
 
 你要找 dsh（DeepSeek Harness）的「主流程」，大概会去 grep `main.ts`、`prompts.ts`。**都没有。**
 
 dsh 是一棵 Cordis 插件树（Cordis 是一个 TypeScript 的依赖注入 / 插件框架，上游 fork 了一份自用，为什么要 fork 见 [10](10-cordis-boot-preset.md)）：树上每个节点是一个插件实例，插件之间靠事件和服务互相找。模型每一步收到的字节就由这几十个互不认识的插件各自贡献一小块，在 `preStep()` 这一个函数里汇合。所以读懂 dsh 的第一步不在找入口：入口是一次汇合，不是一条主干。
 
-这一篇给出那条完整路径，把术语在原地讲清楚，再列出上游 49 个包组各管什么、由本系列哪一篇覆盖。
+这一篇给出那条完整路径，把术语在原地讲清楚，再列出上游 50 个包组各管什么、由本系列哪一篇覆盖。
 
 ## 一次 dsh 请求，从进程到落盘
 
@@ -82,88 +82,89 @@ $ dsh web
 - **preset（agent preset）**是会话级的插件组合，一个目录里一份 `agent.cordis.yml`。每进程挂载一次到一个「standing scope」（常驻作用域：preset 挂上去以后一直在，不随某个 session 生灭），session 通过 scope 父链加入，于是 `agent → preset → global` 三层。Web 下模型看到的工具与 prompt 段落几乎全部由 preset 决定。
 - **bundle** 是一种发行格式：一个声明了 `dsh.bundle` 的 npm 包，实质是一份 `cordis.patch.yml`。`dsh-base` 是每个 profile 的第一层，`dsh-web-app` / `dsh-headless` 叠在上面。补丁按 id 定位行并**整块替换** `config`，不做深合并。
 
-## 上游 49 个包组
+## 上游 50 个包组
 
-`packages/` 下是两级层次：`packages/<group>/<package>/`。用 `ls -d packages/*/ | wc -l` 数出 49 个组、`ls -d packages/*/*/ | wc -l` 数出 219 个包。下表每行一个组，`src` 是该组非测试 TypeScript 行数（`find … | grep -v -E '/tests?/|__tests__' | xargs cat | wc -l`，完整命令见 [附录 B](appendix-b-verification.md)）。
+`packages/` 下是两级层次：`packages/<group>/<package>/`。用 `ls -d packages/*/ | wc -l` 数出 50 个组、`ls -d packages/*/*/ | wc -l` 数出 227 个包。下表每行一个组，`src` 是该组非测试 TypeScript 行数（`find … | grep -v -E '/tests?/|__tests__' | xargs cat | wc -l`，完整命令见 [附录 B](appendix-b-verification.md)）。
 
 | 组 | 包数 | src 行 | 管什么 | 本系列哪篇 |
 | --- | ---: | ---: | --- | --- |
-| `core` | 8 | 13,589 | session 日志、system-prompt 装配、工具注册表、Agent 接口与默认 ReactLoop、scope 原语 | [01](01-system-prompt.md) [03](03-agent-loop.md) [05](05-session.md) |
-| `llm` | 5 | 8,065 | Message/StreamChunk 词汇、adapter seam、DeepSeek 与 pi-ai 两个实现、重试、token meter | [04](04-llm-adapter.md) |
-| `session` | 13 | 8,385 | 持久化（JSONL/SQLite）、投影、统计、标题、遥测、检查点策略 | [05](05-session.md) |
-| `session-query` | 4 | 5,298 | 跨会话检索、事件追溯、日志导出 | [05](05-session.md) |
+| `core` | 8 | 13,497 | session 日志、system-prompt 装配、工具注册表、Agent 接口与默认 ReactLoop、scope 原语 | [01](01-system-prompt.md) [03](03-agent-loop.md) [05](05-session.md) |
+| `llm` | 5 | 11,020 | Message/StreamChunk 词汇、adapter seam、DeepSeek 与 pi-ai 两个实现、重试、token meter | [04](04-llm-adapter.md) |
+| `session` | 13 | 9,519 | 持久化（JSONL/SQLite）、投影、统计、标题、遥测、检查点策略 | [05](05-session.md) |
+| `session-query` | 4 | 5,295 | 跨会话检索、事件追溯、日志导出 | [05](05-session.md) |
 | `storage` | 4 | 2,088 | 键值与域存储 | [05](05-session.md) |
-| `attachment` | 2 | 564 | 图片等附件的内容寻址存储 | [05](05-session.md) |
+| `attachment` | 2 | 1,655 | 图片等附件的内容寻址存储 | [05](05-session.md) |
 | `workspace` | 1 | 1,142 | 工作区的稳定 id、标题、会话成员 | [05](05-session.md) |
-| `compaction` | 4 | 2,893 | 压缩 seam、basic 实现、工具结果裁剪、`/compact` | [06](06-compaction.md) |
+| `compaction` | 4 | 2,880 | 压缩 seam、basic 实现、工具结果裁剪、`/compact` | [06](06-compaction.md) |
 | `spill` | 3 | 664 | 超大工具输出落盘 + 有界预览 | [06](06-compaction.md) |
-| `context` | 4 | 3,411 | AGENTS.md/CLAUDE.md 注入、时间、tmux、被引用会话 | [01](01-system-prompt.md) |
+| `context` | 6 | 4,092 | AGENTS.md/CLAUDE.md 注入、时间、tmux、被引用会话 | [01](01-system-prompt.md) |
 | `skill` | 4 | 2,520 | skill 注册表、文件系统发现、`skill` 工具与目录注入 | [01](01-system-prompt.md) |
-| `fs` | 7 | 5,746 | 文件 seam、本地实现、观察策略、沙箱包裹、`read/write/edit`、ripgrep 搜索 | [07](07-tools-approval-sandbox.md) |
-| `shell` | 9 | 3,749 | bash/pwsh 的 local 与 sandbox 后端、持久 shell、`shell-env` | [07](07-tools-approval-sandbox.md) |
-| `subprocess` | 2 | 1,819 | 子进程 seam | [07](07-tools-approval-sandbox.md) |
-| `sandbox` | 4 | 3,945 | 沙箱 seam + bwrap / Landlock / Seatbelt / Windows ACL 后端链 | [07](07-tools-approval-sandbox.md) |
-| `interaction` | 5 | 1,996 | 人类命令、权限预设、审批瀑布、向用户提问 | [07](07-tools-approval-sandbox.md) |
-| `terminal` | 3 | 2,306 | PTY 会话与 `dsh-tool-terminal` | [07](07-tools-approval-sandbox.md) |
+| `fs` | 7 | 5,804 | 文件 seam、本地实现、观察策略、沙箱包裹、`read/write/edit`、ripgrep 搜索 | [07](07-tools-approval-sandbox.md) |
+| `shell` | 10 | 4,321 | bash/pwsh 的 local 与 sandbox 后端、持久 shell、`shell-env` | [07](07-tools-approval-sandbox.md) |
+| `subprocess` | 2 | 2,220 | 子进程 seam | [07](07-tools-approval-sandbox.md) |
+| `sandbox` | 4 | 3,904 | 沙箱 seam + bwrap / Landlock / Seatbelt / Windows ACL 后端链 | [07](07-tools-approval-sandbox.md) |
+| `interaction` | 5 | 2,060 | 人类命令、权限预设、审批瀑布、向用户提问 | [07](07-tools-approval-sandbox.md) |
+| `terminal` | 3 | 2,405 | PTY 会话与 `dsh-tool-terminal` | [07](07-tools-approval-sandbox.md) |
 | `lsp` | 3 | 2,486 | 四个语义操作 + 通用 stdio 后端 + `lsp` 工具 | [07](07-tools-approval-sandbox.md) |
-| `web` | 6 | 2,903 | `ctx.web` 的 search/fetch 两操作、三个搜索 provider、`web_search`/`web_fetch` | [07](07-tools-approval-sandbox.md) |
+| `web` | 6 | 3,010 | `ctx.web` 的 search/fetch 两操作、三个搜索 provider、`web_search`/`web_fetch` | [07](07-tools-approval-sandbox.md) |
 | `e2b` | 3 | 2,659 | 实验性：把 fs 与 subprocess 搬到 E2B 远程沙箱 | [07](07-tools-approval-sandbox.md) |
-| `subagent` | 11 | 8,436 | 子代理 seam 与 in-process / ACP / SDK / Codex / Claude Code 五种 provider，以及委派工具 | [08](08-orchestration.md) |
-| `workflow` | 4 | 3,610 | 模型写脚本扇出的 `workflow`、Ralph 循环、worker-thread 引擎 | [08](08-orchestration.md) |
-| `goal` | 4 | 2,610 | 会话内长目标：状态机、轮次驱动、`/goal` 与工具 | [08](08-orchestration.md) |
-| `plan` | 1 | 563 | plan 模式与 `exit_plan_mode` | [08](08-orchestration.md) |
-| `todo` | 1 | 326 | `todo_write` | [08](08-orchestration.md) |
+| `experimental` | 2 | 2,763 | 实验性 Agent Team：共享任务 DAG、队友信箱与模型工具 | [08](08-orchestration.md) |
+| `subagent` | 11 | 9,573 | 子代理 seam 与 in-process / ACP / SDK / Codex / Claude Code 五种 provider，以及委派工具 | [08](08-orchestration.md) |
+| `workflow` | 4 | 3,581 | 模型写脚本扇出的 `workflow`、Ralph 循环、worker-thread 引擎 | [08](08-orchestration.md) |
+| `goal` | 4 | 2,589 | 会话内长目标：状态机、轮次驱动、`/goal` 与工具 | [08](08-orchestration.md) |
+| `plan` | 1 | 601 | plan 模式与 `exit_plan_mode` | [08](08-orchestration.md) |
+| `todo` | 1 | 329 | `todo_write` | [08](08-orchestration.md) |
 | `jobs` | 3 | 1,423 | 后台任务注册表与 `job_*` 工具 | [08](08-orchestration.md) |
-| `schedule` | 1 | 2,028 | 定时触发的会话 | [08](08-orchestration.md) |
+| `schedule` | 1 | 2,003 | 定时触发的会话 | [08](08-orchestration.md) |
 | `guard` | 2 | 374 | 重复工具调用提醒、超时策略 | [08](08-orchestration.md) |
 | `hooks` | 3 | 1,813 | Claude Code / Codex 的 shell hook 协议桥接 | [08](08-orchestration.md) |
-| `extensions` | 4 | 16,096 | 让模型在运行时定义/运行/撤销 Cordis 插件（`cordis_*` 工具 + vm 宿主 + 浏览器半边） | [09](09-extensions-and-code-mode.md) |
-| `code-runtime` | 2 | 2,019 | Code Mode 的执行 seam 与 worker-thread 后端 | [09](09-extensions-and-code-mode.md) |
-| `boot` | 2 | 1,500 | profile 组合、Loader 装配、分层 env、命令行参数快照 | [10](10-cordis-boot-preset.md) |
-| `bundle` | 3 | 571 | `base` / `web-app` / `headless` 三份补丁 | [10](10-cordis-boot-preset.md) |
+| `extensions` | 4 | 16,710 | 让模型在运行时定义/运行/撤销 Cordis 插件（`cordis_*` 工具 + vm 宿主 + 浏览器半边） | [09](09-extensions-and-code-mode.md) |
+| `code-runtime` | 3 | 2,696 | Code Mode 的执行 seam 与 worker-thread 后端 | [09](09-extensions-and-code-mode.md) |
+| `boot` | 2 | 1,481 | profile 组合、Loader 装配、分层 env、命令行参数快照 | [10](10-cordis-boot-preset.md) |
+| `bundle` | 3 | 683 | `base` / `web-app` / `headless` 三份补丁 | [10](10-cordis-boot-preset.md) |
 | `preset` | 2 | 1,783 | agent preset 词汇与发现、可组合的 persona 行 | [10](10-cordis-boot-preset.md) |
-| `settings` | 2 | 1,532 | 「schema 默认 → 组合 base → 用户段」三层设置解析 | [10](10-cordis-boot-preset.md) |
-| `credentials` | 2 | 741 | 配置里只放引用，key 从环境与 `$DSH_HOME` 解析 | [10](10-cordis-boot-preset.md) |
+| `settings` | 2 | 1,507 | 「schema 默认 → 组合 base → 用户段」三层设置解析 | [10](10-cordis-boot-preset.md) |
+| `credentials` | 3 | 1,989 | 配置里只放引用，key 从环境与 `$DSH_HOME` 解析 | [10](10-cordis-boot-preset.md) |
 | `identity` | 1 | 131 | 一个匿名 Harness-home 关联 id | [10](10-cordis-boot-preset.md) |
-| `client` | 39 | 71,896 | 浏览器半边：shell、连接、运行时、slot 扩展点、约 22 个 `ui-*` 特性插件 | [11](11-web-client-and-host.md) |
-| `host` | 8 | 10,680 | Web GUI 的 Node 半边：apiproxy、webserver、静态资源、目录选择、插件清单 | [11](11-web-client-and-host.md) |
-| `api` | 2 | 1,817 | Typert 一元 RPC 网关与 BFF remotes | [11](11-web-client-and-host.md) |
-| `typert` | 4 | 8,430 | 源码类型反射 → 运行时注册表 → 生成 Host/Client 契约 | [11](11-web-client-and-host.md) |
+| `client` | 40 | 74,897 | 浏览器半边：shell、连接、运行时、slot 扩展点、约 22 个 `ui-*` 特性插件 | [11](11-web-client-and-host.md) |
+| `host` | 8 | 10,685 | Web GUI 的 Node 半边：apiproxy、webserver、静态资源、目录选择、插件清单 | [11](11-web-client-and-host.md) |
+| `api` | 2 | 1,861 | Typert 一元 RPC 网关与 BFF remotes | [11](11-web-client-and-host.md) |
+| `typert` | 4 | 8,433 | 源码类型反射 → 运行时注册表 → 生成 Host/Client 契约 | [11](11-web-client-and-host.md) |
 | `feedback` | 2 | 785 | `/feedback` 与每条 assistant 消息的本地评分 | [11](11-web-client-and-host.md) |
-| `acp` | 1 | 532 | ACP stdio JSON-RPC 服务器 | [12](12-surfaces-and-protocols.md) |
-| `mcp` | 1 | 929 | MCP 客户端，只桥接 tools | [12](12-surfaces-and-protocols.md) |
-| `sdk` | 3 | 1,754 | NDJSON JSON-RPC 协议、服务器插件、TS 客户端 | [12](12-surfaces-and-protocols.md) |
+| `acp` | 1 | 847 | ACP stdio JSON-RPC 服务器 | [12](12-surfaces-and-protocols.md) |
+| `mcp` | 1 | 1,171 | MCP 客户端，只桥接 tools | [12](12-surfaces-and-protocols.md) |
+| `sdk` | 3 | 1,760 | NDJSON JSON-RPC 协议、服务器插件、TS 客户端 | [12](12-surfaces-and-protocols.md) |
 | `runtime-diagnostics` | 1 | 230 | 开发期运行时契约断言服务 | [13](13-self-verification.md) |
-| `test-support` | 6 | 7,003 | 快照录制、loop 测试工具、mock LLM 服务器、录制回放 | [13](13-self-verification.md) |
-| `examples` | 3 | 659 | demo 骨架包 | [13](13-self-verification.md) |
-| `util` | 7 | 1,269 | 品牌类型、`$DSH_HOME` 解析、超时、输出保留、原子写 | [13](13-self-verification.md) |
+| `test-support` | 6 | 7,093 | 快照录制、loop 测试工具、mock LLM 服务器、录制回放 | [13](13-self-verification.md) |
+| `examples` | 3 | 619 | demo 骨架包 | [13](13-self-verification.md) |
+| `util` | 7 | 1,305 | 品牌类型、`$DSH_HOME` 解析、超时、输出保留、原子写 | [13](13-self-verification.md) |
 
-`client` 一个组就占了源码的 32%，而它与 harness 核心机制关系最小；`core` + `llm` + `session` 三组加起来 30,039 行，才是「一次请求怎么成形」的全部代码。
+`client` 一个组占了源码的 31%，而它与 harness 核心机制关系最小；`core` + `llm` + `session` 三组加起来 34,036 行，才是「一次请求怎么成形」的主要代码。
 
 ## 规模事实
 
-以下数字都在锁定 commit `47f94385` 上实测（命令见 [附录 B](appendix-b-verification.md)）：
+以下数字都在锁定 commit `b150a551` 上实测（命令见 [附录 B](appendix-b-verification.md)）：
 
 | 事实 | 值 |
 | --- | ---: |
-| `packages/` 下的包目录 | 219 |
-| 包组（两级层次的第一级） | 49 |
-| `packages/` 非测试 TS/TSX 行数 | 228,300 |
-| `packages/` 测试行数 | 268,040 |
-| 测试文件数 | 854 |
-| `.agents/notes/` 英文设计记录 | 683 |
-| `docs/` 英文文档 | 110 |
-| 所有包与 app 的版本号 | `0.1.0-rc.5` |
+| `packages/` 下的包目录 | 227 |
+| 包组（两级层次的第一级） | 50 |
+| `packages/` 非测试 TS/TSX 行数 | 244,956 |
+| `packages/` 测试行数 | 292,314 |
+| 测试文件数 | 909 |
+| `.agents/notes/` 英文设计记录 | 739 |
+| `docs/` 英文文档 | 112 |
+| 所有包与 app 的版本号 | `0.1.1-rc.2` |
 
-测试比源码多 17%。原因是上游把「每个包必须有 README 的 Model Experience 小节」（这一节固定写清「模型在什么条件下、看到这个包贡献的什么内容」）、「每个非平凡改动必须配一篇 Agent Note」、「行号快照必须可重录」都做成了脚本门禁。这套自证机制单独占一篇，见 [13 自证与工程化](13-self-verification.md)。
+测试比源码多 19%。原因是上游把「每个包必须有 README 的 Model Experience 小节」（这一节固定写清「模型在什么条件下、看到这个包贡献的什么内容」）、「每个非平凡改动必须配一篇 Agent Note」、「行号快照必须可重录」都做成了脚本门禁。这套自证机制单独占一篇，见 [13 自证与工程化](13-self-verification.md)。
 
-683 篇设计记录是 dsh 最不寻常的地方：它把「为什么这么定」全部写进了 `.agents/notes/`，路径即状态（`{lifecycle}/{class}/yyyy-mm-dd-topic.md`，三层依次是生命周期、类别、日期与主题，看一眼路径就知道这篇记录处在什么阶段、属于哪一类改动）。本系列的「为什么这么设计」几乎全部引自那里，导读见 [15 设计记录导读](15-agent-notes-guide.md)。
+739 篇设计记录是 dsh 最不寻常的地方：它把「为什么这么定」全部写进了 `.agents/notes/`，路径即状态（`{lifecycle}/{class}/yyyy-mm-dd-topic.md`，三层依次是生命周期、类别、日期与主题，看一眼路径就知道这篇记录处在什么阶段、属于哪一类改动）。本系列的「为什么这么设计」几乎全部引自那里，导读见 [15 设计记录导读](15-agent-notes-guide.md)。
 
 ## 这个系列怎么读
 
 | # | 文章 | 读完你会明白 |
 | --- | --- | --- |
-| 00 | 本篇 | 一次请求从进程启动到落盘的完整路径，以及 49 个包组各管什么 |
+| 00 | 本篇 | 一次请求从进程启动到落盘的完整路径，以及 50 个包组各管什么 |
 | 01 | [System Prompt](01-system-prompt.md) | 模型第一眼看到的那段文字逐字长什么样、每一段由哪个包按什么 order 贡献、runtime 状态为什么走 user 消息 |
 | 02 | [KV-Cache](02-kv-cache.md) | 为什么 dsh 一行 `cache_control` 都不发却能持续命中，以及哪些操作会把前缀打断 |
 | 03 | [Agent Loop](03-agent-loop.md) | 一个 turn 里 `step()` 逐段做了什么，工具怎么并行、怎么有序结算、怎么取消 |
@@ -174,11 +175,11 @@ $ dsh web
 | 08 | [编排层](08-orchestration.md) | 子代理、plan、goal、Ralph、workflow、hooks 各自挂在循环的哪个点上 |
 | 09 | [Extensions 与 Code Mode](09-extensions-and-code-mode.md) | 让模型在运行时改自己的插件树是怎么做到的，以及只给它一个 `run_code` 会发生什么 |
 | 10 | [Cordis、启动与 preset](10-cordis-boot-preset.md) | 默认到底装了哪些行、四个 preset 差在哪、为什么要 fork 一份 Cordis |
-| 11 | [Web 客户端与 host](11-web-client-and-host.md) | 39 个前端包如何把一条事件日志变成你看到的界面 |
+| 11 | [Web 客户端与 host](11-web-client-and-host.md) | 40 个前端包如何把一条事件日志变成你看到的界面 |
 | 12 | [产品表面与协议](12-surfaces-and-protocols.md) | Web / headless / ACP / MCP / Python SDK 各是什么、谁驱动谁、退出码怎么定 |
 | 13 | [自证与工程化](13-self-verification.md) | invariant 服务、测试分层、文档门禁：一个仓库如何用脚本证明自己没坏 |
 | 14 | [横向对照](14-comparison.md) | dsh 与 Claude Code / Codex / OpenCode / pi / mini-swe-agent 在七个维度上的机制差异 |
-| 15 | [设计记录导读](15-agent-notes-guide.md) | 683 篇 Agent Note 里最值得读的那些，以及上游 110 篇文档的分工 |
+| 15 | [设计记录导读](15-agent-notes-guide.md) | 739 篇 Agent Note 里最值得读的那些，以及上游 112 篇文档的分工 |
 | A | [术语表](appendix-a-glossary.md) | 每条术语带源码出处 |
 | B | [怎么自己核对](appendix-b-verification.md) | 不用凭据能核什么、要凭据才能核什么，以及本系列所有统计数字的命令 |
 
@@ -196,4 +197,4 @@ $ dsh web
 
 **3. 只想搞懂「一次请求怎么成形」，该盯哪几组包？为什么浏览器那一侧的代码可以先整个跳过，哪怕它是全仓最大的一坨？**
 
-盯 `core` + `llm` + `session`，13,589 + 8,065 + 8,385 = 30,039 行，请求的拼装、序列化与记录全在这里。行数第一的是 `client`，39 个包、71,896 行，占源码 31%，它是浏览器那半边，干的是把一条事件日志渲染成你看到的界面，不参与请求怎么拼、怎么发。想知道界面是怎么来的，再去看 [11 Web 客户端与 host](11-web-client-and-host.md)。
+盯 `core` + `llm` + `session`，13,497 + 11,020 + 9,519 = 34,036 行，请求的拼装、序列化与记录主要在这里。行数第一的是 `client`，40 个包、74,897 行，占源码 31%，它是浏览器那半边，干的是把一条事件日志渲染成你看到的界面，不参与请求怎么拼、怎么发。想知道界面是怎么来的，再去看 [11 Web 客户端与 host](11-web-client-and-host.md)。

@@ -1,8 +1,8 @@
 ---
 title: 成本、部署与风险：给做决策的人
-sources: [{"repo":"deepseek-harness","path":"packages/llm/token-meter/src/usage-projection.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
-last_verified: 2026-08-16
-status: stale
+sources: [{"repo":"deepseek-harness","path":"packages/llm/token-meter/src/usage-projection.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}]
+last_verified: 2026-08-23
+status: reviewed
 ---
 
 # 成本、部署与风险：给做决策的人

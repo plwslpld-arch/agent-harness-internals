@@ -1,8 +1,8 @@
 ---
 title: Extensions 与 Code Mode：让 agent 改自己的运行时，以及只给它一个 run_code
-sources: [{"repo":"deepseek-harness","path":"packages/extensions/README.md","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
-last_verified: 2026-08-16
-status: stale
+sources: [{"repo":"deepseek-harness","path":"packages/extensions/README.md","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}]
+last_verified: 2026-08-23
+status: reviewed
 ---
 
 # Extensions 与 Code Mode：让 agent 改自己的运行时，以及只给它一个 run_code
@@ -288,7 +288,7 @@ if (this.modeFor(scope) !== 'native') {
 
 翻译成人话就是：描述文本本身就是防错设计。参数 schema 里写了不算数，模型不一定读；写进描述的第一句才拦得住。
 
-描述与 `code` 参数说明按运行时语言换皮：`TYPESCRIPT_FLAVOR`（`packages/core/tools/src/code-mode.ts:46-54`）与 `PYTHON_FLAVOR`（`packages/core/tools/src/code-mode.ts:62-70`）。换皮是**惰性**的：两个 getter 装在定义对象上（`packages/core/tools/src/code-mode.ts:667-679`），在注册表投影 schema 的那一刻才读 `ctx.codeRuntime.language`。理由也写在注释里：定义在注册时铸造一次，那时还不知道会挂哪个运行时；推迟到投影点是「仍能发出所载入运行时语言」的最小改动。
+描述与 `code` 参数说明按运行时语言换皮：`TYPESCRIPT_FLAVOR`（`packages/core/tools/src/code-mode.ts:46-54`）与 `PYTHON_FLAVOR`（`packages/core/tools/src/code-mode.ts:62-70`）。换皮是**惰性**的：两个 getter 装在定义对象上（`packages/core/tools/src/code-mode.ts:663-679`），在注册表投影 schema 的那一刻才读 `ctx.codeRuntime.language`。理由也写在注释里：定义在注册时铸造一次，那时还不知道会挂哪个运行时；推迟到投影点是「仍能发出所载入运行时语言」的最小改动。
 
 ### 2.4 直呼 native 工具会发生什么
 
@@ -608,7 +608,7 @@ Host 与 Client 之间的往返被记成六个 `cordis/*` 事件（`docs/subsyst
 
 ## 六、怎么自己核
 
-以下命令都在 dsh checkout 根目录跑（`C:/w/dshi/sources/checkouts/deepseek-harness`，commit `47f9438`）。
+以下命令都在 dsh checkout 根目录跑（`C:/w/dshi/sources/checkouts/deepseek-harness`，commit `b150a55`）。
 
 ```bash
 # 1. Code Mode 下模型收到的工具表：只有 run_code

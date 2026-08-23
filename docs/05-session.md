@@ -1,8 +1,8 @@
 ---
 title: Session：事件溯源、surface 与持久化
-sources: [{"repo":"deepseek-harness","path":"packages/core/session/src/types.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/core/session/src/surface.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/session/session-persistence/src/coordinator.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/session/session-checkpoint-policy/src/index.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
-last_verified: 2026-08-16
-status: stale
+sources: [{"repo":"deepseek-harness","path":"packages/core/session/src/types.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}, {"repo":"deepseek-harness","path":"packages/core/session/src/surface.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}, {"repo":"deepseek-harness","path":"packages/session/session-persistence/src/coordinator.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}, {"repo":"deepseek-harness","path":"packages/session/session-checkpoint-policy/src/index.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}]
+last_verified: 2026-08-23
+status: reviewed
 ---
 
 # Session：事件溯源、surface 与持久化
@@ -64,7 +64,7 @@ JSONL 就是「每行一个独立 JSON 对象」的文本格式，一行读完�
 
 ## 事件信封
 
-`SessionEvent`（`packages/core/session/src/types.ts:408-440`）的形状：
+`SessionEvent`（`packages/core/session/src/types.ts:408-441`）的形状：
 
 ```ts
 export type SessionEvent<T extends SessionEventType = SessionEventType> = {
@@ -249,9 +249,9 @@ export function apply(ctx: Context): void {
 
 用 `node:sqlite` 的同步 API。`SCHEMA_VERSION = 17`（`packages/session/session-persistence-sqlite/src/schema.ts:18`），`application_id = 0x44534850`（`:20`，常量名 `SESSION_PERSISTENCE_SQLITE_APPLICATION_ID`），一个防呆措施，避免往不相关的数据库里写。
 
-两张表：`sessions`（`packages/session/session-persistence-sqlite/src/schema.ts:23-37`，一行一个会话的元数据，另加 `incarnation` 和 `revision` 两个本后端自己的字段）和 `events`（`packages/session/session-persistence-sqlite/src/schema.ts:48-60`，一行一个事件，`data` 是 JSON 文本，`source_event_seqs` / `surface_op` 各自 JSON 编码，`ignorable` 是 1 或 null）。
+两张表：`sessions`（`packages/session/session-persistence-sqlite/src/schema.ts:22-35`，一行一个会话的元数据，另加 `incarnation` 和 `revision` 两个本后端自己的字段）和 `events`（`:37-46`，一行物理记录；打包记录可以代表多条逻辑事件，`data` 是字符串或压缩字节，`source_event_seqs` / `surface_op` 各自编码，`ignorable` 是 1 或 null）。
 
-`sessions` 行的**存在本身**就是物化信号（`packages/session/session-persistence-sqlite/src/schema.ts:26-30`）：只有第一次 append 才写这一行，所以「创建了但从没写过」的会话没有行、不出现在 `list` 里，刻意对齐 JSONL 后端「第一次 append 之前没有文件」的行为。journal 默认 `wal`，可选 `delete`/`truncate`/`persist`（网络挂载上 WAL 的共享内存文件不工作），`memory`/`off` 被拒绝，理由写在注释里（`packages/session/session-persistence-sqlite/src/schema.ts:62-70`）：悄悄放弃 journal 持久性就等于悄悄违背这个后端的承诺。这个后端没有独立的 per-session 文件，`locate()` 返回 undefined。
+`sessions` 行的**存在本身**就是物化信号：`appendBatch` 只在尚未物化时写 metadata 行，然后插入事件并递增 revision（`packages/session/session-persistence-sqlite/src/store.ts:173-195`）；`list` 只枚举这些行（`:241-245`）。所以「创建了但从没写过」的会话没有行、不出现在 `list` 里，刻意对齐 JSONL 后端「第一次 append 之前没有文件」的行为。journal 默认 `wal`，可选 `delete`/`truncate`/`persist`（网络挂载上 WAL 的共享内存文件不工作），`memory`/`off` 被拒绝，理由写在注释里（`packages/session/session-persistence-sqlite/src/schema.ts:62-70`）：悄悄放弃 journal 持久性就等于悄悄违背这个后端的承诺。这个后端没有独立的 per-session 文件，`locate()` 返回 undefined。
 
 ### 两道拒绝闸门
 
@@ -261,7 +261,7 @@ export function apply(ctx: Context): void {
 
 ## 派生服务
 
-**`session-projection`**：把「日志 → 某个视图」抽象成三个纯同步函数（`packages/session/session-projection/src/index.ts:42-73`）：`init()` 给空日志的初始状态，`apply(state, event)` 是纯转移（不感兴趣的事件**必须返回同一个引用**，`Object.is` 相等就意味着零下游工作），`view(state)` 出 wire 载荷。每个定义还带一个 `stateVersion`，序列化形状或折叠语义一变就要 bump，好让持久化的旧缓存行被丢弃而不是被错误地继续前推。
+**`session-projection`**：把「日志 → 某个视图」抽象成三个纯同步函数（`packages/session/session-projection/src/index.ts:42-82`）：`init()` 给空日志的初始状态，`apply(state, event)` 是纯转移（不感兴趣的事件**必须返回同一个引用**，`Object.is` 相等就意味着零下游工作），`view(state)` 出 wire 载荷。每个定义还带一个 `stateVersion`，序列化形状或折叠语义一变就要 bump，好让持久化的旧缓存行被丢弃而不是被错误地继续前推。
 
 **`session-projection-cache`**：把每个投影的 `(ver, seq, val)` 写进 storage 域。这里要说一件容易误导的事：**它和 KV cache 毫无关系**。包头注释（`packages/session/session-projection-cache/src/index.ts:1-12`）说得很明确：它是折叠捷径，永远不是权威；一行可能过时（`seq` 会说明过时多少）但绝不会错，所以每条写路径都是 fail-soft 的，丢一次写只是下次冷读时多重放一段尾巴；`ver` 不匹配就丢弃而不是迁移。名字里的 "cache" 指的是「投影状态的检查点」，不是模型侧的前缀缓存。
 

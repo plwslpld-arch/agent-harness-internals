@@ -39,7 +39,7 @@
 
 | # | 文章 | 读完你会明白 |
 | --- | --- | --- |
-| 00 | [总览](docs/00-overview.md) | 一次请求从进程启动到落盘的完整路径，以及 49 个包组各管什么 |
+| 00 | [总览](docs/00-overview.md) | 一次请求从进程启动到落盘的完整路径，以及 50 个包组各管什么 |
 | 01 | [System Prompt](docs/01-system-prompt.md) | 模型第一眼看到的那段文字逐字长什么样、由谁贡献、顺序怎么定 |
 | 02 | [KV-Cache](docs/02-kv-cache.md) | 为什么 dsh 没有一行缓存管理代码却能一直命中，以及什么时候会塌 |
 | 03 | [Agent Loop](docs/03-agent-loop.md) | 一个 turn 里发生了什么，工具怎么并行、怎么取消 |
@@ -50,11 +50,11 @@
 | 08 | [编排层](docs/08-orchestration.md) | 子代理、计划、待办、目标、钩子、工作流、技能各挂在循环的哪个点 |
 | 09 | [Extensions 与 Code Mode](docs/09-extensions-and-code-mode.md) | 让模型在运行时改自己的插件树，以及只给它一个 `run_code` 会怎样 |
 | 10 | [Cordis、启动与 preset](docs/10-cordis-boot-preset.md) | 默认到底装了什么、四个 preset 差在哪、为什么要 fork Cordis |
-| 11 | [Web 客户端与 host](docs/11-web-client-and-host.md) | 39 个 UI 包如何把事件日志变成你看到的界面 |
+| 11 | [Web 客户端与 host](docs/11-web-client-and-host.md) | 40 个 UI 包如何把事件日志变成你看到的界面 |
 | 12 | [产品表面与协议](docs/12-surfaces-and-protocols.md) | Web / headless / ACP / MCP / SDK / Python 各是什么，谁驱动谁 |
-| 13 | [自证与工程化](docs/13-self-verification.md) | 219 个 `invariant.ts`（真正装了检查的只有 35 个）、测试多于源码、文档门禁，一个仓库如何证明自己没坏 |
+| 13 | [自证与工程化](docs/13-self-verification.md) | 227 个 `invariant.ts`（真正装了检查的只有 37 个）、测试多于源码、文档门禁，一个仓库如何证明自己没坏 |
 | 14 | [横向对照](docs/14-comparison.md) | 六个 harness 在七个维度上的机制差异：prompt 装配、缓存、压缩、循环、审批沙箱、会话、扩展 |
-| 15 | [设计记录导读](docs/15-agent-notes-guide.md) | 683 篇 Agent Note 里最值得读的那些，以及上游文档的分工 |
+| 15 | [设计记录导读](docs/15-agent-notes-guide.md) | 739 篇 Agent Note 里最值得读的那些，以及上游文档的分工 |
 | A | [术语表](docs/appendix-a-glossary.md) | 每条带源码出处 |
 | B | [怎么自己核对](docs/appendix-b-verification.md) | 不用凭据能核什么、要凭据才能核什么 |
 
@@ -89,7 +89,7 @@ npm run check       # 全部门禁
 ## 几点说明
 
 - 这不是 DeepSeek 的官方仓库、镜像或贡献入口。
-- 上游自己有 110 篇英文文档、683 篇设计记录，讲得比这里全。这里补的是它不会写的：跨包的因果链、失效条件、横向对比、以及「当初为什么这么定」。
+- 上游自己有 112 篇英文文档、739 篇设计记录，讲得比这里全。这里补的是它不会写的：跨包的因果链、失效条件、横向对比、以及「当初为什么这么定」。
 - Claude Code 闭源，相关内容只依据公开文档。
 - Logo 的鱼形主标取自 dsh 上游 MIT 源码里的图标并加了子标，只用于标明研究对象，不代表 DeepSeek 认可或参与本项目。
 
