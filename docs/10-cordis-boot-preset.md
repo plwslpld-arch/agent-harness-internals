@@ -61,7 +61,7 @@ status: stale
 几个反复出现的字段先认一下：`id` 是这一行在补丁里的寻址名（上层补丁靠它找到目标行）；`name` 是真正要加载的 npm 包名；`config` 是传给这个包的配置；`disabled` 控制这一行激不激活；`insert` 表示往清单里追加新行；`inject` 声明「我要等哪些服务就位才肯启动」。逐条读：
 
 - `:7-10`：把 `system-prompt` 这一行的 `persona` 配置换掉。`{{model}}` 和 `{{cwd}}` 不是 YAML 模板，是 prompt 变量，由 agent-loop 在装配时代入（`packages/core/agent-loop/src/index.ts:351-353` 注册了 `provider`/`model`/`cwd` 三个变量）。
-- `:14-15`：`hmr` 这一行 `disabled: true`。**注意 `disabled` 和「删掉这一行」不是一回事**：行还在树里，只是不激活。web-app 那一层也这么干，理由写在 `packages/bundle/web-app/cordis.patch.yml:283-285`：base 是共享的，一个「在某个面上被删掉」的行，等哪天有人重排组合顺序时会悄悄复活，而 `disabled` 是显式的。
+- `:14-15`：`hmr` 这一行 `disabled: true`。**注意 `disabled` 和「删掉这一行」不是一回事**：行还在树里，只是不激活。web-app 那一层也这么干，理由写在 `packages/bundle/web-app/cordis.patch.yml:304-306`：base 是共享的，一个「在某个面上被删掉」的行，等哪天有人重排组合顺序时会悄悄复活，而 `disabled` 是显式的。
 - `:17-20`：`tools` 注册表的呈现模式由环境变量 `DSH_TOOLS_MODE` 决定。`!!js` 是这套 YAML 方言的自定义标签，值是一段在挂载时求值的 JavaScript 表达式（不是字符串）。
 - `:22-35`：`insert` 追加三行新的。`code-runtime` 是 Code Mode 的执行后端（跑在 worker thread 里）；`headless-startup` 解析命令行位置参数；`headless-runner` 声明 `inject: [headlessStartup]`，所以它的 `task: !!js ctx.headlessStartup.task` 这个表达式，**要等到 `headlessStartup` 这个服务真的存在之后才求值**。这是 vendored Cordis 的一项本地修改（惰性配置解析，后面第八节会讲）。
 
@@ -588,7 +588,7 @@ Run commands in a bash shell
 |---|---|---|---|
 | dsh | 若干层 `cordis.patch.yml` 补丁，每行一个 npm 包 | 能：agent preset 是一个目录一个 YAML，`$DSH_HOME/.agent-presets/` 下用户自己写 | 能：`dsh plugin --profile <name> add <package>`（把参数原样转给 profile 目录里的 pnpm，`apps/cli/src/args.ts:171-179`），再在 patch 里加一行 |
 | Claude Code | 内置工具集固定，配置项 + MCP + hooks + subagents 定义文件 | 部分：subagent 定义可换模型与工具子集 | MCP server、hooks、skills、plugins |
-| Codex | Rust 内建工具集，`config.toml` 配置项 + agent role 的 toml | 部分：agent role 可带模型、reasoning effort 与 developer instructions | MCP（作为 client）、hooks（11 个事件，`codex!codex-rs/app-server-protocol/src/protocol/v2/hook.rs:20`）、Extension API 的 `context_contributors()`；反方向 Codex 自己还发一个 `codex-mcp-server` 二进制，把整个 agent 包成一个名叫 `codex` 的 MCP 工具（`codex!codex-rs/mcp-server/src/codex_tool_config.rs:106`），细节见 [12](12-surfaces-and-protocols.md) |
+| Codex | Rust 内建工具集，`config.toml` 配置项 + agent role 的 toml | 部分：agent role 可带模型、reasoning effort 与 developer instructions | MCP（作为 client）、hooks（11 个事件，`codex!codex-rs/app-server-protocol/src/protocol/v2/hook.rs:20`）、Extension API 的 `context_contributors()`；反方向 Codex 自己还发一个 `codex-mcp-server` 二进制，把整个 agent 包成一个名叫 `codex` 的 MCP 工具（`codex!codex-rs/mcp-server/src/codex_tool_config.rs:104`），细节见 [12](12-surfaces-and-protocols.md) |
 | OpenCode | TypeScript 内建工具 + `agent/agent.ts` 里的 agent 定义 | 能：agent 配置可定制工具与权限 | npm/本地插件，`Hooks` 接口 21 个键（`opencode!packages/plugin/src/index.ts:222-334`）；MCP |
 | pi | 内建 7 个工具（`bash`/`edit`/`find`/`grep`/`ls`/`read`/`write`，`pi!packages/coding-agent/src/core/tools/bash.ts:331`） | 部分：扩展可在 `before_agent_start` 里换 systemPrompt | Extension API（33 个事件、`registerTool`/`registerCommand`/`registerProvider`）、Packages；无 MCP |
 | mini-swe-agent | `mini.yaml` 151 行 + `DefaultAgent` 190 行（`mini-swe-agent!src/minisweagent/agents/default.py:38`），只有一个 bash 工具 | 换 yaml 就是换一切 | 不适用 |

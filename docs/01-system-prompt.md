@@ -112,7 +112,7 @@ You are a coding agent powered by the deepseek-v4-flash model. Your working dire
 
 ### 1.2 `tools[]`：字典序的 24 个 schema
 
-**schema（工具描述）**指一个工具在请求里的完整声明：名字、给模型看的自然语言 `description`、以及参数的 JSON Schema。工具 schema **不在 system 字符串里**，它们是请求体的 `tools` 字段，由 `serializeRequest` 单独映射成 `{type:'function', function:{name, description, parameters}}`（`packages/llm/llm-deepseek/src/serialize.ts:161`）。默认没有配 `toolOrder`，所以按名字的 UTF-16 code unit 排序（`packages/core/system-prompt/src/index.ts:169`）：
+**schema（工具描述）**指一个工具在请求里的完整声明：名字、给模型看的自然语言 `description`、以及参数的 JSON Schema。工具 schema **不在 system 字符串里**，它们是请求体的 `tools` 字段，由 `serializeRequest` 单独映射成 `{type:'function', function:{name, description, parameters}}`（`packages/llm/llm-deepseek/src/serialize.ts:344`）。默认没有配 `toolOrder`，所以按名字的 UTF-16 code unit 排序（`packages/core/system-prompt/src/index.ts:169`）：
 
 ```text
 ask_user_question, bash, create_goal, edit, exit_plan_mode, get_goal, glob, grep,
@@ -280,7 +280,7 @@ export function renderPrompt(assembly: PromptAssembly): string {
 
 ### `complete` section：一个硬边界
 
-`PromptSection.complete` 让某一段变成「唯一的一段」。装配照常跑完（tools、contexts、变量、waterfall 都正常），最后把 `sections` 恢复为只有它。`minimal` preset 就靠这个（`apps/cli/config/agent-presets/minimal/agent.cordis.yml:8-13`）：
+`PromptSection.complete` 让某一段变成「唯一的一段」。装配照常跑完（tools、contexts、变量、waterfall 都正常），最后把 `sections` 恢复为只有它。`minimal` preset 就靠这个（`apps/cli/config/agent-presets/minimal/agent.cordis.yml:9-14`）：
 
 ```yaml
 - id: persona
@@ -311,10 +311,10 @@ export function renderPrompt(assembly: PromptAssembly): string {
 | order | name | owner（文件:行） | 文本（原文或摘要） | 何时出现 |
 | ---: | --- | --- | --- | --- |
 | −100 | `harness:identity` | `packages/core/system-prompt/src/index.ts:358` | `You are an AI agent powered by DeepSeek Harness.` | 默认总在 |
-| −99 | `harness:source` | `packages/boot/app-boot/src/index.ts:824`（由 `packages/bundle/web-app/src/index.ts:142` 调用） | `The DeepSeek Harness implementation checkout is at ${sourceRoot}. …never infer the working directory from this path. Use pwd…` | Web 且 `surfaceContext: true` |
-| −98 | `app:web-surface` | `packages/bundle/web-app/src/index.ts:143`（文本 `:95-105`） | `You are interacting with the user through the DeepSeek Harness Web GUI at ${webUrl}. …` | 同上；`text` 是函数，每次装配读端口 |
+| −99 | `harness:source` | `packages/boot/app-boot/src/index.ts:824`（由 `packages/bundle/web-app/src/index.ts:236` 调用） | `The DeepSeek Harness implementation checkout is at ${sourceRoot}. …never infer the working directory from this path. Use pwd…` | Web 且 `surfaceContext: true` |
+| −98 | `app:web-surface` | `packages/bundle/web-app/src/index.ts:237`（文本 `:95-105`） | `You are interacting with the user through the DeepSeek Harness Web GUI at ${webUrl}. …` | 同上；`text` 是函数，每次装配读端口 |
 | 0 | `deployment:persona` | 全局：`packages/core/system-prompt/src/index.ts:364`（文本来自配置）；preset 遮蔽：`packages/preset/persona/src/index.ts:61`；子代理遮蔽：`packages/subagent/subagent/src/child-agent.ts:172` | Web/headless 默认 `You are a coding agent powered by the {{model}} model. Your working directory is {{cwd}}.` | 总在（空则丢） |
-| 50 | `plan:policy` | `packages/plan/plan-mode/src/index.ts:225` | 文本来自配置的 `section` 键（`apps/cli/config/agent-presets/standard/agent.cordis.yml:113-124`，六段，开头 `You are in plan mode. Stay in plan mode until exit_plan_mode succeeds…`）；未激活时返回 `''` | **动态**：进出 plan 模式会改 system 字符串 |
+| 50 | `plan:policy` | `packages/plan/plan-mode/src/index.ts:243` | 文本来自配置的 `section` 键（`apps/cli/config/agent-presets/standard/agent.cordis.yml:113-124`，六段，开头 `You are in plan mode. Stay in plan mode until exit_plan_mode succeeds…`）；未激活时返回 `''` | **动态**：进出 plan 模式会改 system 字符串 |
 | 99 | `tools:code-only` | `packages/core/tools/src/index.ts:855`（文本 `:58`） | `` `run_code` is the only tool you can call directly — a tool call naming any other tool fails. Reach every tool the SDK declares below from inside the program. `` | 仅 `mode: 'code'`（`both` 渲染空） |
 | 100 | `tool:read` | `packages/fs/tool-fs/src/read.ts:70` | `Use the read tool — not shell commands like cat — to inspect text files. …` | 装了 tool-fs |
 | 101 | `tool:write` | `packages/fs/tool-fs/src/write.ts:63` | `Use the write tool to create files or completely replace file contents. …` | 同上 |
@@ -325,7 +325,7 @@ export function renderPrompt(assembly: PromptAssembly): string {
 | 105 | `tool:pwsh` | `packages/shell/tool-pwsh/src/index.ts:245` | `` Non-zero exits are reported as `[exit code: N]` markers… `` | Windows |
 | 106 | `tool:jobs` | `packages/jobs/tool-jobs/src/index.ts:263` | `Track every background job id you start. …` | 装了 tool-jobs |
 | 106 | `tool:pty` | `packages/terminal/tool-terminal/src/index.ts:156` | `Use a terminal session only when work needs persistent terminal state or interactive stdin; …` | 装了 tool-terminal（standard 未装） |
-| 110 | `tool:web_search` | `packages/web/tool-web/src/search.ts:216` | 两版：`fetch` 开时说 `Follow up with web_fetch…`，关时说 `Use the returned source snippets…` | 装了 tool-web |
+| 110 | `tool:web_search` | `packages/web/tool-web/src/search.ts:316` | 两版：`fetch` 开时说 `Follow up with web_fetch…`，关时说 `Use the returned source snippets…` | 装了 tool-web |
 | 111 | `tool:web_fetch` | `packages/web/tool-web/src/fetch.ts:430` | `Use the web_fetch tool to retrieve the content of a specific HTTP(S) URL …` | `fetch: true`（standard 是 `false`） |
 | 112 | `tool:lsp` | `packages/lsp/tool-lsp/src/index.ts:104`（文本 `:54`） | `Use search/read for ordinary navigation. Use lsp when textual matches are ambiguous …` | 装了 tool-lsp |
 | 113 | `tool:session-query` | `packages/session-query/tool-session-query/src/index.ts:60`（文本 `:52`） | `Use session_search to find relevant work from prior sessions, …` | 装了该工具 |
@@ -333,7 +333,7 @@ export function renderPrompt(assembly: PromptAssembly): string {
 | 115 | `tool:${toolName}` | `packages/workflow/tool-workflow/src/index.ts:212` | `Use the workflow tool ONLY when the user explicitly asks for a workflow …` | standard 装 |
 | 115 | `tool:cordis` | `packages/extensions/tool-cordis/src/index.ts:36`（文本 `packages/extensions/tool-cordis/src/prompt.ts:3`） | `# Dynamic Cordis Plugins` 开头的长 markdown，全仓最长的一段 | 装了 tool-cordis（`cordis` preset） |
 | 116 | `tool:ralph` | `packages/workflow/tool-ralph/src/index.ts:407` | `Use the ralph tool ONLY when the direct human explicitly asks for a Ralph loop …` | standard 装 |
-| 116.5 | `tool:${toolName}` | `packages/subagent/tool-subagent/src/index.ts:459`（order 常量 `:26`） | `` Use ${toolName} in the background by default. … Set `run_in_background: false` only when… `` | 仅 `backgroundMode: continuable`；provider 缺席时返回 `''` |
+| 116.5 | `tool:${toolName}` | `packages/subagent/tool-subagent/src/index.ts:468`（order 常量 `:26`） | `` Use ${toolName} in the background by default. … Set `run_in_background: false` only when… `` | 仅 `backgroundMode: continuable`；provider 缺席时返回 `''` |
 | 117 | `tool:report` | `packages/subagent/tool-subagent-report/src/index.ts:54` | `Deliver your result with the report tool before you finish: call it once with a self-contained answer. …` | **仅子代理 scope** |
 | 150 | `tools:sdk` | `packages/core/tools/src/index.ts:875`（order 常量 `packages/core/tools/src/code-mode.ts:23`） | 由 `SDK_RENDERERS[language](sdkSchemas)` 生成的 `## Writing code for run_code` + TypeScript 声明块 | 仅 code/both 模式 |
 | 190 | `ui:deliverable-file-references` | `packages/client/ui-deliverables/src/index.ts:23`（文本 `:15`） | `When you successfully create or modify files, mention the primary outputs in your final response. …` | Web bundle |
@@ -479,7 +479,7 @@ project(current: string, sections: readonly ContextSnapshotSection[]): UserMessa
 | `dsh-agent-instructions` | `packages/context/agent-instructions/src/index.ts:322` | `toSpliced(lastClaimedIndex + 1, 0, desired)`（`:346`），紧跟用户消息之后、runtime 快照之前 | `<system-reminder>` 包裹的 AGENTS.md 基线 |
 | `dsh-tool-skill` 目录 | `packages/skill/tool-skill/src/index.ts:213` | `[...decision.messages, catalog]`（`:248`），追加到尾 | `<system-reminder>` + `<available_skills>` |
 | `dsh-tool-skill` 用户显式调用 | `packages/skill/tool-skill/src/index.ts:177` | 目录之后（注册在目录监听器之前，所以是更外层，改得更晚，见 `:166-170` 的注释） | `<skill_content>` 块 |
-| `dsh-plan-mode` 叙述 | `packages/plan/plan-mode/src/index.ts:205` | 追加到尾（`:221`） | 切换 plan 模式的通知 |
+| `dsh-plan-mode` 叙述 | `packages/plan/plan-mode/src/index.ts:223` | 追加到尾（`:221`） | 切换 plan 模式的通知 |
 | `dsh-time-context` | `packages/context/time-context/src/index.ts:170` | `{prepend: true}`（`:208`）⇒ 最外层，最后追加到尾（`:200-206`） | `Time sampled while preparing turn …`（「准备本轮时采到的时间」）三行读数；**opt-in，默认不装** |
 | `dsh-tmux-context` | `packages/context/tmux-context/src/index.ts:218` | `{prepend: true}`（`:246`），仅 `step === 1`（`:223`），前置到最前（`:238-244`） | tmux 位置读数；opt-in |
 

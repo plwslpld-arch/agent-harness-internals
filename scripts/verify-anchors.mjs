@@ -10,9 +10,19 @@
 //      多行声明常见的偏移），仍找不到才算失败；
 //   4. 路径不存在、行号越界一律失败。
 //
+// 正文里还有两种简写，写作时用得很多，此前全都在门禁之外：
+//
+//   `tool-calls.ts:237-242`   给过完整路径之后，只写文件名
+//   `:249-259`                连文件名都省掉，跟着上一处引用
+//
+// 全仓四百多处走的是这两种写法。README 说「抽查正文里每一处路径:行号」，
+// 不把它们算进来这句话就不成立。所以这里维护一个「当前在讲哪个文件」的
+// 游标：完整路径、裸文件名、以及不带行号的路径提及都会刷新它，简写引用
+// 挂在游标上。
+//
 // 内容是否「对得上」仍需人读，但至少「指到了一个真实存在的行」由机器保证。
 import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { analysisFiles, parseFrontmatter } from './analysis-metadata.mjs';
 import { checkoutsDir, fail, readManifest } from './lib.mjs';
 
@@ -21,8 +31,13 @@ const defaultRepo = 'deepseek-harness';
 const knownRepos = new Set(manifest.sources.map(({ id }) => id));
 const TOLERANCE = 3;
 
-// 形如 packages/core/agent-loop/src/agent.ts:332 或 …:332-401，前面可带 repo 前缀。
-const REFERENCE = /(?:([a-z0-9][a-z0-9-]*)!)?((?:[\w.-]+\/)+[\w.-]+\.(?:ts|tsx|mjs|js|rs|py|md|yml|yaml|json)):(\d+)(?:-(\d+))?/gu;
+const EXT = '(?:ts|tsx|mjs|js|rs|py|md|yml|yaml|json|css|html)';
+// 完整路径，前面可带 repo 前缀，后面可带行号。
+const FULL = new RegExp(`(?:([a-z0-9][a-z0-9-]*)!)?((?:[\\w.-]+/)+[\\w.-]+\\.${EXT})(?::(\\d+)(?:-(\\d+))?)?`, 'gu');
+// 反引号里的裸文件名，后面可带行号。
+const BARE = new RegExp('`([\\w.-]+\\.' + EXT + ')(?::(\\d+)(?:-(\\d+))?)?`', 'gu');
+// 反引号里只剩行号的简写。
+const SHORT = /`:(\d+)(?:-(\d+))?`/gu;
 
 const fileCache = new Map();
 function readLines(repo, path) {
@@ -32,6 +47,24 @@ function readLines(repo, path) {
     fileCache.set(key, existsSync(absolute) ? readFileSync(absolute, 'utf8').split('\n') : null);
   }
   return fileCache.get(key);
+}
+
+// 一行里的三种写法按出现位置合并，重叠的以完整路径优先。
+function tokensIn(line) {
+  const found = [];
+  const covers = (at, length) => found.some((item) => at >= item.at && at < item.at + item.length);
+  for (const match of line.matchAll(FULL)) {
+    found.push({ at: match.index, length: match[0].length, kind: 'full', match });
+  }
+  for (const match of line.matchAll(BARE)) {
+    if (covers(match.index + 1)) continue;
+    found.push({ at: match.index, length: match[0].length, kind: 'bare', match });
+  }
+  for (const match of line.matchAll(SHORT)) {
+    if (covers(match.index)) continue;
+    found.push({ at: match.index, length: match[0].length, kind: 'short', match });
+  }
+  return found.sort((a, b) => a.at - b.at);
 }
 
 const errors = [];
@@ -52,22 +85,57 @@ for (const file of files) {
   const isStale = metadata?.status === 'stale';
   const sink = isStale ? staleWarnings : errors;
   const boundRepos = new Set((metadata?.sources ?? []).map(({ repo }) => repo).filter(Boolean));
+  const fallback = [...(boundRepos.size ? boundRepos : [defaultRepo])];
   const lines = file.content.split('\n');
+  // 「当前在讲哪个文件」的游标，以及本篇出现过的全部完整路径，
+  // 用来把裸文件名还原成完整路径。
+  let current = null;
+  const seen = [];
   let inFence = false;
+
   lines.forEach((line, index) => {
     if (/^\s*```/u.test(line)) inFence = !inFence;
     // 代码块里的行号多半是 sed/grep 命令参数，不当作引用。
     if (inFence) return;
-    for (const match of line.matchAll(REFERENCE)) {
-      const [, explicitRepo, path, startRaw, endRaw] = match;
-      // 一篇文章可以绑定多个仓库（横向对照篇就是）。先按显式前缀，
-      // 否则在本篇绑定的仓库里找第一个真有这个路径的。
-      const candidates = explicitRepo
-        ? [explicitRepo]
-        : [...(boundRepos.size ? boundRepos : [defaultRepo])];
+    const where = `${file.relativePath}:${index + 1}`;
+
+    for (const { kind, match } of tokensIn(line)) {
+      let repoHint = null;
+      let path = null;
+      let startRaw = null;
+      let endRaw = null;
+
+      if (kind === 'full') {
+        [, repoHint, path, startRaw, endRaw] = match;
+      } else if (kind === 'bare') {
+        const [, name, s, e] = match;
+        // 裸文件名按 basename 回指本篇出现过的完整路径。同名多个就放弃，
+        // 猜错比不猜更糟。
+        const hits = seen.filter((entry) => basename(entry.path) === name);
+        if (hits.length !== 1) continue;
+        ({ repoHint, path } = hits[0]);
+        startRaw = s;
+        endRaw = e;
+      } else {
+        if (!current) continue;
+        ({ repoHint, path } = current);
+        [, startRaw, endRaw] = match;
+      }
+
+      const candidates = repoHint ? [repoHint] : fallback;
       if (!candidates.every((id) => knownRepos.has(id))) continue;
-      const where = `${file.relativePath}:${index + 1}`;
       const repo = candidates.find((id) => readLines(id, path) !== null);
+
+      // 记住这个文件，供后面的简写回指。不带行号的提及也算，正文里
+      // 「`apps/cli/src/args.ts` 解析出三种 mode：`:22`、`:32`」就是这么写的。
+      if (repo !== undefined && (kind === 'full' || kind === 'bare')) {
+        const entry = { path, repoHint: repoHint ?? repo };
+        current = entry;
+        if (!seen.some((item) => item.path === path)) seen.push(entry);
+      }
+
+      if (startRaw === undefined || startRaw === null) continue;
+
       if (repo === undefined) {
         // checkout 未拉取时不误报；verify-sources 已经负责这件事。
         if (!candidates.every((id) => existsSync(join(checkoutsDir, id, '.git')))) continue;
