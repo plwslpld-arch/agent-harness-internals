@@ -24,6 +24,14 @@
       "scope": "repository",
       "alt": "Agent Harness 内部原理 GitHub 中文社交预览图",
       "claims": []
+    },
+    {
+      "id": "start-agent-harness-scope",
+      "path": "assets/diagrams/start/agent-harness-scope.svg",
+      "type": "architecture",
+      "scope": "repository",
+      "alt": "Agent Harness 主线与 Eval 横切验证的中文架构关系图",
+      "claims": []
     }
   ]
 }

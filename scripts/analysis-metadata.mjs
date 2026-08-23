@@ -6,6 +6,7 @@ export const analysisPrefixes = ['docs/'];
 export const articleStatuses = new Set(['outline', 'draft', 'reviewed', 'verified', 'stale']);
 
 const articleDirectories = [
+  ['docs/00-start-here.md', 'start'],
   ['docs/foundations/', 'foundation'],
   ['docs/harnesses/', 'harness'],
   ['docs/comparisons/', 'comparison'],
@@ -55,7 +56,7 @@ export function articleMetadataFailures(relativePath, metadata) {
   if (!/^\d{4}-\d{2}-\d{2}$/u.test(metadata.last_verified ?? '')) {
     errors.push(`${relativePath}: last_verified 必须是 YYYY-MM-DD`);
   }
-  if (Array.isArray(metadata.sources) && metadata.sources.length === 0 && metadata.status !== 'outline') {
+  if (Array.isArray(metadata.sources) && metadata.sources.length === 0 && metadata.status !== 'outline' && kind !== 'start') {
     errors.push(`${relativePath}: 只有 outline 可以使用空 sources`);
   }
   return errors;

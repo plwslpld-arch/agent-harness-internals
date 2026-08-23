@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  articleKind,
   articleMetadataFailures,
   validOfficialDocumentSource,
 } from '../analysis-metadata.mjs';
@@ -65,4 +66,15 @@ test('官方文档来源必须具备标题、HTTPS URL 和访问日期', () => {
     url: 'http://example.com',
     accessed: '2026-08-23',
   }), false);
+});
+
+test('总入口使用 start 类型且可以用仓库自身作为复核对象', () => {
+  assert.equal(articleKind('docs/00-start-here.md'), 'start');
+  assert.deepEqual(articleMetadataFailures('docs/00-start-here.md', {
+    title: '从这里开始',
+    article_type: 'start',
+    status: 'reviewed',
+    last_verified: '2026-08-23',
+    sources: [],
+  }), []);
 });

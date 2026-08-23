@@ -9,6 +9,7 @@ import {
 import { fail } from './lib.mjs';
 
 const depthRules = {
+  start: { characters: 2200, paragraphs: 10 },
   harness: { characters: 2400, paragraphs: 12 },
   foundation: { characters: 1800, paragraphs: 8 },
   comparison: { characters: 2200, paragraphs: 10 },
@@ -134,13 +135,25 @@ function appendixFailures(content, errors) {
   for (const heading of ['使用范围', '条目', '失败与限制']) requireSection(content, heading, errors);
 }
 
+function startFailures(content, errors) {
+  for (const heading of ['这个入口解决什么', '概念地图', '六条主线', '阅读路径', '状态与导航', '证据方法', '本地验证', '边界']) {
+    requireSection(content, heading, errors);
+  }
+  const map = section(content, '概念地图');
+  if (map !== null && !/!\[[^\]]*[\u3400-\u9fff][^\]]*\]\(\.\.\/assets\/diagrams\/[a-z0-9/_.-]+\.svg\)/u.test(map)) {
+    errors.push('“概念地图”必须嵌入带中文替代文本的正式 SVG');
+  }
+  checkSelfReview(content, errors);
+}
+
 export function contentContractFailures(article) {
   const kind = articleKind(article.relativePath);
   if (!kind) return [];
   const errors = [];
   const content = article.content ?? '';
 
-  if (kind === 'harness') harnessFailures(content, errors);
+  if (kind === 'start') startFailures(content, errors);
+  else if (kind === 'harness') harnessFailures(content, errors);
   else if (kind === 'foundation') foundationFailures(content, errors);
   else if (kind === 'comparison') comparisonFailures(content, errors);
   else if (kind === 'role') roleFailures(content, errors);

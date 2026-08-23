@@ -79,6 +79,10 @@ Eval 不与六条主线争夺主导航，而是在每条主线中重复回答同
 
 正式课程导航只会出现 `reviewed` 和 `verified` 页面。在共同基础完成前，可以先按下表理解最终阅读结构；没有链接意味着内容尚未达到发布门槛，而不是文件不存在就被隐藏。
 
+<!-- course-navigation:start -->
+[从总入口开始：先建立概念、状态与证据口径](docs/00-start-here.md)
+<!-- course-navigation:end -->
+
 | 你的目标 | 建议路径 | 需要的背景 |
 | --- | --- | --- |
 | 第一次理解 Agent Harness | 一次模型调用 → Agent Loop → 工具与权限 → 会话与恢复 → Eval 接入 | 无需先读源码 |

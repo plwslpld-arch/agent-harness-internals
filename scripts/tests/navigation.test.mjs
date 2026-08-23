@@ -70,3 +70,11 @@ test('不成对或嵌套的正式导航标记不能静默绕过检查', () => {
 <!-- course-navigation:end -->
 <!-- course-navigation:end -->`, read), ['正式导航标记不成对或发生嵌套']);
 });
+
+test('README 可以把已复核总入口作为唯一正式课程链接', () => {
+  const content = `<!-- course-navigation:start -->
+[从总入口开始](reviewed.md)
+<!-- course-navigation:end -->`;
+
+  assert.deepEqual(navigationFailures(content, read), []);
+});

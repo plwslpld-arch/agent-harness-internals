@@ -124,6 +124,7 @@ test('缺失或非法状态不能绕过内容门禁', () => {
 
 test('基础、比较、角色和实验文章使用各自结构', () => {
   const cases = [
+    ['docs/00-start-here.md', 'start', '概念地图'],
     ['docs/foundations/01-one-turn.md', 'foundation', '核心概念'],
     ['docs/comparisons/01-agent-loop.md', 'comparison', '控制变量'],
     ['docs/roles/researcher.md', 'role', '决策问题'],
