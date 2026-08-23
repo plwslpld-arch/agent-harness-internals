@@ -56,6 +56,14 @@
       "scope": "docs/foundations/03-model-tool-io.md",
       "alt": "模型消息、工具调用和工具结果沿稳定调用标识经过适配与执行的中文数据流图",
       "claims": ["foundation.io.tool-result-correlation"]
+    },
+    {
+      "id": "foundation-tools-permissions-sandbox",
+      "path": "assets/diagrams/foundations/04-tools-permissions-sandbox.svg",
+      "type": "architecture",
+      "scope": "docs/foundations/04-tools-permissions-sandbox.md",
+      "alt": "工具调用依次通过暴露、策略、用户批准、平台隔离与真实执行的中文安全边界图",
+      "claims": ["foundation.security.permission-is-not-sandbox"]
     }
   ]
 }

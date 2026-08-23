@@ -1,0 +1,64 @@
+{
+  "id": "foundation.security.permission-is-not-sandbox",
+  "harness": "foundation",
+  "dimension": "security.permission-is-not-sandbox",
+  "statement": "策略允许或用户批准只回答某次工具调用是否获授权，不能证明命令已在有效 Sandbox 中运行；隔离后端、权限物化、平台支持和失败回退必须独立核验。",
+  "capability": "not-applicable",
+  "version": "locked-sources-2026-08-23",
+  "surface": "tool-security-boundary",
+  "platform": "all",
+  "mode": "cross-implementation-analysis",
+  "evidence_level": "D",
+  "inference": "Gemini CLI 的 PolicyEngine 产生 ALLOW、DENY 或 ASK_USER 等决策，而独立的 LinuxSandboxManager 使用 Bubblewrap 准备命令，上游测试分别验证策略默认值和 bwrap 包装。Codex 的 SandboxAttempt 更直接区分 policy requested sandboxing 与主机 concrete wrapper，其 Windows 测试在后端无法强制 deny-read 时拒绝无沙箱运行。由此可推断授权与隔离是不同安全边界；具体默认策略、隔离强度、平台覆盖和回退行为仍必须按项目核对。",
+  "evidence": [
+    {
+      "type": "source",
+      "source": "gemini-cli",
+      "commit": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+      "path": "packages/core/src/policy/policy-engine.ts",
+      "lines": "290-298",
+      "excerpt": "this.nonInteractive ? PolicyDecision.DENY : PolicyDecision.ASK_USER"
+    },
+    {
+      "type": "upstream-test",
+      "source": "gemini-cli",
+      "commit": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+      "path": "packages/core/src/policy/policy-engine.test.ts",
+      "lines": "144-153",
+      "excerpt": "expect(decision).toBe(PolicyDecision.ASK_USER)"
+    },
+    {
+      "type": "source",
+      "source": "gemini-cli",
+      "commit": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+      "path": "packages/core/src/sandbox/linux/LinuxSandboxManager.ts",
+      "lines": "140-149",
+      "excerpt": "A SandboxManager implementation for Linux that uses Bubblewrap"
+    },
+    {
+      "type": "upstream-test",
+      "source": "gemini-cli",
+      "commit": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+      "path": "packages/core/src/sandbox/linux/LinuxSandboxManager.test.ts",
+      "lines": "75-92",
+      "excerpt": "exec bwrap --args 8"
+    },
+    {
+      "type": "source",
+      "source": "codex",
+      "commit": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+      "path": "codex-rs/core/src/tools/sandboxing.rs",
+      "lines": "386-400",
+      "excerpt": "Whether policy requested sandboxing, independent of this host's concrete wrapper"
+    },
+    {
+      "type": "upstream-test",
+      "source": "codex",
+      "commit": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+      "path": "codex-rs/core/src/tools/sandboxing_tests.rs",
+      "lines": "292-305",
+      "excerpt": "refusing to run unsandboxed"
+    }
+  ],
+  "last_verified": "2026-08-23"
+}
