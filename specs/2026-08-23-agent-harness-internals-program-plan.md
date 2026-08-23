@@ -14,7 +14,7 @@
 - [x] 阶段 1：品牌、Logo、中文视觉、README 和 GitHub 对外信息。
   - 计划：`specs/2026-08-23-phase-1-brand-entry-implementation-plan.md`
   - 验收：三个 Logo 方向完成渲染比较，最佳方案及 Social preview 发布，入口不夸大完成度。
-- [ ] 阶段 2：共同基础课程。
+- [x] 阶段 2：共同基础课程。
   - 计划：`specs/2026-08-23-phase-2-foundations-implementation-plan.md`
   - 验收：六篇基础课程达到 `reviewed`，图示、证据、中文和内容门禁通过。
 - [ ] 阶段 3A：DeepSeek Harness 主线。

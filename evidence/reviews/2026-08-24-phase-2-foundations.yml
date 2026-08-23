@@ -1,0 +1,57 @@
+{
+  "stage": "phase-2-foundations",
+  "date": "2026-08-24",
+  "commit": "0ab561b331377cb263c67c72373fc2f9debb8bdf",
+  "promises": [
+    {"id": "p-six-foundations", "statement": "六篇共同基础均达到 reviewed，具备完整解释、最小例子、失败边界、验证方法和带答案自检。"},
+    {"id": "p-evidence-claims", "statement": "六篇分别绑定锁定来源和正式 Claim，跨实现抽象保持 D 级并公开推断边界。"},
+    {"id": "p-chinese-diagrams", "statement": "六篇分别具有正式中文 SVG，箭头、分层和警告语义经过实际渲染复核。"},
+    {"id": "p-eval-contract", "statement": "Trial 固定分母、Attempt 基础设施恢复、Trace、Artifact、Scorer、Feedback、训练适配和独立发布评测已经分开。"},
+    {"id": "p-atomic-navigation", "statement": "README 与总入口只整批开放六篇 reviewed 基础课，缺失或降级任一篇都会阻断批量发布。"},
+    {"id": "p-legacy-retirement", "statement": "旧双 Harness 总览、概念页和 E1 至 E4 入口退出公开课程树，受影响链接已经改接新基础课。"},
+    {"id": "p-node24-sources", "statement": "Node 24 聚合门禁和十二个锁定来源全量验证通过。"}
+  ],
+  "evidence": [
+    {"id": "e-six-articles", "promise": "p-six-foundations", "type": "file", "reference": "docs/foundations/", "summary": "01 至 06 六篇状态均为 reviewed，并满足共同基础内容契约。"},
+    {"id": "e-content-contract", "promise": "p-six-foundations", "type": "test", "reference": "scripts/tests/content-contract.test.mjs", "summary": "阻断解释不足、段落不足、缺少正式中文图或缺少 Claim 的基础文章。"},
+    {"id": "e-claims", "promise": "p-evidence-claims", "type": "file", "reference": "evidence/claims/", "summary": "六条 foundation Claim 记录锁定 Commit、路径、行号、摘录、等级和推断。"},
+    {"id": "e-evidence-map", "promise": "p-evidence-claims", "type": "file", "reference": "evidence/claims/foundations/evidence-map.yml", "summary": "六篇共准备三十二项候选证据并登记跨项目外推、闭源推断和统计口径风险。"},
+    {"id": "e-diagram-sheet", "promise": "p-chinese-diagrams", "type": "render", "reference": "evidence/reviews/phase-2-foundations-contact-sheet.png", "summary": "六张最终图集中复核，未发现截断、重叠、箭头误向或英文说明残留；A17 仅作为调用标识。"},
+    {"id": "e-visual-manifest", "promise": "p-chinese-diagrams", "type": "file", "reference": "assets/diagrams/manifest.yml", "summary": "六图具有中文替代文本、合法图类型、文章范围和 Claim 绑定。"},
+    {"id": "e-eval-article", "promise": "p-eval-contract", "type": "file", "reference": "docs/foundations/06-trace-feedback-eval.md", "summary": "使用四个固定 Trial 的例子区分基础设施恢复、产品失败和不可判定，并分开三类评测用途。"},
+    {"id": "e-eval-claim", "promise": "p-eval-contract", "type": "file", "reference": "evidence/claims/foundation.eval.trial-attempt-stability.yml", "summary": "明确声明统计语义是仓库规范性 D 级契约，不冒充 Terminal-Bench 或 Inspect AI 默认术语。"},
+    {"id": "e-navigation-test", "promise": "p-atomic-navigation", "type": "test", "reference": "scripts/tests/navigation.test.mjs", "summary": "缺少一篇或任一篇为 draft 时，共同基础批量导航明确失败。"},
+    {"id": "e-public-entry", "promise": "p-atomic-navigation", "type": "file", "reference": "README.md", "summary": "公开状态更新为共同基础 6/6 reviewed，并整批链接六篇基础课。"},
+    {"id": "e-legacy-test", "promise": "p-legacy-retirement", "type": "test", "reference": "scripts/tests/project-files.test.mjs", "summary": "禁止旧总览、旧概念、E1 至 E4 和旧双主线入口回到公开树。"},
+    {"id": "e-source-all", "promise": "p-node24-sources", "type": "command", "reference": "node scripts/verify-sources.mjs --profile all", "summary": "十二个来源定义与十二个全量 Checkout 均通过锁定验证。"},
+    {"id": "e-check-all", "promise": "p-node24-sources", "type": "command", "reference": "node scripts/check-all.mjs", "summary": "十七组聚合检查、八十四项单元测试和全部当前门禁通过。"}
+  ],
+  "findings": [
+    {"id": "f-visual-english-labels", "priority": "high", "status": "resolved", "summary": "阶段合并图发现前两张早期图仍显示 Agent Harness、Eval 和 Sandbox 等英文标签。"},
+    {"id": "f-eval-training-arrow", "priority": "high", "status": "resolved", "summary": "评测图首轮把训练适配直接连到独立发布评测，容易误读为同一数据链。"},
+    {"id": "f-navigation-partial-release", "priority": "high", "status": "resolved", "summary": "原导航门禁只逐链接校验状态，不能阻止五篇先公开、一篇滞后的部分发布。"},
+    {"id": "f-session-history-generalization", "priority": "high", "status": "resolved", "summary": "长会话示例可能把推荐的原始事件保留契约误写成所有上游默认事实。"},
+    {"id": "f-upstream-statistics-collapse", "priority": "high", "status": "resolved", "summary": "Terminal-Bench 的 TrialResults 与 attempts 命名可能被错误等同仓库的 Trial 与恢复 Attempt。"},
+    {"id": "f-feedback-surface-collapse", "priority": "medium", "status": "resolved", "summary": "DSH 消息伴随反馈和 feedback 命令最初在相邻句中出现，可能被误读为同一反馈契约。"},
+    {"id": "f-legacy-source-corpus", "priority": "medium", "status": "open", "summary": "旧 A 系列、DSH 深文和角色文章仍待阶段 3 至 4 按新证据模型重审；当前不在正式课程导航。"},
+    {"id": "f-remote-not-deployed", "priority": "medium", "status": "open", "summary": "GitHub 远端名称、资料、社交预览和保护规则继续保留到最终部署阶段统一应用。"},
+    {"id": "f-legacy-style-warning", "priority": "low", "status": "open", "summary": "待后续重审的旧附录仍有一条非阻断句长节奏提醒。"}
+  ],
+  "resolutions": [
+    {"id": "f-visual-english-labels", "action": "把图中标签改为智能体运行框架、评测验证和隔离沙箱，重渲染受影响单图与六图合并图。", "evidence": ["e-diagram-sheet", "e-visual-manifest"]},
+    {"id": "f-eval-training-arrow", "action": "删除训练适配到发布评测的直连，改为评分结果独立分叉到反馈链和隔离发布重跑。", "evidence": ["e-diagram-sheet", "e-eval-article"]},
+    {"id": "f-navigation-partial-release", "action": "增加共同基础 required batch 门禁和失败测试，README 与总入口必须同时包含六篇且全部可发布。", "evidence": ["e-navigation-test", "e-public-entry"]},
+    {"id": "f-session-history-generalization", "action": "把原始事件保留写成审计敏感任务的推荐契约，并明确上游若裁剪或删除必须登记恢复限制。", "evidence": ["e-six-articles", "e-claims"]},
+    {"id": "f-upstream-statistics-collapse", "action": "把固定 Trial 与恢复 Attempt 登记为仓库规范性 D 级 Claim，同时逐段解释 Terminal-Bench 上游命名差异。", "evidence": ["e-eval-article", "e-eval-claim"]},
+    {"id": "f-feedback-surface-collapse", "action": "正文明确两者是不同反馈表面，不能互相替代证据，也都不证明 RewardAdapter 已实现。", "evidence": ["e-eval-article"]}
+  ],
+  "commands": [
+    {"command": "node --version", "exit_code": 0, "summary": "输出 v24.19.0。"},
+    {"command": "node scripts/check-all.mjs", "exit_code": 0, "summary": "十七组聚合检查、八十四项单元测试、十个正式 SVG、二十五次正式导航目标核对和一千六百一十九处源码锚点通过。"},
+    {"command": "node scripts/verify-sources.mjs --profile all", "exit_code": 0, "summary": "十二个来源定义与十二个全量 Checkout 通过。"},
+    {"command": "渲染并打开 phase-2-foundations-contact-sheet.png", "exit_code": 0, "summary": "六图最终版无文字截断、节点重叠、箭头误向或英文说明残留。"},
+    {"command": "rg -n -g '*.svg' '>[^<]*[A-Za-z][^<]*<' assets/diagrams/foundations", "exit_code": 0, "summary": "只命中工具调用标识 A17，没有英文自然语言标签。"},
+    {"command": "git diff --check", "exit_code": 0, "summary": "没有空白错误。"}
+  ],
+  "result": "pass"
+}

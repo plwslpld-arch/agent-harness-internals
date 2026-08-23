@@ -20,7 +20,7 @@
     </g>
     <g transform="translate(300 116)">
       <rect width="214" height="64" rx="18" fill="#E8F6F5" stroke="#0B8F8C" stroke-width="3"/>
-      <text x="107" y="40" fill="#0B7775" font-size="22" font-weight="720">Agent Harness</text>
+      <text x="107" y="40" fill="#0B7775" font-size="22" font-weight="720">智能体运行框架</text>
     </g>
     <g transform="translate(610 116)">
       <rect width="174" height="64" rx="18" fill="#E8F1FF" stroke="#3569A8" stroke-width="3"/>
