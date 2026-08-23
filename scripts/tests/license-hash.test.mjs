@@ -1,9 +1,9 @@
 import { strictEqual, notStrictEqual } from 'node:assert';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { sha256, sha256Text } from '../lib.mjs';
+import { readDocument, root, sha256, sha256Text } from '../lib.mjs';
 
 // Windows 上 core.autocrlf=true 会把 checkout 出来的 LICENSE 换成 CRLF。
 // 逐字节哈希因此对不上 lock，门禁在 Windows 上永远失败。归一化之后
@@ -27,4 +27,24 @@ test('sha256Text still detects a real change to the terms', () => {
   const changed = join(dir, 'LICENSE.changed');
   writeFileSync(changed, ['MIT License', '', 'Permission is NOT granted.', ''].join('\n'));
   notStrictEqual(sha256Text(changed), sha256Text(lf));
+});
+
+test('Claude 双 SDK 分别锁定实际许可证条款', () => {
+  const manifest = readDocument(join(root, 'sources', 'sources.yml'));
+  const lock = readDocument(join(root, 'sources', 'sources.lock.yml'));
+  const byId = new Map(manifest.sources.map((source) => [source.id, source]));
+  const locks = new Map(lock.sources.map((source) => [source.id, source]));
+
+  strictEqual(byId.get('claude-agent-sdk-python').license.spdx, 'MIT');
+  strictEqual(byId.get('claude-agent-sdk-python').license.file, 'LICENSE');
+  strictEqual(byId.get('claude-agent-sdk-typescript').license.spdx, 'LicenseRef-Anthropic-Commercial-Terms');
+  strictEqual(byId.get('claude-agent-sdk-typescript').license.file, 'LICENSE.md');
+  strictEqual(
+    sha256Text(join(root, 'sources', 'checkouts', 'claude-agent-sdk-typescript', 'LICENSE.md')),
+    locks.get('claude-agent-sdk-typescript').licenseSha256,
+  );
+  strictEqual(
+    readFileSync(join(root, 'sources', 'checkouts', 'claude-agent-sdk-typescript', 'LICENSE.md'), 'utf8').includes('Commercial Terms of Service'),
+    true,
+  );
 });

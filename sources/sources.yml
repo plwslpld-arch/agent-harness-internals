@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 1,
-  "project": "Harness Internals",
+  "schemaVersion": 2,
+  "project": "Agent Harness Internals",
   "sources": [
     {
       "id": "deepseek-harness",
@@ -9,6 +9,7 @@
       "url": "https://github.com/deepseek-ai/deepseek-harness.git",
       "defaultBranch": "master",
       "fetchPolicy": "automatic",
+      "profiles": ["core"],
       "license": {
         "spdx": "MIT",
         "file": "LICENSE"
@@ -25,6 +26,7 @@
       "url": "https://github.com/openai/codex.git",
       "defaultBranch": "main",
       "fetchPolicy": "automatic",
+      "profiles": ["core"],
       "license": {
         "spdx": "Apache-2.0",
         "file": "LICENSE"
@@ -41,6 +43,7 @@
       "url": "https://github.com/google-gemini/gemini-cli.git",
       "defaultBranch": "main",
       "fetchPolicy": "automatic",
+      "profiles": ["core"],
       "license": {
         "spdx": "Apache-2.0",
         "file": "LICENSE"
@@ -51,12 +54,13 @@
       }
     },
     {
-      "id": "claude-agent-sdk",
+      "id": "claude-agent-sdk-python",
       "name": "Claude Agent SDK for Python",
       "category": "reference-agents",
       "url": "https://github.com/anthropics/claude-agent-sdk-python.git",
       "defaultBranch": "main",
       "fetchPolicy": "automatic",
+      "profiles": ["core"],
       "license": {
         "spdx": "MIT",
         "file": "LICENSE"
@@ -67,12 +71,30 @@
       }
     },
     {
+      "id": "claude-agent-sdk-typescript",
+      "name": "Claude Agent SDK for TypeScript",
+      "category": "reference-agents",
+      "url": "https://github.com/anthropics/claude-agent-sdk-typescript.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "profiles": ["core"],
+      "license": {
+        "spdx": "LicenseRef-Anthropic-Commercial-Terms",
+        "file": "LICENSE.md"
+      },
+      "redistribution": {
+        "policy": "metadata-and-analysis-only",
+        "notes": "Official SDK contract surface under Anthropic commercial terms; do not redistribute or infer closed-source Claude Code internals."
+      }
+    },
+    {
       "id": "opencode",
       "name": "OpenCode",
       "category": "comparison-agents",
       "url": "https://github.com/anomalyco/opencode.git",
       "defaultBranch": "dev",
       "fetchPolicy": "automatic",
+      "profiles": ["core"],
       "license": {
         "spdx": "MIT",
         "file": "LICENSE"
@@ -89,6 +111,7 @@
       "url": "https://github.com/earendil-works/pi.git",
       "defaultBranch": "main",
       "fetchPolicy": "automatic",
+      "profiles": ["core"],
       "license": {
         "spdx": "MIT",
         "file": "LICENSE"
@@ -105,6 +128,7 @@
       "url": "https://github.com/SWE-agent/mini-swe-agent.git",
       "defaultBranch": "main",
       "fetchPolicy": "automatic",
+      "profiles": ["samples"],
       "license": {
         "spdx": "MIT",
         "file": "LICENSE.md"
@@ -121,6 +145,7 @@
       "url": "https://github.com/EleutherAI/lm-evaluation-harness.git",
       "defaultBranch": "main",
       "fetchPolicy": "automatic",
+      "profiles": ["eval"],
       "license": {
         "spdx": "MIT",
         "file": "LICENSE.md"
@@ -137,6 +162,7 @@
       "url": "https://github.com/UKGovernmentBEIS/inspect_ai.git",
       "defaultBranch": "main",
       "fetchPolicy": "automatic",
+      "profiles": ["eval"],
       "license": {
         "spdx": "MIT",
         "file": "LICENSE"
@@ -153,6 +179,7 @@
       "url": "https://github.com/harbor-framework/terminal-bench-1.git",
       "defaultBranch": "main",
       "fetchPolicy": "automatic",
+      "profiles": ["eval"],
       "license": {
         "spdx": "Apache-2.0",
         "file": "LICENSE"
@@ -169,6 +196,7 @@
       "url": "https://github.com/SWE-bench/SWE-bench.git",
       "defaultBranch": "main",
       "fetchPolicy": "automatic",
+      "profiles": ["eval"],
       "license": {
         "spdx": "MIT",
         "file": "LICENSE"

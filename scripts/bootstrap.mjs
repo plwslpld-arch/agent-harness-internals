@@ -1,7 +1,14 @@
 #!/usr/bin/env node
 import { existsSync, mkdirSync } from 'node:fs';
 import { isAbsolute, join, resolve } from 'node:path';
-import { checkoutsDir, git, readManifest, root } from './lib.mjs';
+import {
+  checkoutsDir,
+  git,
+  parseSourceProfiles,
+  readManifest,
+  root,
+  selectManifestSources,
+} from './lib.mjs';
 
 const includeRestricted = process.argv.includes('--include-restricted');
 const seeds = new Map();
@@ -17,9 +24,12 @@ for (let index = 2; index < process.argv.length; index += 1) {
   index += 1;
 }
 const { manifest, locks } = readManifest();
+const profiles = parseSourceProfiles(process.argv.slice(2));
+const selectedSources = selectManifestSources(manifest, profiles);
 mkdirSync(checkoutsDir, { recursive: true });
 
-for (const source of manifest.sources) {
+console.log(`来源配置：${[...profiles].join(', ')}（${selectedSources.length} 个来源）`);
+for (const source of selectedSources) {
   if (source.fetchPolicy === 'restricted' && !includeRestricted) {
     console.log(`skip ${source.id} (restricted; use --include-restricted)`);
     continue;

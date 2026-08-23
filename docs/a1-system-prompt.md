@@ -1,9 +1,9 @@
 ---
 title: Prompt 装配：谁拥有模型最先看到的资产
-sources: [{"repo":"deepseek-harness","path":"packages/core/system-prompt/src/index.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"},{"repo":"codex","path":"codex-rs/core/src/client_common.rs","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29"},{"repo":"gemini-cli","path":"packages/core/src/core/prompts.ts","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2"},{"repo":"claude-agent-sdk","path":"src/claude_agent_sdk/types.py","commit":"542fefb3b94be87760b2513fff889b91bb5b6672"}]
+sources: [{"repo":"deepseek-harness","path":"packages/core/system-prompt/src/index.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"},{"repo":"codex","path":"codex-rs/core/src/client_common.rs","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29"},{"repo":"gemini-cli","path":"packages/core/src/core/prompts.ts","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2"},{"repo":"claude-agent-sdk-python","path":"src/claude_agent_sdk/types.py","commit":"542fefb3b94be87760b2513fff889b91bb5b6672"}]
 last_verified: 2026-08-23
 status: reviewed
-coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk":1}
+coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk-python":1}
 ---
 
 # Prompt 装配：谁拥有模型最先看到的资产
@@ -20,7 +20,7 @@ coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk":
 | DSH | `deepseek-harness!packages/core/system-prompt/src/index.ts:169` 负责工具顺序等装配细节。 |
 | Codex | `codex!codex-rs/core/src/client_common.rs:30` 把 base instructions 放进请求公共结构。 |
 | Gemini CLI | `gemini-cli!packages/core/src/core/prompts.ts:23` 暴露 core system prompt 的生成入口。 |
-| Claude | `claude-agent-sdk!src/claude_agent_sdk/types.py:1967` 只证明 SDK 允许调用者覆盖或预设 system prompt。 |
+| Claude | `claude-agent-sdk-python!src/claude_agent_sdk/types.py:1967` 只证明 SDK 允许调用者覆盖或预设 system prompt。 |
 
 DSH 把多插件贡献合成一份稳定前缀，详细逐字重建保留在深读层。Codex 把基础指令建模为请求对象的一部分；Gemini CLI 用 PromptProvider 集中生成。三者都能从源码继续追到装配过程，但资产边界不同。
 

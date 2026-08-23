@@ -1,9 +1,9 @@
 ---
 title: Code Mode：把很多工具收成一个运行时代码入口
-sources: [{"repo":"deepseek-harness","path":"packages/core/tools/src/index.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"},{"repo":"codex","path":"codex-rs/app-server/src/code_mode_host.rs","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29"},{"repo":"gemini-cli","path":"packages/core/src/tools/tool-registry.ts","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2"},{"repo":"claude-agent-sdk","path":"src/claude_agent_sdk/types.py","commit":"542fefb3b94be87760b2513fff889b91bb5b6672"}]
+sources: [{"repo":"deepseek-harness","path":"packages/core/tools/src/index.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"},{"repo":"codex","path":"codex-rs/app-server/src/code_mode_host.rs","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29"},{"repo":"gemini-cli","path":"packages/core/src/tools/tool-registry.ts","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2"},{"repo":"claude-agent-sdk-python","path":"src/claude_agent_sdk/types.py","commit":"542fefb3b94be87760b2513fff889b91bb5b6672"}]
 last_verified: 2026-08-23
 status: reviewed
-coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk":1}
+coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk-python":1}
 ---
 
 # Code Mode：把很多工具收成一个运行时代码入口
@@ -18,7 +18,7 @@ coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk":
 | DSH | `deepseek-harness!packages/core/tools/src/index.ts:651` 定义工具呈现模式配置。 |
 | Codex | `codex!codex-rs/app-server/src/code_mode_host.rs:8` 选择进程级 code-mode host。 |
 | Gemini CLI | `gemini-cli!packages/core/src/tools/tool-registry.ts:231` 仍公开一般工具注册表；当前锁定源码未证明等价 Code Mode。 |
-| Claude | `claude-agent-sdk!src/claude_agent_sdk/types.py:1955` 公开 allowed_tools；当前 SDK 契约未证明等价 Code Mode。 |
+| Claude | `claude-agent-sdk-python!src/claude_agent_sdk/types.py:1955` 公开 allowed_tools；当前 SDK 契约未证明等价 Code Mode。 |
 
 DSH 和 Codex 都有明确 Code Mode 路径。Gemini CLI 与 Claude 两列写的是证据边界：找到工具注册/允许列表，不代表存在同类「代码解释器 + 单入口」机制。
 

@@ -25,9 +25,14 @@
 	url = https://github.com/google-gemini/gemini-cli.git
 	shallow = true
 	branch = main
-[submodule "sources/checkouts/claude-agent-sdk"]
-	path = sources/checkouts/claude-agent-sdk
+[submodule "sources/checkouts/claude-agent-sdk-python"]
+	path = sources/checkouts/claude-agent-sdk-python
 	url = https://github.com/anthropics/claude-agent-sdk-python.git
+	shallow = true
+	branch = main
+[submodule "sources/checkouts/claude-agent-sdk-typescript"]
+	path = sources/checkouts/claude-agent-sdk-typescript
+	url = https://github.com/anthropics/claude-agent-sdk-typescript.git
 	shallow = true
 	branch = main
 [submodule "sources/checkouts/lm-evaluation-harness"]

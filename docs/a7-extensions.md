@@ -1,9 +1,9 @@
 ---
 title: 扩展：Plugins、Skills、Hooks 与 MCP
-sources: [{"repo":"deepseek-harness","path":"packages/hooks/hooks-claude-code/src/index.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"},{"repo":"codex","path":"codex-rs/core/src/skills.rs","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29"},{"repo":"gemini-cli","path":"packages/core/src/hooks/types.ts","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2"},{"repo":"claude-agent-sdk","path":"src/claude_agent_sdk/types.py","commit":"542fefb3b94be87760b2513fff889b91bb5b6672"}]
+sources: [{"repo":"deepseek-harness","path":"packages/hooks/hooks-claude-code/src/index.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"},{"repo":"codex","path":"codex-rs/core/src/skills.rs","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29"},{"repo":"gemini-cli","path":"packages/core/src/hooks/types.ts","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2"},{"repo":"claude-agent-sdk-python","path":"src/claude_agent_sdk/types.py","commit":"542fefb3b94be87760b2513fff889b91bb5b6672"}]
 last_verified: 2026-08-23
 status: reviewed
-coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk":1}
+coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk-python":1}
 ---
 
 # 扩展：Plugins、Skills、Hooks 与 MCP
@@ -18,7 +18,7 @@ coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk":
 | DSH | `deepseek-harness!packages/hooks/hooks-claude-code/src/index.ts:242` 展示 hook 可以在工具执行前返回 ask。 |
 | Codex | `codex!codex-rs/core/src/skills.rs:27-29` 生成 HostSkillsLoadInput。 |
 | Gemini CLI | `gemini-cli!packages/core/src/hooks/types.ts:43` 枚举 hook 事件名。 |
-| Claude | `claude-agent-sdk!src/claude_agent_sdk/types.py:263` 定义公开 HookEvent 联合。 |
+| Claude | `claude-agent-sdk-python!src/claude_agent_sdk/types.py:263` 定义公开 HookEvent 联合。 |
 
 Skill 通常向模型注入可发现的说明；hook 介入运行时事件；MCP 连接外部工具或资源；plugin 可能打包前面几种能力。比较时应按实际生命周期拆开。
 

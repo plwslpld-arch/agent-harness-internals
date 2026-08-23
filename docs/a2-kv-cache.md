@@ -1,9 +1,9 @@
 ---
 title: 缓存：前缀稳定性从哪里来
-sources: [{"repo":"deepseek-harness","path":"packages/llm/llm-deepseek/src/serialize.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"},{"repo":"codex","path":"codex-rs/core/src/client.rs","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29"},{"repo":"gemini-cli","path":"packages/core/src/core/client.ts","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2"},{"repo":"claude-agent-sdk","path":"src/claude_agent_sdk/types.py","commit":"542fefb3b94be87760b2513fff889b91bb5b6672"}]
+sources: [{"repo":"deepseek-harness","path":"packages/llm/llm-deepseek/src/serialize.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"},{"repo":"codex","path":"codex-rs/core/src/client.rs","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29"},{"repo":"gemini-cli","path":"packages/core/src/core/client.ts","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2"},{"repo":"claude-agent-sdk-python","path":"src/claude_agent_sdk/types.py","commit":"542fefb3b94be87760b2513fff889b91bb5b6672"}]
 last_verified: 2026-08-23
 status: reviewed
-coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk":1}
+coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk-python":1}
 ---
 
 # 缓存：前缀稳定性从哪里来
@@ -18,7 +18,7 @@ coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk":
 | DSH | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:377` 是请求体序列化入口，DSH 依靠稳定历史获得隐式复用。 |
 | Codex | `codex!codex-rs/core/src/client.rs:326` 同时处理前后两次 prompt cache key。 |
 | Gemini CLI | `gemini-cli!packages/core/src/core/client.ts:697` 用模型窗口与上次 prompt token 计算剩余空间。 |
-| Claude | `claude-agent-sdk!src/claude_agent_sdk/types.py:2144` 只暴露 partial message 流选项，没有公开 cache key 契约。 |
+| Claude | `claude-agent-sdk-python!src/claude_agent_sdk/types.py:2144` 只暴露 partial message 流选项，没有公开 cache key 契约。 |
 
 Codex 有显式 cache key 路径；DSH 的重点是保持 system、工具 schema 和历史前缀稳定。Gemini CLI 这处证据说明客户端持续跟踪 token 压力，但不等于它在 SDK 层承诺某种 provider 缓存协议。
 

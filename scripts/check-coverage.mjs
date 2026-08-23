@@ -9,7 +9,7 @@ export const AGENT_REPOS = [
   'deepseek-harness',
   'codex',
   'gemini-cli',
-  'claude-agent-sdk',
+  'claude-agent-sdk-python',
 ];
 
 export const EVAL_REPOS = [

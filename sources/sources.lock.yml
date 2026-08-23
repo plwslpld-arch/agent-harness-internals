@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "generatedAt": "2026-08-21T20:03:37+08:00",
   "sources": [
     {
@@ -18,9 +18,14 @@
       "licenseSha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd"
     },
     {
-      "id": "claude-agent-sdk",
+      "id": "claude-agent-sdk-python",
       "commit": "542fefb3b94be87760b2513fff889b91bb5b6672",
       "licenseSha256": "cebdde8a8fb9ee59e5eaaed19578bf8085aa7047562259c31f38f225c26f6812"
+    },
+    {
+      "id": "claude-agent-sdk-typescript",
+      "commit": "48275071e804139579fabada9bb8d90cfe02b062",
+      "licenseSha256": "728158fd1037143fad6907e8fa34804177e598b7326519503fe83cafdef849e6"
     },
     {
       "id": "opencode",

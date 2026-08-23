@@ -1,9 +1,9 @@
 ---
 title: 会话：持久化、恢复与分叉
-sources: [{"repo":"deepseek-harness","path":"packages/core/session/src/types.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"},{"repo":"codex","path":"codex-rs/core/src/rollout.rs","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29"},{"repo":"gemini-cli","path":"packages/core/src/core/agentChatHistory.ts","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2"},{"repo":"claude-agent-sdk","path":"src/claude_agent_sdk/types.py","commit":"542fefb3b94be87760b2513fff889b91bb5b6672"}]
+sources: [{"repo":"deepseek-harness","path":"packages/core/session/src/types.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"},{"repo":"codex","path":"codex-rs/core/src/rollout.rs","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29"},{"repo":"gemini-cli","path":"packages/core/src/core/agentChatHistory.ts","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2"},{"repo":"claude-agent-sdk-python","path":"src/claude_agent_sdk/types.py","commit":"542fefb3b94be87760b2513fff889b91bb5b6672"}]
 last_verified: 2026-08-23
 status: reviewed
-coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk":1}
+coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk-python":1}
 ---
 
 # 会话：持久化、恢复与分叉
@@ -18,7 +18,7 @@ coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk":
 | DSH | `deepseek-harness!packages/core/session/src/types.ts:408-441` 定义 SessionEvent 联合。 |
 | Codex | `codex!codex-rs/core/src/rollout.rs:5` 导出 RolloutRecorder。 |
 | Gemini CLI | `gemini-cli!packages/core/src/core/agentChatHistory.ts:20-24` 把 chat history 建模为拥有 durable ID 的 turn 集合。 |
-| Claude | `claude-agent-sdk!src/claude_agent_sdk/types.py:1493` 定义 SessionKey 契约。 |
+| Claude | `claude-agent-sdk-python!src/claude_agent_sdk/types.py:1493` 定义 SessionKey 契约。 |
 
 DSH 的事件日志强调可投影与版本解释；Codex rollout 记录线程过程；Gemini CLI 的强所有者维护 turn 身份。Claude SDK 还公开 resume 与 fork 选项，但存储实现和闭源产品保留策略需要单独证据。
 

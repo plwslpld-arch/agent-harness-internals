@@ -1,9 +1,9 @@
 ---
 title: 产品表面与协议：谁驱动谁
-sources: [{"repo":"deepseek-harness","path":"packages/boot/app-boot/src/profile.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"},{"repo":"codex","path":"codex-rs/app-server/src/command_exec.rs","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29"},{"repo":"gemini-cli","path":"packages/core/src/agents/remote-subagent-protocol.ts","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2"},{"repo":"claude-agent-sdk","path":"src/claude_agent_sdk/types.py","commit":"542fefb3b94be87760b2513fff889b91bb5b6672"}]
+sources: [{"repo":"deepseek-harness","path":"packages/boot/app-boot/src/profile.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"},{"repo":"codex","path":"codex-rs/app-server/src/command_exec.rs","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29"},{"repo":"gemini-cli","path":"packages/core/src/agents/remote-subagent-protocol.ts","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2"},{"repo":"claude-agent-sdk-python","path":"src/claude_agent_sdk/types.py","commit":"542fefb3b94be87760b2513fff889b91bb5b6672"}]
 last_verified: 2026-08-23
 status: reviewed
-coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk":1}
+coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk-python":1}
 ---
 
 # 产品表面与协议：谁驱动谁
@@ -18,7 +18,7 @@ coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk":
 | DSH | `deepseek-harness!packages/boot/app-boot/src/profile.ts:114-117` 列出自动初始化的 web/headless profile。 |
 | Codex | `codex!codex-rs/app-server/src/command_exec.rs:9-18` 引入 app-server 的命令执行通知与响应类型。 |
 | Gemini CLI | `gemini-cli!packages/core/src/agents/remote-subagent-protocol.ts:412` 构造远程子代理协议。 |
-| Claude | `claude-agent-sdk!src/claude_agent_sdk/types.py:1360` 定义流事件消息。 |
+| Claude | `claude-agent-sdk-python!src/claude_agent_sdk/types.py:1360` 定义流事件消息。 |
 
 协议层需要传递结构化工具事件、增量输出、审批请求和终止信号。若表面只保留最终文本，它无法完整重放，也无法独立审计工具过程。
 

@@ -20,7 +20,7 @@ test('counts repository anchors while excluding fenced examples', () => {
   const content = `
 默认来源：\`packages/core/src/session.ts:12\`
 Codex：\`codex!codex-rs/core/src/context_manager.rs:40\`，后续同文件 \`:52\`
-Claude：\`claude-agent-sdk!src/claude_agent_sdk/types.py:88\`
+Claude：\`claude-agent-sdk-python!src/claude_agent_sdk/types.py:88\`
 
 \`\`\`md
 Gemini 示例：\`gemini-cli!packages/core/src/core/client.ts:9\`
@@ -31,7 +31,7 @@ Gemini 示例：\`gemini-cli!packages/core/src/core/client.ts:9\`
     'deepseek-harness': 1,
     codex: 2,
     'gemini-cli': 0,
-    'claude-agent-sdk': 1,
+    'claude-agent-sdk-python': 1,
   });
 });
 

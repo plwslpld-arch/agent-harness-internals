@@ -1,9 +1,9 @@
 ---
 title: 编排：子代理、计划、任务与工作流
-sources: [{"repo":"deepseek-harness","path":"packages/subagent/subagent/src/types.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"},{"repo":"codex","path":"codex-rs/core/src/agent/control/spawn.rs","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29"},{"repo":"gemini-cli","path":"packages/core/src/agents/registry.ts","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2"},{"repo":"claude-agent-sdk","path":"src/claude_agent_sdk/types.py","commit":"542fefb3b94be87760b2513fff889b91bb5b6672"}]
+sources: [{"repo":"deepseek-harness","path":"packages/subagent/subagent/src/types.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"},{"repo":"codex","path":"codex-rs/core/src/agent/control/spawn.rs","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29"},{"repo":"gemini-cli","path":"packages/core/src/agents/registry.ts","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2"},{"repo":"claude-agent-sdk-python","path":"src/claude_agent_sdk/types.py","commit":"542fefb3b94be87760b2513fff889b91bb5b6672"}]
 last_verified: 2026-08-23
 status: reviewed
-coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk":1}
+coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk-python":1}
 ---
 
 # 编排：子代理、计划、任务与工作流
@@ -18,7 +18,7 @@ coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk":
 | DSH | `deepseek-harness!packages/subagent/subagent/src/types.ts:314` 定义 provider 的 start 契约。 |
 | Codex | `codex!codex-rs/core/src/agent/control/spawn.rs:20-24` 说明 spawn 后的初始输入与 V2 通信上下文必须成对。 |
 | Gemini CLI | `gemini-cli!packages/core/src/agents/registry.ts:50-54` 用 AgentRegistry 维护定义集合。 |
-| Claude | `claude-agent-sdk!src/claude_agent_sdk/types.py:87` 定义 AgentDefinition。 |
+| Claude | `claude-agent-sdk-python!src/claude_agent_sdk/types.py:87` 定义 AgentDefinition。 |
 
 编排层要把子代理当有身份、有生命周期的执行者，而不是一次匿名函数调用。父任务应知道谁在运行、输出属于哪次委派、取消是否已送达。
 

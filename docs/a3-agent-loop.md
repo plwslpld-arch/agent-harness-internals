@@ -1,9 +1,9 @@
 ---
 title: Agent Loop：一个 turn 里发生什么
-sources: [{"repo":"deepseek-harness","path":"packages/core/agent-loop/src/agent.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"},{"repo":"codex","path":"codex-rs/core/src/client.rs","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29"},{"repo":"gemini-cli","path":"packages/core/src/scheduler/scheduler.ts","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2"},{"repo":"claude-agent-sdk","path":"src/claude_agent_sdk/types.py","commit":"542fefb3b94be87760b2513fff889b91bb5b6672"}]
+sources: [{"repo":"deepseek-harness","path":"packages/core/agent-loop/src/agent.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"},{"repo":"codex","path":"codex-rs/core/src/client.rs","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29"},{"repo":"gemini-cli","path":"packages/core/src/scheduler/scheduler.ts","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2"},{"repo":"claude-agent-sdk-python","path":"src/claude_agent_sdk/types.py","commit":"542fefb3b94be87760b2513fff889b91bb5b6672"}]
 last_verified: 2026-08-23
 status: reviewed
-coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk":1}
+coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk-python":1}
 ---
 
 # Agent Loop：一个 turn 里发生什么
@@ -18,7 +18,7 @@ coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk":
 | DSH | `deepseek-harness!packages/core/agent-loop/src/agent.ts:38-46` 定义循环驱动器的状态联合。 |
 | Codex | `codex!codex-rs/core/src/client.rs:966` 在发请求前整理 ResponseItem 序列。 |
 | Gemini CLI | `gemini-cli!packages/core/src/scheduler/scheduler.ts:195` 是工具调用调度入口。 |
-| Claude | `claude-agent-sdk!src/claude_agent_sdk/types.py:950` 与 `claude-agent-sdk!src/claude_agent_sdk/types.py:959` 定义工具调用和工具结果消息块。 |
+| Claude | `claude-agent-sdk-python!src/claude_agent_sdk/types.py:950` 与 `claude-agent-sdk-python!src/claude_agent_sdk/types.py:959` 定义工具调用和工具结果消息块。 |
 
 DSH 把循环状态显式化，Codex 先把历史转成 Responses 输入项，Gemini CLI 由 scheduler 管理工具队列。Claude SDK 能证明消息协议含 tool use/result，却不能证明闭源循环内部使用同一种状态机。
 

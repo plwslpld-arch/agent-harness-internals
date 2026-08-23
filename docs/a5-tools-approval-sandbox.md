@@ -1,9 +1,9 @@
 ---
 title: 工具、审批、沙箱与网络边界
-sources: [{"repo":"deepseek-harness","path":"packages/sandbox/sandbox-policy/src/session-mode.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"},{"repo":"codex","path":"codex-rs/core/src/sandboxing/mod.rs","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29"},{"repo":"gemini-cli","path":"packages/core/src/services/sandboxManager.ts","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2"},{"repo":"claude-agent-sdk","path":"src/claude_agent_sdk/types.py","commit":"542fefb3b94be87760b2513fff889b91bb5b6672"}]
+sources: [{"repo":"deepseek-harness","path":"packages/sandbox/sandbox-policy/src/session-mode.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"},{"repo":"codex","path":"codex-rs/core/src/sandboxing/mod.rs","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29"},{"repo":"gemini-cli","path":"packages/core/src/services/sandboxManager.ts","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2"},{"repo":"claude-agent-sdk-python","path":"src/claude_agent_sdk/types.py","commit":"542fefb3b94be87760b2513fff889b91bb5b6672"}]
 last_verified: 2026-08-23
 status: reviewed
-coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk":1}
+coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk-python":1}
 ---
 
 # 工具、审批、沙箱与网络边界
@@ -18,7 +18,7 @@ coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk":
 | DSH | `deepseek-harness!packages/sandbox/sandbox-policy/src/session-mode.ts:69-71` 写入会话沙箱模式；该策略不自动构成网络围栏。 |
 | Codex | `codex!codex-rs/core/src/sandboxing/mod.rs:18` 明确引入 managed network sandbox context。 |
 | Gemini CLI | `gemini-cli!packages/core/src/services/sandboxManager.ts:162` 定义 SandboxManager 接口。 |
-| Claude | `claude-agent-sdk!src/claude_agent_sdk/types.py:849` 公开 sandbox network 配置契约。 |
+| Claude | `claude-agent-sdk-python!src/claude_agent_sdk/types.py:849` 公开 sandbox network 配置契约。 |
 
 Codex 把文件系统与受管网络上下文放在同一内核运行路径；DSH 的沙箱模式主要约束文件/进程效果，不能据此声称网络已封闭。Gemini CLI 的 sandbox manager 负责把请求变成受限命令。
 

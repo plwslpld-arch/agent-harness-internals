@@ -92,7 +92,7 @@ title: KV-Cache：没有一行缓存代码，为什么还能一直命中
 sources: [{"repo":"deepseek-harness","path":"packages/llm/llm-deepseek/src/serialize.ts","commit":"<40-hex>"}]
 last_verified: 2026-08-16
 status: draft
-coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk":1}
+coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk-python":1}
 ---
 ```
 
