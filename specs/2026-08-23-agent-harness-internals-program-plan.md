@@ -12,7 +12,7 @@
   - 计划：`specs/2026-08-23-phase-0-foundation-implementation-plan.md`
   - 验收：新 Schema 和门禁有单元测试，旧双 Harness 规则退出，阶段复核通过。
 - [ ] 阶段 1：品牌、Logo、中文视觉、README 和 GitHub 对外信息。
-  - 计划在阶段 0 复核通过后根据已落地接口编写。
+  - 计划：`specs/2026-08-23-phase-1-brand-entry-implementation-plan.md`
   - 验收：三个 Logo 方向完成渲染比较，最佳方案及 Social preview 发布，入口不夸大完成度。
 - [ ] 阶段 2：共同基础课程。
   - 计划在阶段 1 复核通过后编写。
