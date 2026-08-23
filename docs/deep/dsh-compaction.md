@@ -388,7 +388,7 @@ sed -n '145,163p' packages/compaction/compaction-basic/src/summarizer.ts
 sed -n '31,66p'   packages/compaction/compaction-basic/src/summarizer.ts
 ```
 
-相关阅读：`replace` 与 surface 的规则见 [05 Session](dsh-session.md)；前缀缓存为什么只在这里被打断见 [02 KV-Cache](dsh-kv-cache.md)；`purpose:'compaction'` 与 `CONTEXT_WINDOW_EXCEEDED` 的来龙去脉见 [04 LLM 层](dsh-llm-adapter.md)；`agent/pre-step` 与 `agent/request-error` 这两个扩展点见 [03 Agent 循环](dsh-agent-loop.md)；跨 harness 的完整对照见 [14 横向对比](../00-overview.md)；术语见 [附录 A 词汇表](../appendix-a-glossary.md)。
+相关阅读：`replace` 与 surface 的规则见 [05 Session](dsh-session.md)；前缀缓存为什么只在这里被打断见 [02 KV-Cache](dsh-kv-cache.md)；`purpose:'compaction'` 与 `CONTEXT_WINDOW_EXCEEDED` 的来龙去脉见 [04 LLM 层](dsh-llm-adapter.md)；`agent/pre-step` 与 `agent/request-error` 这两个扩展点见 [03 Agent 循环](dsh-agent-loop.md)；共同状态边界见 [Session、Context、Compaction 与 Memory](../foundations/05-session-context-memory.md)；术语见 [附录 A 词汇表](../appendix-a-glossary.md)。
 
 ## 自检
 

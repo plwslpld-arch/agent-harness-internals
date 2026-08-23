@@ -78,3 +78,33 @@ test('README 可以把已复核总入口作为唯一正式课程链接', () => {
 
   assert.deepEqual(navigationFailures(content, read), []);
 });
+
+test('共同基础必须六篇同时达到发布状态才能批量进入导航', () => {
+  const targets = [
+    'foundations/01.md',
+    'foundations/02.md',
+    'foundations/03.md',
+    'foundations/04.md',
+    'foundations/05.md',
+    'foundations/06.md',
+  ];
+  const batch = [{ name: '共同基础', targets }];
+  const allReviewed = Object.fromEntries(targets.map((target) => [target, '---\nstatus: reviewed\n---\n']));
+  const resolveFoundation = (target) => allReviewed[target];
+
+  const incomplete = `<!-- course-navigation:start -->
+${targets.slice(0, 5).map((target) => `[基础](${target})`).join('\n')}
+<!-- course-navigation:end -->`;
+  assert.deepEqual(navigationFailures(incomplete, resolveFoundation, { requiredBatches: batch }), [
+    '共同基础批量导航不完整：缺少 foundations/06.md',
+  ]);
+
+  allReviewed['foundations/06.md'] = '---\nstatus: draft\n---\n';
+  const complete = `<!-- course-navigation:start -->
+${targets.map((target) => `[基础](${target})`).join('\n')}
+<!-- course-navigation:end -->`;
+  assert.deepEqual(navigationFailures(complete, resolveFoundation, { requiredBatches: batch }), [
+    'foundations/06.md: 正式导航不能链接 status=draft',
+    '共同基础批量发布失败：foundations/06.md status=draft',
+  ]);
+});

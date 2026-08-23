@@ -734,7 +734,7 @@ grep -rn "order: 1\?[0-9]\{1,2\}" packages/*/*/src/index.ts | grep "systemPrompt
 
 设计记录：`.agents/notes/implemented/feature/2026-06-21-subagent-capability-seam.md`（子代理接缝）、`2026-08-10-fork-children-stay-one-shot.md`（fork 与前缀复用）、`2026-06-30-hook-bridges.md`（hook 桥的定位）、`2026-07-16-harness-level-loop.md`（goal 与 ralph 两种外层策略）、`2026-07-05-skill-system.md` 与 `2026-08-09-layered-skill-registry.md`（skill 渐进披露与分层注册表）、`2026-07-06-tool-output-spill-files.md`（spill）、`2026-08-12-production-dsh-excludes-product-subagent-providers.md`（产品 provider 出栈）。
 
-更多背景：循环事件本身见 [03 Agent Loop](dsh-agent-loop.md)，工具流水线与审批沙箱见 [07](dsh-tools-approval-sandbox.md)，段落装配与 order 规则见 [01 System Prompt](dsh-system-prompt.md)，前缀稳定性见 [02 KV-Cache](dsh-kv-cache.md)，Code Mode 与 Extensions 见 [09](dsh-extensions-and-code-mode.md)，preset 与 profile 的组装关系见 [10](dsh-cordis-boot-preset.md)，ACP / SDK 两个协议面见 [12](dsh-surfaces-and-protocols.md)，横向对照的完整版见 [14](../00-overview.md)，术语见 [附录 A](../appendix-a-glossary.md)。
+更多背景：循环事件本身见 [03 Agent Loop](dsh-agent-loop.md)，工具流水线与审批沙箱见 [07](dsh-tools-approval-sandbox.md)，段落装配与 order 规则见 [01 System Prompt](dsh-system-prompt.md)，前缀稳定性见 [02 KV-Cache](dsh-kv-cache.md)，Code Mode 与 Extensions 见 [09](dsh-extensions-and-code-mode.md)，preset 与 profile 的组装关系见 [10](dsh-cordis-boot-preset.md)，ACP / SDK 两个协议面见 [12](dsh-surfaces-and-protocols.md)，共同 Agent Turn 见 [一次真实 Agent Turn](../foundations/02-agent-turn.md)，术语见 [附录 A](../appendix-a-glossary.md)。
 
 ---
 

@@ -569,4 +569,4 @@ sed -n '95,106p' packages/bundle/web-app/src/index.ts
 
 ---
 
-相关：[10 Cordis、启动、bundle 与 preset](dsh-cordis-boot-preset.md) 讲这些 `ui-*` 行从哪来；[05 Session](dsh-session.md) 讲事件日志与投影本身；[12 产品表面与协议](dsh-surfaces-and-protocols.md) 讲不经浏览器的那些入口；[14 横向对比](../00-overview.md) 有完整对照。术语见[附录 A 术语表](../appendix-a-glossary.md)。
+相关：[10 Cordis、启动、bundle 与 preset](dsh-cordis-boot-preset.md) 讲这些 `ui-*` 行从哪来；[05 Session](dsh-session.md) 讲事件日志与投影本身；[12 产品表面与协议](dsh-surfaces-and-protocols.md) 讲不经浏览器的那些入口；共同职责边界见 [Agent Harness 的职责与边界](../foundations/01-boundaries.md)。术语见[附录 A 术语表](../appendix-a-glossary.md)。

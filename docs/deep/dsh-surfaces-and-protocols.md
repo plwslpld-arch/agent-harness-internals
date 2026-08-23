@@ -540,4 +540,4 @@ echo $?
 
 ---
 
-相关：[10 Cordis、启动、bundle 与 preset](dsh-cordis-boot-preset.md) 讲这些入口各自的组合从哪来；[11 Web 客户端与 host](dsh-web-client-and-host.md) 讲 Web 面的内部结构；[03 Agent Loop](dsh-agent-loop.md) 讲 `TurnEndReason` 的六种取值；[08 编排](dsh-orchestration.md) 讲子代理与委派；[13 自证制度](dsh-self-verification.md) 讲上游怎么保证这些包的文档不漂移；[14 横向对比](../00-overview.md) 有更完整的六家对照。
+相关：[10 Cordis、启动、bundle 与 preset](dsh-cordis-boot-preset.md) 讲这些入口各自的组合从哪来；[11 Web 客户端与 host](dsh-web-client-and-host.md) 讲 Web 面的内部结构；[03 Agent Loop](dsh-agent-loop.md) 讲 `TurnEndReason` 的六种取值；[08 编排](dsh-orchestration.md) 讲子代理与委派；[13 自证制度](dsh-self-verification.md) 讲上游怎么保证这些包的文档不漂移；共同数据边界见 [模型输入、输出与工具结果](../foundations/03-model-tool-io.md)。

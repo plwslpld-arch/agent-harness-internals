@@ -41,6 +41,12 @@ test('AGENTS 使用 Agent Harness 单主线治理规则', () => {
 test('公开树不再保留英文入口和旧定位视觉', () => {
   const legacyFiles = [
     'README.en.md',
+    'docs/00-overview.md',
+    'docs/concepts.md',
+    'docs/e1-what-is-eval-harness.md',
+    'docs/e2-tasks-and-envs.md',
+    'docs/e3-run-and-score.md',
+    'docs/e4-harness-decides-score.md',
     'assets/harness-internals.svg',
     'assets/harness-coupling.svg',
     'assets/agent-harness-matrix.svg',
@@ -59,4 +65,5 @@ test('公开树不再保留英文入口和旧定位视觉', () => {
   });
   const content = publicFiles.map((path) => readFileSync(path, 'utf8')).join('\n');
   assert.doesNotMatch(content, /README\.en\.md|assets\/(?:harness-internals|harness-coupling|agent-harness-matrix|dsh-codex-subsystems|harness-model-cross)\.svg/u);
+  assert.doesNotMatch(content, /两种 Harness|Part B：Eval Harness|Eval Harness：同名的另一层系统/u);
 });

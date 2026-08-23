@@ -644,7 +644,7 @@ grep -rn "code-runtime\|tool-cordis" packages/bundle/*/cordis.patch.yml apps/cli
 
 设计记录本体：`.agents/notes/implemented/feature/2026-06-15-code-mode.md`（Code Mode 的三个决策、What the model sees、五条 Risks、六条 Alternatives considered）与 `.agents/notes/implemented/feature/2026-07-08-self-referential-cordis-toolset.md`（Extensions 的设计家）。相关的还有 `2026-07-20-code-mode-typed-tool-returns.md`（`ToolOutputMap` 的来源）、`2026-07-26-code-mode-live-parallel-dispatch.md`（子调用调度器）、`2026-07-31-code-mode-language-dispatch.md`（Python 渲染器）。
 
-更多背景：工具流水线本身见 [07 工具、审批与沙箱](dsh-tools-approval-sandbox.md)，prompt section 的排序与装配见 [01 System Prompt](dsh-system-prompt.md)，前缀稳定性见 [02 KV-Cache](dsh-kv-cache.md)，`cordis` preset 与 boot/profile 的关系见 [10 Cordis 与 boot preset](dsh-cordis-boot-preset.md)，横向对照的完整版见 [14 横向对比](../00-overview.md)，术语见 [附录 A 术语表](../appendix-a-glossary.md)。
+更多背景：工具流水线本身见 [07 工具、审批与沙箱](dsh-tools-approval-sandbox.md)，prompt section 的排序与装配见 [01 System Prompt](dsh-system-prompt.md)，前缀稳定性见 [02 KV-Cache](dsh-kv-cache.md)，`cordis` preset 与 boot/profile 的关系见 [10 Cordis 与 boot preset](dsh-cordis-boot-preset.md)，共同安全边界见 [工具、权限与 Sandbox](../foundations/04-tools-permissions-sandbox.md)，术语见 [附录 A 术语表](../appendix-a-glossary.md)。
 
 ---
 

@@ -49,6 +49,17 @@ Claude 主线采用双边界：Claude Code 的公开行为只引用官方文档�
 
 如果你第一次接触 Agent Harness，先读共同基础。顺序是一次模型调用、Agent Loop、上下文与状态、工具与安全、会话与恢复，以及 Trace、Feedback 和 Eval 接入。基础课负责共同语言，不代替任何项目的实现细节。
 
+### 共同基础课程：6/6 `reviewed`
+
+<!-- course-navigation:start -->
+1. [Agent Harness 的职责与边界](foundations/01-boundaries.md)
+2. [一次真实 Agent Turn](foundations/02-agent-turn.md)
+3. [模型输入、输出与工具结果](foundations/03-model-tool-io.md)
+4. [工具、权限与 Sandbox](foundations/04-tools-permissions-sandbox.md)
+5. [Session、Context、Compaction 与 Memory](foundations/05-session-context-memory.md)
+6. [Trace、Feedback 与评测接入](foundations/06-trace-feedback-eval.md)
+<!-- course-navigation:end -->
+
 如果你准备实现或改造 Harness，选一条与你技术栈最接近的主线从头读完，不要只抽取功能表。完整跟踪真实输入、状态变化、工具结果、失败路径与终止条件后，再去横向比较其他实现；这能减少把表面 API 当成系统语义的风险。
 
 如果你负责质量、发布或评测，沿 Trial、Attempt、Trace、Artifact、Scorer 和 Feedback 阅读。重点检查统计单位是否稳定、基础设施重试是否改变分母、产品失败是否被重试成通过，以及训练数据和独立发布集是否泄漏。
@@ -69,7 +80,7 @@ Claude 主线采用双边界：Claude Code 的公开行为只引用官方文档�
 
 `stale` 用来保护读者免受过期证据误导，它不评价文章的永久质量。当上游 Commit、文档或实验环境发生漂移，页面就应退出正式导航，直到重新绑定来源并复核受影响结论。状态表可以继续显示它，以便读者知道缺口，却不能把它当成仍然有效的课程。
 
-当前正式导航只有这个总入口。六条主线的状态会公开显示，但在达到 `reviewed` 前不提供课程链接。文件存在、篇幅很长或测试通过，都不能绕过这条发布规则。
+当前正式导航包含这个总入口和六篇共同基础。六条主线的状态会公开显示，但在达到 `reviewed` 前不提供课程链接。文件存在、篇幅很长或测试通过，都不能绕过这条发布规则。
 
 ## 证据方法
 

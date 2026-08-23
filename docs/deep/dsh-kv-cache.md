@@ -590,4 +590,4 @@ fork 相对 spawn 的唯一收益，就是继承来的那段历史能命中父�
 
 ---
 
-相关阅读：请求头部的另一半怎么拼见 [01 系统提示](dsh-system-prompt.md)；日志与 surface 的完整模型见 [05 会话](dsh-session.md)；压缩的触发阈值、事务与失败分类见 [06 压缩](dsh-compaction.md)；适配器的 SSE、错误码与重试见 [04 LLM 适配器](dsh-llm-adapter.md)；横向对照的完整矩阵见 [14 对比](../00-overview.md)。
+相关阅读：请求头部的另一半怎么拼见 [01 系统提示](dsh-system-prompt.md)；日志与 surface 的完整模型见 [05 会话](dsh-session.md)；压缩的触发阈值、事务与失败分类见 [06 压缩](dsh-compaction.md)；适配器的 SSE、错误码与重试见 [04 LLM 适配器](dsh-llm-adapter.md)；共同状态边界见 [Session、Context、Compaction 与 Memory](../foundations/05-session-context-memory.md)。

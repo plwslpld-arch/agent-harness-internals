@@ -10,7 +10,7 @@
 
 **Agent Harness 是唯一主线；Eval 是横切验证能力。** 仓库不会再建设一套与 Agent Harness 并列的 Eval Harness 百科。Inspect AI、SWE-bench、Terminal-Bench 和 LM Evaluation Harness 只在需要回答「任务怎样定义、轨迹怎样收集、结果怎样评分、失败能否重试」时作为外部参照出现。缺少证据，就保留未知。
 
-> 当前状态：仓库正在覆盖式重建。治理、证据门禁和正式品牌已经完成阶段复核；共同基础与六条一级主线尚未进入正式课程导航。下表会随每篇文章从 `outline` 推进到 `reviewed` 或 `verified` 而更新，未完成内容不会以链接冒充成品。
+> 当前状态：仓库正在覆盖式重建。治理、证据门禁和正式品牌已经完成阶段复核；共同基础 6/6 已达到 `reviewed` 并开放正式导航，六条一级主线仍处于 `outline`。未完成内容不会以链接冒充成品。
 
 ## 这里研究的不是「模型排行榜」
 
@@ -77,10 +77,17 @@ Eval 不与六条主线争夺主导航，而是在每条主线中重复回答同
 
 ## 阅读路径
 
-正式课程导航只会出现 `reviewed` 和 `verified` 页面。在共同基础完成前，可以先按下表理解最终阅读结构；没有链接意味着内容尚未达到发布门槛，而不是文件不存在就被隐藏。
+正式课程导航只会出现 `reviewed` 和 `verified` 页面。六篇共同基础已经整批完成复核并开放；六条项目主线会继续显示状态，但达到发布门槛前不提供课程链接。
 
 <!-- course-navigation:start -->
 [从总入口开始：先建立概念、状态与证据口径](docs/00-start-here.md)
+
+1. [Agent Harness 的职责与边界](docs/foundations/01-boundaries.md)
+2. [一次真实 Agent Turn](docs/foundations/02-agent-turn.md)
+3. [模型输入、输出与工具结果](docs/foundations/03-model-tool-io.md)
+4. [工具、权限与 Sandbox](docs/foundations/04-tools-permissions-sandbox.md)
+5. [Session、Context、Compaction 与 Memory](docs/foundations/05-session-context-memory.md)
+6. [Trace、Feedback 与评测接入](docs/foundations/06-trace-feedback-eval.md)
 <!-- course-navigation:end -->
 
 | 你的目标 | 建议路径 | 需要的背景 |

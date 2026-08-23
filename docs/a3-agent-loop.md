@@ -22,7 +22,7 @@ coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk-p
 
 DSH 把循环状态显式化，Codex 先把历史转成 Responses 输入项，Gemini CLI 由 scheduler 管理工具队列。Claude SDK 能证明消息协议含 tool use/result，却不能证明闭源循环内部使用同一种状态机。
 
-产品失败不应通过无限重试被「重试成成功」。Attempt 可以恢复基础设施问题，Trial 的判定口径仍要保持不变；这条边界在 [e3 运行与记分](e3-run-and-score.md) 里展开。
+产品失败不应通过无限重试被「重试成成功」。Attempt 可以恢复基础设施问题，Trial 的判定口径仍要保持不变；这条边界在 [Trace、Feedback 与评测接入](foundations/06-trace-feedback-eval.md) 里展开。
 
 ## 自检
 

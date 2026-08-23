@@ -39,10 +39,11 @@ function navigationRegions(content) {
   return activeStart === null ? regions : null;
 }
 
-export function navigationFailures(content, resolveDocument) {
+export function navigationFailures(content, resolveDocument, options = {}) {
   const errors = [];
   const regions = navigationRegions(content);
   if (!regions) return ['正式导航标记不成对或发生嵌套'];
+  const linkedTargets = new Set();
   for (const region of regions) {
     for (const match of region.matchAll(localLink)) {
       const raw = match[1];
@@ -56,6 +57,7 @@ export function navigationFailures(content, resolveDocument) {
         errors.push(`${raw}: 正式导航链接 URL 编码非法`);
         continue;
       }
+      linkedTargets.add(target);
       const document = resolveDocument(target);
       if (typeof document !== 'string') {
         errors.push(`${target}: 正式导航目标不存在`);
@@ -71,6 +73,26 @@ export function navigationFailures(content, resolveDocument) {
       }
     }
   }
+  for (const batch of options.requiredBatches ?? []) {
+    const present = batch.targets.filter((target) => linkedTargets.has(target));
+    if (present.length === 0) continue;
+    const missing = batch.targets.filter((target) => !linkedTargets.has(target));
+    if (missing.length > 0) {
+      errors.push(`${batch.name}批量导航不完整：缺少 ${missing.join('、')}`);
+      continue;
+    }
+    for (const target of batch.targets) {
+      const document = resolveDocument(target);
+      if (typeof document !== 'string') {
+        errors.push(`${batch.name}批量发布失败：${target} 不存在`);
+        continue;
+      }
+      const { metadata } = parseFrontmatter(document);
+      if (!publishableStatuses.has(metadata?.status)) {
+        errors.push(`${batch.name}批量发布失败：${target} status=${metadata?.status ?? '(缺失)'}`);
+      }
+    }
+  }
   return errors;
 }
 
@@ -81,12 +103,35 @@ function main() {
   for (const path of files) {
     const relativePath = posixPath(relative(root, path));
     const content = readFileSync(path, 'utf8');
+    const foundationTargets = relativePath === 'README.md'
+      ? [
+          'docs/foundations/01-boundaries.md',
+          'docs/foundations/02-agent-turn.md',
+          'docs/foundations/03-model-tool-io.md',
+          'docs/foundations/04-tools-permissions-sandbox.md',
+          'docs/foundations/05-session-context-memory.md',
+          'docs/foundations/06-trace-feedback-eval.md',
+        ]
+      : relativePath === 'docs/00-start-here.md'
+        ? [
+            'foundations/01-boundaries.md',
+            'foundations/02-agent-turn.md',
+            'foundations/03-model-tool-io.md',
+            'foundations/04-tools-permissions-sandbox.md',
+            'foundations/05-session-context-memory.md',
+            'foundations/06-trace-feedback-eval.md',
+          ]
+        : [];
     const fileErrors = navigationFailures(content, (target) => {
       checked += 1;
       const absolute = resolve(dirname(path), target);
       const repositoryRelative = relative(root, absolute);
       if (repositoryRelative.startsWith('..') || isAbsolute(repositoryRelative)) return undefined;
       return existsSync(absolute) ? readFileSync(absolute, 'utf8') : undefined;
+    }, {
+      requiredBatches: foundationTargets.length > 0
+        ? [{ name: '共同基础', targets: foundationTargets }]
+        : [],
     });
     for (const error of fileErrors) errors.push(`${relativePath}: ${error}`);
   }

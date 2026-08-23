@@ -655,4 +655,4 @@ dsh --profile web --dump-config            # 加上用户层与 --patch 叠加�
 
 ---
 
-相关：[00 总览](dsh-overview.md) 给出整体地图；[01 System Prompt](dsh-system-prompt.md) 讲 persona 与 section 如何装配成最终字符串；[03 Agent Loop](dsh-agent-loop.md) 讲这棵树跑起来之后一个 turn 怎么走；[09 扩展与 Code Mode](dsh-extensions-and-code-mode.md) 讲 `tool-cordis` 与 `code` preset 背后的机制；[14 横向对比](../00-overview.md) 有更完整的六家对照。术语见[附录 A 术语表](../appendix-a-glossary.md)。
+相关：[00 总览](dsh-overview.md) 给出整体地图；[01 System Prompt](dsh-system-prompt.md) 讲 persona 与 section 如何装配成最终字符串；[03 Agent Loop](dsh-agent-loop.md) 讲这棵树跑起来之后一个 turn 怎么走；[09 扩展与 Code Mode](dsh-extensions-and-code-mode.md) 讲 `tool-cordis` 与 `code` preset 背后的机制；共同边界从 [总入口](../00-start-here.md) 进入。术语见[附录 A 术语表](../appendix-a-glossary.md)。

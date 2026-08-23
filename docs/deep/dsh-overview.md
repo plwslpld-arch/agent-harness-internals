@@ -178,12 +178,11 @@ $ dsh web
 | 11 | [Web 客户端与 host](dsh-web-client-and-host.md) | 40 个前端包如何把一条事件日志变成你看到的界面 |
 | 12 | [产品表面与协议](dsh-surfaces-and-protocols.md) | Web / headless / ACP / MCP / Python SDK 各是什么、谁驱动谁、退出码怎么定 |
 | 13 | [自证与工程化](dsh-self-verification.md) | invariant 服务、测试分层、文档门禁：一个仓库如何用脚本证明自己没坏 |
-| 14 | [横向对照](../00-overview.md) | dsh 与 Claude Code / Codex / OpenCode / pi / mini-swe-agent 在七个维度上的机制差异 |
 | 15 | [设计记录导读](dsh-agent-notes-guide.md) | 739 篇 Agent Note 里最值得读的那些，以及上游 112 篇文档的分工 |
 | A | [术语表](../appendix-a-glossary.md) | 每条术语带源码出处 |
 | B | [怎么自己核对](../appendix-b-verification.md) | 不用凭据能核什么、要凭据才能核什么，以及本系列所有统计数字的命令 |
 
-想省时间就读 01 → 02 → 14 三篇：模型看到什么、为什么这么排、别人怎么做。其余按需查。
+想省时间就读 01 → 02，再回到 [共同基础](../00-start-here.md) 核对跨项目边界。正式横向比较要等六条主线分别完成复核后再发布。
 
 ## 自检
 
