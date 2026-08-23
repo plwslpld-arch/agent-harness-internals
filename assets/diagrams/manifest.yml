@@ -152,6 +152,14 @@
       "scope": "docs/harnesses/deepseek-harness/07-surfaces-feedback-eval.md",
       "alt": "DSH 多产品表面共享智能体核心，并将消息反馈、会话反馈、遥测、奖励适配和独立评测分层接入的中文架构图",
       "claims": ["deepseek-harness.surfaces.protocol-adapters-not-identical", "deepseek-harness.feedback.is-not-training-reward"]
+    },
+    {
+      "id": "deepseek-harness-verification-design-limits",
+      "path": "assets/diagrams/deepseek-harness/08-verification-design-limits.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/deepseek-harness/08-verification-design-limits.md",
+      "alt": "DSH 从约束定义、运行时不变量、测试与文档同步到独立评测和生产观察的中文证据闭环图",
+      "claims": ["deepseek-harness.verification.internal-gates-have-bounded-scope"]
     }
   ]
 }

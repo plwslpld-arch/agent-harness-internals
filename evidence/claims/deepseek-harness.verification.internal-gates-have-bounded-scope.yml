@@ -1,0 +1,20 @@
+{
+  "id": "deepseek-harness.verification.internal-gates-have-bounded-scope",
+  "harness": "deepseek-harness",
+  "dimension": "verification.internal-gates-have-bounded-scope",
+  "statement": "锁定 DSH 通过包自有运行时不变量、单包语义测试、完整 companion 拓扑测试、源码接线规则和 Agent Note 文档治理降低已知契约回归风险；这些内部门禁只覆盖已编码关系，不能单独证明真实任务正确、目标平台安全或生产发布就绪。",
+  "capability": "optional",
+  "version": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+  "surface": "runtime-invariants-tests-documentation",
+  "platform": "all",
+  "mode": "internal-verification",
+  "evidence_level": "D",
+  "evidence": [
+    {"type":"source","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/runtime-diagnostics/invariants/src/index.ts","lines":"160-175","excerpt":"throw new InvariantError(packageName, message)"},
+    {"type":"upstream-test","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/runtime-diagnostics/invariants/tests/service.spec.ts","lines":"189-207","excerpt":"attributes failures to the registering package with the stable code"},
+    {"type":"source","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"scripts/test-invariants.ts","lines":"137-156","excerpt":"coverage and exhaustive runtime registration remain"},
+    {"type":"source","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":".agents/notes/README.md","lines":"44-48","excerpt":"Every non-trivial change MUST add or update at least one Agent Note"}
+  ],
+  "inference": "源码与测试直接证明不变量注册、错误归属和测试 companion 装配；治理文档直接规定设计记录生命周期。把它们解释成一条有边界的内部验证链属于综合推断，且不存在目标平台生产实验，所以不升级为生产就绪声明。",
+  "last_verified": "2026-08-24"
+}

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1100" viewBox="0 0 1400 1100" role="img" aria-labelledby="title desc">
+  <title id="title">DSH 自验证与外部证据闭环</title>
+  <desc id="desc">从约束定义、运行时不变量、测试与文档同步，流向独立评测和生产观察，并通过失败证据回流修正规则的中文架构图。</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="7" stdDeviation="8" flood-color="#17324d" flood-opacity="0.13"/></filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#0b8783"/></marker>
+    <style>
+      text{font-family:"Microsoft YaHei","Noto Sans CJK SC",sans-serif;fill:#17324d}.h1{font-size:38px;font-weight:700}.sub{font-size:18px;fill:#5d7287}.section{font-size:25px;font-weight:700}.boxTitle{font-size:22px;font-weight:700}.body{font-size:17px;fill:#526b82}.small{font-size:15px;fill:#62798e}.white{fill:#fff}.light{fill:#dce8f2}.mutedLight{fill:#bdd1df}.teal{fill:#0b8783}.amber{fill:#9b6400}.red{fill:#99473f}.line{stroke:#0b8783;stroke-width:5;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1400" height="1100" rx="34" fill="#f5f8fb"/>
+  <text x="700" y="65" text-anchor="middle" class="h1">DSH 自验证约束已知回归，外部证据决定发布</text>
+  <text x="700" y="101" text-anchor="middle" class="sub">每一层只回答自己的问题；绿色门禁不能跨越未执行的环境</text>
+  <rect x="55" y="145" width="820" height="700" rx="28" fill="#e8f5f4" stroke="#0b8783" stroke-width="3"/>
+  <text x="85" y="190" class="section teal">内部验证闭环</text>
+  <text x="85" y="220" class="small">目标：阻止已知契约、装配与文档关系回归</text>
+  <g filter="url(#shadow)">
+    <rect x="95" y="260" width="320" height="145" rx="22" fill="#fff"/><rect x="515" y="260" width="320" height="145" rx="22" fill="#fff"/>
+    <rect x="95" y="485" width="320" height="145" rx="22" fill="#fff"/><rect x="515" y="485" width="320" height="145" rx="22" fill="#fff"/>
+    <rect x="305" y="690" width="320" height="115" rx="22" fill="#17324d"/>
+  </g>
+  <text x="255" y="305" text-anchor="middle" class="boxTitle">约束定义</text><text x="255" y="340" text-anchor="middle" class="body">类型、配置模式、输入校验</text><text x="255" y="370" text-anchor="middle" class="body">包拥有明确关系</text>
+  <text x="675" y="305" text-anchor="middle" class="boxTitle">运行时不变量</text><text x="675" y="340" text-anchor="middle" class="body">独立子纤程、错误归属</text><text x="675" y="370" text-anchor="middle" class="body">可关闭、可过滤、可缺失</text>
+  <text x="255" y="530" text-anchor="middle" class="boxTitle">测试与拓扑</text><text x="255" y="565" text-anchor="middle" class="body">单包语义与全量配套入口</text><text x="255" y="595" text-anchor="middle" class="body">固定输入、固定环境</text>
+  <text x="675" y="530" text-anchor="middle" class="boxTitle">文档与设计记录</text><text x="675" y="565" text-anchor="middle" class="body">双语同步、生命周期、取舍</text><text x="675" y="595" text-anchor="middle" class="body">解释动机，不证明行为</text>
+  <text x="465" y="735" text-anchor="middle" class="boxTitle white">持续集成汇总</text><text x="465" y="770" text-anchor="middle" class="body light">绑定提交、平台、命令与产物</text>
+  <path d="M415 332 H500" class="line"/><path d="M675 405 V470" class="line"/><path d="M515 557 H430" class="line"/><path d="M255 630 V665 Q255 700 290 700 H300" class="line"/><path d="M675 630 V665 Q675 700 640 700 H630" class="line"/>
+  <rect x="925" y="145" width="420" height="700" rx="28" fill="#fff4dc" stroke="#c47a00" stroke-width="3"/>
+  <text x="955" y="190" class="section amber">外部发布证据</text><text x="955" y="220" class="small">目标：回答真实任务、环境与风险是否达标</text>
+  <g filter="url(#shadow)"><rect x="965" y="270" width="340" height="135" rx="22" fill="#fff"/><rect x="965" y="455" width="340" height="135" rx="22" fill="#fff"/><rect x="965" y="640" width="340" height="135" rx="22" fill="#fff0ee"/></g>
+  <text x="1135" y="315" text-anchor="middle" class="boxTitle">独立任务评测</text><text x="1135" y="350" text-anchor="middle" class="body">固定试验、目标与评分器</text><text x="1135" y="380" text-anchor="middle" class="body">保留会话和外部产物</text>
+  <text x="1135" y="500" text-anchor="middle" class="boxTitle">目标环境实验</text><text x="1135" y="535" text-anchor="middle" class="body">平台、安全、故障与容量</text><text x="1135" y="565" text-anchor="middle" class="body">真实供应商和权限强度</text>
+  <text x="1135" y="685" text-anchor="middle" class="boxTitle red">发布门禁与生产观察</text><text x="1135" y="720" text-anchor="middle" class="body">独立留出集、告警与响应</text><text x="1135" y="750" text-anchor="middle" class="body">不能由内部测试数量替代</text>
+  <path d="M1135 405 V440" class="line"/><path d="M1135 590 V625" class="line"/><path d="M625 748 H900 Q925 748 925 723 V338 Q925 320 950 320" class="line"/>
+  <rect x="110" y="905" width="1180" height="130" rx="25" fill="#17324d"/>
+  <text x="700" y="950" text-anchor="middle" class="section white">失败证据回流，但不改写原始结果</text><text x="700" y="988" text-anchor="middle" class="body light">生产失败 → 新试验 → 新约束与回归测试 → 更新设计记录 → 重新独立评测</text><text x="700" y="1018" text-anchor="middle" class="small mutedLight">未执行的平台、权限、供应商和负载必须明确标为部分支持或不可用</text>
+  <path d="M1135 775 V880 Q1135 895 1115 895 H730 V865" class="line"/>
+</svg>
