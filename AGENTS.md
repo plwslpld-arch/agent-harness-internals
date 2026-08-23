@@ -1,123 +1,141 @@
-# 仓库写作与维护规则
+# Agent Harness Internals 仓库规则
 
-这是一个中文源码分析仓库，研究 agent harness 怎么造、eval harness 怎么把它量出来。DeepSeek Harness（下称 dsh）保留为深度样本，Codex、Gemini CLI、Claude Agent SDK 与四个 eval harness 进入同一套证据门禁。
+本仓库是中文、可核对的 Agent Harness 源码知识库。**Agent Harness 是唯一主线**；评测只作为任务定义、环境、Trace、Scorer、统计与独立发布门禁等横切能力进入各条主线，不建设并列的 Eval Harness 百科。
 
-## 一条核心规则
+六条一级主线是 DSH、Codex、Gemini CLI、Claude、pi 和 OpenCode。Claude 主线必须区分 Claude Code 的闭源实现、官方文档，以及 Claude Agent SDK for Python / TypeScript 的公开契约面，不能借 SDK 的确定性外推闭源内部实现。
 
-**先给读者看模型/进程真实看到的东西，再解释机制。**
+仓库按新项目覆盖式建设，不为旧目录、旧文章编号或旧定位保留兼容入口，也不在公开正文中比较新旧仓库版本。
 
-一篇文章如果通篇都是「某某函数在某某行」的索引，而没有一段真实的 prompt、一份真实的请求 JSON、一段真实的源码，那它没有完成工作。行号是脚注，不是内容。
+## 公开内容与语言
 
-## 写作要求
-
-- **说人话。** 术语第一次出现就地解释，不要让读者跳到附录。不要写「本篇尚未覆盖」这种给自己找台阶的清单——写不完就不写那一节。
-- **不硬套模板。** 每篇的结构服从内容。常见的顺序是：读者看得见的现象 → 真实数据 → 机制与源码 → 为什么这么设计 → 代价和失效点 → 别人怎么做。缺哪段都行，但不要为了凑格式注水。
-- **贴真代码。** 引用上游源码时贴出来，标 `路径:行号`。**不要写伪代码再让它看起来像源码**——旧版 `docs/10` 出现过这个问题，函数名在上游根本不存在。
-- **重要的引用请带原文片段。** 写成 `` `路径:行号`「被引内容的前几个词」 ``，`check:anchors` 会做一次子串匹配。纯行号只能保证「指到了一个真实存在的行」，挡不住「行号对、但指到了相邻的另一个声明」；带上原文就能让 CI 替你挡住这类错。
-- **行号简写只在无歧义时用。** 给过一次完整路径之后可以写 `` `文件名.ts:237` `` 或 `` `:249-259` ``，`check:anchors` 按「当前在讲哪个文件」的游标把它们还原成完整路径。**同一行先后提到两个文件时不要用简写**，游标只会停在靠后的那个，写全路径才不会指错。
-- **推断要写明。** 属于推断的句子直接写「这是推断」。不使用 `inference` 标签，也不使用任何行内证据标签。
-- **横向对照就地给。** 讲完一个机制，顺手给一段「Claude Code / Codex / OpenCode / pi 怎么做」。不要把对照全部推到最后一篇。
-- **不复述上游文档。** 上游有 112 篇英文文档、739 篇设计记录，讲得比这里全。这里补的是它不会写的：跨包的因果链、失效条件、横向对比、以及「为什么当初这么定」。
-
-## 教学标准
-
-`docs/` 下每篇都要满足四条，缺一条就算没写完：
-
-- **顶部读者提示。** 标题下面一段斜体，写清这篇讲给谁、读完能回答哪几个问题。不要写成内容摘要。
-- **钩子。** 提示之后、第一个小节之前，用一个具体现象或一个反直觉的事实把读者拉进来。钩子里承诺的东西，正文必须真的兑现；不确定能不能兑现就别写进钩子。也别预设读者做过很小众的事（「你要是拿这两个入口做过对比实验」这类）。
-- **英文一律带中文。** `>` 引用块、行内 `「英文」`、正文里的整句英文，都要在**紧跟其后**的位置给中文。表格里的英文原文，译文放在紧挨表格的段落里。`路径:行号` 后面用于 `check:anchors` 子串匹配的原文片段不需要翻译，代码块内部也不需要。
-- **结尾 `## 自检`，3–4 题。** 考理解不考记忆：问「为什么这么设计」「改成 X 会坏在哪」「什么条件下这条结论不成立」，不问「某个常量叫什么名字」「某个数字是多少」。数字可以写进题干当已知条件，但不能是答案本身。答案要给完整，并指回正文对应小节。
-
-转述正文结论时（`concepts.md` / `for-product.md` / `for-ops.md` 这三篇尤其容易犯）：正文标了「这是推断」的，转述时不能变成确定事实；正文带了限定词的（「默认组合下」「Windows 上只兑现一部分」「这一列依据官方文档、无法从源码核实」），限定词要跟着一起搬。为了讲得通俗而删掉限定词，是这个仓库最不能接受的一类错。单位也不许换（token 就写 token，不要为了通俗写成「字」）。
-
-## 文风
-
-正文用「说人话」skill 维护，避免写成 AI 腔。装法：
-
-```bash
-git clone https://github.com/MrGeDiao/shuorenhua.git
-cp -r shuorenhua ~/.claude/skills/shuorenhua
-```
-
-改本仓库的文章时按 `docs` 场景走：档位 `minimal`、scope `bounded`、无源引用 `audit-only`，**不要升到 `aggressive`**——技术文档压过头会把信息一起压掉。
-
-**为什么是这个 skill 而不是星更多的那些。** 去 AI 味的中文 skill 有十几个，`op7418/Humanizer-zh` 星数是它的十几倍。选「说人话」的唯一理由是它带 `references/protected-spans.md`：这个仓库有一千多处 `路径:行号`、几百个代码块和大量上游英文原文，改写工具如果没有 protected spans 的概念，动一次锚点就废。改写完必须跑 `check:anchors` 确认锚点一处未少，这是机器验的，不靠人工确认。
-
-**写作时的节奏要求。** 词表能查的病灶交给门禁，查不出来的那一半是句子节奏：句长过于均匀就是模型腔。现有正文的句长变异系数在 0.6 到 0.88 之间，均句长 20 到 30 字。写完可以跑 `npm run style:report` 看自己这篇落在哪里，低于 0.6 说明句子被写齐了，回去把长短句拉开。
-
-## 文风门禁
-
-`npm run check:style` 把上面这些规矩里能机器判的部分变成门禁，规则表在 [`scripts/style-rules.json`](scripts/style-rules.json)，阈值由现有正文标定，改阈值要同时改这里的说明。
-
-| 规则 | 判据 | 级别 |
-| --- | --- | --- |
-| 破折号密度 | 每千中文字 ≤ 1.0，且绝对数 ≥ 3 才判失败 | error |
-| 禁用表达 | 「值得注意的是」「换句话说」「综上所述」等二十余条，一处都不许 | error |
-| 「不是 X，而是 Y」对仗 | 每千中文字 ≤ 0.6 | error |
-| 引号统一 | 中文正文只用「」 | error |
-| 英文引文带中文 | 英文引用块之后 3 行内必须出现中文 | error |
-| 句长变异系数 | ≥ 0.6 | warn |
-| 均句长 | 18 到 45 字 | warn |
-
-两条关于阈值的说明，改规则前先读：
-
-- **对仗按密度卡而不按绝对数卡。** 「不是删事件，而是往 surface 上追加一条替换事件」这类是精确澄清，不是修辞。抽查现有正文，按绝对数卡会误伤八篇好文章。
-- **`> —— 路径:行号` 是引用出处行，不计入破折号密度。** 它是引用格式，不是连接符。
-
-`protected spans` 与 `check:anchors` 用同一套定义：frontmatter、代码块、行内 code、`路径:行号` 引用。这些内容不参与文风判断。
-
-这个仓库额外有几类内容属于 protected spans，一个字符都不能动：所有 `路径:行号` 引用（`check:anchors` 会校验）、代码块、被引用的上游英文原文、frontmatter、表格里的数字与路径。
-
-几条本仓库实测出来的高频病灶，写的时候自己先避开：破折号 `——` 当万能连接符、「不是 X，而是 Y」的对仗、「值得注意的是」这类开场、「一句话总结 / 三件事值得先记住」这种套路引导句、以及直角引号与弯引号混用（统一用「」，英文原文里的引号保持原样）。
+- README、正文、图中可见文字、图例、替代文本、GitHub About 和 Social Preview 均使用中文。
+- 产品名、协议名、API、函数、类型、字段、枚举和代码标识符保留原文，例如 Codex、MCP、Session、JSONL。
+- 英文完整句必须紧跟中文解释；上游短摘录可以保留原文，但正文必须说明它支持什么、不能支持什么。
+- 不创建平行的英文 README。文件名使用稳定的 ASCII slug，文章标题与说明使用中文。
+- 用户可见文字不得出现本机绝对路径；命令从仓库根目录写相对路径。
 
 ## 目录职责
 
 | 路径 | 职责 |
 | --- | --- |
-| `README.md` | 唯一导航入口。不要新增平行的 QUICKSTART / LEARNING_PATH。 |
-| `docs/` | 跨 harness 正文与入口，ASCII slug 文件名 + 中文标题。 |
-| `docs/deep/` | 单一实现的深读；当前保留 DSH 专属内容。 |
-| `sources/` | 上游 submodule 与 commit 锁定。 |
-| `research/runtime-evidence/` | 真实运行记录：环境、命令、退出码、产物。**没跑过的实验不要写进这里。** |
-| `scripts/` | 零依赖的校验脚本。 |
-| `specs/` | 设计与改造方案。不是正文，不参与 `check:analysis`，但参与 `check:style`。 |
+| `README.md` | 唯一公开入口、真实进度、正式导航与证据边界 |
+| `docs/00-start-here.md` | 全仓阅读入口和课程地图 |
+| `docs/foundations/` | Agent Harness 的共同基础 |
+| `docs/harnesses/` | 六条一级主线的独立连续课程 |
+| `docs/comparisons/` | 同问题、同口径、无总分的横向比较 |
+| `docs/roles/` | 产品、工程、安全、评测与研究角色路径 |
+| `docs/labs/` | 可复现实验说明 |
+| `docs/appendix/` | 词表、来源、证据等级、漂移与限制 |
+| `assets/brand/` | Logo、中文组合标和 Social Preview |
+| `assets/diagrams/` | 中文机制图、Manifest 与图示规范 |
+| `evidence/claims/` | 影响公开判断的关键结论注册表 |
+| `evidence/experiments/` | 实验环境、命令、结果和产物索引 |
+| `evidence/reviews/` | 逐阶段对抗复核记录 |
+| `sources/` | 上游来源清单、Lock 与本地 Checkout |
+| `scripts/` | 零运行时依赖的校验和维护脚本 |
+| `specs/` | 已批准总规格、总路线和当前阶段计划 |
 
-## frontmatter
+## 来源配置
 
-`docs/` 下每篇都要有，解析器是行式正则，**列表必须写在一行**：
+来源分为三组：
 
-```yaml
----
-title: KV-Cache：没有一行缓存代码，为什么还能一直命中
-sources: [{"repo":"deepseek-harness","path":"packages/llm/llm-deepseek/src/serialize.ts","commit":"<40-hex>"}]
-last_verified: 2026-08-16
-status: draft
-coverage_min: {"deepseek-harness":1,"codex":1,"gemini-cli":1,"claude-agent-sdk-python":1}
----
-```
+- `core`：DSH、Codex、Gemini CLI、Claude 双 SDK、pi、OpenCode。
+- `samples`：用于补充独特机制的扩展样本。
+- `eval`：Inspect AI、SWE-bench、Terminal-Bench、lm-evaluation-harness 等评测参考。
 
-- `status` 取 `draft` / `reviewed` / `stale`。
-- `sources[].commit` 必须等于 `sources/sources.lock.yml` 里的值（`stale` 除外）。
-- `sources[].path` 会被 `git cat-file -e` 实证。
-- `docs/aN-*.md` 的 `coverage_min` 必须覆盖四个 agent 主角；`docs/eN-*.md` 必须覆盖四个 eval 主角。值是该来源在本篇的最低源码锚点数，至少为 1。
-- 证据矩阵前写 `<!-- evidence-matrix -->`。首列是维度名，其余数据格必须含源码锚点、HTTPS 官方链接或正文明写「这是推断」。
+默认 Bootstrap 与来源验证只要求 `core`；需要复核扩展或评测正文时显式选择 `samples`、`eval` 或 `all`。所有来源必须绑定完整 Commit，Manifest、Lock、gitlink、许可证和 Checkout 必须一致。上游源码只做本地核对，不 vendor 到公开正文。
 
-## 校验
+## 文章元数据与状态
 
-改完跑 `npm run check`，它串联：
+新目录文章必须包含 `title`、`article_type`、`status`、`last_verified` 和 `sources`；Harness 文章还必须声明 `harness`。数组和对象写为单行 JSON 兼容 YAML，便于零依赖解析器读取。
 
-| 步骤 | 检查什么 |
+状态只有五种：
+
+- `outline`：只有结构，允许空来源，不进入正式导航。
+- `draft`：已有正文，但证据、深度或复核未完成。
+- `reviewed`：内容和证据完成复核，可以进入正式导航。
+- `verified`：在 reviewed 基础上完成相关运行实验。
+- `stale`：上游漂移或边界变化后等待重新审核。
+
+README 的正式导航必须放在 `course-navigation` 标记区间内，并且只能链接 `reviewed` 或 `verified`。进度表可以显示其他状态，但不能把草稿伪装成正式课程。
+
+## 内容质量
+
+行号是证据定位，不是正文。文章必须先给读者真实可见的输入、输出、请求、事件或行为，再解释调用链、实现选择、失败条件和验证方法。
+
+Harness 文章至少包含：
+
+1. 读者会得到什么。
+2. 真实输入与输出。
+3. 至少三步的调用链。
+4. 可核对的源码证据。
+5. 失败与限制。
+6. 验证方法。
+7. 三至四组有完整答案的自检。
+
+基础、比较、角色、实验和附录文章遵循 `check:content` 中各自的结构与深度下限。长代码块、表格和标题不能冒充解释性正文。机器门禁只能拦截明显空壳，不能证明论证正确；`reviewed` 仍需要人工逐段复核。
+
+## 源码锚点与推断
+
+- 源码引用写成 `来源ID!路径:起止行`；同一来源的后续简写只在没有歧义时使用。
+- 重要引用在行号后附短摘录，便于门禁确认区间与原文一致。
+- 不把伪代码写成上游源码；重建示例必须标明“重建”或“示意”。
+- 能力存在、默认启用、平台可用和产品公开承诺是不同结论，分别核对。
+- 推断必须明确写出依据、推理步骤和不成立条件；证据不足时使用 `unknown`，不能写成 `absent`。
+- 上游变化后只把文章标记为 `stale`，机器不得自动改写语义结论。
+
+Frontmatter、代码块、行内代码、源码路径、行号、Commit、表格数字和上游短摘录属于受保护内容。改写文风时不得改变这些字段，完成后必须运行锚点与来源检查。
+
+## 关键结论注册表
+
+默认行为、安全边界、平台差异、终止和失败语义、成本与性能、跨 Harness 比较、评测与发布证据，以及 README 的公开承诺，必须进入 `evidence/claims/` 的关键结论注册表。
+
+能力状态为 `default`、`optional`、`extension`、`external`、`absent`、`unknown`、`not-applicable`。证据等级为 A、B、C、D、U。能力状态与证据等级不能混用：源码存在不等于默认能力，无法核验也不等于功能缺失。D 级结论必须写推断说明，A 级结论必须同时有源码、上游测试和实验记录。
+
+## 中文图示
+
+每条一级主线至少交付一张中文系统架构图和一张中文端到端任务流程图。复杂文章按需要使用时序图、状态图、数据流图或决策树；两句话能讲清的关系不画装饰图。
+
+正式 SVG 只放在 `assets/brand/` 或 `assets/diagrams/`，并登记到图示 Manifest。每张 SVG 必须有中文 `<title>`、中文 `<desc>` 和中文 `alt`，图中说明句使用中文，专名与代码标识符可以保留。图示必须实际渲染检查窄屏、裁切、对比度、字体回退、箭头方向和 GitHub 预览。图中直接表达的重要结论要关联 Claim ID。
+
+## 实验与评测边界
+
+- 没有执行过的实验不得写成成功结果；实验记录必须包含环境、输入、命令、退出码、原始结果和限制。
+- Trial 是统计单位，Attempt 是恢复过程；不能靠重试把产品失败改成通过。
+- 训练 Reward、Checkpoint 选择和独立发布评测必须分开记录。
+- Eval 集成说明任务与环境如何固定、Trace 如何采集、Scorer 如何判定、统计如何汇总，以及哪些失败不能重试消除。
+- 仓库门禁、第三方 Benchmark 或局部实验不证明生产就绪、发布授权或个人能力。
+
+## 逐阶段对抗复核
+
+每个阶段完成后必须写入 `evidence/reviews/`：列出阶段承诺、逐项证据、实际命令与退出码、反向检查发现、解决动作和最终结果。`pass` 不能存在未解决的高优先级发现，也不能带非零最终命令。没有对应复核记录的阶段不得宣布完成。
+
+对抗复核至少回答：是否遗漏用户明确要求；是否把草稿、结构门禁或文件数量当成完成；是否越过闭源、平台、模式或版本边界；是否有绝对路径、英文图中文字、失效链接、未登记图示或只在本机成立的命令；是否把来源存在误写成行为确定。
+
+## 验证环境与命令
+
+本仓库使用 **Node 24** 执行完整验证，**不调用 NVM**。需要运行脚本时使用已配置的 Node 24 环境；不得反复探测或切换 NVM，也不得触发其弹窗。
+
+核心命令：
+
+| 命令 | 作用 |
 | --- | --- |
-| `sources:verify` | submodule 与 lock 一致、无本地改动 |
-| `check:analysis` | frontmatter 完整、commit 与 lock 一致、路径存在 |
-| `check:anchors` | **正文里的 `文件:行号` 真的指向那一行**（行号越界或指向空行即失败）；引用后面跟了「原文片段」时，还会校验那段文字确实出现在被引区间里 |
-| `check:coverage` | 对 `docs/aN-*.md` / `docs/eN-*.md` 按主角统计跨仓锚点，低于 frontmatter 阈值即失败 |
-| `check:matrix` | 标记为 evidence-matrix 的对照表，每个数据格必须带锚点、官方链接或明确推断 |
-| `check:style` | 中文文风：破折号密度、禁用表达、对仗句、引号统一、英文引文带中文；句长节奏只报告不拦 |
-| `check:portability` | LF 换行、无机器绝对路径、零依赖 |
-| `check:licenses` | 许可证文件与哈希 |
-| `check:links` | 相对链接目标存在 |
-| `check:secrets` | 密钥模式扫描 |
-| `test` | 脚本自身的单元测试 |
+| `npm run sources:verify` | 来源、Lock、gitlink 和 Checkout |
+| `npm run check:analysis` | 文章类型、状态、来源与路径 |
+| `npm run check:claims` | 关键结论、证据等级与摘录 |
+| `npm run check:navigation` | 正式导航发布状态 |
+| `npm run check:content` | 各类文章结构与解释深度 |
+| `npm run check:visuals` | 中文 SVG、安全结构与 Manifest |
+| `npm run check:reviews` | 阶段对抗复核记录 |
+| `npm run check:anchors` | 正文源码行号与短摘录 |
+| `npm run check:licenses` | 第三方许可证和哈希 |
+| `npm run check:links` | 本地链接目标 |
+| `npm run check:secrets` | 敏感信息模式 |
+| `npm test` | 门禁脚本单元测试 |
+| `npm run check` | 聚合执行全部门禁 |
 
-上游变化后，绑定旧 commit 的结论需要重新人工审核；不要让机器改写语义结论。
+提交前先运行与改动直接相关的测试，再运行聚合检查。任何成功声明都要附实际命令和结果；不要用“应该通过”代替执行证据。
+
+## 最终 GitHub 发布
+
+最终仓库名为 `agent-harness-internals`。发布时逐项复核 About、Topics、README、Social Preview、License、默认分支、保护规则、公开可见性和相对链接。最终提交完成后，受控移除历史提交消息中的 Codex/Claude `Co-Authored-By` 与 Claude Session 元数据，保留人类作者、文件内容和提交顺序；强推后恢复保护规则，并确认 Contributors 页面不再列出 Codex 或 Claude。
