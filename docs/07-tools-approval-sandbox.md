@@ -105,7 +105,7 @@ dsh 把权限拆成三个互不包含的东西。搞混它们是理解这套系�
             approval: never
 ```
 
-插件自带的 schema 默认表只有两项（`packages/interaction/permission-presets/src/index.ts:168-175`），bundle 补了 `read-only`。选一个 preset 写一条 `permission/preset` 事件（纯「用户意图」记录），然后按需分别写 `sandbox/mode` 和 `approval/policy`；两个旋钮的值凑不出任何一个 preset 时，派生状态是 `custom`。每个新会话发布前，`pinInitialPermission`（`packages/interaction/permission-presets/src/index.ts:400-430`）把三条事件补齐，于是「这个会话当时是什么权限」永远能从日志本身重建。
+插件自带的 schema 默认表只有两项（`packages/interaction/permission-presets/src/index.ts:184-191`），bundle 补了 `read-only`。选一个 preset 写一条 `permission/preset` 事件（纯「用户意图」记录），然后按需分别写 `sandbox/mode` 和 `approval/policy`；两个旋钮的值凑不出任何一个 preset 时，派生状态是 `custom`。每个新会话发布前，`pinInitialPermission`（`packages/interaction/permission-presets/src/index.ts:416-446`）把三条事件补齐，于是「这个会话当时是什么权限」永远能从日志本身重建。
 
 默认部署值：`DSH_PERMISSION_MODE ?? 'workspace-write'`，审批是 `danger-full-access ? 'never' : 'ask'`（`packages/bundle/base/cordis.patch.yml:175`、`:191`）。
 
@@ -116,7 +116,7 @@ dsh 把权限拆成三个互不包含的东西。搞混它们是理解这套系�
 1. **沙箱升级**：`approveEscalation`（`packages/sandbox/sandbox/src/escalation.ts:157-189`），被 `bash`/`pwsh`（`packages/shell/tool-bash/src/index.ts:213-233`）和 `write`/`edit`（`packages/fs/tool-fs/src/sandbox.ts:97`）共用。
 2. **`tools/pre-execute` 返回 `ask`**：由 `ToolRuntime.serviceAsk` 转成一次 `request()`（`packages/core/tools/src/index.ts:1689-1729`）。
 
-其余出现 `approval/request` 字样的地方都是**回答方**（answerer），不是发起方：ACP 桥（`packages/acp/acp/src/index.ts:215`）和 Web 客户端的 api-proxy（`packages/host/apiproxy/src/api-proxy.ts:1422`）。**waterfall（瀑布事件）**是 Cordis 的环绕式中间件：监听器排成一队，每个都必须 `await next()` 才轮到下一个，最后的返回值权威；一个监听器都没有时，返回的就是发起方给的默认值。答不上来就是答不上来，零监听器时 waterfall 落到默认值 `'unavailable'`，消费方一律按拒绝处理。
+其余出现 `approval/request` 字样的地方都是**回答方**（answerer），不是发起方：ACP 桥（`packages/acp/acp/src/index.ts:271`）和 Web 客户端的 api-proxy（`packages/host/apiproxy/src/api-proxy.ts:1363`）。**waterfall（瀑布事件）**是 Cordis 的环绕式中间件：监听器排成一队，每个都必须 `await next()` 才轮到下一个，最后的返回值权威；一个监听器都没有时，返回的就是发起方给的默认值。答不上来就是答不上来，零监听器时 waterfall 落到默认值 `'unavailable'`，消费方一律按拒绝处理。
 
 `ApprovalService.request()` 本身很短（`packages/interaction/user-approval/src/index.ts:257-276`）：
 
@@ -160,29 +160,29 @@ dsh 把权限拆成三个互不包含的东西。搞混它们是理解这套系�
 
 | 工具 | 模型看到的描述（摘要，原文见目录） | 并发 | 在哪 |
 | --- | --- | --- | --- |
-| `bash` | "Execute a bash command (`bash -c`)… Each call runs in a fresh shell: no state (cwd, variables, functions) persists between calls — pass `workdir` instead of using `cd`. Non-zero exits are reported as `[exit code: N]`… a blocked file operation is reported as `[sandbox: file access denied under <mode> mode]` — a policy denial, not a bug in the command; do not retry another way… Set `run_in_background: true`…"（`docs/tool-catalog.md:180`） | exclusive | 两处（非 Windows） |
-| `pwsh` | 同上的 PowerShell 版；多一句 "On Windows a force-killed command settles as `[exit code: 1]` without a signal marker"（`docs/tool-catalog.md:224`） | exclusive | 两处（Windows） |
-| `read` | "Read a UTF-8 text file and return line-numbered content."（`docs/tool-catalog.md:638`） | **parallel** | 两处 |
-| `write` | "Create or fully replace a UTF-8 text file."（`docs/tool-catalog.md:688`） | exclusive | 两处 |
-| `edit` | "Edit an existing UTF-8 text file by replacing literal text."（`docs/tool-catalog.md:603`） | exclusive | 两处 |
-| `read_image` | "Read a PNG/JPEG/WebP/GIF file and return the image itself. Requires the current model to accept image input."（`docs/tool-catalog.md:667`） | **parallel** | 两处 |
-| `glob` | "Find files whose paths match a glob pattern… Up to 100 paths come back in modification-time order; a larger result instead returns 100 paths sampled across top-level entries…"（`docs/tool-catalog.md:720`） | exclusive | 两处 |
-| `grep` | "Search file contents with a ripgrep regular expression… Returns the first 250 matches inline; a capped result reports where the complete match list was saved."（`docs/tool-catalog.md:745`） | exclusive | 两处 |
-| `str_replace_editor` | "Custom editing tool for viewing, creating and editing files"（`docs/tool-catalog.md:533`） | exclusive | 仅 base bundle |
-| `job_output` | "Read a background job. Stream jobs return only output since the previous read… Every response ends with `[status: ...]`. Reads are non-blocking unless `wait: true`…"（`docs/tool-catalog.md:1651`） | exclusive | 两处 |
-| `job_list` / `job_kill` | 列出 / 请求终止后台任务（`docs/tool-catalog.md:1638`、`:1613`） | exclusive | 两处 |
-| `todo_write` | "Send the ENTIRE list every call — it REPLACES the previous list (there are no partial updates, no per-item edits)… Mark every todo being actively worked on `in_progress`…"（`docs/tool-catalog.md:1686`） | exclusive | 两处 |
-| `skill` | "Load the full instructions for an available skill. Call this with the exact skill name from the session skill catalog…"（`docs/tool-catalog.md:1215`） | exclusive | 两处 |
-| `exit_plan_mode` | "Use only in plan mode. Present your plan for the user's review and, on approval, leave plan mode…"（`docs/tool-catalog.md:153`） | exclusive | 两处 |
-| `subagent` | "Delegate a self-contained task to a subagent… Give it a complete, standalone prompt: it does not see this conversation. This call waits for the result by default. Set `run_in_background: true`…"（`docs/tool-catalog.md:1475`） | **parallel** | 两处 |
+| `bash` | "Execute a bash command (`bash -c`)… Each call runs in a fresh shell: no state (cwd, variables, functions) persists between calls — pass `workdir` instead of using `cd`. Non-zero exits are reported as `[exit code: N]`… a blocked file operation is reported as `[sandbox: file access denied under <mode> mode]` — a policy denial, not a bug in the command; do not retry another way… Set `run_in_background: true`…"（`docs/tool-catalog.md:182`） | exclusive | 两处（非 Windows） |
+| `pwsh` | 同上的 PowerShell 版；多一句 "On Windows a force-killed command settles as `[exit code: 1]` without a signal marker"（`docs/tool-catalog.md:226`） | exclusive | 两处（Windows） |
+| `read` | "Read a UTF-8 text file and return line-numbered content."（`docs/tool-catalog.md:667`） | **parallel** | 两处 |
+| `write` | "Create or fully replace a UTF-8 text file."（`docs/tool-catalog.md:717`） | exclusive | 两处 |
+| `edit` | "Edit an existing UTF-8 text file by replacing literal text."（`docs/tool-catalog.md:632`） | exclusive | 两处 |
+| `read_image` | "Read a PNG/JPEG/WebP/GIF file and return the image itself. Requires the current model to accept image input."（`docs/tool-catalog.md:696`） | **parallel** | 两处 |
+| `glob` | "Find files whose paths match a glob pattern… Up to 100 paths come back in modification-time order; a larger result instead returns 100 paths sampled across top-level entries…"（`docs/tool-catalog.md:749`） | exclusive | 两处 |
+| `grep` | "Search file contents with a ripgrep regular expression… Returns the first 250 matches inline; a capped result reports where the complete match list was saved."（`docs/tool-catalog.md:774`） | exclusive | 两处 |
+| `str_replace_editor` | "Custom editing tool for viewing, creating and editing files"（`docs/tool-catalog.md:562`） | exclusive | 仅 base bundle |
+| `job_output` | "Read a background job. Stream jobs return only output since the previous read… Every response ends with `[status: ...]`. Reads are non-blocking unless `wait: true`…"（`docs/tool-catalog.md:1680`） | exclusive | 两处 |
+| `job_list` / `job_kill` | 列出 / 请求终止后台任务（`docs/tool-catalog.md:1667`、`:1613`） | exclusive | 两处 |
+| `todo_write` | "Send the ENTIRE list every call — it REPLACES the previous list (there are no partial updates, no per-item edits)… Mark every todo being actively worked on `in_progress`…"（`docs/tool-catalog.md:2031`） | exclusive | 两处 |
+| `skill` | "Load the full instructions for an available skill. Call this with the exact skill name from the session skill catalog…"（`docs/tool-catalog.md:1244`） | exclusive | 两处 |
+| `exit_plan_mode` | "Use only in plan mode. Present your plan for the user's review and, on approval, leave plan mode…"（`docs/tool-catalog.md:155`） | exclusive | 两处 |
+| `subagent` | "Delegate a self-contained task to a subagent… Give it a complete, standalone prompt: it does not see this conversation. This call waits for the result by default. Set `run_in_background: true`…"（`docs/tool-catalog.md:1504`） | **parallel** | 两处 |
 | `subagent_fork` | 同包第二实例，绑 fork 后端 | **parallel** | 两处 |
-| `send_message` / `interrupt_agent` / `list_agents` | 给后台子代理续发下一 turn / 取消其当前 turn / 列出子孙（`docs/tool-catalog.md:1554`、`:1511`、`:1532`） | exclusive | 两处 |
-| `report` | "Report selected content to the agent that started you… only your direct parent receives it"（`docs/tool-catalog.md:1586`），**只注册在 continuable 子 agent 的 scope 里** | exclusive | 两处（宿主平面注册） |
-| `workflow` | "Run a JavaScript workflow script that orchestrates subagents at scale…"（`docs/tool-catalog.md:1736`） | exclusive | 两处 |
-| `ralph` | "Run a foreground fresh-agent Ralph loop toward one immutable objective. Use only when the direct human explicitly asks for Ralph or fresh-agent iteration…"（`docs/tool-catalog.md:1184`） | exclusive | 两处 |
-| `create_goal` / `get_goal` / `update_goal` | 同会话持久目标；create/edit/pause/resume 要求直接人类根权限（`docs/tool-catalog.md:945`、`:970`、`:983`） | exclusive | 两处 |
-| `web_search` | "Search the web for current information. Returns an optional summary answer and a list of source URLs."（`docs/tool-catalog.md:1852`） | **parallel** | 两处 |
-| `ask_user_question` | "Ask the user a concise question when you need confirmation, a choice, or missing information before proceeding…"（`docs/tool-catalog.md:47`） | exclusive | 仅 standard preset |
+| `send_message` / `interrupt_agent` / `list_agents` | 给后台子代理续发下一 turn / 取消其当前 turn / 列出子孙（`docs/tool-catalog.md:1583`、`:1511`、`:1532`） | exclusive | 两处 |
+| `report` | "Report selected content to the agent that started you… only your direct parent receives it"（`docs/tool-catalog.md:1615`），**只注册在 continuable 子 agent 的 scope 里** | exclusive | 两处（宿主平面注册） |
+| `workflow` | "Run a JavaScript workflow script that orchestrates subagents at scale…"（`docs/tool-catalog.md:2081`） | exclusive | 两处 |
+| `ralph` | "Run a foreground fresh-agent Ralph loop toward one immutable objective. Use only when the direct human explicitly asks for Ralph or fresh-agent iteration…"（`docs/tool-catalog.md:1213`） | exclusive | 两处 |
+| `create_goal` / `get_goal` / `update_goal` | 同会话持久目标；create/edit/pause/resume 要求直接人类根权限（`docs/tool-catalog.md:974`、`:970`、`:983`） | exclusive | 两处 |
+| `web_search` | "Search the web for current information. Returns an optional summary answer and a list of source URLs."（`docs/tool-catalog.md:2197`） | **parallel** | 两处 |
+| `ask_user_question` | "Ask the user a concise question when you need confirmation, a choice, or missing information before proceeding…"（`docs/tool-catalog.md:49`） | exclusive | 仅 standard preset |
 
 三点要注意：
 

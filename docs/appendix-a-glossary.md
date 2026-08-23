@@ -50,10 +50,10 @@ status: stale
 
 | 术语 | 一句话 | 定义处 | 展开于 |
 | --- | --- | --- | --- |
-| **event log / SessionEvent** | Session 是 append-only 的 `SessionEvent` 日志，是唯一真源；每条带 `type` / `seq` / `time` / `data`。 | `packages/core/session/src/types.ts:404` | [05 Session](05-session.md) |
-| **surface** | 从事件日志投影出的「模型看见的消息序列」。不是所有事件都进 surface，只有 message-producing 的那些。 | `packages/core/session/src/types.ts:357` | [05](05-session.md) |
-| **surfaceOp** | 一条 surface 事件相对当前 surface 的放置方式：`'append'`，或 `{ op: 'replace', start, end }`（压缩用它遮蔽一段历史）。 | `packages/core/session/src/types.ts:372` | [05](05-session.md)、[06 压缩](06-compaction.md) |
-| **log-only 事件** | 只写进会话日志、**不投影成任何模型可见消息**的事件（`plan/mode`、`tool/code-dispatch`、`hook/invoked` 都是）。判据就在 surfaceOp 的定义旁边：`surfaceOp` 在 message-producing 事件上必填、在 log-only 事件上禁止。 | `packages/core/session/src/types.ts:378` | [05](05-session.md)、[08](08-orchestration.md)、[09](09-extensions-and-code-mode.md) |
+| **event log / SessionEvent** | Session 是 append-only 的 `SessionEvent` 日志，是唯一真源；每条带 `type` / `seq` / `time` / `data`。 | `packages/core/session/src/types.ts:408` | [05 Session](05-session.md) |
+| **surface** | 从事件日志投影出的「模型看见的消息序列」。不是所有事件都进 surface，只有 message-producing 的那些。 | `packages/core/session/src/types.ts:361` | [05](05-session.md) |
+| **surfaceOp** | 一条 surface 事件相对当前 surface 的放置方式：`'append'`，或 `{ op: 'replace', start, end }`（压缩用它遮蔽一段历史）。 | `packages/core/session/src/types.ts:376` | [05](05-session.md)、[06 压缩](06-compaction.md) |
+| **log-only 事件** | 只写进会话日志、**不投影成任何模型可见消息**的事件（`plan/mode`、`tool/code-dispatch`、`hook/invoked` 都是）。判据就在 surfaceOp 的定义旁边：`surfaceOp` 在 message-producing 事件上必填、在 log-only 事件上禁止。 | `packages/core/session/src/types.ts:382` | [05](05-session.md)、[08](08-orchestration.md)、[09](09-extensions-and-code-mode.md) |
 | **epoch header / request header** | 一次模型调用的完整调用快照：`config`（provider/model/temperature/maxTokens/stop）、`system`、`tools`。以 `request/header` 事件落盘，`foldRequestHeader()` 从日志里把它折叠回来。 | `packages/core/session/src/types.ts:201`、`packages/core/session/src/request-header.ts:65` | [02 KV-Cache](02-kv-cache.md) |
 | **turn** | 一次「排空已认领输入」的过程，模型和它的工具都停下来（或被终止策略打断）才结束。 | `docs/glossary.md:37` | [03](03-agent-loop.md) |
 | **step** | 一次模型请求 + 它引发的工具执行。一个 turn 含零到多个 step。 | `docs/glossary.md:38` | [03](03-agent-loop.md) |
@@ -89,7 +89,7 @@ status: stale
 
 | 术语 | 一句话 | 定义处 | 展开于 |
 | --- | --- | --- | --- |
-| **KV-cache 前缀** | provider 侧按请求的**逐字节前缀**复用已算好的 KV。dsh 没有一行缓存管理代码，靠「前缀不动」这条纪律命中。序列化在这里发生。 | `packages/llm/llm-deepseek/src/serialize.ts:112` | [02](02-kv-cache.md) |
+| **KV-cache 前缀** | provider 侧按请求的**逐字节前缀**复用已算好的 KV。dsh 没有一行缓存管理代码，靠「前缀不动」这条纪律命中。序列化在这里发生。 | `packages/llm/llm-deepseek/src/serialize.ts:242` | [02](02-kv-cache.md) |
 | **cache read / write tokens** | usage 里与 uncached input 分开报的两项；DeepSeek 侧的 `prompt_cache_hit_tokens` / `cached_tokens` 映射过来。 | `packages/llm/llm/src/types.ts:138` | [02](02-kv-cache.md)、[04 LLM 层](04-llm-adapter.md) |
 | **compaction（压缩）** | 上下文接近窗口时把一段历史换成摘要 checkpoint 的机制，本身是能力接缝（`CompactionEngine`）。 | `packages/compaction/compaction/src/index.ts:96` | [06](06-compaction.md) |
 | **prune（工具结果裁剪）** | 与压缩不同的一层：超过 `thresholdChars` 的工具结果保留 head/tail、砍掉中间，不动会话结构。 | `packages/compaction/compaction-tool-result-pruner/src/index.ts:50` | [06](06-compaction.md) |
@@ -103,15 +103,15 @@ status: stale
 | **Code Mode** | `ToolRuntime` 的一种呈现模式（`native` / `code` / `both`）：`code` 下模型不再逐个调工具，而是写 TypeScript。 | `packages/core/tools/src/code-mode.ts:2` | [09 Extensions 与 Code Mode](09-extensions-and-code-mode.md) |
 | **run_code** | Code Mode 下唯一暴露给模型的传输工具，system prompt 里附上生成的 SDK 声明。 | `packages/core/tools/src/code-mode.ts:20` | [09](09-extensions-and-code-mode.md) |
 | **one-shot** | 委派的两种契约之一：`start()` 发起一次运行，父等它出结果，结果一旦回来这个子会话就作废，父再也够不着它。 | `packages/subagent/subagent/src/index.ts:16-17` | [08](08-orchestration.md) |
-| **continuable** | 另一种契约：`startContinuable()` 建立一个**持久**子代理，立刻返回一个持久 id，父可以用 `send_message` 继续跟它对话，它结算时反过来通知父。continuable 子代理永远不会变成 `SubagentRun`，续话由它自己的 inbox 排序。 | `packages/subagent/subagent/src/index.ts:16-17`（两个入口的意图）、`packages/subagent/subagent/src/continuation.ts:403`（实现） | [08](08-orchestration.md) |
-| **Activation** | 一个 continuable 子代理「当前这条命」。子会话是磁盘上的持久事件流，Activation 是它此刻活在内存里的那个 Agent 实例，**进程内最多一个**。它不是请求、结果、取消或 Task 的边界：一个 Activation 可以跑很多个 FIFO turn，并且在它创建的后代还没跑完时保持驻留。 | `packages/subagent/subagent/src/continuation.ts:8`（定性注释）、`packages/subagent/subagent/src/continuation.ts:191`（`interface Activation`） | [08](08-orchestration.md) |
+| **continuable** | 另一种契约：`startContinuable()` 建立一个**持久**子代理，立刻返回一个持久 id，父可以用 `send_message` 继续跟它对话，它结算时反过来通知父。continuable 子代理永远不会变成 `SubagentRun`，续话由它自己的 inbox 排序。 | `packages/subagent/subagent/src/index.ts:16-17`（两个入口的意图）、`packages/subagent/subagent/src/continuation.ts:409`（实现） | [08](08-orchestration.md) |
+| **Activation** | 一个 continuable 子代理「当前这条命」。子会话是磁盘上的持久事件流，Activation 是它此刻活在内存里的那个 Agent 实例，**进程内最多一个**。它不是请求、结果、取消或 Task 的边界：一个 Activation 可以跑很多个 FIFO turn，并且在它创建的后代还没跑完时保持驻留。 | `packages/subagent/subagent/src/continuation.ts:8`（定性注释）、`packages/subagent/subagent/src/continuation.ts:197`（`interface Activation`） | [08](08-orchestration.md) |
 | **spawn** | 进程内新建子 agent：自己的 session，**看不到**父对话历史。 | `packages/subagent/subagent-spawn-in-process/README.md:5` | [08](08-orchestration.md) |
 | **fork** | 进程内新建子 agent，但用父已完成的对话轮次做种子。与 spawn 的唯一行为差别就是这个种子。 | `packages/subagent/subagent-fork-in-process/README.md:5` | [08](08-orchestration.md) |
 | **seed（fork 的对话种子）** | fork 出来的子代理开头自带的那段父会话历史：从 seq 0 起、到父**最后一个 `turn/end`** 为止的连续事件前缀。切在 `turn/end` 是因为当前那个没跑完的工具调用轮次不平衡，重放不出一个合法的子会话；父还没有任何已完成的 turn 时种子为空，此时 fork 等价于 spawn。 | `packages/subagent/subagent-fork-in-process/src/index.ts:3-6`（模块定性）、`packages/subagent/subagent-fork-in-process/src/index.ts:48`（`completedTurnPrefix`） | [08](08-orchestration.md) |
 | **skill** | 渐进披露的可复用指令：目录里只放名称与描述，`skill` 工具按需加载全文。 | `packages/skill/skill/src/index.ts:85` | [08](08-orchestration.md) |
 | **goal** | 挂在既有 session 上的一个持久完成目标，带 `active`/`paused`/`blocked`/`complete` 相位与 round 上限。它是状态，不是调度器。 | `docs/glossary.md:25` | [08](08-orchestration.md) |
 | **Ralph loop** | 前台的「每轮换一个全新 agent」工作流：子代理不带任何对话种子，靠共享工作区和一份有界交接报告传状态。 | `docs/glossary.md:43` | [08](08-orchestration.md) |
-| **plan mode** | 一个持久化的会话状态：记录计划、在 step 开始时叙述并施加限制；模式切换**不改变工具目录**，以保住请求缓存稳定。 | `packages/plan/plan-mode/src/index.ts:180` | [08](08-orchestration.md) |
+| **plan mode** | 一个持久化的会话状态：记录计划、在 step 开始时叙述并施加限制；模式切换**不改变工具目录**，以保住请求缓存稳定。 | `packages/plan/plan-mode/src/index.ts:198` | [08](08-orchestration.md) |
 | **hook** | 外部 shell 命令扩展点。dsh 自己的扩展面是带类型的 Cordis 事件；`hooks-claude-code`（7 个事件）/ `hooks-codex`（5 个事件）只是把外部协议映射过来的兼容适配器，默认组装一个都没挂。 | `packages/hooks/hook-protocol/src/index.ts:1-7`（模块定性）、`packages/hooks/hook-protocol/src/runner.ts:20`（默认 600 秒超时） | [08](08-orchestration.md) |
 
 这一节的英文：one-shot 是「一次性」，continuable 是「可以续的」，`startContinuable()` 就是「起一个可续的」，`send_message` 是「发消息」，`SubagentRun` 是「子代理的一次运行」，Activation 是「激活体」（这个子代理此刻活着的那个实例）。spawn 是「另起一个」，fork 是「岔一条出来」，seed 是「种子」，`completedTurnPrefix` 直译「已完成 turn 的前缀」。goal 四个相位 `active` / `paused` / `blocked` / `complete` 分别是进行中、暂停、卡住、已完成。Code Mode 三种呈现模式 `native` / `code` / `both` 是原生调用、写代码、两者都给。hook 是「钩子」。

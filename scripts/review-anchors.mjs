@@ -16,13 +16,14 @@
 //   node scripts/review-anchors.mjs                     全部 stale 篇
 //   node scripts/review-anchors.mjs docs/04-llm-adapter.md
 //   node scripts/review-anchors.mjs --write             写进 research/drift/
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { analysisFiles, parseFrontmatter } from './analysis-metadata.mjs';
 import { checkoutsDir, fail, git, readManifest, root } from './lib.mjs';
 
 const argv = process.argv.slice(2);
 const doWrite = argv.includes('--write');
+const doApply = argv.includes('--apply');
 const only = argv.filter((arg) => !arg.startsWith('--'));
 
 const { manifest, locks } = readManifest();
@@ -84,7 +85,7 @@ for (const file of analysisFiles()) {
   lines.forEach((line, index) => {
     if (/^\s*```/u.test(line)) { inFence = !inFence; return; }
     if (inFence) return;
-    for (const [, explicitRepo, path, startRaw] of line.matchAll(REFERENCE)) {
+    for (const [, explicitRepo, path, startRaw, endRaw] of line.matchAll(REFERENCE)) {
       const repos = explicitRepo ? [explicitRepo] : candidates;
       const repo = repos.find((id) => knownRepos.has(id) && existsSync(join(checkoutsDir, id, path)))
         ?? repos.find((id) => knownRepos.has(id));
@@ -100,7 +101,7 @@ for (const file of analysisFiles()) {
       if (!oldLines || start > oldLines.length) continue;
       const oldText = normalize(oldLines[start - 1]);
       if (!oldText) continue;
-      const entry = { where, ref, oldText };
+      const entry = { where, ref, oldText, file: file.path, docLine: index, path, startRaw, endRaw };
       if (!newLines) {
         buckets.gone.push({ ...entry, note: '文件在新版本里不存在' });
       } else if (start <= newLines.length && normalize(newLines[start - 1]) === oldText) {
@@ -172,6 +173,35 @@ if (buckets.moved.length) {
   out.push('| --- | --- | ---: |');
   for (const item of buckets.moved) out.push(`| \`${item.where}\` | \`${item.ref}\` | ${item.to} |`);
   out.push('');
+}
+
+// moved 那一档内容逐字未变，只是位置挪了，可以机器改。区间引用按同一位移
+// 平移终点，免得 `:120-130` 被改成 `:88-130` 这种跨了半个文件的假区间。
+if (doApply) {
+  const byFile = new Map();
+  for (const item of buckets.moved) {
+    if (!byFile.has(item.file)) byFile.set(item.file, []);
+    byFile.get(item.file).push(item);
+  }
+  let applied = 0;
+  for (const [path, items] of byFile) {
+    const lines = readFileSync(path, 'utf8').split('\n');
+    for (const item of items) {
+      const from = item.endRaw ? `${item.path}:${item.startRaw}-${item.endRaw}` : `${item.path}:${item.startRaw}`;
+      const shift = item.to - Number(item.startRaw);
+      const to = item.endRaw
+        ? `${item.path}:${item.to}-${Number(item.endRaw) + shift}`
+        : `${item.path}:${item.to}`;
+      const line = lines[item.docLine];
+      if (!line?.includes(from)) continue;
+      lines[item.docLine] = line.split(from).join(to);
+      applied += 1;
+    }
+    writeFileSync(path, lines.join('\n'));
+  }
+  console.log(`已把 ${applied} 处只挪了位置的引用改到新行号（共 ${buckets.moved.length} 处待改）。`);
+  console.log('changed 与 gone 两档不动，那些要人读。');
+  process.exit(0);
 }
 
 const report = `${out.join('\n')}\n`;

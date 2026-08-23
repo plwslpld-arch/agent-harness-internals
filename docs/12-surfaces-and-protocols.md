@@ -158,9 +158,9 @@ ACP（Agent Client Protocol，一套让「客户端程序」和「agent」互相
   conn = new AgentSideConnection(makeAgent, stream)
 ```
 
-（`packages/acp/acp/src/index.ts:353`。类型名本身就是答案：`AgentSideConnection` 的字面意思是「站在 agent 这一侧的连接」，`makeAgent` 是「造一个 agent 出来」，`stream` 是 stdio 那条流。谁被驱动，写在名字里了。）方法实现集中在 `makeAgent` 返回的对象字面量里：`initialize`（`:234`）、`authenticate`（`:247`）、`newSession`（`:251`）、`prompt`（`:277`）、`cancel`（`:338`）。插件本体只注入一个服务：`export const inject = ['agents']`（`:44`）。
+（`packages/acp/acp/src/index.ts:448`。类型名本身就是答案：`AgentSideConnection` 的字面意思是「站在 agent 这一侧的连接」，`makeAgent` 是「造一个 agent 出来」，`stream` 是 stdio 那条流。谁被驱动，写在名字里了。）方法实现集中在 `makeAgent` 返回的对象字面量里：`initialize`（`:234`）、`authenticate`（`:247`）、`newSession`（`:251`）、`prompt`（`:277`）、`cancel`（`:338`）。插件本体只注入一个服务：`export const inject = ['agents']`（`:44`）。
 
-**`session/new` 的三条校验**（`packages/acp/acp/src/index.ts:430-436`）：
+**`session/new` 的三条校验**（`packages/acp/acp/src/index.ts:539-545`）：
 
 ```ts
 function validateSessionParams(params: NewSessionRequest): void {
@@ -192,7 +192,7 @@ function validateSessionParams(params: NewSessionRequest): void {
               inflight.resolve(end.kind === 'max-tokens' ? 'end_turn' : turnEndToStopReason(end))
 ```
 
-（`packages/acp/acp/src/index.ts:331`。这一行读作：如果本轮结束原因是 `max-tokens`，就把它当成 `end_turn` 报出去，其余原因才交给映射表 `turnEndToStopReason` 正常翻译；`inflight.resolve` 是把那个还悬着的 `prompt` 请求兑现掉。）理由在上一行注释：token 上限不是 prompt 级的停止原因。**所以 `end_turn` 不代表这个 turn 正常完成**：它可能是 aborted、blocked、error 或撞了 token 上限。跟 headless 那个严格的退出码语义对比一下就知道，同一个 `TurnEndReason` 在两个面上被投影成了完全不同的粒度。
+（`packages/acp/acp/src/index.ts:206`。这一行读作：如果本轮结束原因是 `max-tokens`，就把它当成 `end_turn` 报出去，其余原因才交给映射表 `turnEndToStopReason` 正常翻译；`inflight.resolve` 是把那个还悬着的 `prompt` 请求兑现掉。）理由在上一行注释：token 上限不是 prompt 级的停止原因。**所以 `end_turn` 不代表这个 turn 正常完成**：它可能是 aborted、blocked、error 或撞了 token 上限。跟 headless 那个严格的退出码语义对比一下就知道，同一个 `TurnEndReason` 在两个面上被投影成了完全不同的粒度。
 
 **审批是 dsh 向客户端发起的**（`:215-229`）：拦 `approval/request` waterfall（waterfall 是 cordis 的一种事件形式，多个监听者排队接手，谁先给出答案就用谁的，都不接就走默认值），转成 `conn.requestPermission`，只提供两个一次性选项（`allow-once` / `reject-once`），**永不产生持久授权**（`:213-214` 的注释）。顺带一个对照：整条 waterfall 没人应答时的默认值是 `'unavailable'`（`packages/interaction/user-approval/src/index.ts:320`），也就是 fail-closed。
 
@@ -216,7 +216,7 @@ function validateSessionParams(params: NewSessionRequest): void {
         const allow = params.options.find(o => o.kind === 'allow_once' || o.kind === 'allow_always')
 ```
 
-（`:257`。子 agent 发来的许可请求报文里带一个 `options` 数组，每个选项有个 `kind` 字段；这行是从里面挑出第一个 `allow_once`（只允许这一次）或 `allow_always`（以后都允许）的选项，挑到就当作答复回过去。）两端对得很整齐：dsh 做 server 时提供 `allow_once`/`reject_once` 两个 kind，dsh 做 client 时正好按 `allow_once`/`allow_always` 去挑。而且 `packages/acp/acp/src/index.ts:213` 的注释直接点名 `dsh-subagent-acp` 是它的目标客户端：**dsh 的 ACP server 面主要是给 dsh 自己的子代理机制用的**。
+（`:257`。子 agent 发来的许可请求报文里带一个 `options` 数组，每个选项有个 `kind` 字段；这行是从里面挑出第一个 `allow_once`（只允许这一次）或 `allow_always`（以后都允许）的选项，挑到就当作答复回过去。）两端对得很整齐：dsh 做 server 时提供 `allow_once`/`reject_once` 两个 kind，dsh 做 client 时正好按 `allow_once`/`allow_always` 去挑。而且 `packages/acp/acp/src/index.ts:269` 的注释直接点名 `dsh-subagent-acp` 是它的目标客户端：**dsh 的 ACP server 面主要是给 dsh 自己的子代理机制用的**。
 
 ---
 
@@ -236,7 +236,7 @@ export function publicToolName(serverName: string, rawName: string): string {
 }
 ```
 
-（`packages/mcp/mcp-client/src/tools.ts:96-102`。这个函数把「哪个 server」和「原始工具名」拼成一个对模型公开的名字：先按 `mcp__<server>__<tool>` 拼成 `joined`，把非法字符全换成下划线得到 `normalized`；如果一个字符都没被换掉、长度也没超限，就直接用它；否则拿 `server\0tool` 算一个 sha256、截前几位当 hash，把名字截短再接上这个 hash。）常量是 64 字符上限、`[A-Za-z0-9_-]` 字符集、12 位 hash（`:45`、`:48`、`:51`），注释说明这是 DeepSeek 的 function-name 契约（`:82-91`）。超限时截到 51 字符再拼 hash；hash 输入用 `\0` 分隔 server 名与工具名，避免命名空间碰撞。
+（`packages/mcp/mcp-client/src/tools.ts:111-117`。这个函数把「哪个 server」和「原始工具名」拼成一个对模型公开的名字：先按 `mcp__<server>__<tool>` 拼成 `joined`，把非法字符全换成下划线得到 `normalized`；如果一个字符都没被换掉、长度也没超限，就直接用它；否则拿 `server\0tool` 算一个 sha256、截前几位当 hash，把名字截短再接上这个 hash。）常量是 64 字符上限、`[A-Za-z0-9_-]` 字符集、12 位 hash（`:45`、`:48`、`:51`），注释说明这是 DeepSeek 的 function-name 契约（`:82-91`）。超限时截到 51 字符再拼 hash；hash 输入用 `\0` 分隔 server 名与工具名，避免命名空间碰撞。
 
 工具更新是**整代替换**，两阶段：
 
@@ -249,7 +249,7 @@ export function publicToolName(serverName: string, rawName: string): string {
 
 两种传输在同一个 schema union 里（`packages/mcp/mcp-client/src/index.ts:107-128`）：`stdio`（command/args/env/cwd）与 `streamable-http`（url/headers），共享 `toolCallTimeoutMs`、`failOnStartupError` 和一组重连参数。
 
-全仓搜 `McpServer`，只在测试里出现两处构造（`packages/mcp/mcp-client/tests/fixture-server.ts:12` 与 `packages/mcp/mcp-client/tests/mcp-client.e2e.ts:434`），都是给 client 当对手用的假 server；`src/` 下零命中。这与 ACP 面拒绝 `mcpServers` 是同一个立场：**dsh 消费 MCP 工具，不对外暴露 MCP 服务**。
+全仓搜 `McpServer`，只在测试里出现两处构造（`packages/mcp/mcp-client/tests/fixture-server.ts:12` 与 `packages/mcp/mcp-client/tests/mcp-client.e2e.ts:474`），都是给 client 当对手用的假 server；`src/` 下零命中。这与 ACP 面拒绝 `mcpServers` 是同一个立场：**dsh 消费 MCP 工具，不对外暴露 MCP 服务**。
 
 ---
 
@@ -355,7 +355,7 @@ class RunResult:
 
 **平台限制写在一个 14 行的 JSON 里**（`python/sdk-runtime/platforms.json`）：`linux-x64`（manylinux_2_28_x86_64）、`linux-arm64`（manylinux_2_28_aarch64）、`macos-arm64`（macosx_14_0_arm64）。**没有 Windows，没有 macOS x64。** 发布脚本 `scripts/build-python-release.py:47` 直接读这个 manifest，CLI 的合法平台取值就是它的 key。
 
-打包路线在另一个脚本：`const PKG_SPEC = '@yao-pkg/pkg@6.21.0'`（`scripts/build-exe-for-python-sdk.ts:25`），用 `--sea` 模式（`:390`）打成单文件 Node 24 可执行。设计记录在 `.agents/notes/implemented/architecture/2026-07-10-single-file-executable-sdk-runtime-distribution.md`，代价那一节（`:85`）诚实地写着产物量级 174MB，源码原样进 blob、无字节码混淆。
+打包路线在另一个脚本：`const PKG_SPEC = '@yao-pkg/pkg@6.21.0'`（`scripts/build-exe-for-python-sdk.ts:26`），用 `--sea` 模式（`:390`）打成单文件 Node 24 可执行。设计记录在 `.agents/notes/implemented/architecture/2026-07-10-single-file-executable-sdk-runtime-distribution.md`，代价那一节（`:85`）诚实地写着产物量级 174MB，源码原样进 blob、无字节码混淆。
 
 ---
 
@@ -446,7 +446,7 @@ DSML 属于 **DeepSeek V4 模型仓库**（`encoding_dsv4.py`），是模型侧�
 
 **同一个 `TurnEndReason` 在三个面上被投影成三种粒度。** headless 只认 `completed`（其余全退 1），ACP 把 `max-tokens` 也说成 `end_turn`，SDK 干脆不给每轮结果、只给入队回执。跨面比较「这个任务成功了吗」需要先统一口径。
 
-**SDK 协议没有 cancel。** 三个 README 都写了（`protocol:38`、`server:45`、`client:47`）。放弃一轮的唯一办法是杀掉 runtime 进程，对 benchmark 场景可以接受，对交互场景不行。ACP 反而有 `session/cancel`（`packages/acp/acp/src/index.ts:338`），这是两个协议面最大的能力差。
+**SDK 协议没有 cancel。** 三个 README 都写了（`protocol:38`、`server:45`、`client:47`）。放弃一轮的唯一办法是杀掉 runtime 进程，对 benchmark 场景可以接受，对交互场景不行。ACP 反而有 `session/cancel`（`packages/acp/acp/src/index.ts:425`），这是两个协议面最大的能力差。
 
 **stdout 纪律是约定不是强制。** SDK server 的 README 自己承认它不检查也不否决兄弟 logger。一个部署组合里多挂一行 stdout logger，协议通道就坏了，而且坏得很难查。
 
@@ -454,7 +454,7 @@ DSML 属于 **DeepSeek V4 模型仓库**（`encoding_dsv4.py`），是模型侧�
 
 **ACP 面拒绝 `mcpServers` 和 `additionalDirectories`。** 一个通用 ACP 客户端按标准发过来会被 `invalidParams` 拒掉。上游把这个包定位成「automation-only」（`:2`），字面意思是「只面向自动化」，不是通用 ACP 实现。
 
-**两个协议面都不做版本协商，但不做的方式不同。** SDK 这边是**真的没有**：server 握手回一个 `serverInfo: { name, version: '0.0.1' }`（`packages/sdk/server/src/server.ts:124`），client 收到后只检查这两个字段是不是字符串（`packages/sdk/client/src/client.ts:270-274`），从不比对版本号，协议演进时两端对不上也没人会报错。ACP 这边不一样：`initialize` 是**返回** `protocolVersion` 的（`packages/acp/acp/src/index.ts:295`），只是这个实现刻意只支持一个版本，源码注释把这个选择写明了（`packages/acp/acp/src/index.ts:291`「Single-version agent」，译作「只认一个版本的 agent」；接着说 ACP 规范里「支持就回同一版本，否则回自己支持的最新版本」这两条分支在这里都落到同一个值上）。也就是说 ACP 面是「协商机制在、可选项只有一个」，客户端能从回包里发现不匹配；SDK 面是「连发现的手段都没有」。两者都属于 pre-release 姿态，没有兼容承诺，但排查成本差一个量级。
+**两个协议面都不做版本协商，但不做的方式不同。** SDK 这边是**真的没有**：server 握手回一个 `serverInfo: { name, version: '0.0.1' }`（`packages/sdk/server/src/server.ts:124`），client 收到后只检查这两个字段是不是字符串（`packages/sdk/client/src/client.ts:270-274`），从不比对版本号，协议演进时两端对不上也没人会报错。ACP 这边不一样：`initialize` 是**返回** `protocolVersion` 的（`packages/acp/acp/src/index.ts:58`），只是这个实现刻意只支持一个版本，源码注释把这个选择写明了（`packages/acp/acp/src/index.ts:291`「Single-version agent」，译作「只认一个版本的 agent」；接着说 ACP 规范里「支持就回同一版本，否则回自己支持的最新版本」这两条分支在这里都落到同一个值上）。也就是说 ACP 面是「协商机制在、可选项只有一个」，客户端能从回包里发现不匹配；SDK 面是「连发现的手段都没有」。两者都属于 pre-release 姿态，没有兼容承诺，但排查成本差一个量级。
 
 ---
 
@@ -466,7 +466,7 @@ DSML 属于 **DeepSeek V4 模型仓库**（`encoding_dsv4.py`），是模型侧�
 |---|---|---|---|---|
 | dsh | Web（唯一；TUI 已删） | headless CLI、SDK JSON-RPC (stdio)、Python SDK | client only | ACP server |
 | Claude Code | CLI、桌面端、Web、IDE 扩展 | Agent SDK | client（含 deferred 工具加载） | 无公开 agent 协议；有 hooks/skills/plugins |
-| Codex | Rust CLI，可选 UI | app server、Extension API | client **+ server**（`codex!codex-rs/mcp-server/src/codex_tool_config.rs:106`：把 codex 自己包成一个名叫 `codex` 的 MCP 工具） | 经由上面那个 MCP server |
+| Codex | Rust CLI，可选 UI | app server、Extension API | client **+ server**（`codex!codex-rs/mcp-server/src/codex_tool_config.rs:104`：把 codex 自己包成一个名叫 `codex` 的 MCP 工具） | 经由上面那个 MCP server |
 | OpenCode | TUI | server（HTTP）、SDK | client（tools/resources/OAuth/instructions） | **ACP server**（`opencode acp`，`opencode!packages/opencode/src/cli/cmd/acp.ts:58`，和 dsh 用同一个 `@agentclientprotocol/sdk`） |
 | pi | 自定义 TUI | `-p` print/JSON、RPC、SDK、`packages/server` | **无**（可用扩展自建） | 无 |
 | mini-swe-agent | CLI | 作为 Python 库 | 无 | 无 |

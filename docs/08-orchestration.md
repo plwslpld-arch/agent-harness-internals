@@ -49,7 +49,7 @@ dsh 里这些能力全部通过两条通道之一到达模型。
 
 包分工见 `packages/subagent/README.md:9-19`：`subagent`（服务 `ctx.subagents`）、`subagent-in-process-driver`（共享的进程内驱动器）、六个 provider（`spawn-in-process`、`fork-in-process`、`acp`、`codex`、`claude-code`、`dsh-sdk`）、三个工具包（`tool-subagent`、`tool-subagent-control`、`tool-subagent-report`）。
 
-provider 只需要实现一个 `start(request): Promise<SubagentRun>`（`packages/subagent/subagent/src/types.ts:307`），外加一张能力表 `SubagentCapabilities`（`packages/subagent/subagent/src/types.ts:86-91`：`outputSchema` / `depthLimit` / `toolFilter` / `persona`）和一个描述性布尔量 `inheritsParentContext`（`:295`）。服务在 `start()` 里先按能力表校验请求（`packages/subagent/subagent/src/index.ts:481-496`），要不到的能力**报错而不是静默忽略**。
+provider 只需要实现一个 `start(request): Promise<SubagentRun>`（`packages/subagent/subagent/src/types.ts:314`），外加一张能力表 `SubagentCapabilities`（`packages/subagent/subagent/src/types.ts:86-91`：`outputSchema` / `depthLimit` / `toolFilter` / `persona`）和一个描述性布尔量 `inheritsParentContext`（`:295`）。服务在 `start()` 里先按能力表校验请求（`packages/subagent/subagent/src/index.ts:497-512`），要不到的能力**报错而不是静默忽略**。
 
 ### 2.1 一次 one-shot 委派：setup 的四步
 
@@ -93,7 +93,7 @@ approvalPolicy: parent.ctx.get('approval') === undefined ? undefined : 'never',
 
 `packages/subagent/subagent/src/continuation.ts`（1400+ 行）是另一条路径：一个持久子 Session，加上至多一个进程内 **Activation**——「Activation」指这个子会话当前那个活着的、正在内存里跑的 Agent 实例。子会话本身是磁盘上的持久事件流，可以没有 Activation（关掉了，随时能重开）；有 Activation 时最多一个，不会出现两个实例同时写一个子会话。Activation 三态（`:159`）：`running`（子在跑，或者还有未消费的消息）、`waiting`（它自己也在等它启动的孙代）、`settled`。
 
-模型真正会读到的是**结算通知**。文本由 `settlementSummary`（`packages/subagent/subagent/src/continuation.ts:291-312`）按停止原因选一句：
+模型真正会读到的是**结算通知**。文本由 `settlementSummary`（`packages/subagent/subagent/src/continuation.ts:297-318`）按停止原因选一句：
 
 | 停止原因 | 模型收到的句子（`subject` = `Background subagent <childId>`） |
 |---|---|
@@ -107,13 +107,13 @@ approvalPolicy: parent.ctx.get('approval') === undefined ? undefined : 'never',
 
 后面接子代理的最后一条 assistant 内容（`Its closing message:`，意思是「它的收尾留言：」），没有就写 `It left no closing message.`（它没留下收尾留言，`:1410-1411`）。
 
-**怎么送到父**，是这一段最讲究的地方（`packages/subagent/subagent/src/continuation.ts:1429-1442`）：
+**怎么送到父**，是这一段最讲究的地方（`packages/subagent/subagent/src/continuation.ts:1491-1504`）：
 
 - 父自己的 lineage 正在拆除 → `parent.inject(message)`，不唤醒。注释解释：唤醒一个宿主马上就要销毁的 Agent，等于「每层树白花一次模型请求」。
 - 父 idle → `parent.followup(message)`，开一个普通 turn。
 - 父忙 → `parent.steer(message)`，塞进当前 turn 的下一个 step。注释写明动机：几个子代理同时结算时，steer 让它们只花**一个 step**，而不是一人一个 turn。
 
-子代理主动汇报走 `report` 工具，框成（`packages/subagent/subagent/src/continuation.ts:638`）：
+子代理主动汇报走 `report` 工具，框成（`packages/subagent/subagent/src/continuation.ts:664`）：
 
 > `Background subagent <childId> reported:`
 
@@ -191,15 +191,15 @@ fork 是唯一 `inheritsParentContext = true` 的 provider（`packages/subagent/
 
 （默认让 subagent 在后台跑。要委派好几件互不相干的事，就在同一条消息里一起发起，它们跑着的时候你接着干别的有用的活。只有当你下一步动作确实要等那个子代理的结果时，才设 `run_in_background: false`。一个后台运行结算时，运行时会给你发一条通知，里面带着它的结局和最后那条 assistant 消息。）
 
-顺带一提，`subagent` 工具声明 `isConcurrencySafe: () => true`（`packages/subagent/tool-subagent/src/index.ts:368`），注释给了理由：子代理从不写父会话，唯一一次父侧写入（`tasks.start`）是同步的可交换插入。
+顺带一提，`subagent` 工具声明 `isConcurrencySafe: () => true`（`packages/subagent/tool-subagent/src/index.ts:377`），注释给了理由：子代理从不写父会话，唯一一次父侧写入（`tasks.start`）是同步的可交换插入。
 
 ### 2.7 把 Claude Code、Codex、ACP 当子代理驱动
 
 这是 dsh 最不像别家的一块。三个 provider 各自接一个真实的外部 agent：
 
-**`subagent-claude-code`** 用的是官方 SDK：`import { query as officialQuery, ... } from '@anthropic-ai/claude-agent-sdk'`（`packages/subagent/subagent-claude-code/src/run.ts:10-17`，`package.json` 里 pin 在 `0.3.220`）。provider 名固定为 `'claude-code'`（`packages/subagent/subagent-claude-code/src/index.ts:53`），能力表是全 false 的共享常量 `NO_START_CAPABILITIES`（`packages/subagent/subagent/src/out-of-process.ts:25-30`）：persona、工具过滤、深度、结构化输出一个都要不到，服务层会直接拒绝这些请求，而不是悄悄忽略。
+**`subagent-claude-code`** 用的是官方 SDK：`import { query as officialQuery, ... } from '@anthropic-ai/claude-agent-sdk'`（`packages/subagent/subagent-claude-code/src/run.ts:10-17`，`package.json` 里 pin 在 `0.3.220`）。provider 名固定为 `'claude-code'`（`packages/subagent/subagent-claude-code/src/index.ts:53`），能力表是全 false 的共享常量 `NO_START_CAPABILITIES`（`packages/subagent/subagent/src/out-of-process.ts:50-55`）：persona、工具过滤、深度、结构化输出一个都要不到，服务层会直接拒绝这些请求，而不是悄悄忽略。
 
-传给 SDK 的选项在 `packages/subagent/subagent-claude-code/src/run.ts:177-195`，几行逐条看：
+传给 SDK 的选项在 `packages/subagent/subagent-claude-code/src/run.ts:309-327`，几行逐条看：
 
 - `cwd: spec.cwd`（`:184`）：父会话的工作目录；父会话没有 cwd 就直接报错，不猜。
 - `pathToClaudeCodeExecutable: spec.executable`（`:185`）：路径来自 `ctx.subprocess.resolveExecutable('claude', ...)`（`packages/subagent/subagent-claude-code/src/index.ts:69-73`），也就是**走 dsh 自己的 subprocess 接缝、用清洗过的 PATH 解析**，而不是让 SDK 自己去找。
@@ -212,7 +212,7 @@ fork 是唯一 `inheritsParentContext = true` 的 provider（`packages/subagent/
 
 **`subagent-codex`** 走的是 Codex 自己的 app-server 协议：`['codex', 'app-server', '--stdio']`（`packages/subagent/subagent-codex/src/run.ts:41`；Windows 上前面加 `cmd.exe /d /s /c`）。argv 是常量，所以任务文本永远不经过 shell。握手三步（`packages/subagent/subagent-codex/src/wire.ts`）：`initialize` 带 `clientInfo: { name: 'deepseek-harness', ... }`（`:134`），`thread/start { cwd, ephemeral: true }`（`:154`，非 ephemeral 直接拒），`turn/start { threadId, input }`（`:180`）。
 
-**无人值守审批**（`packages/subagent/subagent-codex/src/wire.ts:294-318`）是这样：Codex 会反过来向客户端请求批准，而 dsh 这一侧没有人。于是命令执行/文件修改的审批请求一律回 `cancel` 或 `decline`，权限请求回空权限，用户输入请求回空答案，MCP elicitation 回 `{ action: 'decline' }`（`:309`），任何**没列举到**的方法直接让整次运行失败。fail-closed，和 dsh 自己审批接缝的姿态一致。
+**无人值守审批**（`packages/subagent/subagent-codex/src/wire.ts:612-636`）是这样：Codex 会反过来向客户端请求批准，而 dsh 这一侧没有人。于是命令执行/文件修改的审批请求一律回 `cancel` 或 `decline`，权限请求回空权限，用户输入请求回空答案，MCP elicitation 回 `{ action: 'decline' }`（`:309`），任何**没列举到**的方法直接让整次运行失败。fail-closed，和 dsh 自己审批接缝的姿态一致。
 
 答案选取只认 `phase === 'final_answer'` 或无 phase 的 `agentMessage`，`commentary` 被丢弃。上下文超窗被识别出来映射成 `max-tokens` 而不是笼统的 error（`:191`）。
 
@@ -220,7 +220,7 @@ fork 是唯一 `inheritsParentContext = true` 的 provider（`packages/subagent/
 
 三者的共同点：**父只拿最终文本，子的一切中间状态留在子那边**；以及**能力表全 false**：你不能给 Claude Code 换 persona，也不能给它加工具过滤，服务层会当场拒绝而不是假装成功。
 
-一个部署事实：生产 `@deepseek-ai/dsh-base` **不再依赖也不挂载**这两个产品 provider（`.agents/notes/implemented/simplification/2026-08-12-production-dsh-excludes-product-subagent-providers.md`），理由是不想让每个安装都下载 Claude Agent SDK。standard preset 里两行是 `disabled: true`（`apps/cli/config/agent-presets/standard/agent.cordis.yml:203-219`），注释教你怎么开：「Copy this preset, then remove `disabled` from either ordinary tool row」（把这份 preset 复制一份，然后从那两行普通工具里任选一行，把 `disabled` 删掉）。
+一个部署事实：生产 `@deepseek-ai/dsh-base` **不再依赖也不挂载**这两个产品 provider（`.agents/notes/implemented/simplification/2026-08-12-production-dsh-excludes-product-subagent-providers.md`），理由是不想让每个安装都下载 Claude Agent SDK。standard preset 里两行是 `disabled: true`（`apps/cli/config/agent-presets/standard/agent.cordis.yml:204-220`），注释教你怎么开：「Copy this preset, then remove `disabled` from either ordinary tool row」（把这份 preset 复制一份，然后从那两行普通工具里任选一行，把 `disabled` 删掉）。
 
 ---
 
@@ -230,7 +230,7 @@ fork 是唯一 `inheritsParentContext = true` 的 provider（`packages/subagent/
 
 「log-only」是 dsh 对 session 事件的一种分类：这条事件只写进会话日志、供本地折叠出当前状态，**不会被投影成任何模型能看到的消息**。所以进出 plan mode 这件事本身，模型不是从事件里知道的，而是从下面那段 system prompt 段落有没有内容知道的。
 
-**进出如何改 system prompt**：section 的 text 是个函数（`packages/plan/plan-mode/src/index.ts:226-231`），active 时返回部署配置的整段文本，inactive 时返回空串（空段被装配丢弃，零 token）。order 50 落在 persona（0）之后、所有 `tool:*` 指导段（100+）之前。这个位置让段落里那句「These plan-mode rules override any later tool description」（这些 plan-mode 规则压过后面任何工具描述）在字面上成立：后面的段落确实在它后面。
+**进出如何改 system prompt**：section 的 text 是个函数（`packages/plan/plan-mode/src/index.ts:244-249`），active 时返回部署配置的整段文本，inactive 时返回空串（空段被装配丢弃，零 token）。order 50 落在 persona（0）之后、所有 `tool:*` 指导段（100+）之前。这个位置让段落里那句「These plan-mode rules override any later tool description」（这些 plan-mode 规则压过后面任何工具描述）在字面上成立：后面的段落确实在它后面。
 
 段落文本是部署配置而非硬编码。发行版三个 preset 用的是同一份，其中第三段直接把设计取舍写给了模型看（`apps/cli/config/agent-presets/standard/agent.cordis.yml:118`）：
 
@@ -254,7 +254,7 @@ fork 是唯一 `inheritsParentContext = true` 的 provider（`packages/subagent/
 
 （只在 plan mode 里用。把你的计划交给用户过目，用户批准就退出 plan mode。整份计划要用 markdown 一次发全，开头是一个给它起名的 # 标题。用户可以批准（那你下一步就开始执行），也可以继续规划；他的反馈会回到工具结果里，你改完再交一次。）
 
-审批走 `ctx.userQuestions` 而**不是** approval 接缝（`packages/plan/plan-mode/src/index.ts:330-350`）：一个 id 为 `plan-review` 的问题，两个选项 `Approve`（批准）/ `Keep planning`（继续规划）。接受条件极严（`:368-375`）：恰好一个答案、id 匹配、恰好一个被选标签等于 `Approve`、且**用户没有额外写自定义文本**。写了字就算「继续规划」，反馈原样回到工具结果里。批准之后的模式翻转是**挂起**的（`:379`），要等下一个 `agent/pre-step` 才落 log，这样同一批 assistant 工具调用里 plan 指导仍然有效。
+审批走 `ctx.userQuestions` 而**不是** approval 接缝（`packages/plan/plan-mode/src/index.ts:367-387`）：一个 id 为 `plan-review` 的问题，两个选项 `Approve`（批准）/ `Keep planning`（继续规划）。接受条件极严（`:368-375`）：恰好一个答案、id 匹配、恰好一个被选标签等于 `Approve`、且**用户没有额外写自定义文本**。写了字就算「继续规划」，反馈原样回到工具结果里。批准之后的模式翻转是**挂起**的（`:379`），要等下一个 `agent/pre-step` 才落 log，这样同一批 assistant 工具调用里 plan 指导仍然有效。
 
 ---
 
@@ -268,7 +268,7 @@ fork 是唯一 `inheritsParentContext = true` 的 provider（`packages/subagent/
 
 （为当前这摊活记录并更新一份结构化的任务清单。**每次调用都要把整份清单发全，它会把上一份整个替换掉**（没有局部更新，也不能单独改某一条）。）
 
-发行版 preset 配的是 `allowParallelInProgress: true`（`apps/cli/config/agent-presets/standard/agent.cordis.yml:240-243`），于是模型读到的是并行分支（`packages/todo/tool-todo/src/index.ts:51-55`）：
+发行版 preset 配的是 `allowParallelInProgress: true`（`apps/cli/config/agent-presets/standard/agent.cordis.yml:241-244`），于是模型读到的是并行分支（`packages/todo/tool-todo/src/index.ts:51-55`）：
 
 > Mark every todo being actively worked on `in_progress` — several at once when work genuinely runs in parallel (e.g. concurrent subagents or background commands), one for sequential work; while work remains, at least one task should be `in_progress`.
 
@@ -456,7 +456,7 @@ Ralph 的脚本**不是模型写的**：它是一段固定的、部署拥有的�
 
 最后那句是防自我递归：不写这句，worker 很容易再开一个 Ralph 循环。
 
-跨轮的只有一个东西：上一轮返回的结构化报告（`{ status, summary, evidence[], nextSteps[], blocker }`），序列化后塞进下一轮 prompt，还有一道字节上限。轮上限默认 256（`packages/workflow/tool-ralph/src/index.ts:37`），发行版 preset 配成 64（`apps/cli/config/agent-presets/standard/agent.cordis.yml:229-233`），且**只能调低不能调高**。
+跨轮的只有一个东西：上一轮返回的结构化报告（`{ status, summary, evidence[], nextSteps[], blocker }`），序列化后塞进下一轮 prompt，还有一道字节上限。轮上限默认 256（`packages/workflow/tool-ralph/src/index.ts:37`），发行版 preset 配成 64（`apps/cli/config/agent-presets/standard/agent.cordis.yml:230-234`），且**只能调低不能调高**。
 
 provider 有门禁（`packages/workflow/tool-ralph/src/index.ts:220-232`）：必须支持结构化输出，且 `inheritsParentContext` 必须为 false。fork 那种继承上下文的 provider 会被拒，因为 Ralph 的整个意义就是「每轮忘光」。
 
@@ -627,7 +627,7 @@ const SKILL_GESTURE = /(^|\s)\/([a-z0-9]+(?:-[a-z0-9]+)*)(?=\s|$)/g
 |---|---|---|
 | -100 | `harness:identity` | `packages/core/system-prompt/src/index.ts:359` |
 | 0 | `deployment:persona`（子代理里的 persona 遮蔽） | `packages/subagent/subagent/src/child-agent.ts:172` |
-| **50** | `plan:policy` | `packages/plan/plan-mode/src/index.ts:226` |
+| **50** | `plan:policy` | `packages/plan/plan-mode/src/index.ts:244` |
 | **99** | `tools:code-only`（Code Mode，见 [09](09-extensions-and-code-mode.md)） | `packages/core/tools/src/index.ts:857` |
 | 100-106 | `tool:read/write/edit/glob/grep/bash/jobs` | 各工具包 |
 | 110 | `sandbox:policy` | `packages/sandbox/sandbox-policy/src/index.ts:114` |
@@ -670,12 +670,12 @@ const SKILL_GESTURE = /(^|\s)\/([a-z0-9]+(?:-[a-z0-9]+)*)(?=\s|$)/g
 
 | 维度 | dsh | Claude Code | Codex | OpenCode | pi |
 |---|---|---|---|---|---|
-| **hooks** | 通过两个兼容桥支持 CC 的 7 个事件 / Codex 的 5 个事件；原生扩展 = Cordis 插件 | 原生 30+ 事件、5 种 handler 类型（command/http/mcp_tool/prompt/agent） | 原生 11 个事件（`codex!codex-rs/app-server-protocol/src/protocol/v2/hook.rs:20`） | npm 插件的 `Hooks` 接口共 21 个键（`opencode!packages/plugin/src/index.ts:222-334`），其中 15 个是点号命名的事件钩子（`chat.params`、`tool.execute.before/after`、`permission.ask`…），6 个带 `experimental.` 前缀 | Extension API 33 个生命周期事件（`pi!packages/coding-agent/src/core/extensions/types.ts:1198`） |
+| **hooks** | 通过两个兼容桥支持 CC 的 7 个事件 / Codex 的 5 个事件；原生扩展 = Cordis 插件 | 原生 30+ 事件、5 种 handler 类型（command/http/mcp_tool/prompt/agent） | 原生 11 个事件（`codex!codex-rs/app-server-protocol/src/protocol/v2/hook.rs:20`） | npm 插件的 `Hooks` 接口共 21 个键（`opencode!packages/plugin/src/index.ts:222-334`），其中 15 个是点号命名的事件钩子（`chat.params`、`tool.execute.before/after`、`permission.ask`…），6 个带 `experimental.` 前缀 | Extension API 33 个生命周期事件（`pi!packages/coding-agent/src/core/extensions/types.ts:1214`） |
 | **MCP** | `mcp-client`，只桥接 tools | 有，工具默认 deferred | 有 | 有（含 OAuth、resources 三工具） | **刻意没有**（「Build CLI tools with READMEs, or build an extension that adds MCP support」，写带 README 的命令行工具，或者自己写个扩展把 MCP 支持加上） |
 
 对照下来有三点：
 
-**一、pi 是刻意什么都不做的那一极。** `pi!packages/coding-agent/README.md:494` 起有一节直接叫 Philosophy，逐条列出「No MCP. No sub-agents. No permission popups. No plan mode. No built-in to-dos. No background bash.」（不做 MCP。不做子代理。不弹权限对话框。没有计划模式。没有内置待办。没有后台 bash。）但它给出了最全的扩展 API：`ExtensionAPI` 上挂着 33 个 `on(event, …)` 生命周期事件（`pi!packages/coding-agent/src/core/extensions/types.ts:1198`），外加 `registerTool`/`registerCommand`/`registerShortcut`/`registerFlag`/`registerProvider`/`registerMessageRenderer`。它的立场是：核心保持最小，这些能力你自己按需要装。dsh 是完全相反的一极：全都有，但每一项都是可拆卸的插件行，默认组装里还有一大半是 `disabled: true`。
+**一、pi 是刻意什么都不做的那一极。** `pi!packages/coding-agent/README.md:494` 起有一节直接叫 Philosophy，逐条列出「No MCP. No sub-agents. No permission popups. No plan mode. No built-in to-dos. No background bash.」（不做 MCP。不做子代理。不弹权限对话框。没有计划模式。没有内置待办。没有后台 bash。）但它给出了最全的扩展 API：`ExtensionAPI` 上挂着 33 个 `on(event, …)` 生命周期事件（`pi!packages/coding-agent/src/core/extensions/types.ts:1214`），外加 `registerTool`/`registerCommand`/`registerShortcut`/`registerFlag`/`registerProvider`/`registerMessageRenderer`。它的立场是：核心保持最小，这些能力你自己按需要装。dsh 是完全相反的一极：全都有，但每一项都是可拆卸的插件行，默认组装里还有一大半是 `disabled: true`。
 
 **二、Codex 的内置角色文案是「教父代理怎么委派」。** explorer 的描述鼓励并行多开、复用结果；worker 明确 ownership 并告知「你不是唯一在改代码的人」。dsh 没有角色概念，它把这件事推到了 provider 和 preset 层：委派的**语义**由部署写在 preset 里，模型只看到一个统一的委派契约（§一）。两种做法各有代价：Codex 的角色文案对模型更直接，dsh 的做法让同一份工具描述能同时代表六种完全不同的后端。
 

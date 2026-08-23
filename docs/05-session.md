@@ -64,7 +64,7 @@ JSONL 就是「每行一个独立 JSON 对象」的文本格式，一行读完�
 
 ## 事件信封
 
-`SessionEvent`（`packages/core/session/src/types.ts:404-436`）的形状：
+`SessionEvent`（`packages/core/session/src/types.ts:408-440`）的形状：
 
 ```ts
 export type SessionEvent<T extends SessionEventType = SessionEventType> = {
@@ -92,7 +92,7 @@ export type SessionEvent<T extends SessionEventType = SessionEventType> = {
 
 这是一个真正的可辨识联合：`switch (event.type)` 会直接把 `event.data` 收窄，不需要断言。`surfaceOp` 和 `sourceEventSeqs` 两个字段**只存在于三种 surface 事件的变体上**，编译期就挡住了「给 `turn/start` 加 surfaceOp」这种写法。
 
-`ignorable` 的缺省语义是「必需」。注释（`packages/core/session/src/types.ts:412-422`）把理由写全了：读到一个不认识、又没有这个标记的事件类型，必须**拒绝重建整个会话**，因为一个不认识的必需事件可能改变后面整条日志的解释方式；漏标 `ignorable` 只会导致过度拒绝（不方便），漏判则会静默恢复出一个被掏空的会话（灾难）。
+`ignorable` 的缺省语义是「必需」。注释（`packages/core/session/src/types.ts:24-34`）把理由写全了：读到一个不认识、又没有这个标记的事件类型，必须**拒绝重建整个会话**，因为一个不认识的必需事件可能改变后面整条日志的解释方式；漏标 `ignorable` 只会导致过度拒绝（不方便），漏判则会静默恢复出一个被掏空的会话（灾难）。
 
 会话头 `SessionHeader`（`packages/core/session/src/types.ts:61-99`）在日志之外：`version` / `id` / `createdAt` / `cwd?` / `parentSession?` / `seedLength?` / `origin?:'subagent'` / `delegationDepth?` / `agentPreset?`。`SESSION_FORMAT_VERSION = 0`（`packages/core/session/src/types.ts:56`）。这个 0 容易被误读成「没有版本机制」，其实反了：升级链、内存态视图转换、continue 时迁移这一整套机制是**已实现**的（`.agents/notes/implemented/architecture/2026-08-10-session-log-version-mechanism.md`，状态 implemented；`packages/core/session/src/types.ts:52-54` 的注释直接指向它），协调器里也真的有迁移函数在跑，比如把已删除的 `steering/message` 事件升级成等价的 user 消息（`packages/session/session-persistence/src/coordinator.ts:383-385`）。版本号停在 0，是因为**至今没有触发过一次 bump**。注释说明只有结构性变更才算（header 形状、事件信封、核心事件语义、surface 机制），加一个普通事件类型不算，那由每事件的 `ignorable` 标记兜着。所以真正的现状是：比 0 新的日志拒绝读（让你升 harness），比 0 旧的日志本 build 没有升级步骤可用（`coordinator.ts:80-82`），而不是「机制不存在」。
 
@@ -136,7 +136,7 @@ const SURFACE_EVENT_TYPES = new Set<string>([
 
 而且它们**必须**带 `surfaceOp`，其它事件带了就抛（`surfaceOpOf`，`packages/core/session/src/surface.ts:184-208`）。这两条一起构成了一个双向约束：符合条件的事件不带标记会被拒，不符合条件的事件带了标记也会被拒。
 
-`SurfaceOp` 只有两种（`packages/core/session/src/types.ts:372-374`）：
+`SurfaceOp` 只有两种（`packages/core/session/src/types.ts:376-378`）：
 
 ```ts
 export type SurfaceOp =
@@ -181,7 +181,7 @@ export type SurfaceOp =
 - `headerEquals`（`:44-54`）：逐字段比，`config` 走 `callConfigEquals`，`adapterDefaults` 比两个布尔标记，`system` 直接 `===`，`tools` **按顺序**用 `JSON.stringify` 比每个 schema。
 - `foldRequestHeader`（`:65-70`）：扫一遍事件，取最后一个 `request/header` 的 canonical 形式。这是纯离线重建路径；活会话用同一个折叠函数增量维护。
 
-循环只在 header 变化时写事件（`packages/core/agent-loop/src/agent.ts:464-470`）。因此「任何一次请求 = 最新 header + surface 派生消息」是可以从日志离线重建的，这也是 [02 KV-Cache](02-kv-cache.md) 里那套稳定性论证的地基。
+循环只在 header 变化时写事件（`packages/core/agent-loop/src/agent.ts:483-489`）。因此「任何一次请求 = 最新 header + surface 派生消息」是可以从日志离线重建的，这也是 [02 KV-Cache](02-kv-cache.md) 里那套稳定性论证的地基。
 
 ## 崩溃修复：`repair.ts`
 
@@ -247,9 +247,9 @@ export function apply(ctx: Context): void {
 
 ### SQLite 后端
 
-用 `node:sqlite` 的同步 API。`SCHEMA_VERSION = 15`（`packages/session/session-persistence-sqlite/src/schema.ts:20`），`application_id = 0x44534850`（`:23`），一个防呆措施，避免往不相关的数据库里写。
+用 `node:sqlite` 的同步 API。`SCHEMA_VERSION = 17`（`packages/session/session-persistence-sqlite/src/schema.ts:18`），`application_id = 0x44534850`（`:20`，常量名 `SESSION_PERSISTENCE_SQLITE_APPLICATION_ID`），一个防呆措施，避免往不相关的数据库里写。
 
-两张表：`sessions`（`packages/session/session-persistence-sqlite/src/schema.ts:32-46`，一行一个会话的元数据，另加 `incarnation` 和 `revision` 两个本后端自己的字段）和 `events`（`packages/session/session-persistence-sqlite/src/schema.ts:48-60`，一行一个事件，`data` 是 JSON 文本，`source_event_seqs` / `surface_op` 各自 JSON 编码，`ignorable` 是 1 或 null）。
+两张表：`sessions`（`packages/session/session-persistence-sqlite/src/schema.ts:23-37`，一行一个会话的元数据，另加 `incarnation` 和 `revision` 两个本后端自己的字段）和 `events`（`packages/session/session-persistence-sqlite/src/schema.ts:48-60`，一行一个事件，`data` 是 JSON 文本，`source_event_seqs` / `surface_op` 各自 JSON 编码，`ignorable` 是 1 或 null）。
 
 `sessions` 行的**存在本身**就是物化信号（`packages/session/session-persistence-sqlite/src/schema.ts:26-30`）：只有第一次 append 才写这一行，所以「创建了但从没写过」的会话没有行、不出现在 `list` 里，刻意对齐 JSONL 后端「第一次 append 之前没有文件」的行为。journal 默认 `wal`，可选 `delete`/`truncate`/`persist`（网络挂载上 WAL 的共享内存文件不工作），`memory`/`off` 被拒绝，理由写在注释里（`packages/session/session-persistence-sqlite/src/schema.ts:62-70`）：悄悄放弃 journal 持久性就等于悄悄违背这个后端的承诺。这个后端没有独立的 per-session 文件，`locate()` 返回 undefined。
 
@@ -281,7 +281,7 @@ export function apply(ctx: Context): void {
 
 种子会话在构造时补一条 `session/end-seed` 标记（`packages/core/session/src/index.ts:544-547`），同时记下 `firstLiveSeq`（`:539`）。两者的区别在注释里讲得很细（`packages/core/session/src/index.ts:456-472`）：`firstLiveSeq` 是**进程内的构造事实**，不持久化；`session/end-seed` 是它在日志里的投影，供读存储历史的消费者使用；而 `header.seedLength` 是**持久的 fork 血缘边界**。已经以该标记结尾的种子不会被重复标记，所以反复打开一个没动过的会话不会让日志变长。
 
-resume 时会发生什么：日志被完整读回（含解包 chunk 行、格式版本与事件类型门禁）；`repair.ts` 给崩溃遗留的开放 turn 补上关闭事件；`deriveMessages()` 从头折叠出模型历史；loop 实例发第一个请求时写 `request/header{reason:'resume'}`（`packages/core/agent-loop/src/agent.ts:465-467`），因为日志里已经有 header 了。如果这次进程的插件组合导致 system 或 tools 与上次不同，这条 resume 快照会与上一条不同：**漂移被记录，但不被阻止**。
+resume 时会发生什么：日志被完整读回（含解包 chunk 行、格式版本与事件类型门禁）；`repair.ts` 给崩溃遗留的开放 turn 补上关闭事件；`deriveMessages()` 从头折叠出模型历史；loop 实例发第一个请求时写 `request/header{reason:'resume'}`（`packages/core/agent-loop/src/agent.ts:484-486`），因为日志里已经有 header 了。如果这次进程的插件组合导致 system 或 tools 与上次不同，这条 resume 快照会与上一条不同：**漂移被记录，但不被阻止**。
 
 ## 代价与失效点
 

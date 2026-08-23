@@ -1,35 +1,35 @@
-# 锚点复核工作量：HEAD~1 → 当前 lock
+# 锚点复核工作量：HEAD~2 → 当前 lock
 
-比对了 1058 处落在已变化文件上的锚点。**真正需要人读的是 29 处**，其余 805 处行号内容都没动、224 处只是挪了位置。
+比对了 996 处落在已变化文件上的锚点。**真正需要人读的是 32 处**，其余 806 处行号内容都没动、158 处只是挪了位置。
 
 | 档 | 数量 | 怎么处理 |
 | --- | ---: | --- |
-| same 未动 | 805 | 不用读 |
-| moved 挪位 | 224 | 按新行号改，改完抽查上下文 |
-| changed 内容变了 | 24 | **必须人读**：这一行现在讲的还是原来那件事吗 |
+| same 未动 | 806 | 不用读 |
+| moved 挪位 | 158 | 按新行号改，改完抽查上下文 |
+| changed 内容变了 | 27 | **必须人读**：这一行现在讲的还是原来那件事吗 |
 | gone 找不到了 | 5 | **必须人读**：多半实现换了，正文结论要重写 |
 
 ## 逐篇
 
 | 篇目 | 需要人读 | same | moved | changed | gone |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `docs/11-web-client-and-host.md` | 9 | 44 | 22 | 4 | 5 |
-| `docs/04-llm-adapter.md` | 5 | 49 | 69 | 5 | 0 |
-| `docs/08-orchestration.md` | 5 | 99 | 17 | 5 | 0 |
-| `docs/02-kv-cache.md` | 4 | 60 | 18 | 4 | 0 |
-| `docs/05-session.md` | 4 | 59 | 6 | 4 | 0 |
-| `docs/12-surfaces-and-protocols.md` | 1 | 39 | 10 | 1 | 0 |
-| `docs/13-self-verification.md` | 1 | 40 | 5 | 1 | 0 |
-| `docs/00-overview.md` | 0 | 11 | 3 | 0 | 0 |
-| `docs/01-system-prompt.md` | 0 | 78 | 8 | 0 | 0 |
-| `docs/03-agent-loop.md` | 0 | 20 | 4 | 0 | 0 |
+| `docs/11-web-client-and-host.md` | 9 | 44 | 21 | 4 | 5 |
+| `docs/04-llm-adapter.md` | 6 | 49 | 37 | 6 | 0 |
+| `docs/08-orchestration.md` | 5 | 99 | 14 | 5 | 0 |
+| `docs/02-kv-cache.md` | 4 | 60 | 13 | 4 | 0 |
+| `docs/05-session.md` | 4 | 60 | 5 | 4 | 0 |
+| `docs/12-surfaces-and-protocols.md` | 1 | 39 | 5 | 1 | 0 |
+| `docs/13-self-verification.md` | 1 | 40 | 4 | 1 | 0 |
+| `docs/14-comparison.md` | 1 | 13 | 5 | 1 | 0 |
+| `docs/appendix-a-glossary.md` | 1 | 58 | 6 | 1 | 0 |
+| `docs/00-overview.md` | 0 | 11 | 2 | 0 | 0 |
+| `docs/01-system-prompt.md` | 0 | 78 | 3 | 0 | 0 |
+| `docs/03-agent-loop.md` | 0 | 20 | 3 | 0 | 0 |
 | `docs/06-compaction.md` | 0 | 47 | 0 | 0 | 0 |
-| `docs/07-tools-approval-sandbox.md` | 0 | 63 | 26 | 0 | 0 |
+| `docs/07-tools-approval-sandbox.md` | 0 | 63 | 19 | 0 | 0 |
 | `docs/09-extensions-and-code-mode.md` | 0 | 60 | 20 | 0 | 0 |
-| `docs/10-cordis-boot-preset.md` | 0 | 48 | 2 | 0 | 0 |
-| `docs/14-comparison.md` | 0 | 13 | 6 | 0 | 0 |
+| `docs/10-cordis-boot-preset.md` | 0 | 48 | 1 | 0 | 0 |
 | `docs/15-agent-notes-guide.md` | 0 | 14 | 0 | 0 | 0 |
-| `docs/appendix-a-glossary.md` | 0 | 58 | 8 | 0 | 0 |
 | `docs/appendix-b-verification.md` | 0 | 3 | 0 | 0 | 0 |
 
 ## gone：内容在新版本里找不到了
@@ -65,6 +65,9 @@
 - `docs/04-llm-adapter.md:227` 引 `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:96`
   - 旧：`// Official passback rule (guides/thinking_mode.mdx): reasoning_content`
   - 新：`return defaults.thinking === undefined ? {} : { thinking: defaults.thinking }`
+- `docs/04-llm-adapter.md:316` 引 `deepseek-harness!packages/llm/llm-pi-ai/src/catalog.ts:98`
+  - 旧：`* here or withheld above, so the offer never silently lags the upstream set.`
+  - 新：`const THINKING_FORMAT_GATE: Record<PiAiThinkingFormat, true> = {`
 - `docs/04-llm-adapter.md:319` 引 `deepseek-harness!packages/llm/llm-pi-ai/src/replay.ts:20`
   - 旧：`/** Versioned adapter-private projection required to replay a pi-ai response. */`
   - 新：``
@@ -119,233 +122,173 @@
 - `docs/13-self-verification.md:191` 引 `deepseek-harness!docs/testing.md:49`
   - 旧：`Every non-trivial model-, protocol-, or human-visible change adds or updates a keyless scenario in the same PR through a`
   - 新：`Every non-trivial model-, protocol-, or human-visible change adds or updates a keyless scenario in the same PR through a`
+- `docs/14-comparison.md:91` 引 `codex!codex-rs/core/src/client.rs:485`
+  - 旧：`self.prompt_cache_key_override`
+  - 新：`fn prompt_cache_key(&self, responses_metadata: &CodexResponsesMetadata) -> String {`
+- `docs/appendix-a-glossary.md:106` 引 `deepseek-harness!packages/subagent/subagent/src/continuation.ts:409`
+  - 旧：`const childId = SessionId(randomUUID())`
+  - 新：`async startContinuable(spec: ContinuableStartSpec): Promise<ContinuableStart> {`
 
 ## moved：内容没变，行号要改
 
 | 出处 | 引用 | 新行号 |
 | --- | --- | ---: |
-| `docs/00-overview.md:67` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:151` | 377 |
-| `docs/00-overview.md:69` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:464` | 483 |
-| `docs/00-overview.md:191` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:464` | 483 |
-| `docs/01-system-prompt.md:115` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:161` | 344 |
-| `docs/01-system-prompt.md:283` | `deepseek-harness!apps/cli/config/agent-presets/minimal/agent.cordis.yml:8` | 9 |
-| `docs/01-system-prompt.md:314` | `deepseek-harness!packages/bundle/web-app/src/index.ts:142` | 236 |
-| `docs/01-system-prompt.md:315` | `deepseek-harness!packages/bundle/web-app/src/index.ts:143` | 237 |
-| `docs/01-system-prompt.md:317` | `deepseek-harness!packages/plan/plan-mode/src/index.ts:225` | 243 |
-| `docs/01-system-prompt.md:328` | `deepseek-harness!packages/web/tool-web/src/search.ts:216` | 316 |
-| `docs/01-system-prompt.md:336` | `deepseek-harness!packages/subagent/tool-subagent/src/index.ts:459` | 468 |
-| `docs/01-system-prompt.md:482` | `deepseek-harness!packages/plan/plan-mode/src/index.ts:205` | 223 |
-| `docs/02-kv-cache.md:16` | `deepseek-harness!packages/subagent/subagent-codex/tests/responses-fixture.ts:70` | 71 |
-| `docs/02-kv-cache.md:26` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:151` | 377 |
-| `docs/02-kv-cache.md:202` | `deepseek-harness!packages/llm/llm-deepseek/README.md:73` | 100 |
-| `docs/02-kv-cache.md:206` | `deepseek-harness!packages/llm/llm-pi-ai/src/config.ts:130` | 154 |
-| `docs/02-kv-cache.md:206` | `deepseek-harness!packages/llm/llm-pi-ai/src/adapter.ts:92` | 122 |
-| `docs/02-kv-cache.md:259` | `deepseek-harness!packages/core/session/src/types.ts:372` | 376 |
-| `docs/02-kv-cache.md:293` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:464` | 483 |
-| `docs/02-kv-cache.md:316` | `deepseek-harness!packages/llm/llm/src/index.ts:779` | 824 |
-| `docs/02-kv-cache.md:316` | `deepseek-harness!packages/llm/llm/src/index.ts:804` | 854 |
-| `docs/02-kv-cache.md:423` | `deepseek-harness!packages/llm/llm-deepseek/README.md:107` | 134 |
-| `docs/02-kv-cache.md:428` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:38` | 82 |
-| `docs/02-kv-cache.md:429` | `deepseek-harness!packages/plan/plan-mode/src/index.ts:225` | 243 |
-| `docs/02-kv-cache.md:444` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:381` | 400 |
-| `docs/02-kv-cache.md:481` | `deepseek-harness!packages/plan/plan-mode/src/index.ts:228` | 246 |
-| `docs/02-kv-cache.md:481` | `deepseek-harness!packages/bundle/web-app/src/index.ts:146` | 240 |
-| `docs/02-kv-cache.md:492` | `deepseek-harness!docs/subsystems/llm-streaming.md:597` | 635 |
-| `docs/02-kv-cache.md:496` | `deepseek-harness!packages/llm/llm/src/index.ts:823` | 878 |
-| `docs/02-kv-cache.md:577` | `deepseek-harness!packages/llm/llm-deepseek/README.md:107` | 134 |
-| `docs/03-agent-loop.md:18` | `deepseek-harness!packages/test-support/acp-snapshot/src/suite.ts:87` | 88 |
-| `docs/03-agent-loop.md:20` | `deepseek-harness!examples/acp-agent/tests/acp.snapshot.ts:175` | 214 |
-| `docs/03-agent-loop.md:331` | `deepseek-harness!packages/core/session/src/types.ts:343` | 347 |
-| `docs/03-agent-loop.md:452` | `deepseek-harness!examples/acp-agent/tests/acp.snapshot.ts:382` | 455 |
-| `docs/04-llm-adapter.md:18` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:173` | 131 |
-| `docs/04-llm-adapter.md:39` | `deepseek-harness!packages/llm/llm-deepseek/tests/serialize.spec.ts:165` | 237 |
-| `docs/04-llm-adapter.md:52` | `deepseek-harness!packages/llm/llm-deepseek/tests/mock-server.ts:28` | 30 |
-| `docs/04-llm-adapter.md:104` | `deepseek-harness!packages/llm/llm/src/index.ts:338` | 365 |
-| `docs/04-llm-adapter.md:104` | `deepseek-harness!packages/llm/llm/src/index.ts:405` | 432 |
-| `docs/04-llm-adapter.md:106` | `deepseek-harness!packages/llm/llm/src/index.ts:387` | 414 |
-| `docs/04-llm-adapter.md:106` | `deepseek-harness!packages/llm/llm-deepseek/src/index.ts:258` | 449 |
-| `docs/04-llm-adapter.md:108` | `deepseek-harness!packages/llm/llm/src/index.ts:734` | 770 |
-| `docs/04-llm-adapter.md:110` | `deepseek-harness!packages/llm/llm/src/index.ts:779` | 824 |
-| `docs/04-llm-adapter.md:110` | `deepseek-harness!packages/llm/llm/src/index.ts:155` | 156 |
-| `docs/04-llm-adapter.md:112` | `deepseek-harness!packages/llm/llm/src/index.ts:913` | 985 |
-| `docs/04-llm-adapter.md:112` | `deepseek-harness!packages/llm/llm/src/index.ts:921` | 993 |
-| `docs/04-llm-adapter.md:127` | `deepseek-harness!packages/llm/llm/src/index.ts:843` | 898 |
-| `docs/04-llm-adapter.md:127` | `deepseek-harness!packages/llm/llm/src/index.ts:931` | 1003 |
-| `docs/04-llm-adapter.md:129` | `deepseek-harness!packages/llm/llm/src/index.ts:823` | 878 |
-| `docs/04-llm-adapter.md:139` | `deepseek-harness!packages/llm/llm/src/assembler.ts:36` | 37 |
-| `docs/04-llm-adapter.md:139` | `deepseek-harness!packages/llm/llm/src/assembler.ts:134` | 157 |
-| `docs/04-llm-adapter.md:158` | `deepseek-harness!packages/llm/llm-deepseek/src/index.ts:47` | 81 |
-| `docs/04-llm-adapter.md:158` | `deepseek-harness!packages/llm/llm-deepseek/src/index.ts:49` | 83 |
-| `docs/04-llm-adapter.md:158` | `deepseek-harness!packages/llm/llm-deepseek/src/adapter.ts:91` | 132 |
-| `docs/04-llm-adapter.md:158` | `deepseek-harness!packages/llm/llm-deepseek/src/adapter.ts:93` | 134 |
-| `docs/04-llm-adapter.md:158` | `deepseek-harness!packages/llm/llm-deepseek/src/adapter.ts:89` | 130 |
-| `docs/04-llm-adapter.md:160` | `deepseek-harness!packages/llm/llm-deepseek/src/index.ts:161` | 275 |
-| `docs/04-llm-adapter.md:160` | `deepseek-harness!packages/llm/llm-deepseek/src/index.ts:185` | 359 |
-| `docs/04-llm-adapter.md:162` | `deepseek-harness!packages/llm/llm-deepseek/src/index.ts:204` | 390 |
-| `docs/04-llm-adapter.md:162` | `deepseek-harness!packages/llm/llm-deepseek/src/index.ts:225` | 411 |
-| `docs/04-llm-adapter.md:162` | `deepseek-harness!packages/llm/llm/src/index.ts:137` | 138 |
-| `docs/04-llm-adapter.md:164` | `deepseek-harness!packages/llm/llm-deepseek/src/adapter.ts:175` | 374 |
-| `docs/04-llm-adapter.md:173` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:155` | 381 |
-| `docs/04-llm-adapter.md:174` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:112` | 242 |
-| `docs/04-llm-adapter.md:175` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:176` | 356 |
-| `docs/04-llm-adapter.md:176` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:177` | 357 |
-| `docs/04-llm-adapter.md:177` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:178` | 358 |
-| `docs/04-llm-adapter.md:178` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:179` | 359 |
-| `docs/04-llm-adapter.md:179` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:161` | 344 |
-| `docs/04-llm-adapter.md:180` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:183` | 363 |
-| `docs/04-llm-adapter.md:182` | `deepseek-harness!packages/llm/llm/src/types.ts:320` | 341 |
-| `docs/04-llm-adapter.md:184` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:37` | 81 |
-| `docs/04-llm-adapter.md:193` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:112` | 242 |
-| `docs/04-llm-adapter.md:200` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:64` | 108 |
-| `docs/04-llm-adapter.md:216` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:87` | 215 |
-| `docs/04-llm-adapter.md:229` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:135` | 265 |
-| `docs/04-llm-adapter.md:233` | `deepseek-harness!packages/llm/llm-deepseek/src/adapter.ts:283` | 520 |
-| `docs/04-llm-adapter.md:235` | `deepseek-harness!packages/llm/llm-deepseek/src/adapter.ts:297` | 603 |
-| `docs/04-llm-adapter.md:237` | `deepseek-harness!packages/llm/llm-deepseek/src/adapter.ts:220` | 422 |
-| `docs/04-llm-adapter.md:252` | `deepseek-harness!packages/llm/llm-deepseek/src/adapter.ts:246` | 486 |
-| `docs/04-llm-adapter.md:254` | `deepseek-harness!packages/llm/llm-deepseek/src/adapter.ts:321` | 622 |
-| `docs/04-llm-adapter.md:256` | `deepseek-harness!packages/llm/llm-deepseek/src/adapter.ts:138` | 333 |
-| `docs/04-llm-adapter.md:306` | `deepseek-harness!packages/llm/llm-deepseek/README.md:73` | 100 |
-| `docs/04-llm-adapter.md:310` | `deepseek-harness!packages/llm/llm-pi-ai/package.json:45` | 46 |
-| `docs/04-llm-adapter.md:316` | `deepseek-harness!packages/llm/llm-pi-ai/src/catalog.ts:100` | 98 |
-| `docs/04-llm-adapter.md:316` | `deepseek-harness!packages/llm/llm-pi-ai/src/catalog.ts:69` | 74 |
-| `docs/04-llm-adapter.md:317` | `deepseek-harness!packages/llm/llm-pi-ai/src/adapter.ts:92` | 122 |
-| `docs/04-llm-adapter.md:318` | `deepseek-harness!packages/llm/llm-pi-ai/src/adapter.ts:96` | 126 |
-| `docs/04-llm-adapter.md:320` | `deepseek-harness!packages/llm/llm-pi-ai/src/context.ts:39` | 58 |
-| `docs/04-llm-adapter.md:379` | `deepseek-harness!packages/llm/token-meter/src/usage-projection.ts:109` | 120 |
-| `docs/04-llm-adapter.md:379` | `deepseek-harness!packages/llm/token-meter/src/breakdown-projection.ts:44` | 56 |
-| `docs/04-llm-adapter.md:379` | `deepseek-harness!packages/llm/token-meter/src/usage-projection.ts:70` | 75 |
-| `docs/04-llm-adapter.md:404` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:449` | 468 |
-| `docs/04-llm-adapter.md:404` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:464` | 483 |
-| `docs/04-llm-adapter.md:404` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:486` | 505 |
-| `docs/04-llm-adapter.md:404` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:349` | 350 |
-| `docs/04-llm-adapter.md:406` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:355` | 374 |
-| `docs/04-llm-adapter.md:413` | `deepseek-harness!packages/llm/llm-deepseek/src/adapter.ts:297` | 603 |
-| `docs/04-llm-adapter.md:414` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:64` | 108 |
-| `docs/04-llm-adapter.md:420` | `deepseek-harness!packages/llm/llm/src/index.ts:387` | 414 |
-| `docs/04-llm-adapter.md:461` | `deepseek-harness!packages/llm/llm/src/index.ts:734` | 770 |
-| `docs/04-llm-adapter.md:467` | `deepseek-harness!packages/llm/llm-deepseek/src/adapter.ts:138` | 333 |
-| `docs/04-llm-adapter.md:471` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:349` | 350 |
-| `docs/05-session.md:67` | `deepseek-harness!packages/core/session/src/types.ts:404` | 408 |
-| `docs/05-session.md:95` | `deepseek-harness!packages/core/session/src/types.ts:412` | 24 |
-| `docs/05-session.md:139` | `deepseek-harness!packages/core/session/src/types.ts:372` | 376 |
-| `docs/05-session.md:184` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:464` | 483 |
-| `docs/05-session.md:252` | `deepseek-harness!packages/session/session-persistence-sqlite/src/schema.ts:32` | 23 |
-| `docs/05-session.md:284` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:465` | 484 |
-| `docs/07-tools-approval-sandbox.md:108` | `deepseek-harness!packages/interaction/permission-presets/src/index.ts:168` | 184 |
-| `docs/07-tools-approval-sandbox.md:108` | `deepseek-harness!packages/interaction/permission-presets/src/index.ts:400` | 416 |
-| `docs/07-tools-approval-sandbox.md:119` | `deepseek-harness!packages/acp/acp/src/index.ts:215` | 271 |
-| `docs/07-tools-approval-sandbox.md:119` | `deepseek-harness!packages/host/apiproxy/src/api-proxy.ts:1422` | 1363 |
-| `docs/07-tools-approval-sandbox.md:163` | `deepseek-harness!docs/tool-catalog.md:180` | 182 |
-| `docs/07-tools-approval-sandbox.md:164` | `deepseek-harness!docs/tool-catalog.md:224` | 226 |
-| `docs/07-tools-approval-sandbox.md:165` | `deepseek-harness!docs/tool-catalog.md:638` | 667 |
-| `docs/07-tools-approval-sandbox.md:166` | `deepseek-harness!docs/tool-catalog.md:688` | 717 |
-| `docs/07-tools-approval-sandbox.md:167` | `deepseek-harness!docs/tool-catalog.md:603` | 632 |
-| `docs/07-tools-approval-sandbox.md:168` | `deepseek-harness!docs/tool-catalog.md:667` | 696 |
-| `docs/07-tools-approval-sandbox.md:169` | `deepseek-harness!docs/tool-catalog.md:720` | 749 |
-| `docs/07-tools-approval-sandbox.md:170` | `deepseek-harness!docs/tool-catalog.md:745` | 774 |
-| `docs/07-tools-approval-sandbox.md:171` | `deepseek-harness!docs/tool-catalog.md:533` | 562 |
-| `docs/07-tools-approval-sandbox.md:172` | `deepseek-harness!docs/tool-catalog.md:1651` | 1680 |
-| `docs/07-tools-approval-sandbox.md:173` | `deepseek-harness!docs/tool-catalog.md:1638` | 1667 |
-| `docs/07-tools-approval-sandbox.md:174` | `deepseek-harness!docs/tool-catalog.md:1686` | 2031 |
-| `docs/07-tools-approval-sandbox.md:175` | `deepseek-harness!docs/tool-catalog.md:1215` | 1244 |
-| `docs/07-tools-approval-sandbox.md:176` | `deepseek-harness!docs/tool-catalog.md:153` | 155 |
-| `docs/07-tools-approval-sandbox.md:177` | `deepseek-harness!docs/tool-catalog.md:1475` | 1504 |
-| `docs/07-tools-approval-sandbox.md:179` | `deepseek-harness!docs/tool-catalog.md:1554` | 1583 |
-| `docs/07-tools-approval-sandbox.md:180` | `deepseek-harness!docs/tool-catalog.md:1586` | 1615 |
-| `docs/07-tools-approval-sandbox.md:181` | `deepseek-harness!docs/tool-catalog.md:1736` | 2081 |
-| `docs/07-tools-approval-sandbox.md:182` | `deepseek-harness!docs/tool-catalog.md:1184` | 1213 |
-| `docs/07-tools-approval-sandbox.md:183` | `deepseek-harness!docs/tool-catalog.md:945` | 974 |
-| `docs/07-tools-approval-sandbox.md:184` | `deepseek-harness!docs/tool-catalog.md:1852` | 2197 |
-| `docs/07-tools-approval-sandbox.md:185` | `deepseek-harness!docs/tool-catalog.md:47` | 49 |
-| `docs/08-orchestration.md:52` | `deepseek-harness!packages/subagent/subagent/src/types.ts:307` | 314 |
-| `docs/08-orchestration.md:52` | `deepseek-harness!packages/subagent/subagent/src/index.ts:481` | 497 |
-| `docs/08-orchestration.md:96` | `deepseek-harness!packages/subagent/subagent/src/continuation.ts:291` | 297 |
-| `docs/08-orchestration.md:110` | `deepseek-harness!packages/subagent/subagent/src/continuation.ts:1429` | 1491 |
-| `docs/08-orchestration.md:116` | `deepseek-harness!packages/subagent/subagent/src/continuation.ts:638` | 664 |
-| `docs/08-orchestration.md:194` | `deepseek-harness!packages/subagent/tool-subagent/src/index.ts:368` | 377 |
-| `docs/08-orchestration.md:200` | `deepseek-harness!packages/subagent/subagent/src/out-of-process.ts:25` | 50 |
-| `docs/08-orchestration.md:202` | `deepseek-harness!packages/subagent/subagent-claude-code/src/run.ts:177` | 309 |
-| `docs/08-orchestration.md:215` | `deepseek-harness!packages/subagent/subagent-codex/src/wire.ts:294` | 612 |
-| `docs/08-orchestration.md:223` | `deepseek-harness!apps/cli/config/agent-presets/standard/agent.cordis.yml:203` | 204 |
-| `docs/08-orchestration.md:233` | `deepseek-harness!packages/plan/plan-mode/src/index.ts:226` | 244 |
-| `docs/08-orchestration.md:257` | `deepseek-harness!packages/plan/plan-mode/src/index.ts:330` | 367 |
-| `docs/08-orchestration.md:271` | `deepseek-harness!apps/cli/config/agent-presets/standard/agent.cordis.yml:240` | 241 |
-| `docs/08-orchestration.md:459` | `deepseek-harness!apps/cli/config/agent-presets/standard/agent.cordis.yml:229` | 230 |
-| `docs/08-orchestration.md:630` | `deepseek-harness!packages/plan/plan-mode/src/index.ts:226` | 244 |
-| `docs/08-orchestration.md:673` | `pi!packages/coding-agent/src/core/extensions/types.ts:1198` | 1214 |
-| `docs/08-orchestration.md:678` | `pi!packages/coding-agent/src/core/extensions/types.ts:1198` | 1214 |
-| `docs/09-extensions-and-code-mode.md:226` | `deepseek-harness!apps/cli/config/agent-presets/code/agent.cordis.yml:259` | 260 |
-| `docs/09-extensions-and-code-mode.md:291` | `deepseek-harness!packages/core/tools/src/code-mode.ts:61` | 62 |
-| `docs/09-extensions-and-code-mode.md:291` | `deepseek-harness!packages/core/tools/src/code-mode.ts:659` | 667 |
-| `docs/09-extensions-and-code-mode.md:364` | `deepseek-harness!packages/core/tools/src/code-mode.ts:464` | 466 |
-| `docs/09-extensions-and-code-mode.md:364` | `deepseek-harness!packages/core/tools/src/code-mode.ts:151` | 153 |
-| `docs/09-extensions-and-code-mode.md:366` | `deepseek-harness!packages/core/tools/src/code-mode.ts:606` | 614 |
-| `docs/09-extensions-and-code-mode.md:366` | `deepseek-harness!packages/core/tools/src/code-mode.ts:601` | 609 |
-| `docs/09-extensions-and-code-mode.md:368` | `deepseek-harness!packages/core/tools/src/code-mode.ts:393` | 395 |
-| `docs/09-extensions-and-code-mode.md:368` | `deepseek-harness!packages/core/tools/src/code-mode.ts:344` | 346 |
-| `docs/09-extensions-and-code-mode.md:377` | `deepseek-harness!packages/core/tools/src/code-mode.ts:562` | 570 |
-| `docs/09-extensions-and-code-mode.md:379` | `deepseek-harness!packages/core/tools/src/code-mode.ts:627` | 635 |
-| `docs/09-extensions-and-code-mode.md:390` | `deepseek-harness!packages/core/tools/src/code-mode.ts:510` | 512 |
-| `docs/09-extensions-and-code-mode.md:390` | `deepseek-harness!packages/core/tools/src/code-mode.ts:151` | 153 |
-| `docs/09-extensions-and-code-mode.md:390` | `deepseek-harness!packages/core/tools/src/code-mode.ts:516` | 518 |
-| `docs/09-extensions-and-code-mode.md:392` | `deepseek-harness!packages/core/tools/src/code-mode.ts:500` | 502 |
-| `docs/09-extensions-and-code-mode.md:477` | `deepseek-harness!docs/tool-catalog.md:365` | 367 |
-| `docs/09-extensions-and-code-mode.md:487` | `deepseek-harness!docs/tool-catalog.md:270` | 272 |
-| `docs/09-extensions-and-code-mode.md:565` | `deepseek-harness!apps/cli/config/agent-presets/cordis/agent.cordis.yml:245` | 246 |
-| `docs/09-extensions-and-code-mode.md:565` | `deepseek-harness!apps/cli/config/agent-presets/cordis/agent.cordis.yml:255` | 256 |
-| `docs/09-extensions-and-code-mode.md:605` | `pi!packages/coding-agent/src/core/extensions/types.ts:1198` | 1214 |
-| `docs/10-cordis-boot-preset.md:64` | `deepseek-harness!packages/bundle/web-app/cordis.patch.yml:283` | 304 |
-| `docs/10-cordis-boot-preset.md:591` | `codex!codex-rs/mcp-server/src/codex_tool_config.rs:106` | 104 |
-| `docs/11-web-client-and-host.md:32` | `deepseek-harness!packages/host/apiproxy/src/api-proxy.ts:3475` | 3373 |
-| `docs/11-web-client-and-host.md:52` | `deepseek-harness!packages/host/apiproxy/src/api-proxy.ts:1285` | 1226 |
-| `docs/11-web-client-and-host.md:52` | `deepseek-harness!packages/session/session-projection/src/index.ts:181` | 190 |
-| `docs/11-web-client-and-host.md:94` | `deepseek-harness!packages/client/runtime/src/client/sessions/session.ts:467` | 471 |
-| `docs/11-web-client-and-host.md:103` | `deepseek-harness!packages/client/runtime/src/client/sessions/session.ts:447` | 451 |
-| `docs/11-web-client-and-host.md:125` | `deepseek-harness!packages/client/ui-conversation/src/client/chat/ChatView.tsx:150` | 162 |
-| `docs/11-web-client-and-host.md:125` | `deepseek-harness!packages/client/ui-conversation/src/client/apply.ts:377` | 381 |
-| `docs/11-web-client-and-host.md:252` | `deepseek-harness!packages/client/ui-conversation/src/client/apply.ts:371` | 375 |
-| `docs/11-web-client-and-host.md:252` | `deepseek-harness!packages/client/ui-subagent/src/client/index.ts:121` | 69 |
-| `docs/11-web-client-and-host.md:254` | `deepseek-harness!packages/client/ui-conversation/src/client/apply.ts:367` | 371 |
-| `docs/11-web-client-and-host.md:279` | `deepseek-harness!packages/bundle/web-app/src/index.ts:96` | 143 |
-| `docs/11-web-client-and-host.md:319` | `deepseek-harness!packages/client/modules/src/client/manifest.ts:110` | 149 |
-| `docs/11-web-client-and-host.md:327` | `deepseek-harness!apps/web/vite.config.ts:7` | 8 |
-| `docs/11-web-client-and-host.md:352` | `deepseek-harness!packages/host/webserver/src/index.ts:94` | 108 |
-| `docs/11-web-client-and-host.md:354` | `deepseek-harness!packages/host/frontend-static/src/index.ts:98` | 109 |
-| `docs/11-web-client-and-host.md:354` | `deepseek-harness!packages/bundle/web-app/src/index.ts:119` | 166 |
-| `docs/11-web-client-and-host.md:380` | `deepseek-harness!packages/api/gateway/src/client/index.ts:406` | 408 |
-| `docs/11-web-client-and-host.md:402` | `deepseek-harness!packages/bundle/web-app/src/startup.ts:70` | 75 |
-| `docs/11-web-client-and-host.md:419` | `deepseek-harness!packages/client/locale/src/client/index.ts:114` | 144 |
-| `docs/11-web-client-and-host.md:446` | `deepseek-harness!packages/client/ui-conversation/src/client/skeleton/InputBar.tsx:562` | 581 |
-| `docs/11-web-client-and-host.md:480` | `deepseek-harness!packages/api/remotes/src/client/index.ts:108` | 116 |
-| `docs/11-web-client-and-host.md:494` | `codex!codex-rs/ext/extension-api/src/registry.rs:145` | 146 |
-| `docs/12-surfaces-and-protocols.md:161` | `deepseek-harness!packages/acp/acp/src/index.ts:353` | 448 |
-| `docs/12-surfaces-and-protocols.md:163` | `deepseek-harness!packages/acp/acp/src/index.ts:430` | 539 |
-| `docs/12-surfaces-and-protocols.md:195` | `deepseek-harness!packages/acp/acp/src/index.ts:331` | 206 |
-| `docs/12-surfaces-and-protocols.md:219` | `deepseek-harness!packages/acp/acp/src/index.ts:213` | 269 |
-| `docs/12-surfaces-and-protocols.md:239` | `deepseek-harness!packages/mcp/mcp-client/src/tools.ts:96` | 111 |
-| `docs/12-surfaces-and-protocols.md:252` | `deepseek-harness!packages/mcp/mcp-client/tests/mcp-client.e2e.ts:434` | 474 |
-| `docs/12-surfaces-and-protocols.md:358` | `deepseek-harness!scripts/build-exe-for-python-sdk.ts:25` | 26 |
-| `docs/12-surfaces-and-protocols.md:449` | `deepseek-harness!packages/acp/acp/src/index.ts:338` | 425 |
-| `docs/12-surfaces-and-protocols.md:457` | `deepseek-harness!packages/acp/acp/src/index.ts:295` | 58 |
-| `docs/12-surfaces-and-protocols.md:469` | `codex!codex-rs/mcp-server/src/codex_tool_config.rs:106` | 104 |
-| `docs/13-self-verification.md:123` | `deepseek-harness!packages/llm/llm/src/index.ts:906` | 978 |
-| `docs/13-self-verification.md:199` | `deepseek-harness!packages/test-support/acp-snapshot/src/suite.ts:104` | 105 |
-| `docs/13-self-verification.md:205` | `deepseek-harness!scripts/run-gates.ts:581` | 215 |
-| `docs/13-self-verification.md:235` | `deepseek-harness!scripts/build-exe-for-python-sdk.ts:25` | 26 |
-| `docs/13-self-verification.md:235` | `deepseek-harness!scripts/build-exe-for-python-sdk.ts:390` | 391 |
-| `docs/14-comparison.md:67` | `codex!codex-rs/core/src/config/mod.rs:210` | 224 |
-| `docs/14-comparison.md:91` | `codex!codex-rs/core/src/client.rs:484` | 485 |
-| `docs/14-comparison.md:93` | `pi!packages/coding-agent/src/core/compaction/compaction.ts:573` | 577 |
-| `docs/14-comparison.md:116` | `codex!codex-rs/protocol/src/openai_models.rs:482` | 486 |
-| `docs/14-comparison.md:139` | `pi!packages/coding-agent/src/core/agent-session.ts:665` | 676 |
-| `docs/14-comparison.md:202` | `pi!packages/coding-agent/src/core/extensions/types.ts:1198` | 1214 |
-| `docs/appendix-a-glossary.md:53` | `deepseek-harness!packages/core/session/src/types.ts:404` | 408 |
-| `docs/appendix-a-glossary.md:54` | `deepseek-harness!packages/core/session/src/types.ts:357` | 361 |
-| `docs/appendix-a-glossary.md:55` | `deepseek-harness!packages/core/session/src/types.ts:372` | 376 |
-| `docs/appendix-a-glossary.md:56` | `deepseek-harness!packages/core/session/src/types.ts:378` | 382 |
-| `docs/appendix-a-glossary.md:92` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:112` | 242 |
-| `docs/appendix-a-glossary.md:106` | `deepseek-harness!packages/subagent/subagent/src/continuation.ts:403` | 409 |
-| `docs/appendix-a-glossary.md:107` | `deepseek-harness!packages/subagent/subagent/src/continuation.ts:191` | 197 |
-| `docs/appendix-a-glossary.md:114` | `deepseek-harness!packages/plan/plan-mode/src/index.ts:180` | 198 |
+| `docs/00-overview.md:69` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:483` | 45 |
+| `docs/00-overview.md:191` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:483` | 45 |
+| `docs/01-system-prompt.md:283` | `deepseek-harness!apps/cli/config/agent-presets/minimal/agent.cordis.yml:9` | 10 |
+| `docs/01-system-prompt.md:317` | `deepseek-harness!packages/plan/plan-mode/src/index.ts:243` | 260 |
+| `docs/01-system-prompt.md:482` | `deepseek-harness!packages/plan/plan-mode/src/index.ts:223` | 241 |
+| `docs/02-kv-cache.md:16` | `deepseek-harness!packages/subagent/subagent-codex/tests/responses-fixture.ts:71` | 72 |
+| `docs/02-kv-cache.md:206` | `deepseek-harness!packages/llm/llm-pi-ai/src/config.ts:154` | 195 |
+| `docs/02-kv-cache.md:206` | `deepseek-harness!packages/llm/llm-pi-ai/src/adapter.ts:122` | 70 |
+| `docs/02-kv-cache.md:259` | `deepseek-harness!packages/core/session/src/types.ts:376` | 24 |
+| `docs/02-kv-cache.md:293` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:483` | 45 |
+| `docs/02-kv-cache.md:316` | `deepseek-harness!packages/llm/llm/src/index.ts:824` | 879 |
+| `docs/02-kv-cache.md:316` | `deepseek-harness!packages/llm/llm/src/index.ts:854` | 145 |
+| `docs/02-kv-cache.md:428` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:82` | 210 |
+| `docs/02-kv-cache.md:429` | `deepseek-harness!packages/plan/plan-mode/src/index.ts:243` | 260 |
+| `docs/02-kv-cache.md:444` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:400` | 45 |
+| `docs/02-kv-cache.md:481` | `deepseek-harness!packages/plan/plan-mode/src/index.ts:246` | 263 |
+| `docs/02-kv-cache.md:492` | `deepseek-harness!docs/subsystems/llm-streaming.md:635` | 673 |
+| `docs/02-kv-cache.md:496` | `deepseek-harness!packages/llm/llm/src/index.ts:878` | 950 |
+| `docs/03-agent-loop.md:18` | `deepseek-harness!packages/test-support/acp-snapshot/src/suite.ts:88` | 1 |
+| `docs/03-agent-loop.md:20` | `deepseek-harness!examples/acp-agent/tests/acp.snapshot.ts:214` | 179 |
+| `docs/03-agent-loop.md:452` | `deepseek-harness!examples/acp-agent/tests/acp.snapshot.ts:455` | 487 |
+| `docs/04-llm-adapter.md:18` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:131` | 261 |
+| `docs/04-llm-adapter.md:39` | `deepseek-harness!packages/llm/llm-deepseek/tests/serialize.spec.ts:237` | 309 |
+| `docs/04-llm-adapter.md:52` | `deepseek-harness!packages/llm/llm-deepseek/tests/mock-server.ts:30` | 32 |
+| `docs/04-llm-adapter.md:104` | `deepseek-harness!packages/llm/llm/src/index.ts:365` | 50 |
+| `docs/04-llm-adapter.md:104` | `deepseek-harness!packages/llm/llm/src/index.ts:432` | 459 |
+| `docs/04-llm-adapter.md:110` | `deepseek-harness!packages/llm/llm/src/index.ts:824` | 879 |
+| `docs/04-llm-adapter.md:110` | `deepseek-harness!packages/llm/llm/src/index.ts:156` | 157 |
+| `docs/04-llm-adapter.md:127` | `deepseek-harness!packages/llm/llm/src/index.ts:898` | 50 |
+| `docs/04-llm-adapter.md:129` | `deepseek-harness!packages/llm/llm/src/index.ts:878` | 950 |
+| `docs/04-llm-adapter.md:139` | `deepseek-harness!packages/llm/llm/src/assembler.ts:37` | 38 |
+| `docs/04-llm-adapter.md:139` | `deepseek-harness!packages/llm/llm/src/assembler.ts:157` | 200 |
+| `docs/04-llm-adapter.md:158` | `deepseek-harness!packages/llm/llm-deepseek/src/index.ts:81` | 145 |
+| `docs/04-llm-adapter.md:158` | `deepseek-harness!packages/llm/llm-deepseek/src/index.ts:83` | 147 |
+| `docs/04-llm-adapter.md:158` | `deepseek-harness!packages/llm/llm-deepseek/src/adapter.ts:132` | 1 |
+| `docs/04-llm-adapter.md:158` | `deepseek-harness!packages/llm/llm-deepseek/src/adapter.ts:134` | 329 |
+| `docs/04-llm-adapter.md:158` | `deepseek-harness!packages/llm/llm-deepseek/src/adapter.ts:130` | 62 |
+| `docs/04-llm-adapter.md:160` | `deepseek-harness!packages/llm/llm-deepseek/src/index.ts:275` | 157 |
+| `docs/04-llm-adapter.md:162` | `deepseek-harness!packages/llm/llm/src/index.ts:138` | 139 |
+| `docs/04-llm-adapter.md:182` | `deepseek-harness!packages/llm/llm/src/types.ts:341` | 362 |
+| `docs/04-llm-adapter.md:184` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:81` | 209 |
+| `docs/04-llm-adapter.md:200` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:108` | 238 |
+| `docs/04-llm-adapter.md:256` | `deepseek-harness!packages/llm/llm-deepseek/src/adapter.ts:333` | 650 |
+| `docs/04-llm-adapter.md:310` | `deepseek-harness!packages/llm/llm-pi-ai/package.json:46` | 47 |
+| `docs/04-llm-adapter.md:316` | `deepseek-harness!packages/llm/llm-pi-ai/src/catalog.ts:74` | 79 |
+| `docs/04-llm-adapter.md:317` | `deepseek-harness!packages/llm/llm-pi-ai/src/adapter.ts:122` | 70 |
+| `docs/04-llm-adapter.md:318` | `deepseek-harness!packages/llm/llm-pi-ai/src/adapter.ts:126` | 145 |
+| `docs/04-llm-adapter.md:320` | `deepseek-harness!packages/llm/llm-pi-ai/src/context.ts:58` | 78 |
+| `docs/04-llm-adapter.md:379` | `deepseek-harness!packages/llm/token-meter/src/usage-projection.ts:120` | 132 |
+| `docs/04-llm-adapter.md:379` | `deepseek-harness!packages/llm/token-meter/src/breakdown-projection.ts:56` | 69 |
+| `docs/04-llm-adapter.md:379` | `deepseek-harness!packages/llm/token-meter/src/usage-projection.ts:75` | 80 |
+| `docs/04-llm-adapter.md:404` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:468` | 487 |
+| `docs/04-llm-adapter.md:404` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:483` | 45 |
+| `docs/04-llm-adapter.md:404` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:350` | 351 |
+| `docs/04-llm-adapter.md:406` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:374` | 393 |
+| `docs/04-llm-adapter.md:414` | `deepseek-harness!packages/llm/llm-deepseek/src/serialize.ts:108` | 238 |
+| `docs/04-llm-adapter.md:467` | `deepseek-harness!packages/llm/llm-deepseek/src/adapter.ts:333` | 650 |
+| `docs/04-llm-adapter.md:471` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:350` | 351 |
+| `docs/05-session.md:67` | `deepseek-harness!packages/core/session/src/types.ts:408` | 412 |
+| `docs/05-session.md:139` | `deepseek-harness!packages/core/session/src/types.ts:376` | 24 |
+| `docs/05-session.md:184` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:483` | 45 |
+| `docs/05-session.md:252` | `deepseek-harness!packages/session/session-persistence-sqlite/src/schema.ts:23` | 20 |
+| `docs/05-session.md:284` | `deepseek-harness!packages/core/agent-loop/src/agent.ts:484` | 231 |
+| `docs/07-tools-approval-sandbox.md:108` | `deepseek-harness!packages/interaction/permission-presets/src/index.ts:416` | 432 |
+| `docs/07-tools-approval-sandbox.md:119` | `deepseek-harness!packages/acp/acp/src/index.ts:271` | 328 |
+| `docs/07-tools-approval-sandbox.md:119` | `deepseek-harness!packages/host/apiproxy/src/api-proxy.ts:1363` | 1304 |
+| `docs/07-tools-approval-sandbox.md:163` | `deepseek-harness!docs/tool-catalog.md:182` | 184 |
+| `docs/07-tools-approval-sandbox.md:164` | `deepseek-harness!docs/tool-catalog.md:226` | 228 |
+| `docs/07-tools-approval-sandbox.md:165` | `deepseek-harness!docs/tool-catalog.md:667` | 696 |
+| `docs/07-tools-approval-sandbox.md:167` | `deepseek-harness!docs/tool-catalog.md:632` | 94 |
+| `docs/07-tools-approval-sandbox.md:168` | `deepseek-harness!docs/tool-catalog.md:696` | 640 |
+| `docs/07-tools-approval-sandbox.md:169` | `deepseek-harness!docs/tool-catalog.md:749` | 53 |
+| `docs/07-tools-approval-sandbox.md:170` | `deepseek-harness!docs/tool-catalog.md:774` | 803 |
+| `docs/07-tools-approval-sandbox.md:171` | `deepseek-harness!docs/tool-catalog.md:562` | 591 |
+| `docs/07-tools-approval-sandbox.md:172` | `deepseek-harness!docs/tool-catalog.md:1680` | 1709 |
+| `docs/07-tools-approval-sandbox.md:173` | `deepseek-harness!docs/tool-catalog.md:1667` | 1696 |
+| `docs/07-tools-approval-sandbox.md:175` | `deepseek-harness!docs/tool-catalog.md:1244` | 53 |
+| `docs/07-tools-approval-sandbox.md:176` | `deepseek-harness!docs/tool-catalog.md:155` | 157 |
+| `docs/07-tools-approval-sandbox.md:180` | `deepseek-harness!docs/tool-catalog.md:1615` | 1644 |
+| `docs/07-tools-approval-sandbox.md:182` | `deepseek-harness!docs/tool-catalog.md:1213` | 1242 |
+| `docs/07-tools-approval-sandbox.md:183` | `deepseek-harness!docs/tool-catalog.md:974` | 53 |
+| `docs/07-tools-approval-sandbox.md:185` | `deepseek-harness!docs/tool-catalog.md:49` | 51 |
+| `docs/08-orchestration.md:52` | `deepseek-harness!packages/subagent/subagent/src/types.ts:314` | 321 |
+| `docs/08-orchestration.md:52` | `deepseek-harness!packages/subagent/subagent/src/index.ts:497` | 132 |
+| `docs/08-orchestration.md:96` | `deepseek-harness!packages/subagent/subagent/src/continuation.ts:297` | 303 |
+| `docs/08-orchestration.md:116` | `deepseek-harness!packages/subagent/subagent/src/continuation.ts:664` | 690 |
+| `docs/08-orchestration.md:194` | `deepseek-harness!packages/subagent/tool-subagent/src/index.ts:377` | 386 |
+| `docs/08-orchestration.md:200` | `deepseek-harness!packages/subagent/subagent/src/out-of-process.ts:50` | 75 |
+| `docs/08-orchestration.md:223` | `deepseek-harness!apps/cli/config/agent-presets/standard/agent.cordis.yml:204` | 187 |
+| `docs/08-orchestration.md:233` | `deepseek-harness!packages/plan/plan-mode/src/index.ts:244` | 261 |
+| `docs/08-orchestration.md:257` | `deepseek-harness!packages/plan/plan-mode/src/index.ts:367` | 54 |
+| `docs/08-orchestration.md:271` | `deepseek-harness!apps/cli/config/agent-presets/standard/agent.cordis.yml:241` | 242 |
+| `docs/08-orchestration.md:459` | `deepseek-harness!apps/cli/config/agent-presets/standard/agent.cordis.yml:230` | 231 |
+| `docs/08-orchestration.md:630` | `deepseek-harness!packages/plan/plan-mode/src/index.ts:244` | 261 |
+| `docs/08-orchestration.md:673` | `pi!packages/coding-agent/src/core/extensions/types.ts:1214` | 1230 |
+| `docs/08-orchestration.md:678` | `pi!packages/coding-agent/src/core/extensions/types.ts:1214` | 1230 |
+| `docs/09-extensions-and-code-mode.md:226` | `deepseek-harness!apps/cli/config/agent-presets/code/agent.cordis.yml:260` | 261 |
+| `docs/09-extensions-and-code-mode.md:291` | `deepseek-harness!packages/core/tools/src/code-mode.ts:62` | 47 |
+| `docs/09-extensions-and-code-mode.md:291` | `deepseek-harness!packages/core/tools/src/code-mode.ts:667` | 675 |
+| `docs/09-extensions-and-code-mode.md:364` | `deepseek-harness!packages/core/tools/src/code-mode.ts:466` | 468 |
+| `docs/09-extensions-and-code-mode.md:364` | `deepseek-harness!packages/core/tools/src/code-mode.ts:153` | 155 |
+| `docs/09-extensions-and-code-mode.md:366` | `deepseek-harness!packages/core/tools/src/code-mode.ts:614` | 622 |
+| `docs/09-extensions-and-code-mode.md:366` | `deepseek-harness!packages/core/tools/src/code-mode.ts:609` | 38 |
+| `docs/09-extensions-and-code-mode.md:368` | `deepseek-harness!packages/core/tools/src/code-mode.ts:395` | 397 |
+| `docs/09-extensions-and-code-mode.md:368` | `deepseek-harness!packages/core/tools/src/code-mode.ts:346` | 348 |
+| `docs/09-extensions-and-code-mode.md:377` | `deepseek-harness!packages/core/tools/src/code-mode.ts:570` | 578 |
+| `docs/09-extensions-and-code-mode.md:379` | `deepseek-harness!packages/core/tools/src/code-mode.ts:635` | 643 |
+| `docs/09-extensions-and-code-mode.md:390` | `deepseek-harness!packages/core/tools/src/code-mode.ts:512` | 514 |
+| `docs/09-extensions-and-code-mode.md:390` | `deepseek-harness!packages/core/tools/src/code-mode.ts:153` | 155 |
+| `docs/09-extensions-and-code-mode.md:390` | `deepseek-harness!packages/core/tools/src/code-mode.ts:518` | 520 |
+| `docs/09-extensions-and-code-mode.md:392` | `deepseek-harness!packages/core/tools/src/code-mode.ts:502` | 504 |
+| `docs/09-extensions-and-code-mode.md:477` | `deepseek-harness!docs/tool-catalog.md:367` | 53 |
+| `docs/09-extensions-and-code-mode.md:487` | `deepseek-harness!docs/tool-catalog.md:272` | 53 |
+| `docs/09-extensions-and-code-mode.md:565` | `deepseek-harness!apps/cli/config/agent-presets/cordis/agent.cordis.yml:246` | 247 |
+| `docs/09-extensions-and-code-mode.md:565` | `deepseek-harness!apps/cli/config/agent-presets/cordis/agent.cordis.yml:256` | 257 |
+| `docs/09-extensions-and-code-mode.md:605` | `pi!packages/coding-agent/src/core/extensions/types.ts:1214` | 1230 |
+| `docs/10-cordis-boot-preset.md:64` | `deepseek-harness!packages/bundle/web-app/cordis.patch.yml:304` | 325 |
+| `docs/11-web-client-and-host.md:32` | `deepseek-harness!packages/host/apiproxy/src/api-proxy.ts:3373` | 3271 |
+| `docs/11-web-client-and-host.md:52` | `deepseek-harness!packages/host/apiproxy/src/api-proxy.ts:1226` | 4 |
+| `docs/11-web-client-and-host.md:52` | `deepseek-harness!packages/session/session-projection/src/index.ts:190` | 199 |
+| `docs/11-web-client-and-host.md:94` | `deepseek-harness!packages/client/runtime/src/client/sessions/session.ts:471` | 392 |
+| `docs/11-web-client-and-host.md:103` | `deepseek-harness!packages/client/runtime/src/client/sessions/session.ts:451` | 40 |
+| `docs/11-web-client-and-host.md:125` | `deepseek-harness!packages/client/ui-conversation/src/client/apply.ts:381` | 141 |
+| `docs/11-web-client-and-host.md:252` | `deepseek-harness!packages/client/ui-conversation/src/client/apply.ts:375` | 379 |
+| `docs/11-web-client-and-host.md:252` | `deepseek-harness!packages/client/ui-subagent/src/client/index.ts:69` | 17 |
+| `docs/11-web-client-and-host.md:254` | `deepseek-harness!packages/client/ui-conversation/src/client/apply.ts:371` | 375 |
+| `docs/11-web-client-and-host.md:279` | `deepseek-harness!packages/bundle/web-app/src/index.ts:143` | 237 |
+| `docs/11-web-client-and-host.md:319` | `deepseek-harness!packages/client/modules/src/client/manifest.ts:149` | 53 |
+| `docs/11-web-client-and-host.md:327` | `deepseek-harness!apps/web/vite.config.ts:8` | 9 |
+| `docs/11-web-client-and-host.md:352` | `deepseek-harness!packages/host/webserver/src/index.ts:108` | 9 |
+| `docs/11-web-client-and-host.md:354` | `deepseek-harness!packages/host/frontend-static/src/index.ts:109` | 120 |
+| `docs/11-web-client-and-host.md:354` | `deepseek-harness!packages/bundle/web-app/src/index.ts:166` | 262 |
+| `docs/11-web-client-and-host.md:380` | `deepseek-harness!packages/api/gateway/src/client/index.ts:408` | 410 |
+| `docs/11-web-client-and-host.md:402` | `deepseek-harness!packages/bundle/web-app/src/startup.ts:75` | 80 |
+| `docs/11-web-client-and-host.md:419` | `deepseek-harness!packages/client/locale/src/client/index.ts:144` | 6 |
+| `docs/11-web-client-and-host.md:446` | `deepseek-harness!packages/client/ui-conversation/src/client/skeleton/InputBar.tsx:581` | 599 |
+| `docs/11-web-client-and-host.md:480` | `deepseek-harness!packages/api/remotes/src/client/index.ts:116` | 102 |
+| `docs/11-web-client-and-host.md:494` | `codex!codex-rs/ext/extension-api/src/registry.rs:146` | 147 |
+| `docs/12-surfaces-and-protocols.md:195` | `deepseek-harness!packages/acp/acp/src/index.ts:206` | 256 |
+| `docs/12-surfaces-and-protocols.md:219` | `deepseek-harness!packages/acp/acp/src/index.ts:269` | 326 |
+| `docs/12-surfaces-and-protocols.md:239` | `deepseek-harness!packages/mcp/mcp-client/src/tools.ts:111` | 126 |
+| `docs/12-surfaces-and-protocols.md:358` | `deepseek-harness!scripts/build-exe-for-python-sdk.ts:26` | 27 |
+| `docs/12-surfaces-and-protocols.md:449` | `deepseek-harness!packages/acp/acp/src/index.ts:425` | 534 |
+| `docs/13-self-verification.md:199` | `deepseek-harness!packages/test-support/acp-snapshot/src/suite.ts:105` | 1 |
+| `docs/13-self-verification.md:205` | `deepseek-harness!scripts/run-gates.ts:215` | 124 |
+| `docs/13-self-verification.md:235` | `deepseek-harness!scripts/build-exe-for-python-sdk.ts:26` | 27 |
+| `docs/13-self-verification.md:235` | `deepseek-harness!scripts/build-exe-for-python-sdk.ts:391` | 392 |
+| `docs/14-comparison.md:67` | `codex!codex-rs/core/src/config/mod.rs:224` | 238 |
+| `docs/14-comparison.md:93` | `pi!packages/coding-agent/src/core/compaction/compaction.ts:577` | 582 |
+| `docs/14-comparison.md:116` | `codex!codex-rs/protocol/src/openai_models.rs:486` | 490 |
+| `docs/14-comparison.md:139` | `pi!packages/coding-agent/src/core/agent-session.ts:676` | 407 |
+| `docs/14-comparison.md:202` | `pi!packages/coding-agent/src/core/extensions/types.ts:1214` | 1230 |
+| `docs/appendix-a-glossary.md:53` | `deepseek-harness!packages/core/session/src/types.ts:408` | 412 |
+| `docs/appendix-a-glossary.md:54` | `deepseek-harness!packages/core/session/src/types.ts:361` | 365 |
+| `docs/appendix-a-glossary.md:55` | `deepseek-harness!packages/core/session/src/types.ts:376` | 24 |
+| `docs/appendix-a-glossary.md:56` | `deepseek-harness!packages/core/session/src/types.ts:382` | 24 |
+| `docs/appendix-a-glossary.md:107` | `deepseek-harness!packages/subagent/subagent/src/continuation.ts:197` | 203 |
+| `docs/appendix-a-glossary.md:114` | `deepseek-harness!packages/plan/plan-mode/src/index.ts:198` | 216 |
 
