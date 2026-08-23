@@ -16,6 +16,20 @@ test('parses the required scalar and list frontmatter forms', () => {
   assert.deepEqual(metadata.evidence, ['code', 'test']);
 });
 
+test('parses JSON object frontmatter used by coverage thresholds', () => {
+  const { metadata } = parseFrontmatter(`---
+title: coverage
+coverage_min: {"deepseek-harness":2,"codex":1}
+---
+body
+`);
+
+  assert.deepEqual(metadata.coverage_min, {
+    'deepseek-harness': 2,
+    codex: 1,
+  });
+});
+
 test('marks only analysis bound to the changed source as stale', () => {
   assert.match(markContentStale(sample, 'deepseek-harness'), /^status: stale$/mu);
   assert.equal(markContentStale(sample, 'cordis'), sample);

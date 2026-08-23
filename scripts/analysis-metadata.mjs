@@ -14,11 +14,13 @@ export function parseFrontmatter(content) {
     const match = /^([a-z_]+):\s*(.*)$/u.exec(line);
     if (!match) continue;
     const [, key, raw] = match;
-    if (raw.startsWith('[') && raw.endsWith(']')) {
+    if ((raw.startsWith('[') && raw.endsWith(']')) || (raw.startsWith('{') && raw.endsWith('}'))) {
       try {
         metadata[key] = JSON.parse(raw);
       } catch {
-        metadata[key] = raw.slice(1, -1).split(',').map((item) => item.trim()).filter(Boolean);
+        metadata[key] = raw.startsWith('[')
+          ? raw.slice(1, -1).split(',').map((item) => item.trim()).filter(Boolean)
+          : raw;
       }
     } else {
       metadata[key] = raw.replace(/^['"]|['"]$/gu, '');

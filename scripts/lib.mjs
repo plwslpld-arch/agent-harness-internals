@@ -82,21 +82,21 @@ export function parseGitmodules(content) {
   return entries;
 }
 
-export function listProjectFiles() {
-  const ignoredDirectories = new Set(['.git', '.claude', '.generated', 'node_modules', 'checkouts', '.tmp', 'dist', 'build', 'coverage']);
+export function listProjectFiles(start = root) {
+  const ignoredEntries = new Set(['.git', '.worktrees', '.claude', '.generated', 'node_modules', 'checkouts', '.tmp', 'dist', 'build', 'coverage']);
   const files = [];
   function visit(directory) {
     for (const entry of readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
       const absolute = join(directory, entry.name);
+      if (ignoredEntries.has(entry.name)) continue;
       if (entry.isDirectory()) {
-        if (ignoredDirectories.has(entry.name)) continue;
         visit(absolute);
       } else if (entry.isFile()) {
         files.push(absolute);
       }
     }
   }
-  visit(root);
+  visit(start);
   return files;
 }
 
