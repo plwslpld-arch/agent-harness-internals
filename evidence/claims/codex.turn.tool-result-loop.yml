@@ -1,0 +1,52 @@
+{
+  "id": "codex.turn.tool-result-loop",
+  "harness": "codex",
+  "dimension": "turn.tool-result-loop",
+  "statement": "在锁定 Codex 核心中，模型请求工具调用时，Harness 执行工具并把关联调用标识的输出加入下一次采样输入；当模型只返回 assistant 消息且没有其他继续条件时，Turn 才完成。",
+  "capability": "default",
+  "version": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+  "surface": "core-turn",
+  "platform": "non-windows-upstream-fixture",
+  "mode": "mock-responses-real-local-exec-permission-disabled",
+  "evidence_level": "B",
+  "evidence": [
+    {
+      "type": "source",
+      "source": "codex",
+      "commit": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+      "path": "codex-rs/core/src/session/turn.rs",
+      "lines": "145-159",
+      "excerpt": "If the model requests a function call, we execute it and send the output"
+    },
+    {
+      "type": "source",
+      "source": "codex",
+      "commit": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+      "path": "codex-rs/core/src/session/turn.rs",
+      "lines": "369-400",
+      "excerpt": "needs_follow_up: model_needs_follow_up,"
+    },
+    {
+      "type": "upstream-test",
+      "source": "codex",
+      "commit": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+      "path": "codex-rs/core/tests/suite/tool_harness.rs",
+      "lines": "64-95",
+      "excerpt": "ev_function_call(call_id, \"exec_command\", &command_args)"
+    },
+    {
+      "type": "upstream-test",
+      "source": "codex",
+      "commit": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+      "path": "codex-rs/core/tests/suite/tool_harness.rs",
+      "lines": "102-133",
+      "excerpt": "let (output_text, _) = call_output(&req, call_id);"
+    }
+  ],
+  "limitations": [
+    "上游测试文件仅在非 Windows 目标编译。",
+    "Responses 服务是确定性 Mock SSE；只有本地命令执行路径是真实执行。",
+    "测试显式使用 PermissionProfile::Disabled 和 AskForApproval::Never，不能证明审批或沙箱。"
+  ],
+  "last_verified": "2026-08-24"
+}

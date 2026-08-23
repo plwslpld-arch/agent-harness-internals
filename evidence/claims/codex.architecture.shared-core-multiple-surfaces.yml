@@ -1,0 +1,64 @@
+{
+  "id": "codex.architecture.shared-core-multiple-surfaces",
+  "harness": "codex",
+  "dimension": "architecture.shared-core-multiple-surfaces",
+  "statement": "在锁定 Codex 中，交互终端、无界面执行、MCP Server 与 App Server 等产品入口由 CLI 分派到不同适配器；活动 Thread 由 ThreadManager 维护，CodexThread 包装 Session 与双向消息通道，Turn 再调用共享模型和工具核心。各表面共享核心边界，但不因此拥有完全相同的协议与能力。",
+  "capability": "default",
+  "version": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+  "surface": "cli-tui-exec-mcp-app-server",
+  "platform": "all",
+  "mode": "surface-dependent",
+  "evidence_level": "D",
+  "inference": "CLI 分派、ThreadManager、CodexThread、Turn、ToolRouter 和 Thread Store 的源码分别锁定入口、活动线程、执行与持久边界；把它们组合成一张共享核心架构图属于跨 crate 分析推断。具体入口、Feature、传输、配置和平台仍决定实际能力集合。",
+  "evidence": [
+    {
+      "type": "source",
+      "source": "codex",
+      "commit": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+      "path": "codex-rs/cli/src/main.rs",
+      "lines": "1137-1197",
+      "excerpt": "codex_exec::run_main(exec_cli, arg0_paths.clone()).await?;"
+    },
+    {
+      "type": "source",
+      "source": "codex",
+      "commit": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+      "path": "codex-rs/cli/src/main.rs",
+      "lines": "1247-1300",
+      "excerpt": "codex_app_server::run_main_with_transport_options("
+    },
+    {
+      "type": "source",
+      "source": "codex",
+      "commit": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+      "path": "codex-rs/core/src/thread_manager.rs",
+      "lines": "216-221",
+      "excerpt": "responsible for creating threads and maintaining"
+    },
+    {
+      "type": "source",
+      "source": "codex",
+      "commit": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+      "path": "codex-rs/core/src/codex_thread.rs",
+      "lines": "202-209",
+      "excerpt": "pub struct CodexThread {"
+    },
+    {
+      "type": "source",
+      "source": "codex",
+      "commit": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+      "path": "codex-rs/core/src/session/turn.rs",
+      "lines": "153-159",
+      "excerpt": "pub(crate) async fn run_turn("
+    },
+    {
+      "type": "source",
+      "source": "codex",
+      "commit": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+      "path": "codex-rs/thread-store/src/lib.rs",
+      "lines": "1-5",
+      "excerpt": "Application code should treat [`codex_protocol::ThreadId`] as the only durable thread handle."
+    }
+  ],
+  "last_verified": "2026-08-24"
+}

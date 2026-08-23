@@ -43,11 +43,11 @@
 
 ### Task 2：发布 Codex 主线入口、系统架构和真实 Turn
 
-- [ ] 新建 `docs/harnesses/codex/README.md`、系统架构图、端到端 Turn 图与入口 Claim。
-- [ ] 从真实上游集成测试提取用户输入、Responses 流、工具调用、工具结果和最终事件，不用伪 API 冒充源码格式。
-- [ ] 架构图覆盖配置、Thread、Session、模型客户端、工具路由、安全层、持久化和产品表面。
-- [ ] 渲染两图，检查中文、窄屏、箭头、颜色和 Claim 绑定。
-- [ ] 提交：`docs(codex): 发布主线入口与真实 Turn 全景`。
+- [x] 新建 `docs/harnesses/codex/README.md`、系统架构图、端到端 Turn 图与入口 Claim。
+- [x] 从真实上游集成测试提取用户输入、Responses 流、工具调用、工具结果和最终事件，不用伪 API 冒充源码格式。
+- [x] 架构图覆盖配置、Thread、Session、模型客户端、工具路由、安全层、持久化和产品表面。
+- [x] 渲染两图，检查中文、窄屏、箭头、颜色和 Claim 绑定。
+- [x] 提交：`docs(codex): 发布主线入口与真实 Turn 全景`。
 
 ### Task 3：配置、Prompt、AGENTS 与 Context Fragment
 

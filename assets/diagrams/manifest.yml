@@ -160,6 +160,22 @@
       "scope": "docs/harnesses/deepseek-harness/08-verification-design-limits.md",
       "alt": "DSH 从约束定义、运行时不变量、测试与文档同步到独立评测和生产观察的中文证据闭环图",
       "claims": ["deepseek-harness.verification.internal-gates-have-bounded-scope"]
+    },
+    {
+      "id": "codex-system-architecture",
+      "path": "assets/diagrams/codex/system-architecture.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/codex/README.md",
+      "alt": "Codex 从多种产品表面、线程与会话到模型工具循环、安全执行和持久化的中文系统架构图",
+      "claims": ["codex.architecture.shared-core-multiple-surfaces"]
+    },
+    {
+      "id": "codex-end-to-end-task",
+      "path": "assets/diagrams/codex/end-to-end-task.svg",
+      "type": "flow",
+      "scope": "docs/harnesses/codex/README.md",
+      "alt": "Codex 端到端任务从用户输入、首次模型采样、工具执行到结果回送和轮次完成的中文流程图",
+      "claims": ["codex.turn.tool-result-loop"]
     }
   ]
 }
