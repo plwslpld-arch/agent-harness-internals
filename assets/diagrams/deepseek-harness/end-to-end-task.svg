@@ -15,7 +15,7 @@
     <rect x="326" y="120" width="748" height="800" rx="25" fill="#E7F5F3" stroke="#087F7C" stroke-width="3"/>
     <rect x="1098" y="120" width="260" height="800" rx="25" fill="#F1EDF8" stroke="#795DA7" stroke-width="2.5"/>
     <text x="172" y="160" text-anchor="middle" fill="#285383" font-size="23" font-weight="760">外部触发与展示</text>
-    <text x="700" y="160" text-anchor="middle" fill="#086E6B" font-size="23" font-weight="760">Agent Harness 决策与持久状态</text>
+    <text x="700" y="160" text-anchor="middle" fill="#086E6B" font-size="23" font-weight="760">智能体运行框架决策与持久状态</text>
     <text x="1228" y="160" text-anchor="middle" fill="#60458C" font-size="23" font-weight="760">外部服务与副作用</text>
 
     <g filter="url(#shadow)">
@@ -33,11 +33,11 @@
 
       <rect x="1128" y="198" width="200" height="84" rx="18" fill="#FFFFFF" stroke="#9C83BF"/>
       <text x="1228" y="230" text-anchor="middle" fill="#17324D" font-size="19" font-weight="760">四　模型响应</text>
-      <text x="1228" y="257" text-anchor="middle" fill="#50677D" font-size="16">提出 bash 调用</text>
+      <text x="1228" y="257" text-anchor="middle" fill="#50677D" font-size="16">提出命令工具调用</text>
 
       <rect x="706" y="344" width="320" height="100" rx="18" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2"/>
       <text x="866" y="377" text-anchor="middle" fill="#955A00" font-size="19" font-weight="760">五　记录行动意图</text>
-      <text x="866" y="405" text-anchor="middle" fill="#50677D" font-size="16">合成 assistant/message</text>
+      <text x="866" y="405" text-anchor="middle" fill="#50677D" font-size="16">合成助手消息事件</text>
       <text x="866" y="429" text-anchor="middle" fill="#8A3D2F" font-size="15">此时副作用尚未发生</text>
 
       <rect x="370" y="344" width="280" height="100" rx="18" fill="#FFFFFF" stroke="#51A9A5"/>
@@ -66,14 +66,14 @@
       <text x="1228" y="593" text-anchor="middle" fill="#50677D" font-size="15">没有新工具调用</text>
 
       <rect x="706" y="672" width="320" height="100" rx="18" fill="#17324D"/>
-      <text x="866" y="705" text-anchor="middle" fill="#FFFFFF" font-size="19" font-weight="760">十一　Harness 终止</text>
+      <text x="866" y="705" text-anchor="middle" fill="#FFFFFF" font-size="19" font-weight="760">十一　运行框架终止</text>
       <text x="866" y="733" text-anchor="middle" fill="#D3E1EA" font-size="16">结束步骤与轮次</text>
       <text x="866" y="757" text-anchor="middle" fill="#D3E1EA" font-size="15">原因：正常完成</text>
 
       <rect x="72" y="672" width="200" height="100" rx="18" fill="#FFFFFF" stroke="#7A9FC8"/>
       <text x="172" y="705" text-anchor="middle" fill="#17324D" font-size="19" font-weight="760">十二　协议输出</text>
       <text x="172" y="733" text-anchor="middle" fill="#50677D" font-size="16">文本更新：DONE</text>
-      <text x="172" y="757" text-anchor="middle" fill="#50677D" font-size="15">停止原因：end_turn</text>
+      <text x="172" y="757" text-anchor="middle" fill="#50677D" font-size="15">停止原因：轮次结束</text>
 
       <rect x="1128" y="672" width="200" height="100" rx="18" fill="#FFFFFF" stroke="#9C83BF"/>
       <text x="1228" y="705" text-anchor="middle" fill="#17324D" font-size="19" font-weight="760">十三　证据消费者</text>

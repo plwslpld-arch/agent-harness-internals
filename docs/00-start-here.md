@@ -32,7 +32,7 @@ sources: []
 
 | 主线 | 入口证据 | 独特研究重点 | 当前状态 |
 | --- | --- | --- | --- |
-| DSH | TypeScript 多包源码与测试 | 上下文、KV-Cache、Code Mode、工具、会话和内置评测如何协作 | `reviewed` |
+| DSH | TypeScript 多包源码与测试 | 上下文、KV-Cache、Code Mode、工具、会话、反馈和评测接入如何协作 | `reviewed` |
 | Codex | Rust 核心、协议、测试和官方文档 | 多表面入口、工具策略、沙箱审批、压缩与恢复怎样连接 | `outline` |
 | Gemini CLI | Core/CLI、Policy、Safety 与 Confirmation 源码 | 策略确认、工具调度、会话和扩展的分层关系 | `outline` |
 | Claude | 官方公开文档与 Python/TypeScript SDK | 闭源产品契约和开源 SDK 实现的证据边界 | `outline` |

@@ -45,7 +45,7 @@
 
 | 主线 | 主要证据面 | 将回答的核心问题 | 当前状态 |
 | --- | --- | --- | --- |
-| DSH | DeepSeek Harness 锁定源码与上游测试 | 多包 TypeScript Harness 怎样组织模型、工具、会话、Code Mode 与评测能力 | `reviewed` |
+| DSH | DeepSeek Harness 锁定源码与上游测试 | 多包 TypeScript Harness 怎样组织模型、工具、会话、Code Mode、反馈与评测接入 | `reviewed` |
 | Codex | Rust 核心源码、协议、测试与官方文档 | CLI、工具、沙箱、审批、会话、压缩和多表面怎样连接 | `outline` |
 | Gemini CLI | Core/CLI 源码、Policy、Safety、Confirmation 与测试 | 工具调度、策略确认、会话和扩展怎样形成完整执行链 | `outline` |
 | Claude | 官方公开文档、Python SDK、TypeScript SDK 与示例 | Claude Code 的公开契约与 Agent SDK 的可见实现边界分别在哪里 | `outline` |

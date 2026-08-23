@@ -16,8 +16,8 @@
     <g font-size="19" text-anchor="middle" fill="#17324D">
       <rect x="90" y="181" width="210" height="48" rx="14" fill="#FFFFFF"/><text x="195" y="212">网页与命令行</text>
       <rect x="330" y="181" width="210" height="48" rx="14" fill="#FFFFFF"/><text x="435" y="212">无界面运行</text>
-      <rect x="570" y="181" width="210" height="48" rx="14" fill="#FFFFFF"/><text x="675" y="212">ACP 协议</text>
-      <rect x="810" y="181" width="210" height="48" rx="14" fill="#FFFFFF"/><text x="915" y="212">SDK 接口</text>
+      <rect x="570" y="181" width="210" height="48" rx="14" fill="#FFFFFF"/><text x="675" y="212">自动化协议</text>
+      <rect x="810" y="181" width="210" height="48" rx="14" fill="#FFFFFF"/><text x="915" y="212">开发工具接口</text>
       <rect x="1050" y="181" width="255" height="48" rx="14" fill="#FFFFFF"/><text x="1177" y="212">命令与自动触发</text>
     </g>
 
@@ -33,13 +33,13 @@
     <g fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"><path d="M322 383h27"/><path d="M587 383h27"/><path d="M852 383h27"/><path d="M1117 383h27"/></g>
 
     <rect x="55" y="486" width="925" height="326" rx="26" fill="#E7F5F3" stroke="#087F7C" stroke-width="3" filter="url(#shadow)"/>
-    <text x="84" y="526" fill="#086E6B" font-size="24" font-weight="760">三　Agent Harness 核心：状态机、服务和证据面</text>
+    <text x="84" y="526" fill="#086E6B" font-size="24" font-weight="760">三　智能体运行框架核心：状态机、服务和证据面</text>
     <g font-size="18">
-      <rect x="92" y="555" width="250" height="92" rx="18" fill="#FFFFFF" stroke="#51A9A5"/><text x="217" y="586" text-anchor="middle" fill="#17324D" font-weight="760">Prompt 与上下文</text><text x="217" y="615" text-anchor="middle" fill="#50677D">指令、历史、工具结构</text>
-      <rect x="392" y="555" width="250" height="92" rx="18" fill="#17324D"/><text x="517" y="586" text-anchor="middle" fill="#FFFFFF" font-weight="760">Agent Loop</text><text x="517" y="615" text-anchor="middle" fill="#D3E1EA">轮次、步骤、继续或终止</text>
-      <rect x="692" y="555" width="250" height="92" rx="18" fill="#FFFFFF" stroke="#51A9A5"/><text x="817" y="586" text-anchor="middle" fill="#17324D" font-weight="760">LLM 路由与适配</text><text x="817" y="615" text-anchor="middle" fill="#50677D">请求、流式块、错误</text>
+      <rect x="92" y="555" width="250" height="92" rx="18" fill="#FFFFFF" stroke="#51A9A5"/><text x="217" y="586" text-anchor="middle" fill="#17324D" font-weight="760">提示与上下文</text><text x="217" y="615" text-anchor="middle" fill="#50677D">指令、历史、工具结构</text>
+      <rect x="392" y="555" width="250" height="92" rx="18" fill="#17324D"/><text x="517" y="586" text-anchor="middle" fill="#FFFFFF" font-weight="760">智能体循环</text><text x="517" y="615" text-anchor="middle" fill="#D3E1EA">轮次、步骤、继续或终止</text>
+      <rect x="692" y="555" width="250" height="92" rx="18" fill="#FFFFFF" stroke="#51A9A5"/><text x="817" y="586" text-anchor="middle" fill="#17324D" font-weight="760">大模型路由与适配</text><text x="817" y="615" text-anchor="middle" fill="#50677D">请求、流式块、错误</text>
       <rect x="92" y="686" width="250" height="92" rx="18" fill="#FFFFFF" stroke="#51A9A5"/><text x="217" y="717" text-anchor="middle" fill="#17324D" font-weight="760">工具与安全</text><text x="217" y="746" text-anchor="middle" fill="#50677D">注册、策略、审批、隔离</text>
-      <rect x="392" y="686" width="250" height="92" rx="18" fill="#FFFFFF" stroke="#51A9A5"/><text x="517" y="717" text-anchor="middle" fill="#17324D" font-weight="760">Session 事件</text><text x="517" y="746" text-anchor="middle" fill="#50677D">日志、投影、持久化、恢复</text>
+      <rect x="392" y="686" width="250" height="92" rx="18" fill="#FFFFFF" stroke="#51A9A5"/><text x="517" y="717" text-anchor="middle" fill="#17324D" font-weight="760">会话事件</text><text x="517" y="746" text-anchor="middle" fill="#50677D">日志、投影、持久化、恢复</text>
       <rect x="692" y="686" width="250" height="92" rx="18" fill="#FFFFFF" stroke="#51A9A5"/><text x="817" y="717" text-anchor="middle" fill="#17324D" font-weight="760">编排与扩展</text><text x="817" y="746" text-anchor="middle" fill="#50677D">目标、委派、技能、工作流</text>
     </g>
     <g fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"><path d="M342 600h42"/><path d="M642 600h42"/><path d="M517 647v31"/><path d="M392 732h-42"/><path d="M642 732h42"/></g>

@@ -17,7 +17,7 @@
 - [x] 阶段 2：共同基础课程。
   - 计划：`specs/2026-08-23-phase-2-foundations-implementation-plan.md`
   - 验收：六篇基础课程达到 `reviewed`，图示、证据、中文和内容门禁通过。
-- [ ] 阶段 3A：DeepSeek Harness 主线。
+- [x] 阶段 3A：DeepSeek Harness 主线。
   - 计划：`specs/2026-08-24-phase-3a-dsh-implementation-plan.md`
   - 验收：现有长文逐篇重审，完整任务链、评测接口、图示和实验通过。
 - [ ] 阶段 3B：Codex 主线。

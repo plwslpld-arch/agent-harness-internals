@@ -1,0 +1,62 @@
+{
+  "stage": "phase-3a-dsh",
+  "date": "2026-08-24",
+  "commit": "77dd65ada229ae28ed13e255178082403961d665",
+  "promises": [
+    {"id": "p-nine-course-line", "statement": "DSH 主线入口与八篇课程均达到 reviewed，沿真实任务覆盖启动、上下文、循环、工具安全、状态、编排、产品表面和自验证。"},
+    {"id": "p-locked-evidence", "statement": "关键默认、安全、状态、终止、恢复、反馈和验证结论绑定锁定源码、上游测试与明确证据等级。"},
+    {"id": "p-eval-boundary", "statement": "消息反馈、会话反馈、遥测、训练适配、Checkpoint 选择和独立发布评测保持语义分离。"},
+    {"id": "p-platform-boundary", "statement": "审批、Sandbox 和无人值守能力按平台与执行强度限定，没有从单一测试外推完整安全保证。"},
+    {"id": "p-chinese-visuals", "statement": "十张 DSH 正式图全部使用中文说明，保留的拉丁字符仅为项目名、协议或真实夹具值，并经集中渲染目检。"},
+    {"id": "p-atomic-navigation", "statement": "DSH 九篇整批进入正式导航，缺少或降级任一篇都会失败，其他五条主线与扩展样本没有提前开放。"},
+    {"id": "p-legacy-retirement", "statement": "十五篇旧 DSH 长文逐项吸收后退出公开树，附录、角色路径与研究记录链接均已改接新主线。"},
+    {"id": "p-node24-all-sources", "statement": "Node 24 聚合门禁与十二个锁定来源的 all 配置验证全部通过。"}
+  ],
+  "evidence": [
+    {"id": "e-course-files", "promise": "p-nine-course-line", "type": "file", "reference": "docs/harnesses/deepseek-harness/", "summary": "入口与 01 至 08 共九篇状态均为 reviewed，每篇具备真实输入输出、调用链、失败限制、验证方法和带答案自检。"},
+    {"id": "e-content-contract", "promise": "p-nine-course-line", "type": "test", "reference": "scripts/check-content-contract.mjs", "summary": "一级主线入口契约和八篇 Harness 文章深度契约通过。"},
+    {"id": "e-claims", "promise": "p-locked-evidence", "type": "file", "reference": "evidence/claims/deepseek-harness.*.yml", "summary": "十二条 DSH 公开 Claim 登记能力状态、提交、表面、平台、模式、证据等级、摘录和推断。"},
+    {"id": "e-evidence-map", "promise": "p-locked-evidence", "type": "file", "reference": "evidence/claims/deepseek-harness/evidence-map.yml", "summary": "九篇课逐项登记源码、上游测试、旧文归宿、计划 Claim 和五类高风险。"},
+    {"id": "e-feedback-article", "promise": "p-eval-boundary", "type": "file", "reference": "docs/harnesses/deepseek-harness/07-surfaces-feedback-eval.md", "summary": "分别解释消息 sidecar、会话反馈事件、遥测、RewardAdapter 与独立 Eval，并明确反馈不是训练奖励。"},
+    {"id": "e-feedback-claim", "promise": "p-eval-boundary", "type": "file", "reference": "evidence/claims/deepseek-harness.feedback.is-not-training-reward.yml", "summary": "反馈边界结论绑定消息类型、会话事件和 Web 上游测试，不把二值评价升级成发布判定。"},
+    {"id": "e-security-article", "promise": "p-platform-boundary", "type": "file", "reference": "docs/harnesses/deepseek-harness/04-tools-security.md", "summary": "分开注册、策略、单调防护、一次性审批与平台执行后端，Windows 证据明确为 partial。"},
+    {"id": "e-security-claim", "promise": "p-platform-boundary", "type": "file", "reference": "evidence/claims/deepseek-harness.security.approval-sandbox-separation.yml", "summary": "审批与隔离结论绑定 Linux、macOS 和 Windows 各自证据，不跨平台升级。"},
+    {"id": "e-diagram-sheet", "promise": "p-chinese-visuals", "type": "render", "reference": "evidence/reviews/phase-3a-dsh-contact-sheet.png", "summary": "十图集中复核未发现文字截断、节点重叠、箭头误向或英文说明句；DSH、DeepSeek Harness 和真实夹具值属于必要标识。"},
+    {"id": "e-visual-manifest", "promise": "p-chinese-visuals", "type": "file", "reference": "assets/diagrams/manifest.yml", "summary": "十张 DSH 图具有中文替代文本、合法图类型、文章范围和 Claim 绑定。"},
+    {"id": "e-navigation-test", "promise": "p-atomic-navigation", "type": "test", "reference": "scripts/tests/navigation.test.mjs", "summary": "新增 DSH 九篇完整批次与扩展样本禁入失败测试，当前共九项导航测试通过。"},
+    {"id": "e-navigation-files", "promise": "p-atomic-navigation", "type": "file", "reference": "README.md", "summary": "总入口只新增 reviewed 的 DSH 主线，其余五条仍为 outline。"},
+    {"id": "e-legacy-map", "promise": "p-legacy-retirement", "type": "file", "reference": "evidence/claims/deepseek-harness/evidence-map.yml", "summary": "legacyCoverage 将十五篇旧文分别映射到九篇新课。"},
+    {"id": "e-legacy-links", "promise": "p-legacy-retirement", "type": "command", "reference": "node scripts/check-links.mjs", "summary": "旧文删除后五十三篇 Markdown 的本地链接全部通过。"},
+    {"id": "e-source-all", "promise": "p-node24-all-sources", "type": "command", "reference": "node scripts/verify-sources.mjs --profile all", "summary": "十二个来源定义与十二个 all 配置 Checkout 全部匹配锁定提交。"},
+    {"id": "e-check-all", "promise": "p-node24-all-sources", "type": "command", "reference": "node scripts/check-all.mjs", "summary": "十七组聚合检查、八十七项单元测试、三十篇文章、十八条 Claim、二十张正式图与四十五次正式导航核对通过。"}
+  ],
+  "findings": [
+    {"id": "f-english-diagram-labels", "priority": "high", "status": "resolved", "summary": "阶段合并图发现系统图和任务图仍把智能体运行框架、循环、提示、会话与停止原因写成英文标签。"},
+    {"id": "f-eval-capability-wording", "priority": "high", "status": "resolved", "summary": "总入口曾用评测能力和内置评测概括 DSH，可能把反馈、遥测或 benchmark 误读为独立发布 Eval。"},
+    {"id": "f-partial-navigation", "priority": "high", "status": "resolved", "summary": "原导航只检查单链接状态，不能阻止 DSH 缺一篇时仍显示为完整主线。"},
+    {"id": "f-platform-generalization", "priority": "high", "status": "resolved", "summary": "工具安全主题容易从一次审批或单个平台测试外推完整隔离保证。"},
+    {"id": "f-spill-fixture-false-success", "priority": "medium", "status": "resolved", "summary": "外溢查询夹具中验证命令退出 1 后仍回复完成，不能把该夹具当成成功验证证据。"},
+    {"id": "f-subagent-root-fixture", "priority": "medium", "status": "resolved", "summary": "递归深度夹具的根会话只显示一级完成，单看根快照不能证明深层拒绝。"},
+    {"id": "f-target-environment-unverified", "priority": "medium", "status": "open", "summary": "本阶段没有现场运行真实模型供应商、Linux 或 macOS 沙箱和线上遥测，相关结论保持源码或上游测试级。"},
+    {"id": "f-remote-not-deployed", "priority": "medium", "status": "open", "summary": "GitHub 仓库改名、About、Topics、社交预览、保护规则和 Contributors 留到阶段 6 统一部署。"},
+    {"id": "f-legacy-style-warning", "priority": "low", "status": "open", "summary": "附录 B 仍有一条非阻断句长节奏提醒，不影响 DSH 九篇正文。"}
+  ],
+  "resolutions": [
+    {"id": "f-english-diagram-labels", "action": "把系统图与任务图中的 Agent Harness、Agent Loop、Prompt、LLM、Session、ACP、SDK、bash、assistant/message、Harness 和 end_turn 说明改为中文，再重渲染十图合并图。", "evidence": ["e-diagram-sheet", "e-visual-manifest"]},
+    {"id": "f-eval-capability-wording", "action": "总入口统一改成反馈与评测接入，正文继续明确消息反馈、会话反馈、遥测、训练适配和发布评测的分层。", "evidence": ["e-feedback-article", "e-feedback-claim", "e-navigation-files"]},
+    {"id": "f-partial-navigation", "action": "增加 DSH 九篇 required batch 和失败测试，并把扩展样本登记为正式导航禁入前缀。", "evidence": ["e-navigation-test", "e-navigation-files"]},
+    {"id": "f-platform-generalization", "action": "安全课分别记录 Linux、macOS、Windows 后端证据，说明审批是决策通道而非隔离机制，并保留 partial。", "evidence": ["e-security-article", "e-security-claim"]},
+    {"id": "f-spill-fixture-false-success", "action": "会话课明确记录退出码 1 与最终回复的矛盾，限定该夹具只能证明 locator 与记录形状。", "evidence": ["e-course-files", "e-claims"]},
+    {"id": "f-subagent-root-fixture", "action": "编排课明确根快照不能独自证明深层拒绝，要求结合子会话和 provider 测试核对。", "evidence": ["e-course-files", "e-claims"]}
+  ],
+  "commands": [
+    {"command": "node --version", "exit_code": 0, "summary": "输出 v24.19.0。"},
+    {"command": "node scripts/check-all.mjs", "exit_code": 0, "summary": "十七组聚合检查与八十七项单元测试通过，仅保留旧附录的一条文风提醒。"},
+    {"command": "node scripts/verify-sources.mjs --profile all", "exit_code": 0, "summary": "十二个来源定义与十二个 all 配置 Checkout 通过。"},
+    {"command": "渲染并打开 phase-3a-dsh-contact-sheet.png", "exit_code": 0, "summary": "十图未见截断、重叠、箭头误向或英文自然语言说明残留。"},
+    {"command": "逐篇统计 status、Claim、失败与限制、验证方法和自检", "exit_code": 0, "summary": "九篇全部 reviewed，十二处 Claim 引用，每篇均包含后三类必需章节。"},
+    {"command": "node scripts/check-links.mjs", "exit_code": 0, "summary": "五十三篇 Markdown 的本地链接通过。"},
+    {"command": "git diff --check", "exit_code": 0, "summary": "没有空白错误。"}
+  ],
+  "result": "pass"
+}
