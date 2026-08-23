@@ -43,6 +43,14 @@ export function sha256(path) {
   return createHash('sha256').update(readFileSync(path)).digest('hex');
 }
 
+// 许可证这类文本文件按内容比对，不按字节。Windows 上 `core.autocrlf=true`
+// 会在 checkout 时把 LF 换成 CRLF，逐字节哈希必然对不上，门禁于是在 Windows
+// 上永远失败（实测 codex / opencode / mini-swe-agent 三个源都会命中）。
+// 许可证变没变看的是条款，不是换行符，所以先归一化再哈希。
+export function sha256Text(path) {
+  return createHash('sha256').update(readFileSync(path, 'utf8').replace(/\r\n/gu, '\n')).digest('hex');
+}
+
 export function writeDocument(path, value) {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
 }

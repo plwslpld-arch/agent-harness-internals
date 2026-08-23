@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { checkoutsDir, fail, readManifest, sha256, sourcesDir, writeDocument } from './lib.mjs';
+import { checkoutsDir, fail, readManifest, sha256Text, sourcesDir, writeDocument } from './lib.mjs';
 
 const updateLock = process.argv.includes('--update-lock');
 const { manifest, lock, locks } = readManifest();
@@ -29,7 +29,7 @@ for (const source of manifest.sources) {
     errors.push(`${source.id}: declared license file is missing: ${licenseFile}`);
     continue;
   }
-  const actual = sha256(path);
+  const actual = sha256Text(path);
   const locked = locks.get(source.id);
   if (updateLock && locked.licenseSha256 !== actual) {
     locked.licenseSha256 = actual;

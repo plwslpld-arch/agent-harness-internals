@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "note": "中文文风门禁的规则表。阈值由现有 21 篇正文标定，改阈值要同时改 AGENTS.md 里的说明。severity 取 error（进门禁）或 warn（只报告）。",
+  "targets": ["docs/*.md", "README.md", "CONTRIBUTING.md"],
+  "rules": {
+    "dashDensity": {
+      "severity": "error",
+      "maxPerThousandChars": 1.0,
+      "minCount": 3,
+      "why": "破折号当万能连接符是本仓库实测的第一病灶。上一轮改写从 478 处降到 44 处，没有门禁就会涨回去。短文件里两三处不算密集，所以密度之外再要求绝对数达到 minCount 才失败。"
+    },
+    "bannedPhrases": {
+      "severity": "error",
+      "max": 0,
+      "phrases": [
+        "值得注意的是",
+        "需要注意的是",
+        "换句话说",
+        "至关重要",
+        "本质上",
+        "一句话总结",
+        "总的来说",
+        "综上所述",
+        "不难发现",
+        "由此可见",
+        "众所周知",
+        "在当今",
+        "深入探讨",
+        "旨在为",
+        "让我们一起",
+        "接下来我们",
+        "首先.{0,30}其次.{0,30}最后",
+        "不仅.{0,20}而且",
+        "起到了.{0,8}的作用",
+        "随着.{0,10}的不断发展",
+        "三件事值得先记住",
+        "以下几点",
+        "总而言之"
+      ],
+      "why": "CHANGELOG 记录这批词已经清零。清零之后需要门禁才守得住。"
+    },
+    "antithesis": {
+      "severity": "error",
+      "maxPerThousandChars": 0.6,
+      "minCount": 2,
+      "pattern": "不是[^，。；\\n]{1,20}，\\s*而是",
+      "why": "「不是 X，而是 Y」的对仗是 AGENTS.md 点名的病灶，但这个句式本身也承担精确澄清。抽查现有正文，「不是删事件，而是往 surface 上追加一条替换事件」这类都是好句子，按绝对数卡会误伤。改成按密度卡，只挡用得最密的那篇。"
+    },
+    "quoteStyle": {
+      "severity": "error",
+      "max": 0,
+      "why": "中文正文统一用「」。英文原文里的引号保持原样，所以以 ASCII 为主的行不计。"
+    },
+    "englishNeedsChinese": {
+      "severity": "error",
+      "lookaheadLines": 3,
+      "minAsciiRatio": 0.8,
+      "why": "AGENTS.md 早就要求「英文一律带中文」，但一直没有门禁。引用块之后 3 行内必须出现中文。"
+    },
+    "sentenceRhythm": {
+      "severity": "warn",
+      "minCoefficientOfVariation": 0.6,
+      "minSentences": 40,
+      "why": "句长过于均匀是 AI 腔里词表查不出来的那一半。现有 21 篇正文的变异系数在 0.6 到 0.75 之间，低于 0.6 说明句子被写齐了。实验性规则，先只报告。"
+    },
+    "sentenceLength": {
+      "severity": "warn",
+      "maxMeanChars": 45,
+      "minMeanChars": 18,
+      "minSentences": 40,
+      "why": "均句长过短同样是模型腔。现有正文在 25 到 32 字之间。实验性规则，先只报告。"
+    }
+  }
+}
