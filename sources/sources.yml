@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "project": "DeepSeek Harness Internals",
+  "project": "Harness Internals",
   "sources": [
     {
       "id": "deepseek-harness",

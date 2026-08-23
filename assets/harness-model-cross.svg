@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+  <title id="title">Harness by model controlled score grid</title>
+  <desc id="desc">Mean pass at one scores from the controlled grid in arXiv 2605.23950, showing three models across minimal, improved, and full harness configurations</desc>
+  <rect width="1200" height="680" rx="28" fill="#0b1220"/>
+  <text x="58" y="62" fill="#f8fafc" font-size="30" font-family="Arial, sans-serif" font-weight="700">Harness × model · controlled factorial grid</text>
+  <text x="58" y="94" fill="#94a3b8" font-size="16" font-family="Arial, sans-serif">SWE-bench Verified subset100 · mean pass@1 over two runs · percent</text>
+  <g font-family="Arial, sans-serif">
+    <g fill="#cbd5e1" font-size="18" text-anchor="middle" font-weight="700"><text x="500" y="150">H1 · Minimal</text><text x="750" y="150">H2 · Improved</text><text x="1000" y="150">H3 · Full</text></g>
+    <g fill="#e2e8f0" font-size="20" font-weight="700"><text x="75" y="240">GLM-5.1</text><text x="75" y="370">GPT-5.4</text><text x="75" y="500">Kimi K2.6</text></g>
+    <g stroke="#334155"><path d="M350 175H1125M350 305H1125M350 435H1125M350 565H1125"/><path d="M375 120V565M625 120V565M875 120V565M1125 120V565"/></g>
+    <g font-size="34" text-anchor="middle" font-weight="700">
+      <g fill="#bae6fd"><text x="500" y="245">52.5</text><text x="500" y="375">55.0</text><text x="500" y="505">52.0</text></g>
+      <g fill="#fde68a"><text x="750" y="245">56.5</text><text x="750" y="375">58.5</text><text x="750" y="505">59.0</text></g>
+      <g fill="#86efac"><text x="1000" y="245">65.5</text><text x="1000" y="375">63.5</text><text x="1000" y="505">60.5</text></g>
+    </g>
+    <g fill="#94a3b8" font-size="15" text-anchor="middle"><text x="500" y="272">baseline</text><text x="750" y="402">+3.5 pp</text><text x="1000" y="272">+13.0 pp</text><text x="1000" y="402">+8.5 pp</text><text x="1000" y="532">+8.5 pp</text></g>
+    <rect x="75" y="588" width="1050" height="62" rx="16" fill="#172554" stroke="#3b82f6"/>
+    <text x="600" y="615" text-anchor="middle" fill="#dbeafe" font-size="19" font-weight="700">Mean harness variance / mean model variance = 7.80× · 6 ranking reversals out of 9 comparisons</text>
+    <text x="600" y="638" text-anchor="middle" fill="#93c5fd" font-size="14">Source: arXiv:2605.23950 v1, Table 2 (2026-05-07). Reproduced as a cited result; not rerun here.</text>
+  </g>
+</svg>

@@ -22,6 +22,6 @@ Claude Code 本体不开源。本仓库只把 Claude Agent SDK 的类型与协�
 
 Cordis 由 dsh 以 `vendor/` 形式内置并做了本地修改，本仓库只分析 dsh 内那一份，不单独锁定 Cordis 上游仓库。Cordis 论文（无明确再发布许可）只做引用与原创释义。
 
-`assets/deepseek-harness-atlas.svg` 中的鱼形图标改编自 dsh 固定 commit 下的 `website/public/favicon.svg`（Copyright (c) 2026 DeepSeek，MIT），右下角罗盘子标为本项目原创。DeepSeek 的名称与图形仅用于标明研究对象，不表示官方认可、赞助或参与。
+`assets/harness-internals.svg`、`agent-harness-matrix.svg`、`dsh-codex-subsystems.svg`、`harness-model-cross.svg` 与 `harness-coupling.svg` 为本项目原创，只使用文字与几何图形，不复用上游 logo。`harness-model-cross.svg` 复述 arXiv:2605.23950 v1 Table 2 的公开数值，图中标明日期、口径与未复跑边界。
 
 社交媒体、Issue、Discussion 与论文只保存必要元数据、短引用、链接与原创分析，不镜像受版权保护的完整内容。
