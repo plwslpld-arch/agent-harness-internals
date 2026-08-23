@@ -64,9 +64,9 @@ $ dsh web
 
 先说清三件事：
 
-**一、模型每一步收到的是三块，不是一块。** system 字符串由 `renderPrompt(assembly)` 现拼（`packages/core/system-prompt/src/index.ts:212`），工具 schema 数组由同一次 `assemble()` 一起产出，会话历史由 `session.deriveMessages()` 从事件日志投影出来（`packages/core/session/src/index.ts:726`）。三块在 `buildRequest` 里合成一个冻结对象，再交给 **adapter（适配器）** 序列化成 DeepSeek chat-completions 请求体（`packages/llm/llm-deepseek/src/serialize.ts:151`，system 进 `messages[0]` 在 `:156-158`）。adapter 就是把 dsh 内部那套统一的请求对象翻译成某一家厂商 HTTP 请求体的那一层，换一家模型就换一个 adapter。哪一块放什么，见 [01 System Prompt](01-system-prompt.md)。
+**一、模型每一步收到的是三块，不是一块。** system 字符串由 `renderPrompt(assembly)` 现拼（`packages/core/system-prompt/src/index.ts:212`），工具 schema 数组由同一次 `assemble()` 一起产出，会话历史由 `session.deriveMessages()` 从事件日志投影出来（`packages/core/session/src/index.ts:726`）。三块在 `buildRequest` 里合成一个冻结对象，再交给 **adapter（适配器）** 序列化成 DeepSeek chat-completions 请求体（`packages/llm/llm-deepseek/src/serialize.ts:377`，system 进 `messages[0]` 在 `:156-158`）。adapter 就是把 dsh 内部那套统一的请求对象翻译成某一家厂商 HTTP 请求体的那一层，换一家模型就换一个 adapter。哪一块放什么，见 [01 System Prompt](01-system-prompt.md)。
 
-**二、`assemble()` 每一步都重跑，但设计目标是字节不变。** `request/header` 事件只在首次或 `headerEquals` 判定变化时才写（`packages/core/agent-loop/src/agent.ts:464-470`），这既是审计记录，也是「前缀有没有断」的可观测量。为什么这条约束值得整套架构围着它转，见 [02 KV-Cache](02-kv-cache.md)。
+**二、`assemble()` 每一步都重跑，但设计目标是字节不变。** `request/header` 事件只在首次或 `headerEquals` 判定变化时才写（`packages/core/agent-loop/src/agent.ts:483-489`），这既是审计记录，也是「前缀有没有断」的可观测量。为什么这条约束值得整套架构围着它转，见 [02 KV-Cache](02-kv-cache.md)。
 
 **三、「模型可见 ⟺ 已记录」是硬不变量。** 任何进入请求的内容都必须先成为一条 session 事件，所以你在 `agent.ts:282-284` 看到的是「先 append 再发」，而不是「发完再记」。上游把这条写进了 `docs/architecture.md:96`，还写了一句「a runtime invariant asserts it」（有一条运行时不变量在断言这件事）。这句话要打个折：那条断言确实存在（`packages/core/agent-loop/src/invariant.ts:39-42`），但它挂在可选的 `dsh-invariants` 服务上，而出厂的 `dsh` 配置**一个 invariant 都不挂**（`.agents/notes/implemented/simplification/2026-08-03-omit-invariants-from-shipped-config.md:13`）。也就是说，你正常跑起来的进程里那条断言根本没上岗。真正一直生效的是写入侧的强制：surface（表面，事件日志里模型能看见的那个子视图，下一节详解）事件不带 `surfaceOp` 直接抛。展开见 [05 Session](05-session.md)。
 
@@ -188,7 +188,7 @@ $ dsh web
 
 **1. `assemble()` 每一步都重跑一遍，为什么反而要求它每次产出的字节一模一样？**
 
-重跑是为了让插件树的当前状态说了算：谁装上了、谁卸了、哪个 scope 遮蔽了哪个，都在这一步现算。字节不变是为了让这件事对模型不可见，因为模型看到的开头一变，前缀复用就断了。dsh 把这个约束做成了可观测量：`request/header` 事件只在首次或 `headerEquals` 判定变化时才写（`packages/core/agent-loop/src/agent.ts:464-470`），所以日志里凭空多出一条 header，就等于告诉你「这一步前缀断了」。展开见 [02 KV-Cache](02-kv-cache.md)。
+重跑是为了让插件树的当前状态说了算：谁装上了、谁卸了、哪个 scope 遮蔽了哪个，都在这一步现算。字节不变是为了让这件事对模型不可见，因为模型看到的开头一变，前缀复用就断了。dsh 把这个约束做成了可观测量：`request/header` 事件只在首次或 `headerEquals` 判定变化时才写（`packages/core/agent-loop/src/agent.ts:483-489`），所以日志里凭空多出一条 header，就等于告诉你「这一步前缀断了」。展开见 [02 KV-Cache](02-kv-cache.md)。
 
 **2. 上游说「模型可见 ⟺ 已记录」由一条运行时不变量保证，这篇为什么要给这句话打折？打完折还剩什么在兜底？**
 

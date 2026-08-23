@@ -64,7 +64,7 @@ OpenCode 把日期放进 system 是这里唯一明显的缓存漏洞：跨天的
 | --- | --- | --- |
 | dsh | `$DSH_HOME/AGENTS.md` + 项目根到 cwd 的整条目录链，同目录里 `AGENTS.md`/`CLAUDE.md` 都加载，之后按内容去重；65536 字节预算（是组合里配的值，schema 没有默认，`packages/bundle/base/cordis.patch.yml:232-235`），超了先丢最宽的 | user 消息里的 `<system-reminder>`，只有 fs 工具动过文件才刷新 |
 | Claude Code | 目录树向上全量拼接，子目录惰性加载，`@import` 最多 4 跳，另有 `.claude/rules` 可按 `paths:` 限定作用域 | user 消息（官方文档明确说是为了保住 system 缓存） |
-| Codex | 项目根到 cwd 逐级找 `AGENTS.override.md`/`AGENTS.md`，32 KiB 预算（`codex!codex-rs/core/src/config/mod.rs:210`） | `input` 数组头部的 developer 消息 |
+| Codex | 项目根到 cwd 逐级找 `AGENTS.override.md`/`AGENTS.md`，32 KiB 预算（`codex!codex-rs/core/src/config/mod.rs:224`） | `input` 数组头部的 developer 消息 |
 | OpenCode | 从 cwd 向上 `findUp`，**第一个命中的文件名类别为准**（不堆叠所有祖先）；支持 http(s) 远程 URL | system 段；另有懒加载——模型 read 某个子目录文件时，才把沿途未加载的 AGENTS.md 作为工具结果附件注入 |
 | pi | 全局 + 完整祖先链的 `AGENTS.override`/`AGENTS`/`CLAUDE.md` | system 里的 `<project_context>` |
 | mini-swe-agent | 不支持 | — |
@@ -88,9 +88,9 @@ OpenCode 的「懒加载嵌套 AGENTS.md」是这一维里最聪明的设计：�
 | --- | --- | --- |
 | **dsh** | 没有任何缓存 API 调用。让 `请求 = f(事件日志)`，日志只追加，投影是纯函数，于是每次请求天然是上次的字节级扩展 | `deriveMessages()` + `EpochHeader` 按值比较，见 [02 KV-Cache](02-kv-cache.md) |
 | **Claude Code** | 显式断点分四层：静态 system+tools（全局缓存）→ CLAUDE.md（项目内）→ 会话上下文 → 对话消息。切模式用工具（`EnterPlanMode`）而不是换工具集；压缩请求复用父会话完全相同的 system/tools | 官方文档 [prompt-caching](https://code.claude.com/docs/en/prompt-caching) |
-| **Codex** | `prompt_cache_key = session_id`，子 agent 共享同一个 key；`store: false` 全量重放历史 + 加密 reasoning 内容 | `codex!codex-rs/core/src/client.rs:484`（key 取 session_id）、`:921`（挂进请求）、`:931`（`store: false`） |
+| **Codex** | `prompt_cache_key = session_id`，子 agent 共享同一个 key；`store: false` 全量重放历史 + 加密 reasoning 内容 | `codex!codex-rs/core/src/client.rs:485`（key 取 session_id）、`:921`（挂进请求）、`:931`（`store: false`） |
 | **OpenCode** | AI-SDK 路径给**前 2 条 system + 末 2 条消息**打 ephemeral；OpenAI 家族用 sessionID 当 `promptCacheKey`；工具按名字排序保证顺序稳定 | `packages/opencode/src/provider/transform.ts:359` |
-| **pi** | 三锚点：system 块、最后一个工具、最后一条用户消息，可选 1 小时保留；**摘要请求刻意用 `cacheRetention: "none"` + 新 sessionId**，避免污染主会话的缓存分片 | `pi!packages/coding-agent/src/core/compaction/compaction.ts:573` |
+| **pi** | 三锚点：system 块、最后一个工具、最后一条用户消息，可选 1 小时保留；**摘要请求刻意用 `cacheRetention: "none"` + 新 sessionId**，避免污染主会话的缓存分片 | `pi!packages/coding-agent/src/core/compaction/compaction.ts:577` |
 | **mini-swe-agent** | 只给最后一条消息打 ephemeral，工具恒为一个 bash | `src/minisweagent/models/utils/cache_control.py:49` |
 
 表里的英文字段先过一遍：`deriveMessages()` 是「从日志派生出消息」的那个函数，`EpochHeader` 直译「纪元头」，指一次模型调用的那份调用快照；Codex 的 `prompt_cache_key` 是「提示词缓存键」，`store: false` 是告诉服务端「别帮我存这次的历史」；OpenCode 的 `promptCacheKey` 同理，ephemeral 就是上面那个「短暂」标记；pi 的 `cacheRetention: "none"` 意思是「这次请求不要写缓存」。`EnterPlanMode`（进入计划模式）是 Claude Code 用来切模式的那个工具的名字。
@@ -113,7 +113,7 @@ OpenCode 的「懒加载嵌套 AGENTS.md」是这一维里最聪明的设计：�
 | --- | --- | --- | --- |
 | **dsh** | 上下文压力超过配置比例，或 `CONTEXT_WINDOW_EXCEEDED` 溢出后恢复 | 从 surface 头开始压，保留尾部一段，不拆 tool 配对 | 摘要请求逐字复用主会话的 system/tools，指令放尾部；压缩前先跑工具结果剪枝 |
 | **Claude Code** | 默认到模型上限（可 `/autocompact` 调），**先清旧工具输出，再摘要** | 明确的幸存清单：CLAUDE.md 和 auto memory 从磁盘重注入、已调用 skill 正文重注入（单个 5k、总计 25k tokens 上限） | 有防抖动：单个大输出导致压完立刻又满时，几次后停止自动压缩并报错，而不是死循环 |
-| **Codex** | `(context_window * 9) / 10`，配置只能往低调不能往高调（`codex!codex-rs/protocol/src/openai_models.rs:482-493`） | 保留 ≤20k tokens 的用户消息（`codex!codex-rs/core/src/compact.rs:57`）+ 摘要 | 三种实现回退链（远程 v2 → 远程 v1 → 本地）；还有一种「不摘要，直接开新窗口 + 让模型自管预算」的模式；摘要注入位置刻意对齐训练分布 |
+| **Codex** | `(context_window * 9) / 10`，配置只能往低调不能往高调（`codex!codex-rs/protocol/src/openai_models.rs:486-497`） | 保留 ≤20k tokens 的用户消息（`codex!codex-rs/core/src/compact.rs:57`）+ 摘要 | 三种实现回退链（远程 v2 → 远程 v1 → 本地）；还有一种「不摘要，直接开新窗口 + 让模型自管预算」的模式；摘要注入位置刻意对齐训练分布 |
 | **OpenCode** | 可用额度 = 输入上限 − reserved，reserved 默认取 20,000 与该模型 maxOutputTokens 的**较小值**（`opencode!packages/opencode/src/session/overflow.ts:8-19`） | 尾部 25% 预算，夹在 2k–15k 之间（`opencode!packages/opencode/src/session/compaction.ts:118`），可在 turn 内切分 | 用一个**专用的、没有工具的 compaction agent** 做摘要；可选清空旧工具输出为 `"[Old tool result content cleared]"` |
 | **pi** | 给「提示词 + 模型回复」预留 16,384 token，用不下了就压（`pi!packages/coding-agent/src/core/compaction/compaction.ts:134`） | 保留最近 20,000 token（`:135`），**绝不在工具结果处切** | 摘要作为 `CompactionEntry` 追加进 JSONL 会话树；跨 turn 时做 split-turn 双摘要 |
 | **mini-swe-agent** | **没有压缩** | — | 唯一保护是 observation 超 10,000 字符做 head/tail 截断（`mini-swe-agent!src/minisweagent/config/mini.yaml:113-124`）；撞上窗口直接终止任务 |
@@ -136,7 +136,7 @@ mini-swe-agent 没有压缩不是缺陷，是立场：它主张 harness 应该�
 | **Claude Code** | 全量重发 + 缓存；并行工具批次 | 是 | 超时命令自动转后台；用户可以在模型跑的时候排队补充消息 |
 | **Codex** | ThreadManager → Session → Task → `run_turn` → 采样请求 | 是，`FuturesOrdered`，**边流边执行**（`OutputItemDone` 一到就启动工具 future） | `StepContext` 快照：一次采样内的上下文、工具列表、工具执行共享同一份快照，避免「工具列表变了但历史里的调用对不上」 |
 | **OpenCode** | `runLoop` 每步一次 `streamText` | 是 | **doom-loop 检测**：末尾 3 个 part 全是同名同参的工具调用（`DOOM_LOOP_THRESHOLD = 3`，`opencode!packages/opencode/src/session/processor.ts:29`）就转成一次权限询问；`invalid` 工具调用会尝试修复 |
-| **pi** | 手写显式循环 + steering / follow-up 消息队列 | 默认并行，单个工具可声明 `executionMode: "sequential"` | `stopReason === "length"` 时**作废本轮所有工具调用**（`pi!packages/coding-agent/src/core/agent-session.ts:665`）——截断的工具调用参数可能是残缺 JSON，执行它很危险 |
+| **pi** | 手写显式循环 + steering / follow-up 消息队列 | 默认并行，单个工具可声明 `executionMode: "sequential"` | `stopReason === "length"` 时**作废本轮所有工具调用**（`pi!packages/coding-agent/src/core/agent-session.ts:676`）——截断的工具调用参数可能是残缺 JSON，执行它很危险 |
 | **mini-swe-agent** | `while True: execute_actions(query())` | 否，顺序 | 每个动作起一个新 subshell（`cd`、环境变量都不保留）；用一个哨兵字符串判断任务完成 |
 
 表里的英文名字挨个翻一下：dsh 合成的 `ABORTED_BEFORE_DISPATCH` 字面是「还没派发出去就被中止了」；Codex 的 `run_turn` 就是「跑一个 turn」，`FuturesOrdered` 是一个按提交顺序交还结果的并发容器，`OutputItemDone` 是「一条输出项已完成」这个流式事件，`StepContext` 直译「一步的上下文」，也就是那份快照本身；OpenCode 的 `runLoop` 是主循环、`streamText` 是发一次流式请求，`DOOM_LOOP_THRESHOLD = 3` 直译「死循环阈值 = 3」，`invalid` 指参数没通过校验的那种工具调用；pi 的 `stopReason === "length"` 意思是「模型这次停下来的原因是顶到了长度上限」，`executionMode: "sequential"` 是「这个工具只能串行执行」；mini-swe-agent 那行 `while True: execute_actions(query())` 就是「一直循环：问模型一次，执行它给出的动作」。
@@ -199,7 +199,7 @@ pi 的 JSONL 树是这里最优雅的：分支不是事后加的功能，是存�
 | **Claude Code** | subagents（frontmatter 定义）、30+ 事件的 hooks、skills、plugins、MCP | 不能 |
 | **Codex** | 内置 explorer / worker 角色的子 agent、mailbox 通信、11 个 hook 事件、skills fragments、MCP、extension-api | 不能 |
 | **OpenCode** | 四个内置 agent（build/plan/general/explore）、可 resume 的 task 子代理、npm 插件（`Hooks` 接口 21 个键，`opencode!packages/plugin/src/index.ts:222-334`）、完整 MCP | 不能 |
-| **pi** | `ExtensionAPI` 上 33 个 `on(event, …)` 生命周期事件（`pi!packages/coding-agent/src/core/extensions/types.ts:1198`）+ `registerTool`/`registerCommand`/`registerProvider`/`registerShortcut`/`registerFlag`；**没有 MCP、没有子代理、没有 plan 模式、没有 todo** | 不能 |
+| **pi** | `ExtensionAPI` 上 33 个 `on(event, …)` 生命周期事件（`pi!packages/coding-agent/src/core/extensions/types.ts:1214`）+ `registerTool`/`registerCommand`/`registerProvider`/`registerShortcut`/`registerFlag`；**没有 MCP、没有子代理、没有 plan 模式、没有 todo** | 不能 |
 | **mini-swe-agent** | Python 子类覆写 + yaml/Jinja | 不适用（`DefaultAgent` 总共 190 行，`mini-swe-agent!src/minisweagent/agents/default.py:38`） |
 
 表里 pi 那格的注册函数照字面读就行：`on(event, …)` 是「在某个事件上挂个回调」，`registerTool` 注册工具、`registerCommand` 注册命令、`registerProvider` 注册模型提供方、`registerShortcut` 注册快捷键、`registerFlag` 注册命令行开关。OpenCode 四个内置 agent 的名字是 build（干活）/ plan（先出计划）/ general（通用）/ explore（探查），`Hooks` 就是「钩子」接口。mini-swe-agent 的 `DefaultAgent` 是「默认 agent」那个类。

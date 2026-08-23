@@ -29,7 +29,7 @@ status: stale
           ctx.on('session/event', (session: Session, event: SessionEvent) => {
 ```
 
-（`packages/host/apiproxy/src/api-proxy.ts:3475`）然后把它包成一个帧压进队列：
+（`packages/host/apiproxy/src/api-proxy.ts:3373`）然后把它包成一个帧压进队列：
 
 ```ts
             queue.push(frame({ type: 'session/event', sessionId: session.id, event, ...view === undefined ? {} : { view } }))
@@ -49,7 +49,7 @@ status: stale
       broadcast({ type: 'session/projection', sessionId: session.id, key, value, seq })
 ```
 
-（`packages/host/apiproxy/src/api-proxy.ts:1285`）投影本身在 `packages/session/session-projection/src/index.ts:181` 订阅同一个事件计算。
+（`packages/host/apiproxy/src/api-proxy.ts:1226`）投影本身在 `packages/session/session-projection/src/index.ts:190` 订阅同一个事件计算。
 
 **跳 2，传输是 WebSocket 下行，不是 HTTP。** 上行（浏览器调 host 方法）走 HTTP POST，下行（事件推送）走两条 WebSocket：
 
@@ -91,7 +91,7 @@ export const HOST_EVENTS_PATH = `${API_PATH}/events.host`
   handleMuxEnvelope(rpcId: RpcId, frame: MuxFrame): void {
 ```
 
-（`packages/client/runtime/src/client/sessions/session.ts:467`）走 `acceptLiveEvent`（`:684`）→ `appendLive`（`:668`）。
+（`packages/client/runtime/src/client/sessions/session.ts:471`）走 `acceptLiveEvent`（`:684`）→ `appendLive`（`:668`）。
 
 **跳 7，变成可订阅状态。** Session 是一个**裸的 observable**，不是 React 状态：
 
@@ -100,7 +100,7 @@ export const HOST_EVENTS_PATH = `${API_PATH}/events.host`
   getSnapshot(): ConversationSnapshot {
 ```
 
-（`packages/client/runtime/src/client/sessions/session.ts:447`、`:455`）到这一跳为止，整条链路里没有一行 React。
+（`packages/client/runtime/src/client/sessions/session.ts:451`、`:455`）到这一跳为止，整条链路里没有一行 React。
 
 **跳 8，唯一的 hook 构造器。**
 
@@ -122,7 +122,7 @@ export function bindSnapshotSelector<T>(w: HostObservable<T>): SnapshotSelectorH
   const timeline = useSession(s => s.chat.timeline)
 ```
 
-（`packages/client/ui-conversation/src/client/chat/ChatView.tsx:150-152`）ChatView 注册进 `'conversation.view'` 这个 **slot**——slot 是界面上一个具名的「洞」，由某个包声明出来，别的包往里注册组件（第三节讲机制，`packages/client/ui-conversation/src/client/apply.ts:377`）。`ui-trajectory` 在同一个 slot 里注册第二个 tab（`packages/client/ui-trajectory/src/client/index.ts:43-44`）。
+（`packages/client/ui-conversation/src/client/chat/ChatView.tsx:162-164`）ChatView 注册进 `'conversation.view'` 这个 **slot**——slot 是界面上一个具名的「洞」，由某个包声明出来，别的包往里注册组件（第三节讲机制，`packages/client/ui-conversation/src/client/apply.ts:381`）。`ui-trajectory` 在同一个 slot 里注册第二个 tab（`packages/client/ui-trajectory/src/client/index.ts:43-44`）。
 
 **九跳总结**：`ctx.on('session/event')` → mux 队列 → `/api/events.mux` WebSocket → `readWebSocket` → `ConnectionController` → `SessionRuntime` → `Session.acceptLiveEvent` → `subscribe`/`getSnapshot` → `bindSnapshotSelector` → `useSession` → `ChatView`。
 
@@ -249,9 +249,9 @@ export type ChainSelect<O extends object, M> = (owner: O) => M | null
   slots.register({ name: 'conversation.composer', select: selectApproval, priority: 1, locale: NS }, ApprovalPanel)
 ```
 
-（`packages/client/ui-conversation/src/client/apply.ts:371`）当有一个待审批的工具调用时，`selectApproval` 返回非空，`ApprovalPanel` 就占住 composer 的位置（琥珀色条、理由标题、从调用参数拼出的命令行、一次性的拒绝/允许）；没有时它返回 null，普通输入框继续占位。`ui-user-questions`（`packages/client/ui-user-questions/src/client/index.ts:56-57`）和 `ui-subagent`（`packages/client/ui-subagent/src/client/index.ts:121-123`）用完全一样的模式注册各自的条目。
+（`packages/client/ui-conversation/src/client/apply.ts:375`）当有一个待审批的工具调用时，`selectApproval` 返回非空，`ApprovalPanel` 就占住 composer 的位置（琥珀色条、理由标题、从调用参数拼出的命令行、一次性的拒绝/允许）；没有时它返回 null，普通输入框继续占位。`ui-user-questions`（`packages/client/ui-user-questions/src/client/index.ts:56-57`）和 `ui-subagent`（`packages/client/ui-subagent/src/client/index.ts:69-71`）用完全一样的模式注册各自的条目。
 
-`priority` 是**升序**的，数字小的先跑（`packages/client/ui-slots/src/index.ts:248`、`:862-868`）。审批面板写了 `priority: 1`，提问面板用默认的 0，所以两者同时挂起时提问先被选中，注册处的注释解释了理由（`packages/client/ui-conversation/src/client/apply.ts:367-370`）：提问是模型在等的一次对话，审批只卡住一次工具调用，先答提问不会把审批饿死（提问一结束审批立刻重新当选）。
+`priority` 是**升序**的，数字小的先跑（`packages/client/ui-slots/src/index.ts:248`、`:862-868`）。审批面板写了 `priority: 1`，提问面板用默认的 0，所以两者同时挂起时提问先被选中，注册处的注释解释了理由（`packages/client/ui-conversation/src/client/apply.ts:371-374`）：提问是模型在等的一次对话，审批只卡住一次工具调用，先答提问不会把审批饿死（提问一结束审批立刻重新当选）。
 
 这带来一个可观察的产品行为：**待审批和待回答不会在消息流里留下一张占位卡片**（`packages/client/ui-conversation/README.md:17` 明说了这一点）。它们只接管输入区，答完就还回去。
 
@@ -276,7 +276,7 @@ export type ChainSelect<O extends object, M> = (owner: O) => M | null
 
 翻译成人话就是：HMR 是常开的，但它只会「发现文件变了」，不会「让文件变」。没人重新构建，它就永远闲着。
 
-这条限制重要到被写进了**模型看到的 system prompt**。`app:web-surface` section 的文本（`packages/bundle/web-app/src/index.ts:96-98`，注册在 `:143-147`，order `-98`）。这里的 surface（产品表面）指用户实际接触 dsh 的那个入口，Web GUI 是其中一个，CLI、SDK 是另外几个：
+这条限制重要到被写进了**模型看到的 system prompt**。`app:web-surface` section 的文本（`packages/bundle/web-app/src/index.ts:143-145`，注册在 `:143-147`，order `-98`）。这里的 surface（产品表面）指用户实际接触 dsh 的那个入口，Web GUI 是其中一个，CLI、SDK 是另外几个：
 
 > The client-plugin HMR receiver is active, but client-plugin changes reload without a refresh only while `pnpm run dev:web` is also running from this same checkout to rebuild their bundles; verify that watcher before promising automatic updates. Every other change — the apps/web shell and plain packages — requires rebuilding the affected Web artifacts and verifying this existing URL after a page refresh.
 
@@ -316,7 +316,7 @@ void new AppWebEntry(el).run()
     this.manifest = parseBootManifest((globalThis as DshWindow).__DSH_BOOT__)
 ```
 
-（`packages/client/web/src/boot.tsx:98`）缺失就抛错（`packages/client/modules/src/client/manifest.ts:110`）。
+（`packages/client/web/src/boot.tsx:98`）缺失就抛错（`packages/client/modules/src/client/manifest.ts:149`）。
 
 所以 `vite dev` 单独跑 `apps/web` 得到的是一个**没有任何插件的空壳**。Vite 配置里直接把这件事做成了显式错误：
 
@@ -324,7 +324,7 @@ void new AppWebEntry(el).run()
 const STANDALONE_ERROR = 'apps/web is not a standalone application: bare Vite cannot inject window.__DSH_BOOT__. '
 ```
 
-（`apps/web/vite.config.ts:7`）这条错误信息说的是：apps/web 不是一个能独立跑的应用，光靠 Vite 注入不了 `window.__DSH_BOOT__`。也就是说，谁想绕开 host 单独起前端，得到的报错会直接告诉他原因，而不是一个白屏。
+（`apps/web/vite.config.ts:8`）这条错误信息说的是：apps/web 不是一个能独立跑的应用，光靠 Vite 注入不了 `window.__DSH_BOOT__`。也就是说，谁想绕开 host 单独起前端，得到的报错会直接告诉他原因，而不是一个白屏。
 
 shell 的启动是两阶段的（`packages/client/web/README.md:5`）：阶段一建模块系统并并行预取 `immediately` 那一档——**执行 bundle 只注册工厂函数，不执行模块体**；阶段二挂 vendored cordis Loader，把模块系统通过它的 `internal` 契约注入，每行 graph 建一个 loader entry，然后**等 Loader 静默且每个 entry fiber 都 ACTIVE，才一次性把整个 UI 切出来**。没有半成品界面。
 
@@ -349,9 +349,9 @@ shell 的启动是两阶段的（`packages/client/web/README.md:5`）：阶段�
 
 （表出自 `packages/host/README.md:7-16` 与各包 package.json；行数为各包 `src/` 下 `.ts` 的行数。）
 
-**webserver 什么都不知道。** 它提供四个注册方法：`register`（`packages/host/webserver/src/index.ts:94`）、`registerUpgrade`（`:109`）、`registerFallback`（`:125`）、`tapIndex`（`:139`），外加一个最长前缀匹配的 `match`（`:242`）。它不认识任何 harness 概念，不服务任何文件，`/api` 和 WebSocket 都是别的插件注册的路由。重复注册直接抛错（`:97`、`:111`、`:127-128`）。
+**webserver 什么都不知道。** 它提供四个注册方法：`register`（`packages/host/webserver/src/index.ts:108`）、`registerUpgrade`（`:109`）、`registerFallback`（`:125`）、`tapIndex`（`:139`），外加一个最长前缀匹配的 `match`（`:242`）。它不认识任何 harness 概念，不服务任何文件，`/api` 和 WebSocket 都是别的插件注册的路由。重复注册直接抛错（`:97`、`:111`、`:127-128`）。
 
-**frontend-static 占 fallback 座**（`packages/host/frontend-static/src/index.ts:98`），语义锁死：非 GET/HEAD 返回 405，越界返回 403，未命中的路径回落到 index.html 且状态码 200（`:83` 的注释：`// Miss (ENOENT/EISDIR) falls back to index.html with 200 (SPA routing).`，意思是文件找不到或者指向的是目录时，回落到 index.html 并返回 200，因为路由在前端）。dist 路径不是它自己找的，是 web-app bundle 用 `require.resolve('@deepseek-ai/dsh-web-frontend/dist/index.html')` 解析后传进来的（`packages/bundle/web-app/src/index.ts:119`、`:139`）。
+**frontend-static 占 fallback 座**（`packages/host/frontend-static/src/index.ts:109`），语义锁死：非 GET/HEAD 返回 405，越界返回 403，未命中的路径回落到 index.html 且状态码 200（`:83` 的注释：`// Miss (ENOENT/EISDIR) falls back to index.html with 200 (SPA routing).`，意思是文件找不到或者指向的是目录时，回落到 index.html 并返回 200，因为路由在前端）。dist 路径不是它自己找的，是 web-app bundle 用 `require.resolve('@deepseek-ai/dsh-web-frontend/dist/index.html')` 解析后传进来的（`packages/bundle/web-app/src/index.ts:166`、`:139`）。
 
 **directory-picker-auto 是一个纯决策函数**，整段贴出来：
 
@@ -377,7 +377,7 @@ export function resolveDirectoryPickerBackend(facts: DirectoryPickerHostFacts): 
       const result = await connection.rpc.call('/api', endpoint, { args }, signal)
 ```
 
-（`packages/api/gateway/src/client/index.ts:406`）endpoint 是 `<namespace>/<method>`，HTTP 层映射成 `POST /api/<namespace>/<method>`，payload 里**有且只有一个 `args` 纯对象**，这条约束是硬校验的（`packages/api/gateway/src/index.ts:201-208`）。取消协议也很干净：host 签名最后一个参数必须是 `signal: AbortSignal`，它进 descriptor 而不进 `args`（`docs/api-gateway.md:56`）。
+（`packages/api/gateway/src/client/index.ts:408`）endpoint 是 `<namespace>/<method>`，HTTP 层映射成 `POST /api/<namespace>/<method>`，payload 里**有且只有一个 `args` 纯对象**，这条约束是硬校验的（`packages/api/gateway/src/index.ts:201-208`）。取消协议也很干净：host 签名最后一个参数必须是 `signal: AbortSignal`，它进 descriptor 而不进 `args`（`docs/api-gateway.md:56`）。
 
 `host/apiproxy` 是旧的，作为尚未迁移方法的兜底（`packages/api/README.md:17`）。运行时的分工在 connection 里三行说清楚：
 
@@ -399,7 +399,7 @@ export function resolveDirectoryPickerBackend(facts: DirectoryPickerHostFacts): 
       program.error('error: --host 0.0.0.0 is intentionally not supported yet for safety: it would expose remote code execution to the network; use 127.0.0.1 instead')
 ```
 
-（`packages/bundle/web-app/src/startup.ts:70`）这句报错的意思是：`--host 0.0.0.0` 出于安全考虑暂时故意不支持，它会把远程代码执行能力暴露到网络上，请改用 `127.0.0.1`。
+（`packages/bundle/web-app/src/startup.ts:75`）这句报错的意思是：`--host 0.0.0.0` 出于安全考虑暂时故意不支持，它会把远程代码执行能力暴露到网络上，请改用 `127.0.0.1`。
 
 ---
 
@@ -416,7 +416,7 @@ export function rehydrateSchema(serialized: unknown): SchemaNode {
 
 这个包只有 195 行，且**不含任何 React**。`hasPath` 的语义是「这个字段被用户覆写过」，`deletePath` 就是「重置这一个字段」。真正的表单控件由各个设置页自己写，Models 页手写了自己的卡片。代价写在 README `:21`：`rehydrateSchema` 会通过 `new Function` 复活序列化的回调，所以这个信封是可执行内容，只对同源可信 host 安全。
 
-**i18n 只有 `zh`/`en` 两种语言，中文是兜底不是默认。** `LocaleRuntime`（`packages/client/locale/src/client/index.ts:114`）管这两种；初始语言取**浏览器自己的语言**（按主语言标签匹配，`zh-Hans-CN` → zh、`en-GB` → en，`:332-343`），匹配不上才落到 `FALLBACK_LOCALE`，也就是 `zh`（`:319-320`、`:90`）。用户显式选的偏好存在 `$DSH_HOME/settings.yaml` 的 `locale.preference`（`packages/client/locale/src/locale-settings.ts:6`、`:9`），插件激活后覆盖这个临时值。
+**i18n 只有 `zh`/`en` 两种语言，中文是兜底不是默认。** `LocaleRuntime`（`packages/client/locale/src/client/index.ts:144`）管这两种；初始语言取**浏览器自己的语言**（按主语言标签匹配，`zh-Hans-CN` → zh、`en-GB` → en，`:332-343`），匹配不上才落到 `FALLBACK_LOCALE`，也就是 `zh`（`:319-320`、`:90`）。用户显式选的偏好存在 `$DSH_HOME/settings.yaml` 的 `locale.preference`（`packages/client/locale/src/locale-settings.ts:6`、`:9`），插件激活后覆盖这个临时值。
 
 查一个 key 是两层嵌套的回退，先在自己的命名空间里试当前语言再试 `zh`，还没有才去 `common` 里把同样两步再走一遍：
 
@@ -443,7 +443,7 @@ export function rehydrateSchema(serialized: unknown): SchemaNode {
 | 提问面板 | `ui-user-questions` | `conversation.composer`（chain） |
 | 模型选择 | `ui-model-selection` | `/model` popupSelect + `conversation.input.model` |
 | agent preset 选择器 | `ui-agent-preset` | 四个 slot：`settings.general.item`（`packages/client/ui-agent-preset/src/client/index.ts:207`）、`settings.section`（`:216`）、新会话页的 `conversation.hero.agentPreset`（`:165`）、会话头只读标签 `conversation.session.header.actions`（`:170`，order −10） |
-| 权限档位 chip | `ui-conversation`（`PermissionSelect`） | **不走 slot**：由 composer 的 `InputBar` 直接渲染（`packages/client/ui-conversation/src/client/skeleton/InputBar.tsx:562`），读 `permissions` 投影 |
+| 权限档位 chip | `ui-conversation`（`PermissionSelect`） | **不走 slot**：由 composer 的 `InputBar` 直接渲染（`packages/client/ui-conversation/src/client/skeleton/InputBar.tsx:581`），读 `permissions` 投影 |
 | goal 条 | `ui-goal` | `conversation.input.dock` order 10 |
 | todo 条 | `ui-conversation`（`TodoDock`，**不是独立包**） | `conversation.input.dock` order 0，读 `todos` 投影 |
 | plan chip | `ui-plan` | `conversation.input.plan` 单座 |
@@ -477,7 +477,7 @@ KV cache 的影响也写清了（`:29`）：这个 section 在包挂载期间是
 
 **两套网关并存。** Remote 和 apiProxy 共用 `/api`，靠 endpoint 形状分流。迁移期间「某个方法走哪条路」是要查代码才知道的。
 
-**文档会落后于源码。** 一个具体例子：`packages/api/remotes/README.md:9` 说 Client 装配只挂 Goal 与 pluginInventory 两个 contribution，而源码 `packages/api/remotes/src/client/index.ts:108-110` 实际挂了 5 个（commands / goals / cordis-host-runner / pluginInventory / messageFeedback）。上游的文档纪律很严（每个包必须有 README、必须有 Model Experience 段），但一致性靠人。
+**文档会落后于源码。** 一个具体例子：`packages/api/remotes/README.md:9` 说 Client 装配只挂 Goal 与 pluginInventory 两个 contribution，而源码 `packages/api/remotes/src/client/index.ts:116-118` 实际挂了 5 个（commands / goals / cordis-host-runner / pluginInventory / messageFeedback）。上游的文档纪律很严（每个包必须有 README、必须有 Model Experience 段），但一致性靠人。
 
 **HMR 默认是空转的**，见第四节。这一点连模型都被专门告知过，因为它误导过人。
 
@@ -491,7 +491,7 @@ KV cache 的影响也写清了（`:29`）：这个 section 在包挂载期间是
 |---|---|---|---|
 | dsh | 唯一一个 Web GUI（TUI 已删除） | host 算投影，浏览器只渲染；WebSocket 下行 + HTTP 上行 | 39 个插件包 + slot 声明表 |
 | Claude Code | CLI 为主，另有桌面端、Web、IDE 扩展 | 不开源 | 不适用（有 hooks/skills/plugins 但不是 UI 插件） |
-| Codex | Rust CLI，可选 UI 与 app server | rollout 记录 + 客户端全量重放历史 | Extension API 有 12 类 contributor（`context_contributors()` 等，`codex!codex-rs/ext/extension-api/src/registry.rs:145-156`），**一个都不是 UI** |
+| Codex | Rust CLI，可选 UI 与 app server | rollout 记录 + 客户端全量重放历史 | Extension API 有 12 类 contributor（`context_contributors()` 等，`codex!codex-rs/ext/extension-api/src/registry.rs:146-157`），**一个都不是 UI** |
 | OpenCode | TUI + server；`Session.Event.*` 经 EventV2 总线推给 TUI/Web | 从 DB 消息重建，中断可续 | 两套：server 侧 `Hooks` 21 个键（`opencode!packages/plugin/src/index.ts:222`，无一个是 UI），另有独立的 `TuiPluginApi`，含 12 个具名 host slot + 对话框/toast/路由/keymap |
 | pi | 自定义 TUI（`packages/tui` 1.7 万行 + `modes/interactive` 1.8 万行） | 扩展可 `registerTool` 并自定义 `renderCall`/`renderResult` | Extension API 里 `ctx.ui.*`：`setHeader`/`setFooter`/`setWidget`/`setEditorComponent`/`custom`/`select`/`confirm` 等 |
 | mini-swe-agent | 交互式 CLI，另有一个 Textual 写的轨迹检查器（`mini-swe-agent!src/minisweagent/run/utilities/inspector.py:16`） | 不适用 | 不适用 |

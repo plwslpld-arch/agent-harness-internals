@@ -13,7 +13,7 @@ status: stale
 
 先把词说清楚：这里说的**前缀缓存（prefix cache，也叫 KV-Cache）**，指 provider 在服务端把「已经算过的请求前导 token 序列」连同它们的注意力中间结果存起来；下一次请求如果开头的 token 与它逐字节相同，这段就不用重新计算，按更便宜的价格计费。关键词是**前导**和**逐字节**：命中只从第一个 token 开始往后连续匹配，中间任何一个字节不同，从那里往后全部作废。
 
-在整个 dsh 仓库里搜 `cache_control`，结果是零。搜 `prompt_cache_key`，只有一处，还是 Codex 子代理的一份测试 fixture 里抄下来的 OpenAI 响应字段（`packages/subagent/subagent-codex/tests/responses-fixture.ts:70`，值是 `null`）。也就是说：没有 cache breakpoint，没有 TTL 选项，没有任何一处调用「provider 的缓存 API」。
+在整个 dsh 仓库里搜 `cache_control`，结果是零。搜 `prompt_cache_key`，只有一处，还是 Codex 子代理的一份测试 fixture 里抄下来的 OpenAI 响应字段（`packages/subagent/subagent-codex/tests/responses-fixture.ts:71`，值是 `null`）。也就是说：没有 cache breakpoint，没有 TTL 选项，没有任何一处调用「provider 的缓存 API」。
 
 但 dsh 有一个带真实 API key 才会跑的端到端测试，断言**第一次之后的每一次请求，DeepSeek 都必须报告非零的缓存读取**（`packages/core/agent-loop/tests/request-cache.e2e.ts:92`）。同时上游一条真实测量记录写着：在四步连续变更权限策略的过程中，「cache reads were 14,848–15,872 tokens while uncached input was 59–306 tokens per request」（`.agents/notes/implemented/feature/2026-07-30-current-sandbox-policy-context.md:35`）（意思是：每次请求缓存读取 14,848 到 15,872 个 token，而没命中、需要重新计算的输入只有 59 到 306 个）。两个数字差了约五十倍，而且是在用户反复切换权限模式的过程中测的。
 
@@ -23,7 +23,7 @@ status: stale
 
 ## 一、先看见：dsh 发给 DeepSeek 的请求长什么样
 
-DeepSeek 适配器把内部的 `GenerateOptions` 变成 HTTP body 的地方只有一个函数，`serializeRequest`（`packages/llm/llm-deepseek/src/serialize.ts:151`）。它短到可以整个贴出来：
+DeepSeek 适配器把内部的 `GenerateOptions` 变成 HTTP body 的地方只有一个函数，`serializeRequest`（`packages/llm/llm-deepseek/src/serialize.ts:377`）。它短到可以整个贴出来：
 
 ```ts
 export function serializeRequest(
@@ -199,11 +199,11 @@ export function mapUsage(usage: WireUsage): TokenUsage {
 
 测试特意把 system prompt 写得很长，就是为了让共享前缀从第一次请求起就稳稳超过 64 token 这个块粒度。**不足一整块的尾部不进缓存**。这解释了为什么「system 很短的会话」看起来命中率很差，不是机制坏了，是压根没攒够一块。
 
-还有一条不对称：**DeepSeek 不报缓存写入指标**，README 里写得很直接（`packages/llm/llm-deepseek/README.md:73`）：「Cache accounting: `cacheReadTokens` ← `prompt_cache_hit_tokens` / `prompt_tokens_details.cached_tokens`; DeepSeek reports no cache-write metric.」（意思是：缓存记账只有一条来路，`cacheReadTokens` 取自 `prompt_cache_hit_tokens` 或 `prompt_tokens_details.cached_tokens`；DeepSeek 不上报任何缓存写入指标。）所以在 DeepSeek 路径上，`cacheWriteTokens` 恒为缺省。
+还有一条不对称：**DeepSeek 不报缓存写入指标**，README 里写得很直接（`packages/llm/llm-deepseek/README.md:100`）：「Cache accounting: `cacheReadTokens` ← `prompt_cache_hit_tokens` / `prompt_tokens_details.cached_tokens`; DeepSeek reports no cache-write metric.」（意思是：缓存记账只有一条来路，`cacheReadTokens` 取自 `prompt_cache_hit_tokens` 或 `prompt_tokens_details.cached_tokens`；DeepSeek 不上报任何缓存写入指标。）所以在 DeepSeek 路径上，`cacheWriteTokens` 恒为缺省。
 
 ### 和 Anthropic 的显式断点比
 
-dsh 有两个 LLM 适配器。DeepSeek 直连适配器（`llm-deepseek`）如上，没有任何缓存参数；而经由 pi-ai SDK 的多 provider 适配器（`llm-pi-ai`）暴露了一个 profile 字段 `cacheRetention`（`packages/llm/llm-pi-ai/src/config.ts:130`），在每次 stream 时原样转发给 SDK（`packages/llm/llm-pi-ai/src/adapter.ts:92`），并且它的 usage 映射里有 `cacheWriteTokens`（`packages/llm/llm-pi-ai/src/stream.ts:27`）。
+dsh 有两个 LLM 适配器。DeepSeek 直连适配器（`llm-deepseek`）如上，没有任何缓存参数；而经由 pi-ai SDK 的多 provider 适配器（`llm-pi-ai`）暴露了一个 profile 字段 `cacheRetention`（`packages/llm/llm-pi-ai/src/config.ts:154`），在每次 stream 时原样转发给 SDK（`packages/llm/llm-pi-ai/src/adapter.ts:122`），并且它的 usage 映射里有 `cacheWriteTokens`（`packages/llm/llm-pi-ai/src/stream.ts:27`）。
 
 这就是两种缓存模型的分界：Anthropic 那一侧要你**显式声明断点**（`cache_control`）、要你为写入付更贵的价、于是也就告诉你写了多少；DeepSeek 这一侧**服务端自动做前缀匹配**，客户端唯一能做的就是别去破坏前缀。dsh 的 DeepSeek 路径里没有任何 `cacheRetention` 的等价物，因为没有可设的东西。
 
@@ -256,7 +256,7 @@ dsh 有两个 LLM 适配器。DeepSeek 直连适配器（`llm-deepseek`）如上
 
 先说两个词。**append-only（只追加）**指这条日志只会在尾部添新事件，已经写下的事件不删不改。**surface（表面）**是这条日志的一个子视图，只有能被模型看见的那几种事件才会进入它，模型历史就是从 surface 折叠出来的。
 
-会话是一条事件日志。全仓只有三种事件能进入「模型可见历史」（surface）：`user/message`、`assistant/message`、`tool/result`（`packages/core/session/src/surface.ts:15`），而且它们**必须**带一个 `surfaceOp`：要么 `'append'`，要么 `{op:'replace', start, end}`（`packages/core/session/src/types.ts:372`）。其它事件（turn 边界、chunk、usage、错误、重试记录）一律 log-only，永远不进模型上下文。
+会话是一条事件日志。全仓只有三种事件能进入「模型可见历史」（surface）：`user/message`、`assistant/message`、`tool/result`（`packages/core/session/src/surface.ts:15`），而且它们**必须**带一个 `surfaceOp`：要么 `'append'`，要么 `{op:'replace', start, end}`（`packages/core/session/src/types.ts:376`）。其它事件（turn 边界、chunk、usage、错误、重试记录）一律 log-only，永远不进模型上下文。
 
 **投影（projection）**指把一条事件翻译成模型消息的那个函数。它必须是纯函数：同一条事件，无论什么时候、在哪台机器上投影，都得到逐字节相同的结果。投影规则只有一处：`deriveEventMessage`（`surface.ts:83`），一个导出的纯函数，`user/message → data`、`assistant/message → message`（内容为空则返回 null）、`tool/result → message`、其余 null。
 
@@ -290,7 +290,7 @@ export function headerEquals(a: EpochHeader, b: EpochHeader): boolean {
 
 `sameSchema` 是 `JSON.stringify` 相等（`request-header.ts:34`），工具**按序**比较，顺序变了就算变了，这和 provider 的前缀匹配语义一致。`callConfigEquals`（`packages/llm/llm/src/call-config.ts:49`）逐字段比 provider、model、reasoningEffort、temperature、maxTokens，`stop` 数组逐元素比。
 
-写入规则在循环里（`packages/core/agent-loop/src/agent.ts:464`）：
+写入规则在循环里（`packages/core/agent-loop/src/agent.ts:483`）：
 
 ```ts
     const baseline = this.session.requestHeader()
@@ -313,7 +313,7 @@ export function headerEquals(a: EpochHeader, b: EpochHeader): boolean {
 请求组装全在一个方法里（`agent.ts:407`），三步：
 
 1. **种子 config**。第一次请求来自 `AgentOptions`；之后来自 `requestProposal(persistedHeader)`：先把 adapter 填的默认值剥掉，再交给 `agent/request` waterfall（`agent.ts:428`、`:438`）。**waterfall（瀑布事件）**是 Cordis 的环绕式中间件：监听器拿到上一环的值，必须 `await next()` 才轮到下一个，最后的返回值权威。插件在这里只能替换**调用配置**，碰不到 messages / system / tools。
-2. **`ctx.llm.prepareCall(proposedConfig)`**（`packages/llm/llm/src/index.ts:779`）：解析出精确模型的默认值，`deepFreeze(structuredClone(...))`，返回一个**只能派发一次**的 `stream()`。派发时若 `!callConfigEquals(options, resolvedConfig)` 就抛 `INVALID_PREPARED_CALL`（`packages/llm/llm/src/index.ts:804`）。这防的是热更新场景：用 A 适配器解析出来的能力，不能拿去 dispatch 给 B 适配器。
+2. **`ctx.llm.prepareCall(proposedConfig)`**（`packages/llm/llm/src/index.ts:824`）：解析出精确模型的默认值，`deepFreeze(structuredClone(...))`，返回一个**只能派发一次**的 `stream()`。派发时若 `!callConfigEquals(options, resolvedConfig)` 就抛 `INVALID_PREPARED_CALL`（`packages/llm/llm/src/index.ts:854`）。这防的是热更新场景：用 A 适配器解析出来的能力，不能拿去 dispatch 给 B 适配器。
 3. **标记 + 冻结**（`agent.ts:486`）：
 
 ```ts
@@ -420,13 +420,13 @@ function compareToolNames(a: ToolSchema, b: ToolSchema): number {
 | 场景 | 发生什么 | 缓存后果 |
 | --- | --- | --- |
 | **工具集变化**（注册/注销/scoped 限制/Code Mode） | assemble 得到不同 tools → `headerEquals` 失败 → 写 `request/header{change}` | 从第一个变化的 schema token 起失效（`packages/core/tools/README.md:145`） |
-| **模型切换**（`agent/request` 返回新路由） | `prepareCall` 重新解析默认值，header 写 `change`，`request/context` 也可能变 | 「Changing the provider or model selects a different cache domain」（`packages/llm/llm-deepseek/README.md:107`）（换 provider 或换模型，就等于选中了另一个缓存域，原来那份攒在旧域里的前缀用不上了） |
+| **模型切换**（`agent/request` 返回新路由） | `prepareCall` 重新解析默认值，header 写 `change`，`request/context` 也可能变 | 「Changing the provider or model selects a different cache domain」（`packages/llm/llm-deepseek/README.md:134`）（换 provider 或换模型，就等于选中了另一个缓存域，原来那份攒在旧域里的前缀用不上了） |
 | **重试**（`dsh-llm-retry` 返回 `{kind:'retry'}`） | `step()` 内的 `while (true)` 重新走一遍 `buildRequest`（`agent.ts:339`）；日志没变，所以字节相同 | 「The reconstructed request preserves the prior prefix」（`packages/llm/llm-retry/README.md:45`）（重建出来的那个请求保留了原先的前缀，也就是重试不额外破坏缓存）。失败步的 chunk 不进 surface，错误文本也不进模型上下文 |
 | **进程重启 / resume** | 新 loop 实例写 `request/header{reason:'resume'}` | 若插件组合导致 system/tools 不同就会漂移，但**可归因**，两份 header 快照可以直接 diff |
 | **子代理 fork** | 子 session 以父的完成 turn 前缀为种子 | 同 provider/model 且没有 persona/toolFilter 差异时，子请求的前导字节等于父的，命中父前缀 |
 | **continuable 子代理** | 多出 `report` 工具 schema 和 `tool:report` 提示段 | 两个 delta 都在**请求头部**，位于继承历史之前 → 继承的历史全部失效。出厂组合因此把 fork 绑成 `one-shot`（`packages/subagent/subagent-fork-in-process/README.md:42`） |
-| **session-title 辅助请求** | 独立小请求，`purpose: 'session-title'` 强制 `thinking: disabled`（`packages/llm/llm-deepseek/src/serialize.ts:38`） | 「No main-request invalidation」（`packages/session/session-title-llm/README.md:42`）（不会让主对话请求的缓存作废） |
-| **plan 模式进出** | `plan:policy` 是一个**函数式 system section**（`packages/plan/plan-mode/src/index.ts:225`），order 50 | 「entering or leaving changes the system prompt from order 50 onward」（`packages/plan/plan-mode/README.md:62`）（进入或退出 plan 模式，都会改动 order 50 及其之后的那部分 system prompt），有意接受的失效点 |
+| **session-title 辅助请求** | 独立小请求，`purpose: 'session-title'` 强制 `thinking: disabled`（`packages/llm/llm-deepseek/src/serialize.ts:82`） | 「No main-request invalidation」（`packages/session/session-title-llm/README.md:42`）（不会让主对话请求的缓存作废） |
+| **plan 模式进出** | `plan:policy` 是一个**函数式 system section**（`packages/plan/plan-mode/src/index.ts:243`），order 50 | 「entering or leaving changes the system prompt from order 50 onward」（`packages/plan/plan-mode/README.md:62`）（进入或退出 plan 模式，都会改动 order 50 及其之后的那部分 system prompt），有意接受的失效点 |
 
 先解释表里的三个词。**fork（分叉）**是开子代理的一种方式：子会话不从空白开始，而是拿父会话已完成的历史当种子；对应的 **spawn** 则是给子代理一段全新的空历史。**one-shot（一次性）**指子代理只跑一轮就交结果，**continuable（可续跑）**指它能被再次唤醒接着干，代价是必须多给它一个 `report` 工具，好让它中途汇报。
 
@@ -441,20 +441,24 @@ fork 那一条要多说两句，因为它把这套推理用到了极致。设计
 四步：
 
 1. **适配器映射**：`mapUsage`（`packages/llm/llm-deepseek/src/translate.ts:53`）产出不相交的 `TokenUsage`。
-2. **落盘**：usage 随 `assistant/chunk{type:'usage'}` 和 `assistant/message.usage` 进日志（`packages/core/agent-loop/src/agent.ts:381`）；压缩的辅助请求用量记在 `compaction/summary.usage`（`packages/compaction/compaction-basic/src/region.ts:460`）。
+2. **落盘**：usage 随 `assistant/chunk{type:'usage'}` 和 `assistant/message.usage` 进日志（`packages/core/agent-loop/src/agent.ts:400`）；压缩的辅助请求用量记在 `compaction/summary.usage`（`packages/compaction/compaction-basic/src/region.ts:460`）。
 3. **投影**：`packages/llm/token-meter/src/usage-projection.ts:107` 起的 `tokenUsageProjectionDefinition` 按 (turn, step) 去重累加四个桶。去重是必要的：同一步会先收到一个 usage chunk、后收到 message 上的最终 usage，重复样本替换而不是累加（`usage-projection.ts:126`）。另外 `pressureFrom = inputTokens + cacheRead + cacheWrite`（`usage-projection.ts:71`）被当作上下文压力的分子。
-4. **UI**：命中率的公式在 `packages/client/ui-conversation/src/client/chat/StatsLine.tsx:109`：
+4. **UI**：命中率的公式在 `packages/client/ui-conversation/src/client/chat/StatsLine.tsx:131`：
 
 ```ts
-export function cacheHitPercent(usage: TokenUsageProjection): number | null {
+export function cacheHitPercent(usage: TokenUsageProjection): string | null {
   const denominator = billedInputTokens(usage)
-  return denominator === 0
-    ? null
-    : Math.round(usage.cacheReadTokens / denominator * 100)
-}
+  if (denominator === 0) return null
+  const missedInputTokens = usage.uncachedInputTokens + usage.cacheWriteTokens
+  if (missedInputTokens === 0) return '100'
+
+  const integerPercent = roundedIntegerPercent(usage.cacheReadTokens, denominator)
+  if (integerPercent < 100) return String(integerPercent)
 ```
 
 分母是 `uncachedInputTokens + cacheReadTokens + cacheWriteTokens`（`StatsLine.tsx:121`），也就是全部计费输入。
+
+函数没在这里结束。整数四舍五入到 100、但其实还漏了 token 的时候，后面那段（`packages/client/ui-conversation/src/client/chat/StatsLine.tsx:140`「At the first distinguishing precision」）会一位一位加小数，直到那个数字能显示成小于 100 的值。返回类型是 `string` 而不是 `number`，就是为了带住这个精度。所以界面上看到 100，意思是**一个 token 都没漏**，而不是「四舍五入之后差不多是 100」。区分这两件事在调缓存的时候很要紧：99.6% 和 100% 差的那部分，正是每轮都在重新计费的前缀。
 
 有一个坑要说明：`reasoningTokens` **不是**第五个桶。投影的桶只有四个（`usage-projection.ts:24`），`bucketsFrom` 也只取四个字段（`usage-projection.ts:31`），因为 `reasoning_tokens` 是 `completion_tokens` 的明细拆分，已经包含在 `outputTokens` 里了，汇总时再加一次就是重复计费。上面那份真实抓包数据可以自己验：`completion_tokens: 69`，`reasoning_tokens: 24`，输出总数是 69 不是 93。
 
@@ -478,7 +482,7 @@ export function cacheHitPercent(usage: TokenUsageProjection): number | null {
 
 （一个小出入：note 说不变量「independently rebuilds each loop request through a fresh `Session`」（`:31`）（意思是：它另起一个全新的 `Session` 把每次循环请求独立重建一遍，好让活着的那份缓存没法自己给自己作证），但代码用的是 `ctx.sessions.get(...)` 拿到的活 session 的 `deriveMessages()`（`invariant.ts:25`、`:39`）。属于笔记与实现的措辞差异。）
 
-**2）system prompt 仍然有合法的动态来源。** plan 模式的 section 是函数式的（`packages/plan/plan-mode/src/index.ts:228`）；`system-prompt/assemble` 是个 waterfall，插件可以任意改写整个 assembly（`packages/core/system-prompt/src/index.ts:532`）；web-app 组合注册的 `app:web-surface` section 文本里带本地 URL（`packages/bundle/web-app/src/index.ts:146`），URL 变了就是头部变了。任何插件写一个返回时间戳的函数式 section，就会每步全 miss；约束这件事的是文档契约和 code review，不是代码。
+**2）system prompt 仍然有合法的动态来源。** plan 模式的 section 是函数式的（`packages/plan/plan-mode/src/index.ts:246`）；`system-prompt/assemble` 是个 waterfall，插件可以任意改写整个 assembly（`packages/core/system-prompt/src/index.ts:532`）；web-app 组合注册的 `app:web-surface` section 文本里带本地 URL（`packages/bundle/web-app/src/index.ts:240`），URL 变了就是头部变了。任何插件写一个返回时间戳的函数式 section，就会每步全 miss；约束这件事的是文档契约和 code review，不是代码。
 
 **3）压缩之后必然从第一条消息起全 miss，而且每轮压缩都重写头部 checkpoint。** 长会话压缩越频繁，损失越大。上游承认这一点，提案里的 `[system][stubs…][state][tail]` 布局意在把 miss 起点从位置 0 往后挪，但状态是 proposed。
 
@@ -489,11 +493,11 @@ export function cacheHitPercent(usage: TokenUsageProjection): number | null {
 // and where provider-specific request options belong.
 ```
 
-这条 TODO 要办的两件事是：重新界定哪些字段对缓存复用来说算 epoch 级，以及那些 provider 私有的请求选项该放到哪儿去。子系统文档里还有对应的 FIXME（`docs/subsystems/llm-streaming.md:597`）：「revisit which remaining fields are genuinely epoch-level for cache purposes (`model` and the model-owned reasoning effort are explicit; the sampling scalars sit here out of caution)」（意思是：得重新审一遍，剩下这些字段里到底哪些对缓存来说真的是 epoch 级的。`model` 和模型自带的 reasoning effort 是明确该算的；那几个采样标量放在这里只是出于谨慎）。
+这条 TODO 要办的两件事是：重新界定哪些字段对缓存复用来说算 epoch 级，以及那些 provider 私有的请求选项该放到哪儿去。子系统文档里还有对应的 FIXME（`docs/subsystems/llm-streaming.md:635`）：「revisit which remaining fields are genuinely epoch-level for cache purposes (`model` and the model-owned reasoning effort are explicit; the sampling scalars sit here out of caution)」（意思是：得重新审一遍，剩下这些字段里到底哪些对缓存来说真的是 epoch 级的。`model` 和模型自带的 reasoning effort 是明确该算的；那几个采样标量放在这里只是出于谨慎）。
 
 **5）两个容易被张冠李戴的东西，和 KV cache 无关。**
 
-- `replayState`。它是 pi-ai 适配器的**私有回放元数据**：thinking 签名、响应 id、每个 block 的签名（`packages/llm/llm-pi-ai/src/replay.ts:21`），供 Anthropic / OpenAI-responses 这类要求签名回传的协议重建历史用。`forAdapter` 在跨适配器时把它剥掉（`packages/llm/llm/src/index.ts:823`），这是防止 provider 私有状态泄漏，**不是**缓存机制。「不同 summarization provider 会放弃缓存复用」的真正原因是缓存域和前缀不同，跟 replayState 没关系。
+- `replayState`。它是 pi-ai 适配器的**私有回放元数据**：thinking 签名、响应 id、每个 block 的签名（`packages/llm/llm-pi-ai/src/replay.ts:16-19`），供 Anthropic / OpenAI-responses 这类要求签名回传的协议重建历史用。`forAdapter` 在跨适配器时把它剥掉（`packages/llm/llm/src/index.ts:878`），这是防止 provider 私有状态泄漏，**不是**缓存机制。「不同 summarization provider 会放弃缓存复用」的真正原因是缓存域和前缀不同，跟 replayState 没关系。
 - `session-projection-cache`。名字里有 cache，但它是会话投影状态的持久化折叠捷径，模块头一句就写着「The cache is a fold shortcut, never an authority」（`packages/session/session-projection-cache/src/index.ts:5`）（意思是：这份缓存只是折叠过程的一条捷径，任何时候都不作数；真相以日志为准，缓存对不上就丢掉重折一遍）。和 provider 的 KV cache 毫无关系。
 
 **6）已知的「正确但不复用」路径全靠配置约束**：手动中段压缩、跨路由摘要、continuable fork。fork 那条上游明说了不会有响亮的失败信号。
@@ -574,7 +578,7 @@ sed -n '145,163p' packages/compaction/compaction-basic/src/summarizer.ts
 
 真正动到头部的只有三类：一是 system prompt 变了（插件注册或卸载 section、进出 plan 模式、persona 变化），二是工具集变了（注册/注销、scoped 限制、Code Mode 切换），三是压缩或工具结果剪枝对 surface 做了 `replace`。前两类改的是 `messages[0]` 和 `tools`，位置在整个请求最前面，失效从第一个 token 起算；第三类改的是 `messages[1]` 及其后，system 和 tools 还能命中，但历史全废。
 
-模型切换是第四种，性质不同：它不是打断前缀，是整个换了一个缓存域（`packages/llm/llm-deepseek/README.md:107`），旧域里攒的东西根本不参与匹配。
+模型切换是第四种，性质不同：它不是打断前缀，是整个换了一个缓存域（`packages/llm/llm-deepseek/README.md:134`），旧域里攒的东西根本不参与匹配。
 
 反过来，纯追加的都不打断：用户新消息、工具结果、assistant 输出、运行时上下文快照。快照是这里的关键设计，它带的信息（日期、git 状态、权限模式）恰恰是最易变的，但因为被放在消息数组最尾巴（`agent.ts:238`），改多少次都不碰前缀。上游把 sandbox 策略从 system section 挪到尾部快照，实测结果就是未命中从 14,691 降到每次 59–306（`.agents/notes/implemented/feature/2026-07-30-current-sandbox-policy-context.md:35`）。
 

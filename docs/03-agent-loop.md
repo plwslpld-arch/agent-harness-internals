@@ -15,9 +15,9 @@ status: stale
 
 ## 先看见：一条真实的会话日志
 
-dsh 的上游仓库里存了一批端到端快照，每个快照是一个跑得起来的 ACP 会话（ACP 是 dsh 对外的一种 stdio JSON-RPC 协议表面，见 [12 产品表面与协议](12-surfaces-and-protocols.md)），产物包括完整的 session 日志（会话事件日志，一条一行往后追加，模型看到的历史就是从它投影出来的）。这批快照分两类，`recorded` 这个布尔量决定是哪一类（`packages/test-support/acp-snapshot/src/suite.ts:87`）：`recorded: true` 的会被 `test:snapshot:record` 拿真 API 重录，`recorded: false` 的是**手写或手工采集**的 fixture，永不重录，用于那些活模型不肯稳定复现的场景（provider 错误、取消、脚本化的重复动作）。commit 47f9438 上是 38 比 40。
+dsh 的上游仓库里存了一批端到端快照，每个快照是一个跑得起来的 ACP 会话（ACP 是 dsh 对外的一种 stdio JSON-RPC 协议表面，见 [12 产品表面与协议](12-surfaces-and-protocols.md)），产物包括完整的 session 日志（会话事件日志，一条一行往后追加，模型看到的历史就是从它投影出来的）。这批快照分两类，`recorded` 这个布尔量决定是哪一类（`packages/test-support/acp-snapshot/src/suite.ts:88`）：`recorded: true` 的会被 `test:snapshot:record` 拿真 API 重录，`recorded: false` 的是**手写或手工采集**的 fixture，永不重录，用于那些活模型不肯稳定复现的场景（provider 错误、取消、脚本化的重复动作）。commit 47f9438 上是 38 比 40。
 
-下面这个 `parallel-tool-calls` 属于后者（`examples/acp-agent/tests/acp.snapshot.ts:175-179`），所以别把它的 usage 数字（模型返回的 token 用量）当真实计量看；**它作为「事件顺序长什么样」的证据是可信的**，因为回放同样要过 session 层的全部校验。我把每行的 `type` 和关键字段抽出来，把 `assistant/chunk`（两个 step 一共 13 条流式碎片）折叠成了一行：
+下面这个 `parallel-tool-calls` 属于后者（`examples/acp-agent/tests/acp.snapshot.ts:214-218`），所以别把它的 usage 数字（模型返回的 token 用量）当真实计量看；**它作为「事件顺序长什么样」的证据是可信的**，因为回放同样要过 session 层的全部校验。我把每行的 `type` 和关键字段抽出来，把 `assistant/chunk`（两个 step 一共 13 条流式碎片）折叠成了一行：
 
 ```text
 session          {"cwd":"…","delegationDepth":0}
@@ -328,7 +328,7 @@ turn 结束前有一个专门的关口（`agent.ts:295-299`）：
 
 看清楚那个参数是什么：`executeToolCalls` 的最后一个参数叫 `acceptContext`，它接收的是 `result.additionalContexts`，**只有这些「附加上下文」进 next-step inbox**。工具结果本身走完全不同的路：`appendToolResult`（`packages/core/agent-loop/src/tool-calls.ts:268-289`）把它写成 `tool/result` 事件，带 `surfaceOp: 'append'`，于是它直接成为派生历史的一部分。
 
-派生历史 `session.deriveMessages()`（`packages/core/session/src/index.ts:726`）只认三种表面事件：`user/message | assistant/message | tool/result`（`packages/core/session/src/types.ts:343-346`）。surface（表面）是事件日志的一个子视图，只有这三种事件能进去，模型历史就从这个子视图折叠出来；`surfaceOp` 是写事件时必须交代的一句话：这条事件对表面做的是追加还是替换。`tool/result` 就在这个名单里。所以下一个 step 的请求里，工具结果是以 tool 消息的身份出现的，位置紧跟在它的 `assistant/message` 后面；而 `additionalContexts`（例如 `repeat-tool-reminder` 的提醒、`spill-policy` 的定位符、`agent-instructions` 发现的工作区说明）是以额外的 `user/message` 身份，在下一个 step 的 `step/start` 之后才写进历史。两者在日志里的位置、角色、写入时机都不同。
+派生历史 `session.deriveMessages()`（`packages/core/session/src/index.ts:726`）只认三种表面事件：`user/message | assistant/message | tool/result`（`packages/core/session/src/types.ts:347-350`）。surface（表面）是事件日志的一个子视图，只有这三种事件能进去，模型历史就从这个子视图折叠出来；`surfaceOp` 是写事件时必须交代的一句话：这条事件对表面做的是追加还是替换。`tool/result` 就在这个名单里。所以下一个 step 的请求里，工具结果是以 tool 消息的身份出现的，位置紧跟在它的 `assistant/message` 后面；而 `additionalContexts`（例如 `repeat-tool-reminder` 的提醒、`spill-policy` 的定位符、`agent-instructions` 发现的工作区说明）是以额外的 `user/message` 身份，在下一个 step 的 `step/start` 之后才写进历史。两者在日志里的位置、角色、写入时机都不同。
 
 ## `buildRequest()`：请求怎么拼出来
 
@@ -449,7 +449,7 @@ turn 结束前有一个专门的关口（`agent.ts:295-299`）：
 
 游标只跨越**连续就绪**的槽位。第 2 个调用先跑完也不会先提交，它得等第 1 个。于是 `tools/post-execute` 策略、`tool/result` 落盘顺序、`additionalContexts` 的先后，全都是模型顺序，只有工具体真正重叠。
 
-**取消**（`tool-calls.ts:237-242`、`:249-259`）：abort 后停止补池，等已启动的 settle 并按序提交，然后给每个没启动的调用补写一对合成的 `tool/call` + `tool/result`，内容是 `Error: tool call aborted before dispatch`（错误：这个工具调用在派发之前就被取消了），错误码 `ABORTED_BEFORE_DISPATCH`。上游的 `cancel-tool-calls` 快照把这两种码摆在了一起（同样是一份手工采集的 fixture，`examples/acp-agent/tests/acp.snapshot.ts:382`，活模型没法稳定复现一次取消）：`call_wait` 已经跑起来了，拿到的是 `Error: tool call aborted`（工具调用被取消，码 `ABORTED`）；`call_skipped` 根本没启动，拿到的是 `Error: tool call aborted before dispatch`（派发前就被取消，码 `ABORTED_BEFORE_DISPATCH`）。历史因此仍然是「每个 call 都有配对 result」的合法结构，重放不会断。
+**取消**（`tool-calls.ts:237-242`、`:249-259`）：abort 后停止补池，等已启动的 settle 并按序提交，然后给每个没启动的调用补写一对合成的 `tool/call` + `tool/result`，内容是 `Error: tool call aborted before dispatch`（错误：这个工具调用在派发之前就被取消了），错误码 `ABORTED_BEFORE_DISPATCH`。上游的 `cancel-tool-calls` 快照把这两种码摆在了一起（同样是一份手工采集的 fixture，`examples/acp-agent/tests/acp.snapshot.ts:455`，活模型没法稳定复现一次取消）：`call_wait` 已经跑起来了，拿到的是 `Error: tool call aborted`（工具调用被取消，码 `ABORTED`）；`call_skipped` 根本没启动，拿到的是 `Error: tool call aborted before dispatch`（派发前就被取消，码 `ABORTED_BEFORE_DISPATCH`）。历史因此仍然是「每个 call 都有配对 result」的合法结构，重放不会断。
 
 **调度器自身失败**是另一回事：`schedulerFailure` 一旦置上就停止新派发，`Promise.allSettled(inFlight)` 后原样抛出（`tool-calls.ts:231-235`），**不伪造任何结果**。这可能留下没有 result 的 `tool/call`。上游的取舍是「内部故障宁可留下不完整的日志，也不编造一条模型会当真的工具输出」。
 

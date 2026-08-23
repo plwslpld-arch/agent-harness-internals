@@ -223,7 +223,7 @@ export type ToolPresentationMode = 'native' | 'code' | 'both'
 
 yaml 里那行注释的意思是：跟 Web 那一侧保持同一个进程级的 Code Mode 临时开关。
 
-真正「产品化」的开关是 agent preset。`apps/cli/config/agent-presets/code/`（UI 名「PTC 模式」）就是 standard preset 加一行（`apps/cli/config/agent-presets/code/agent.cordis.yml:259-262`）：
+真正「产品化」的开关是 agent preset。`apps/cli/config/agent-presets/code/`（UI 名「PTC 模式」）就是 standard preset 加一行（`apps/cli/config/agent-presets/code/agent.cordis.yml:260-263`）：
 
 ```yaml
 - id: tool-presentation
@@ -288,7 +288,7 @@ if (this.modeFor(scope) !== 'native') {
 
 翻译成人话就是：描述文本本身就是防错设计。参数 schema 里写了不算数，模型不一定读；写进描述的第一句才拦得住。
 
-描述与 `code` 参数说明按运行时语言换皮：`TYPESCRIPT_FLAVOR`（`packages/core/tools/src/code-mode.ts:46-54`）与 `PYTHON_FLAVOR`（`packages/core/tools/src/code-mode.ts:61-69`）。换皮是**惰性**的：两个 getter 装在定义对象上（`packages/core/tools/src/code-mode.ts:659-671`），在注册表投影 schema 的那一刻才读 `ctx.codeRuntime.language`。理由也写在注释里：定义在注册时铸造一次，那时还不知道会挂哪个运行时；推迟到投影点是「仍能发出所载入运行时语言」的最小改动。
+描述与 `code` 参数说明按运行时语言换皮：`TYPESCRIPT_FLAVOR`（`packages/core/tools/src/code-mode.ts:46-54`）与 `PYTHON_FLAVOR`（`packages/core/tools/src/code-mode.ts:62-70`）。换皮是**惰性**的：两个 getter 装在定义对象上（`packages/core/tools/src/code-mode.ts:667-679`），在注册表投影 schema 的那一刻才读 `ctx.codeRuntime.language`。理由也写在注释里：定义在注册时铸造一次，那时还不知道会挂哪个运行时；推迟到投影点是「仍能发出所载入运行时语言」的最小改动。
 
 ### 2.4 直呼 native 工具会发生什么
 
@@ -361,11 +361,11 @@ const worker = new Worker(WORKER_PATH, {
 
 ### 2.6 子调用怎么调度
 
-程序里每个 `await tools.xxx(...)` 都是一次**完整重入**工具流水线的子调用。绑定函数在 `packages/core/tools/src/code-mode.ts:464-479`：参数先 `snapshotJsonValue` 归一为无损 JSON（不是无损就当场报错，`packages/core/tools/src/code-mode.ts:151-167`），然后构造一次调用输入，`callId` 是父 callId 加后缀（`` `${exec.callId}:code:${n}` ``），并把父的 `token` 放进 `parent` 字段，这个字段就是 §2.4 里让折叠放行的凭证。
+程序里每个 `await tools.xxx(...)` 都是一次**完整重入**工具流水线的子调用。绑定函数在 `packages/core/tools/src/code-mode.ts:466-481`：参数先 `snapshotJsonValue` 归一为无损 JSON（不是无损就当场报错，`packages/core/tools/src/code-mode.ts:153-169`），然后构造一次调用输入，`callId` 是父 callId 加后缀（`` `${exec.callId}:code:${n}` ``），并把父的 `token` 放进 `parent` 字段，这个字段就是 §2.4 里让折叠放行的凭证。
 
-绑定表按**调用方 agent 的可见集**枚举（`packages/core/tools/src/code-mode.ts:606-609`），也就是 SDK 段声明的那同一份视图，所以「prompt 里承诺的」和「程序里能绑的」永远一致。命名空间对象用 null 原型 + `defineProperty` 建（`packages/core/tools/src/code-mode.ts:601`），这样一个叫 `__proto__` 的工具是普通自有属性而不是原型碰撞。
+绑定表按**调用方 agent 的可见集**枚举（`packages/core/tools/src/code-mode.ts:614-617`），也就是 SDK 段声明的那同一份视图，所以「prompt 里承诺的」和「程序里能绑的」永远一致。命名空间对象用 null 原型 + `defineProperty` 建（`packages/core/tools/src/code-mode.ts:609`），这样一个叫 `__proto__` 的工具是普通自有属性而不是原型碰撞。
 
-调度器是一条**单一有序车道**（`packages/core/tools/src/code-mode.ts:393-447`）。它刻意复刻了 native 循环的时序，注释把契约列了出来（`packages/core/tools/src/code-mode.ts:344-357`）：
+调度器是一条**单一有序车道**（`packages/core/tools/src/code-mode.ts:395-449`）。它刻意复刻了 native 循环的时序，注释把契约列了出来（`packages/core/tools/src/code-mode.ts:346-359`）：
 
 - 有序阶段（写 dispatch-start 事件、pre-execute + guards、post-execute、上下文延迟、写 settle 事件）全部在这一条车道里跑，彼此不重叠；只有「环绕派发 / body」阶段并发。
 - 启动严格按提交顺序；结果按提交顺序经一个 head-of-line 游标提交。
@@ -374,9 +374,9 @@ const worker = new Worker(WORKER_PATH, {
 
 也就是说：程序里的 `Promise.all` 买到的是「工具自己声明为并发安全的那些调用之间」的墙钟并行，不是无条件并行。SDK 指令里那句「safe calls run concurrently; mutating calls run alone, in submission order」（声明为安全的调用会并发跑；会改东西的调用单独跑，按提交顺序来）讲的就是这条真实契约。
 
-子调用的 `additionalContexts` 不能就地注入（那会破坏父调用与父结果的相邻性），所以统一走 `exec.deferContext()` 攒起来，由外层结果带出（`packages/core/tools/src/code-mode.ts:562-564`）。
+子调用的 `additionalContexts` 不能就地注入（那会破坏父调用与父结果的相邻性），所以统一走 `exec.deferContext()` 攒起来，由外层结果带出（`packages/core/tools/src/code-mode.ts:570-572`）。
 
-**取消与排空**：整个运行有一条 run-scoped 的 AbortController，外层信号进来会转发，运行以任何方式结束都会 abort 它。`finally` 里两行（`packages/core/tools/src/code-mode.ts:627-628`）：
+**取消与排空**：整个运行有一条 run-scoped 的 AbortController，外层信号进来会转发，运行以任何方式结束都会 abort 它。`finally` 里两行（`packages/core/tools/src/code-mode.ts:635-636`）：
 
 ```ts
 runController.abort('run_code settled')
@@ -387,9 +387,9 @@ await drainDispatches()
 
 ### 2.7 session 里留下什么
 
-两类 log-only 事件（不进模型历史）：`tool/code-dispatch-start` 在入池时写，`tool/code-dispatch` 在结算时写并带完整渲染内容（`packages/core/tools/src/code-mode.ts:510-521`）。写进日志的参数是**归一化值的兄弟副本**：`jsonNormalizeArgs` 把同一个值 snapshot 了两次（`packages/core/tools/src/code-mode.ts:151-166`），一份派发一份记录，注释给的理由是「a tool mutating its args cannot desync this record from what it actually received」（`packages/core/tools/src/code-mode.ts:516-518`）。这句是说：就算某个工具在执行中把自己收到的参数改了，日志里那份记录也不会跟它实际收到的东西对不上，因为两份是各自独立的快照。
+两类 log-only 事件（不进模型历史）：`tool/code-dispatch-start` 在入池时写，`tool/code-dispatch` 在结算时写并带完整渲染内容（`packages/core/tools/src/code-mode.ts:512-523`）。写进日志的参数是**归一化值的兄弟副本**：`jsonNormalizeArgs` 把同一个值 snapshot 了两次（`packages/core/tools/src/code-mode.ts:153-168`），一份派发一份记录，注释给的理由是「a tool mutating its args cannot desync this record from what it actually received」（`packages/core/tools/src/code-mode.ts:518-520`）。这句是说：就算某个工具在执行中把自己收到的参数改了，日志里那份记录也不会跟它实际收到的东西对不上，因为两份是各自独立的快照。
 
-`tool/code-dispatch` 的内容还会先过一次 `tools/code-dispatch-log` waterfall（瀑布：一串注册在同一个名字下的处理器，前一个的输出接着喂给后一个，这里是 `shapeDispatchLog`），spill 后端就是在这里把超大内容换成预览 + 定位符的，**只换持久副本，程序拿到的值和模型看到的外层结果都不动**（`packages/core/tools/src/code-mode.ts:500-509`）。
+`tool/code-dispatch` 的内容还会先过一次 `tools/code-dispatch-log` waterfall（瀑布：一串注册在同一个名字下的处理器，前一个的输出接着喂给后一个，这里是 `shapeDispatchLog`），spill 后端就是在这里把超大内容换成预览 + 定位符的，**只换持久副本，程序拿到的值和模型看到的外层结果都不动**（`packages/core/tools/src/code-mode.ts:502-511`）。
 
 ---
 
@@ -474,7 +474,7 @@ order 115 落在 100-199 的工具指导带内。文本是一个 105 行的模�
 
 > Run a read-only query explicitly declared by an Inspect Provider. platform, provider, and method must come from cordis_inspect_list, and input must satisfy that method's schema. Use this Tool before cordis_define to read exact Service methods, Event modes, Builtin signatures, Tool schemas, theme tokens, or live Slot trees and props. Host queries run locally. A Client query waits for the first valid page response and remains pending until a page answers or the Tool is cancelled. This Tool cannot invoke business Service methods or modify the runtime. ...
 >
-> —— `docs/tool-catalog.md:365`（`cordis_inspect_query`）
+> —— `docs/tool-catalog.md:367`（`cordis_inspect_query`）
 
 （跑一次由 Inspect Provider 明确声明过的只读查询。platform、provider、method 三个值必须来自 `cordis_inspect_list`，input 必须满足那个 method 的 schema。在 `cordis_define` 之前用这个 Tool 去读准确的 Service 方法、Event 模式、Builtin 签名、Tool schema、主题 token，或者活的 Slot 树和 props。Host 侧的查询在本地跑。Client 侧的查询会等第一个有效的页面响应，在某个页面回答它或者这个 Tool 被取消之前一直挂着。这个 Tool 不能调业务 Service 方法，也不能改运行时。）
 
@@ -484,7 +484,7 @@ order 115 落在 100-199 的工具指导带内。文本是一个 105 行的模�
 
 > Define an immutable Cordis Package. For a new Plugin, use kind:"new" and provide only a semantic prefix of 3–6 lowercase English letters; the Host returns the final pluginId and packageId. To modify an existing Plugin, use kind:"existing" with its exact pluginId to append a Package without overwriting older versions. Provide at least one of code.host and code.client. Each value is a plain JavaScript function body that returns a Cordis Plugin; no TypeScript, JSX, or import transformation occurs. Query Inspect before depending on a Service, Event, Builtin, Slot, or token. Define only validates parameters and syntax and records source: it does not request approval, execute apply, or change currentPackageId. On success, call cordis_run with the returned IDs.
 >
-> —— `docs/tool-catalog.md:270`
+> —— `docs/tool-catalog.md:272`
 
 （定义一个不可变的 Cordis Package。新建插件时用 `kind:"new"`，只需要给一个 3 到 6 个小写英文字母的语义前缀，最终的 pluginId 和 packageId 由 Host 返回。要改一个已有插件，就用 `kind:"existing"` 加上它准确的 pluginId，这样是追加一个 Package，不会覆盖旧版本。`code.host` 和 `code.client` 至少要给一个。每个值都是一段普通 JavaScript 函数体，返回一个 Cordis Plugin；不做任何 TypeScript、JSX 或 import 的转换。在依赖某个 Service、Event、Builtin、Slot 或 token 之前，先用 Inspect 查一下。define 只校验参数和语法、把源码记下来，它不申请审批、不执行 apply、也不改 `currentPackageId`。成功之后，拿返回的那组 id 去调 `cordis_run`。）
 
@@ -562,7 +562,7 @@ Host 与 Client 之间的往返被记成六个 `cordis/*` 事件（`docs/subsyst
 
 写或改 composition 之前，先加载 `editing-cordis-compositions` 这个 skill。）
 
-除了 `tool-cordis` 那一行（`apps/cli/config/agent-presets/cordis/agent.cordis.yml:245-246`），preset 还随身带两个 skill（`cordis-plugin-development` 和 `editing-cordis-compositions`），通过给 `skill-filesystem` 配一个指向 preset 自己目录的 `customSkillDirs` 实现（`apps/cli/config/agent-presets/cordis/agent.cordis.yml:255-259`）。注释解释了为什么 skill 跟着 preset 走而不是放用户的 skill root：「it documents THIS deployment's two planes, and a preset is the unit that gets copied and edited」（它记录的是**这一个**部署的两个平面，而 preset 正是被整个复制、整个修改的那个单位）。skill 机制本身见 [08 编排层](08-orchestration.md)。
+除了 `tool-cordis` 那一行（`apps/cli/config/agent-presets/cordis/agent.cordis.yml:246-247`），preset 还随身带两个 skill（`cordis-plugin-development` 和 `editing-cordis-compositions`），通过给 `skill-filesystem` 配一个指向 preset 自己目录的 `customSkillDirs` 实现（`apps/cli/config/agent-presets/cordis/agent.cordis.yml:256-260`）。注释解释了为什么 skill 跟着 preset 走而不是放用户的 skill root：「it documents THIS deployment's two planes, and a preset is the unit that gets copied and edited」（它记录的是**这一个**部署的两个平面，而 preset 正是被整个复制、整个修改的那个单位）。skill 机制本身见 [08 编排层](08-orchestration.md)。
 
 ### 4.6 风险与护栏，逐条
 
@@ -602,7 +602,7 @@ Host 与 Client 之间的往返被记成六个 `cordis/*` 事件（`docs/subsyst
 
 **Claude Code 的 plugins/skills 是另一条路子。** 它扩展的是「模型能读到什么、什么时候被触发」，不改运行时本身：skill 正文在调用点作为 user message 注入，plugin 打包 skills/commands/agents/hooks/MCP/LSP。装卸是会话外的动作，装完这套东西对模型是静态的。dsh 的 Extensions 是模型在**这一轮**里写一段 JS、下一轮就多出一个工具。
 
-**pi 走到了另一个极端。** 它的哲学明说「No MCP. No sub-agents. No permission popups. No plan mode. No built-in to-dos.」（`pi!packages/coding-agent/README.md:494`），意思是不做 MCP、不做 subagent、不弹权限确认框、不做 plan 模式、不内置待办清单——但它给的是最全的扩展 API（`ExtensionAPI` 上 33 个 `on(event, …)` + `registerTool`/`registerCommand`/`registerProvider` 等，`pi!packages/coding-agent/src/core/extensions/types.ts:1198`），并且在 system prompt 里内嵌自己的文档路径，鼓励「让 pi 给自己写扩展」。差别在**谁来写、什么时候写**：pi 让模型写一个磁盘上的 `.ts` 再 `/reload`，可审计可持久；dsh 让模型直接在活着的进程里 define + run，更快但只活一轮进程。
+**pi 走到了另一个极端。** 它的哲学明说「No MCP. No sub-agents. No permission popups. No plan mode. No built-in to-dos.」（`pi!packages/coding-agent/README.md:494`），意思是不做 MCP、不做 subagent、不弹权限确认框、不做 plan 模式、不内置待办清单——但它给的是最全的扩展 API（`ExtensionAPI` 上 33 个 `on(event, …)` + `registerTool`/`registerCommand`/`registerProvider` 等，`pi!packages/coding-agent/src/core/extensions/types.ts:1214`），并且在 system prompt 里内嵌自己的文档路径，鼓励「让 pi 给自己写扩展」。差别在**谁来写、什么时候写**：pi 让模型写一个磁盘上的 `.ts` 再 `/reload`，可审计可持久；dsh 让模型直接在活着的进程里 define + run，更快但只活一轮进程。
 
 ---
 

@@ -120,7 +120,7 @@ const install: InvariantInstaller = () => {}
 
 **没有任何地方 catch 它**：全仓非测试源码里 `InvariantError` 只在定义它的那个文件出现三次。所以它按普通异常向上传播：
 
-1. agent-loop 那条断言挂在 `llm/stream` 上，而 `llm/stream` 是 waterfall。`packages/llm/llm/src/index.ts:906-909` 的文档注释把责任划得很清楚：「Adapter selection, dispatch, and iteration failures become terminal `error` or `aborted` finish chunks; middleware, nested-call, cleanup, and consumer failures remain thrown.」（适配器选择、派发、迭代这三类失败，会被转换成一个终止性的 `error` 或 `aborted` finish chunk 送进流里；中间件、嵌套调用、清理和消费方的失败，则保持原样往外抛。）invariant 是 middleware，所以它**不会**被转换成一个 finish chunk，而是原样抛出。
+1. agent-loop 那条断言挂在 `llm/stream` 上，而 `llm/stream` 是 waterfall。`packages/llm/llm/src/index.ts:978-981` 的文档注释把责任划得很清楚：「Adapter selection, dispatch, and iteration failures become terminal `error` or `aborted` finish chunks; middleware, nested-call, cleanup, and consumer failures remain thrown.」（适配器选择、派发、迭代这三类失败，会被转换成一个终止性的 `error` 或 `aborted` finish chunk 送进流里；中间件、嵌套调用、清理和消费方的失败，则保持原样往外抛。）invariant 是 middleware，所以它**不会**被转换成一个 finish chunk，而是原样抛出。
 2. 异常从 `step()` 冒到 turn 循环的 catch（`packages/core/agent-loop/src/agent.ts:302`）。既然 signal 没 abort，就走 `packages/core/agent-loop/src/agent.ts:309-314`：`turnEnds = { kind: 'error', error: { message: errorChain(error), code: 'UNKNOWN' } }`。`InvariantError` 不是 `LlmError`，所以它被压平成 `UNKNOWN` 码的文本。
 3. `this.throwError(error)`（`packages/core/agent-loop/src/agent.ts:315`）先 `dispatch.emit('agent/error', …)` 再重抛（`packages/core/agent-loop/src/agent.ts:206-207`）。
 4. `finally` 块无论如何都会追加 `turn/end`（`packages/core/agent-loop/src/agent.ts:319`），所以这个 turn 以 `reason.kind === 'error'` 落盘。
@@ -196,13 +196,13 @@ You are a coding assistant powered by the deepseek-v4-flash model. Your working 
 {"type":"request/header","seq":7,"time":1785498761318,"data":{"header":{"config":{"provider":"deepseek-official","model":"deepseek-v4-flash"},"system":"{{system}}","tools":"{{tools}}"},"reason":"initial"}}
 ```
 
-`system` 和 `tools` 在会话日志里一律被换成 token。完整内容不放在日志里，而是放在旁边的 sidecar 文件（`system-prompt.expected.md` / `tool-schemas.expected.json`）里，且**每一类请求头只由一个场景持有 sidecar**：场景表用 `pinsHeader: true` 标出这个「班长」，同班的其余场景只检查自己重建出来的请求头是否与班长相等（`packages/test-support/acp-snapshot/src/suite.ts:104`）。`examples/acp-agent` 的 78 个场景分成 19 个这样的班，其中 12 个持有 system prompt sidecar、14 个持有 tool schema sidecar（差额来自 `systemPromptSource` / `toolSchemasSource`，允许一个班长复用另一个班长的 sidecar）。
+`system` 和 `tools` 在会话日志里一律被换成 token。完整内容不放在日志里，而是放在旁边的 sidecar 文件（`system-prompt.expected.md` / `tool-schemas.expected.json`）里，且**每一类请求头只由一个场景持有 sidecar**：场景表用 `pinsHeader: true` 标出这个「班长」，同班的其余场景只检查自己重建出来的请求头是否与班长相等（`packages/test-support/acp-snapshot/src/suite.ts:105`）。`examples/acp-agent` 的 78 个场景分成 19 个这样的班，其中 12 个持有 system prompt sidecar、14 个持有 tool schema sidecar（差额来自 `systemPromptSource` / `toolSchemasSource`，允许一个班长复用另一个班长的 sidecar）。
 
 好处是：改一句 prompt，只有受影响那个班的 sidecar 会出 diff；同班其余场景的 fixture 里躺的是常量 token，一个字节都不用动。既保住了「有人在逐字盯着完整内容」，又不至于每次 prompt 微调都要 review 78 份大 diff。`docs/testing.md:12` 用「One ACP scenario (`text-turn`) pins full system-prompt/tool-schema content; other fixtures tokenize it」概括了这个安排（那句英文的意思是：由一个 ACP 场景 `text-turn` 钉住完整的 system prompt 与工具 schema 内容，其余 fixture 把这两块换成 token；它说的是默认那一班），理由在 `.agents/notes/archived/testing/2026-07-06-pin-request-header-content-in-one-scenario.md`。
 
 ## 七、文档不是文档，是有门禁的产物
 
-dsh 有 28 个文档门禁，编在 `scripts/run-gates.ts:581-615` 的 `docSyncLeafGates()` 里，一条 `pnpm run doc-sync` 全跑。挑几条对读者有用的：
+dsh 有 28 个文档门禁，编在 `scripts/run-gates.ts:215-249` 的 `docSyncLeafGates()` 里，一条 `pnpm run doc-sync` 全跑。挑几条对读者有用的：
 
 **每个包 README 必须有 `## Model Experience`。** 这是 `.agents/notes/implemented/process/2026-07-12-package-model-experience-contract.md` 定的，脚本是 `scripts/verify-package-readme-model-experience.ts`。它把 219 个包分成四类：
 
@@ -232,7 +232,7 @@ dsh 有 28 个文档门禁，编在 `scripts/run-gates.ts:581-615` 的 `docSyncL
 - **构建**：`tsc -b` 出 JS，`tsdown` 打包。`tsdown.config.ts:19-20` 里 workspace 是 `vendor/*` + `packages/*/*` + `apps/cli`，每个包固定三个入口：`lib/types/{index,invariant,startup}.js`。注意 `invariant` 是一等构建入口，不是可选附件。
 - **版本**：`packages/*/*` 219 个 `package.json` 全是 `0.1.0-rc.5`，跟根 `package.json:3` 一致。
 - **没有 CHANGELOG**。仓库里根本没有这个文件。变更史靠 git tag（`dsh-v*` / `vendor-<pkg>-v*` / `landlock-run-v*`）加 683 篇 Agent Note，三条独立发布序列见 `.agents/notes/implemented/process/2026-08-10-npm-release-sequences.md`。
-- **Python SDK 打成单文件可执行**：`scripts/build-exe-for-python-sdk.ts:25` 固定 `@yao-pkg/pkg@6.21.0`，走 `--sea` 路线（`scripts/build-exe-for-python-sdk.ts:390`），产出 `dsh-jsonrpc-agent-pkg-<platform>-<arch>` 装进平台 wheel。理由在 `.agents/notes/implemented/architecture/2026-07-10-single-file-executable-sdk-runtime-distribution.md`。
+- **Python SDK 打成单文件可执行**：`scripts/build-exe-for-python-sdk.ts:26` 固定 `@yao-pkg/pkg@6.21.0`，走 `--sea` 路线（`scripts/build-exe-for-python-sdk.ts:391`），产出 `dsh-jsonrpc-agent-pkg-<platform>-<arch>` 装进平台 wheel。理由在 `.agents/notes/implemented/architecture/2026-07-10-single-file-executable-sdk-runtime-distribution.md`。
 - **native landlock**：`native/landlock-run/` 是一个约 300 行 C11、静态链接 musl 的「先自限再 exec」启动器，发成 entry 包 + 两个平台包，靠 npm 的 `os`/`cpu` 字段分发。它 fail-closed（失败时往「关」的方向倒）：内核不支持就不跑命令。
 
 ## 九、失效点：100% 覆盖率骗过的那一次
