@@ -95,7 +95,7 @@ export const textEvents = [
 
 `LlmCallConfig`（`packages/llm/llm/src/call-config.ts:23-30`）只有六个字段：`provider`、`model`、`reasoningEffort`、`temperature`、`maxTokens`、`stop`。它是 session 日志里 `EpochHeader.config` 的内容（**epoch header** 是一次请求的信封：调用配置、适配器默认值、渲染好的 system 字符串、装配好的工具 schema，只有它变了才写一条新事件），也是唯一允许插件在 `agent/request` 这个 waterfall 上替换的东西。**waterfall（瀑布事件）** 是 Cordis 的环绕式中间件：监听器必须 `await next()` 才轮到下一个，返回值权威。`callConfigEquals` 逐字段比较，`stop` 数组按元素比（`packages/llm/llm/src/call-config.ts:49-59`）。
 
-文件顶上留着一条自认的 TODO：哪些字段真的属于「epoch 级、影响缓存复用」还没定论（`packages/llm/llm/src/call-config.ts:15-16`）。这条 TODO 的后果在 [02 KV-Cache](02-kv-cache.md) 里会再碰到：改一次 `temperature` 也会写一条 header 变更事件，但它并不改变 prompt token。
+文件顶上留着一条自认的 TODO：哪些字段真的属于「epoch 级、影响缓存复用」还没定论（`packages/llm/llm/src/call-config.ts:15-16`）。这条 TODO 的后果在 [02 KV-Cache](dsh-kv-cache.md) 里会再碰到：改一次 `temperature` 也会写一条 header 变更事件，但它并不改变 prompt token。
 
 `markAgentLoopRequest` / `isAgentLoopRequest` 用一个 `WeakSet` 标记「这个请求对象是 agent loop 装配的」（`packages/llm/llm/src/call-config.ts:12-13, 65-79`）。中间件靠它区分主对话请求和辅助一次性请求。`deepFreeze` 是迭代式深冻结、带循环保护，**唯独跳过 `AbortSignal`**，冻住它会让取消功能失效（`packages/llm/llm/src/call-config.ts:88-117`，跳过的那行在 `:104`）。
 
@@ -147,7 +147,7 @@ export const textEvents = [
   }
 ```
 
-`this.order` 记的是块的开启顺序，`assemble()` 把累积到一半的 partial 折成成品块。整段的重点在最后那个三元判断：被输出上限截断的工具调用参数可能是半截 JSON，执行它不安全，所以直接丢掉。副作用是：`max-tokens` 那一步会产生一条内容为空、只承载 usage 的 `assistant/message`，[05 Session](05-session.md) 里的 `deriveEventMessage` 会跳过这种消息。
+`this.order` 记的是块的开启顺序，`assemble()` 把累积到一半的 partial 折成成品块。整段的重点在最后那个三元判断：被输出上限截断的工具调用参数可能是半截 JSON，执行它不安全，所以直接丢掉。副作用是：`max-tokens` 那一步会产生一条内容为空、只承载 usage 的 `assistant/message`，[05 Session](dsh-session.md) 里的 `deriveEventMessage` 会跳过这种消息。
 
 每个适配器每次请求必须带归因头（`packages/llm/llm/src/attribution.ts:40-44、:53-55`）：`User-Agent: deepseek-harness/<version> (+https://github.com/deepseek-ai/deepseek-harness)`，版本从 package.json 读，不许手抄。这条是仓库制度，出处是 `.agents/notes/implemented/architecture/2026-06-21-mandatory-app-attribution-headers.md`。
 
@@ -357,7 +357,7 @@ const DEFAULT_RETRYABLE_CODES = Object.freeze([
 
 插件销毁时会 abort 所有等待并 drain（`packages/llm/llm-retry/src/index.ts:221-225`）。
 
-与压缩的关系在 [06 压缩](06-compaction.md) 展开：`compaction-basic` 也挂在 `agent/request-error` 上，专门处理 `CONTEXT_WINDOW_EXCEEDED`。这个码不在默认 `retryableCodes` 里，所以 `normal` 模式的 llm-retry 会直接放行给下游。
+与压缩的关系在 [06 压缩](dsh-compaction.md) 展开：`compaction-basic` 也挂在 `agent/request-error` 上，专门处理 `CONTEXT_WINDOW_EXCEEDED`。这个码不在默认 `retryableCodes` 里，所以 `normal` 模式的 llm-retry 会直接放行给下游。
 
 ## `token-meter`：4 字符一个 token 的增量式计量
 
@@ -454,7 +454,7 @@ sed -n '12,19p'   packages/llm/token-meter/src/estimate.ts       # 4 字符/toke
 grep -o '"usage":{[^}]*}' examples/acp-agent/tests/snapshots/bash-tool-turn/session.jsonl
 ```
 
-相关阅读：请求前缀为什么稳定见 [02 KV-Cache](02-kv-cache.md)；请求是怎么从日志里重建出来的见 [05 Session](05-session.md)；`CONTEXT_WINDOW_EXCEEDED` 之后发生什么见 [06 压缩](06-compaction.md)；`llm/stream` 这类扩展点的机制见 [12 表面与协议](12-surfaces-and-protocols.md)；术语见 [附录 A 词汇表](appendix-a-glossary.md)。
+相关阅读：请求前缀为什么稳定见 [02 KV-Cache](dsh-kv-cache.md)；请求是怎么从日志里重建出来的见 [05 Session](dsh-session.md)；`CONTEXT_WINDOW_EXCEEDED` 之后发生什么见 [06 压缩](dsh-compaction.md)；`llm/stream` 这类扩展点的机制见 [12 表面与协议](dsh-surfaces-and-protocols.md)；术语见 [附录 A 词汇表](../appendix-a-glossary.md)。
 
 ## 自检
 

@@ -11,11 +11,11 @@ status: reviewed
 
 在 dsh 的 agent loop 源码里搜「subagent」，一个字都搜不到（`grep -ril subagent packages/core/agent-loop/src/`，那个目录只有 `agent.ts`、`constants.ts`、`index.ts`、`invariant.ts`、`runtime-context.ts`、`tool-calls.ts` 六个文件，零命中）。搜「plan mode」，也没有。可这个 harness 明明能开子代理、能进计划模式、能记待办清单。那这些东西住在哪儿？更麻烦的问题是：它们凭什么改得动模型的行为，而循环本身对它们一无所知？
 
-[03 Agent Loop](03-agent-loop.md) 讲的循环只有四百多行，里面找不到「子代理」「计划模式」「待办清单」这些词。它们全部在外面，是挂在循环事件上的插件。本篇逐个讲清楚三件事：**它是什么 / 挂在循环的哪个事件 / 模型实际看到什么文本**。
+[03 Agent Loop](dsh-agent-loop.md) 讲的循环只有四百多行，里面找不到「子代理」「计划模式」「待办清单」这些词。它们全部在外面，是挂在循环事件上的插件。本篇逐个讲清楚三件事：**它是什么 / 挂在循环的哪个事件 / 模型实际看到什么文本**。
 
 dsh 里这些能力全部通过两条通道之一到达模型。
 
-- **system prompt section**：带一个 `order` 数字，装配时按 order 排成 system prompt。它落在**请求前缀**里。所谓前缀，就是每次请求都原样重发、因而能被服务端 KV-Cache 命中的开头那一段（见 [02 KV-Cache](02-kv-cache.md)）。改动一个 section，它自己和它之后的所有内容都要重新预填。
+- **system prompt section**：带一个 `order` 数字，装配时按 order 排成 system prompt。它落在**请求前缀**里。所谓前缀，就是每次请求都原样重发、因而能被服务端 KV-Cache 命中的开头那一段（见 [02 KV-Cache](dsh-kv-cache.md)）。改动一个 section，它自己和它之后的所有内容都要重新预填。
 - **user-role 消息**：`agent.inject()` / `followup()` / `steer()` / `additionalContexts` 追加到对话历史末尾。前缀一个字节不动，只是多了一条新消息。
 
 哪条通道是刻意选的，本篇会逐个点出来。
@@ -87,7 +87,7 @@ approvalPolicy: parent.ctx.get('approval') === undefined ? undefined : 'never',
 
 上面两行就是全部强制手段：`sandboxMode` 取父会话的显式覆盖值，`approvalPolicy` 只要父那边配过审批就一律写成 `'never'`（从不询问，也就是从不批准）。
 
-沙箱模式**只复制父会话的显式覆盖**（不复制部署默认值，也不复制一次性升级），审批策略则无条件钉成 `never`。两条都以普通 session 事件追加到子会话（`:220`、`:223`，`source: 'delegation'`），而且刻意排在 fork 种子之后，注释是「fresh policy wins stale seed state」（新策略压过种子里那份过期状态）。子代理因此永远无法通过升级审批拿到更宽的权限，只能报告失败。审批与沙箱的完整模型见 [07 工具、审批与沙箱](07-tools-approval-sandbox.md)。
+沙箱模式**只复制父会话的显式覆盖**（不复制部署默认值，也不复制一次性升级），审批策略则无条件钉成 `never`。两条都以普通 session 事件追加到子会话（`:220`、`:223`，`source: 'delegation'`），而且刻意排在 fork 种子之后，注释是「fresh policy wins stale seed state」（新策略压过种子里那份过期状态）。子代理因此永远无法通过升级审批拿到更宽的权限，只能报告失败。审批与沙箱的完整模型见 [07 工具、审批与沙箱](dsh-tools-approval-sandbox.md)。
 
 ### 2.3 continuable：子代理结算怎么回到父
 
@@ -240,7 +240,7 @@ fork 是唯一 `inheritsParentContext = true` 的 provider（`packages/subagent/
 
 翻译成人话就是：dsh 直接把「我为什么不把写工具摘掉」这个工程取舍讲给模型听，让它自己压住手。
 
-这就是「有意接受的缓存失效点」的全貌：dsh 选择了**只动 system prompt 的一段、不动工具表**。切换 plan mode 会让 order 50 及其之后的 system prompt 全部失效（README 自己承认：「entering or leaving changes the system prompt from order 50 onward」，进出 plan mode 会改动 order 50 往后的整段 system prompt），但工具 schema 一个字节都不变。相比之下，如果按「plan 模式下把写工具摘掉」来做，失效的是**工具表**，那是缓存层级里更靠前的一层，代价大得多（见 [02 KV-Cache](02-kv-cache.md)）。
+这就是「有意接受的缓存失效点」的全貌：dsh 选择了**只动 system prompt 的一段、不动工具表**。切换 plan mode 会让 order 50 及其之后的 system prompt 全部失效（README 自己承认：「entering or leaving changes the system prompt from order 50 onward」，进出 plan mode 会改动 order 50 往后的整段 system prompt），但工具 schema 一个字节都不变。相比之下，如果按「plan 模式下把写工具摘掉」来做，失效的是**工具表**，那是缓存层级里更靠前的一层，代价大得多（见 [02 KV-Cache](dsh-kv-cache.md)）。
 
 `exit_plan_mode` 为什么始终注册，源码注释说了两遍。模块头（`packages/plan/plan-mode/src/index.ts:16-18`）：
 
@@ -530,7 +530,7 @@ order 106 的提示段（`packages/jobs/tool-jobs/src/index.ts:264-267`）：
 
 这是本篇最需要澄清的一点：**skill 目录不是 system prompt section**。`packages/skill/` 里没有任何一处 `ctx.systemPrompt.section` 调用。它是一条注入的 user 消息，由 `tool-skill` 在 `agent/pre-step` 上追加到下游 `enter` 决策的 `messages` 里（`packages/skill/tool-skill/src/index.ts:213-251`）。
 
-这与 [01 System Prompt](01-system-prompt.md) 里讲的「什么进前缀、什么进历史」是同一条判据的应用：**skill 目录会变**（provider 扫盘、preset 挂新目录），放进 system prompt 就意味着每次变化都失效整个前缀；放进历史则只是追加。
+这与 [01 System Prompt](dsh-system-prompt.md) 里讲的「什么进前缀、什么进历史」是同一条判据的应用：**skill 目录会变**（provider 扫盘、preset 挂新目录），放进 system prompt 就意味着每次变化都失效整个前缀；放进历史则只是追加。
 
 首次发布的文本（`packages/skill/tool-skill/src/index.ts:254-277`）：
 
@@ -609,7 +609,7 @@ const SKILL_GESTURE = /(^|\s)\/([a-z0-9]+(?:-[a-z0-9]+)*)(?=\s|$)/g
 
 **`packages/guard/timeout-policy`**：`tools/execute` 上的 wrapper，读 `ToolDefinition.timeoutMs`，没声明就原样放行（没有全局默认值）。只有**自己这道 deadline 赢了**才替换结果，文案是 `Error: tool call timed out after <N>ms`（意思是「工具调用超过 `<N>` 毫秒后超时」，`packages/guard/timeout-policy/src/index.ts:42`）。post-execute 之前会把 `exec.signal` 换回调用方的原信号，免得下游看到一个已 abort 的信号。它是协作式的，不硬杀。
 
-**`packages/interaction/*`**：`commands` 是**纯人类面**的（这里的「面」就是 surface，指一套能力朝谁开口：朝人开口的叫人类面，写进请求让模型看见的叫模型面）。它不注册任何工具、任何提示段，模型既看不见也调不了 `/`-命令；`execute()` 的 JSDoc 明说「Execute against the receiving agent without sending the command to the model」（对接收命令的那个 agent 执行，但不把命令发给模型）。命令要影响模型，必须由 handler 显式安排，`/plan <message>` 就是这么做的（`agent.steer()`）。`permission-presets` 拥有 `permission/preset` 这个纯「用户意图」记录，[07](07-tools-approval-sandbox.md) 里讲。`user-questions` 是接缝，`tool-ask-user` 是它唯一的模型面消费者，描述（`packages/interaction/tool-ask-user/src/index.ts:16-17`）：
+**`packages/interaction/*`**：`commands` 是**纯人类面**的（这里的「面」就是 surface，指一套能力朝谁开口：朝人开口的叫人类面，写进请求让模型看见的叫模型面）。它不注册任何工具、任何提示段，模型既看不见也调不了 `/`-命令；`execute()` 的 JSDoc 明说「Execute against the receiving agent without sending the command to the model」（对接收命令的那个 agent 执行，但不把命令发给模型）。命令要影响模型，必须由 handler 显式安排，`/plan <message>` 就是这么做的（`agent.steer()`）。`permission-presets` 拥有 `permission/preset` 这个纯「用户意图」记录，[07](dsh-tools-approval-sandbox.md) 里讲。`user-questions` 是接缝，`tool-ask-user` 是它唯一的模型面消费者，描述（`packages/interaction/tool-ask-user/src/index.ts:16-17`）：
 
 > Ask the user a concise question when you need confirmation, a choice, or missing information before proceeding. Send one or more questions, each with a stable id that will be echoed in the answer.
 
@@ -628,7 +628,7 @@ const SKILL_GESTURE = /(^|\s)\/([a-z0-9]+(?:-[a-z0-9]+)*)(?=\s|$)/g
 | -100 | `harness:identity` | `packages/core/system-prompt/src/index.ts:359` |
 | 0 | `deployment:persona`（子代理里的 persona 遮蔽） | `packages/subagent/subagent/src/child-agent.ts:172` |
 | **50** | `plan:policy` | `packages/plan/plan-mode/src/index.ts:244` |
-| **99** | `tools:code-only`（Code Mode，见 [09](09-extensions-and-code-mode.md)） | `packages/core/tools/src/index.ts:857` |
+| **99** | `tools:code-only`（Code Mode，见 [09](dsh-extensions-and-code-mode.md)） | `packages/core/tools/src/index.ts:857` |
 | 100-106 | `tool:read/write/edit/glob/grep/bash/jobs` | 各工具包 |
 | 110 | `sandbox:policy` | `packages/sandbox/sandbox-policy/src/index.ts:114` |
 | **114** | `tool:goal` | `packages/goal/tool-goal/src/index.ts:190` |
@@ -666,7 +666,7 @@ const SKILL_GESTURE = /(^|\s)\/([a-z0-9]+(?:-[a-z0-9]+)*)(?=\s|$)/g
 | **持久目标 / 外层循环** | goal（同会话续轮，idle 检查点 + flush 屏障）与 ralph（fresh-agent，丢弃上下文）两种 | 会话恢复时保留活动 goal | `ext/goal` 扩展 | 无 | 无 |
 | **skills** | 目录以 user 消息注入（可替换），`skill` 工具按需加载全文；`/name` 显式调用 | 启动只加载描述，正文在调用点作为 user message 注入；压缩后正文重注入（每个 5k、总 25k 上限） | `SKILL.md` 目录，`$skill` 提及或隐式匹配注入 `<skill>` 片段；技能目录是 `host_skills` 世界状态分节 | 目录扫描 SKILL.md，system 中列出，`skill` 工具加载 | SKILL.md 目录扫描，system 里列出，模型用 `read` 读 |
 
-**（3）外部扩展接缝：别人怎么插进来。** 这两行回答的是「第三方代码在哪个口子上接」。dsh 这两格都是「兼容桥」而非原生面，原生扩展路子是写 Cordis 插件（[09](09-extensions-and-code-mode.md)）。
+**（3）外部扩展接缝：别人怎么插进来。** 这两行回答的是「第三方代码在哪个口子上接」。dsh 这两格都是「兼容桥」而非原生面，原生扩展路子是写 Cordis 插件（[09](dsh-extensions-and-code-mode.md)）。
 
 | 维度 | dsh | Claude Code | Codex | OpenCode | pi |
 |---|---|---|---|---|---|
@@ -679,7 +679,7 @@ const SKILL_GESTURE = /(^|\s)\/([a-z0-9]+(?:-[a-z0-9]+)*)(?=\s|$)/g
 
 **二、Codex 的内置角色文案是「教父代理怎么委派」。** explorer 的描述鼓励并行多开、复用结果；worker 明确 ownership 并告知「你不是唯一在改代码的人」。dsh 没有角色概念，它把这件事推到了 provider 和 preset 层：委派的**语义**由部署写在 preset 里，模型只看到一个统一的委派契约（§一）。两种做法各有代价：Codex 的角色文案对模型更直接，dsh 的做法让同一份工具描述能同时代表六种完全不同的后端。
 
-**三、Claude Code 的 hook 面是 dsh 兼容不完的。** 30+ 事件对 7 个，5 种 handler 类型对 1 种（只跑 `command`）。dsh 的桥接目标从一开始就不是「完整实现」，而是让你现有的 `hooks.json` 里那部分事件能跑起来；真正的扩展路子是写 Cordis 插件，那是 [09](09-extensions-and-code-mode.md) 的题目。
+**三、Claude Code 的 hook 面是 dsh 兼容不完的。** 30+ 事件对 7 个，5 种 handler 类型对 1 种（只跑 `command`）。dsh 的桥接目标从一开始就不是「完整实现」，而是让你现有的 `hooks.json` 里那部分事件能跑起来；真正的扩展路子是写 Cordis 插件，那是 [09](dsh-extensions-and-code-mode.md) 的题目。
 
 ---
 
@@ -734,7 +734,7 @@ grep -rn "order: 1\?[0-9]\{1,2\}" packages/*/*/src/index.ts | grep "systemPrompt
 
 设计记录：`.agents/notes/implemented/feature/2026-06-21-subagent-capability-seam.md`（子代理接缝）、`2026-08-10-fork-children-stay-one-shot.md`（fork 与前缀复用）、`2026-06-30-hook-bridges.md`（hook 桥的定位）、`2026-07-16-harness-level-loop.md`（goal 与 ralph 两种外层策略）、`2026-07-05-skill-system.md` 与 `2026-08-09-layered-skill-registry.md`（skill 渐进披露与分层注册表）、`2026-07-06-tool-output-spill-files.md`（spill）、`2026-08-12-production-dsh-excludes-product-subagent-providers.md`（产品 provider 出栈）。
 
-更多背景：循环事件本身见 [03 Agent Loop](03-agent-loop.md)，工具流水线与审批沙箱见 [07](07-tools-approval-sandbox.md)，段落装配与 order 规则见 [01 System Prompt](01-system-prompt.md)，前缀稳定性见 [02 KV-Cache](02-kv-cache.md)，Code Mode 与 Extensions 见 [09](09-extensions-and-code-mode.md)，preset 与 profile 的组装关系见 [10](10-cordis-boot-preset.md)，ACP / SDK 两个协议面见 [12](12-surfaces-and-protocols.md)，横向对照的完整版见 [14](14-comparison.md)，术语见 [附录 A](appendix-a-glossary.md)。
+更多背景：循环事件本身见 [03 Agent Loop](dsh-agent-loop.md)，工具流水线与审批沙箱见 [07](dsh-tools-approval-sandbox.md)，段落装配与 order 规则见 [01 System Prompt](dsh-system-prompt.md)，前缀稳定性见 [02 KV-Cache](dsh-kv-cache.md)，Code Mode 与 Extensions 见 [09](dsh-extensions-and-code-mode.md)，preset 与 profile 的组装关系见 [10](dsh-cordis-boot-preset.md)，ACP / SDK 两个协议面见 [12](dsh-surfaces-and-protocols.md)，横向对照的完整版见 [14](../00-overview.md)，术语见 [附录 A](../appendix-a-glossary.md)。
 
 ---
 

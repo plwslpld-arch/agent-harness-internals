@@ -52,7 +52,7 @@ Test Files  1 passed (1)
      Tests  6 passed (6)
 ```
 
-这 6 条覆盖了 [04 LLM 层](../../docs/04-llm-adapter.md) 里几个关键说法：凭据只从 credentials 文档读、`thinking` 开关可以在会话中途切换、带 tool call 的轮次会回传 `reasoning_content`、SSE 分片按协议顺序到达。
+这 6 条覆盖了 [DSH LLM 层](../../docs/deep/dsh-llm-adapter.md) 里几个关键说法：凭据只从 credentials 文档读、`thinking` 开关可以在会话中途切换、带 tool call 的轮次会回传 `reasoning_content`、SSE 分片按协议顺序到达。
 
 ---
 

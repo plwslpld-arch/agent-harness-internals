@@ -50,7 +50,7 @@ surface 的变化因此是：
 
 ### 压力（`agent/pre-step`）
 
-**压力（pressure）** 指「按本地估算，历史已经吃掉了上下文窗口的多大比例」，超过阈值就动手压。`agent/pre-step` 是 agent 循环每一步派发请求之前的那个扩展点（见 [03 Agent 循环](03-agent-loop.md)），压缩就挂在那里，每一步派发之前跑一次（`packages/compaction/compaction-basic/src/index.ts:147-164`）。失败只 warn 不中断：`ctx.logger.warn('step compaction failed: …; continuing the turn')`（`:160-161`），也就是说压缩失败不会打断这一轮。
+**压力（pressure）** 指「按本地估算，历史已经吃掉了上下文窗口的多大比例」，超过阈值就动手压。`agent/pre-step` 是 agent 循环每一步派发请求之前的那个扩展点（见 [03 Agent 循环](dsh-agent-loop.md)），压缩就挂在那里，每一步派发之前跑一次（`packages/compaction/compaction-basic/src/index.ts:147-164`）。失败只 warn 不中断：`ctx.logger.warn('step compaction failed: …; continuing the turn')`（`:160-161`），也就是说压缩失败不会打断这一轮。
 
 判定链在 `compactIfNeeded`（`packages/compaction/compaction-basic/src/index.ts:258-332`）：
 
@@ -100,7 +100,7 @@ surface 的变化因此是：
 - 有一个刻意的例外（`:195-208`）：如果模型无关的剪枝已经落地、但后面的摘要环节抛了错，只要 surface 确实变了，仍然算作可重试的进展——注释说得很直白，「那次持久化的缩减本身就是充分的重试证据，不要因为可选的第二阶段失败就把它丢掉」。
 - 计数器在 `agent/status` 变 idle 或者出现成功的 `assistant/message` 时清零（`:167-177`）。
 
-`CONTEXT_WINDOW_EXCEEDED` **不在** `llm-retry` 的默认 `retryableCodes` 里（见 [04 LLM 层](04-llm-adapter.md)），所以 `normal` 模式的重试插件会直接放行给下游；`always` 模式则会特意先问下游要不要处理，压缩因此优先于盲目重试。
+`CONTEXT_WINDOW_EXCEEDED` **不在** `llm-retry` 的默认 `retryableCodes` 里（见 [04 LLM 层](dsh-llm-adapter.md)），所以 `normal` 模式的重试插件会直接放行给下游；`always` 模式则会特意先问下游要不要处理，压缩因此优先于盲目重试。
 
 ### 手动 `/compact`
 
@@ -118,7 +118,7 @@ surface 的变化因此是：
 4. 从 `keepFromIdx` 继续向前退，直到那个 cut 处 tool 配对是平衡的（`toolPairingBalancedBefore`，`:123-127`）。再退到 0 也是无可压。
 5. 返回 `{start: surfaceNodes[0], end: surfaceNodes[keepFromIdx - 1]}`。
 
-第 5 步是关键：**区间永远从 `surfaceNodes[0]` 开始**。自动压缩因此总是在压对话的真前缀，这直接决定了摘要请求能不能复用热缓存（下一节）。**热缓存 / 前缀缓存**指 provider 按请求开头那串 token 做的 KV 复用：从第一个不同的 token 起，后面全部要重算（见 [02 KV-Cache](02-kv-cache.md)）。区间不需要对齐 turn 边界，只需要 tool 配对平衡。
+第 5 步是关键：**区间永远从 `surfaceNodes[0]` 开始**。自动压缩因此总是在压对话的真前缀，这直接决定了摘要请求能不能复用热缓存（下一节）。**热缓存 / 前缀缓存**指 provider 按请求开头那串 token 做的 KV 复用：从第一个不同的 token 起，后面全部要重算（见 [02 KV-Cache](dsh-kv-cache.md)）。区间不需要对齐 turn 边界，只需要 tool 配对平衡。
 
 「tool 配对平衡」的判定在 `packages/compaction/compaction/src/tool-pairing.ts`：按 surface 顺序累计「assistant 消息里的 tool-call 块数 − tool/result 数」，为 N 个节点算 N+1 个 cut 是否为零（`packages/compaction/compaction/src/tool-pairing.ts:14-19, 29-38, 50-75`），并对每个 session 缓存，`replaceGeneration` 变了才重算。`toolPairingBalancedBefore/After`（`packages/compaction/compaction/src/tool-pairing.ts:117, 129`）是对外的两个查询。切在不平衡的位置上会留下悬空的 assistant tool call，provider 会直接拒绝这条消息序列。
 
@@ -144,7 +144,7 @@ append compaction/end            ← 放锁
 
 几个细节单独说。
 
-**锁的语义**。`compaction/start` 的 `turn` 字段是 `number | null`（`packages/compaction/compaction/src/types.ts:23`）：数字表示这次压缩被那个开放 turn 严格包住（自动路径），`null` 表示这是两个 turn 之间的独立事务（手动路径）。`assertCompactionInactive`（`packages/compaction/compaction-basic/src/region.ts:286-298`）判断「有没有未配对的 start」时，会拿 `session/end-seed` 的位置做比较：如果最新的种子边界比那条未配对的 start 还靠后，说明那是上个生命周期留下的，不算活跃锁。这就是 [05 Session](05-session.md) 里 `session/end-seed` 存在的实际用途之一。
+**锁的语义**。`compaction/start` 的 `turn` 字段是 `number | null`（`packages/compaction/compaction/src/types.ts:23`）：数字表示这次压缩被那个开放 turn 严格包住（自动路径），`null` 表示这是两个 turn 之间的独立事务（手动路径）。`assertCompactionInactive`（`packages/compaction/compaction-basic/src/region.ts:286-298`）判断「有没有未配对的 start」时，会拿 `session/end-seed` 的位置做比较：如果最新的种子边界比那条未配对的 start 还靠后，说明那是上个生命周期留下的，不算活跃锁。这就是 [05 Session](dsh-session.md) 里 `session/end-seed` 存在的实际用途之一。
 
 **失败一定尝试收尾**（`packages/compaction/compaction-basic/src/region.ts:218-229`）：catch 里会再 append 一条带 `error` 的 `compaction/end`；连这一步都写不出去，就故意留下一个未配对的 `start`：可检测，好过假装干净。
 
@@ -216,7 +216,7 @@ function buildSummarizationInput(
   }
 ```
 
-结果就是：这次辅助请求的 token 序列 = `[主请求的 system][主请求的 tools][主请求的前 N 条消息][一条新的指令 user 消息]`。前面全部命中，只有尾部指令和输出付全价。`purpose: 'compaction'` 让 DeepSeek 适配器加一个 `x-deepseek-harness-compact: 1` 头（见 [04 LLM 层](04-llm-adapter.md)），那是传输元数据，不进 body。
+结果就是：这次辅助请求的 token 序列 = `[主请求的 system][主请求的 tools][主请求的前 N 条消息][一条新的指令 user 消息]`。前面全部命中，只有尾部指令和输出付全价。`purpose: 'compaction'` 让 DeepSeek 适配器加一个 `x-deepseek-harness-compact: 1` 头（见 [04 LLM 层](dsh-llm-adapter.md)），那是传输元数据，不进 body。
 
 指令原文的开头（`packages/compaction/compaction-basic/src/summarizer.ts:31-34`）：
 
@@ -321,7 +321,7 @@ export const PRUNE_MARKER = '\n\n[... tool result middle pruned ...]\n\n'
       })
 ```
 
-和摘要走的是同一套「计量事件紧邻替换节点」协议。而 `tool/result` 的 replace 在 session 层有额外约束：只能替换恰好一个同类节点、只能改 `content`（见 [05 Session](05-session.md)），所以剪枝在类型和运行时上都无法越界。
+和摘要走的是同一套「计量事件紧邻替换节点」协议。而 `tool/result` 的 replace 在 session 层有额外约束：只能替换恰好一个同类节点、只能改 `content`（见 [05 Session](dsh-session.md)），所以剪枝在类型和运行时上都无法越界。
 
 剪枝在两条触发路径上都跑在摘要之前（`packages/compaction/compaction-basic/src/index.ts:284-287, 308-311`）。README 也点出了它最大的价值（`packages/compaction/compaction-basic/README.md:99`）：「Model-free pruning can avoid the auxiliary call entirely」（不调模型的剪枝，有可能把那次辅助调用整个省掉）。很多时候剪一剪就够了，那次摘要请求根本不用发。
 
@@ -330,7 +330,7 @@ export const PRUNE_MARKER = '\n\n[... tool result middle pruned ...]\n\n'
 1. **主对话在压缩后必然从第一条消息起 miss**。README 自己写明（`packages/compaction/compaction-basic/README.md:103`）：「Each checkpoint invalidates reuse from the first replaced history token; the unchanged request prefix before that range remains reusable」（每一条 checkpoint 都会让复用从「第一个被替换掉的历史 token」处断开；这个区间之前那段没变的请求前缀仍然能复用）。保住的只有 system 和 tools。
 2. **每轮压缩都重写头部 checkpoint**。上游提案的问题陈述（`.agents/notes/proposed/feature/2026-07-06-recallable-compaction.md:9`）自评得很直接：「the head checkpoint is rewritten every pass, so the request prefix takes a full prompt-cache miss each time, and earlier summaries are re-summarized generation after generation」（头部那条 checkpoint 每压一轮就被重写一次，所以请求前缀每次都吃一个完整的 prompt-cache miss；更早的那些摘要还会被一代一代反复再摘要）。压得越频繁，重复摘要的损耗越大。
 3. **被压掉的原文对模型彻底消失**。同一份提案指出（`:9`）：`shadowedRange` 只存在于 log-only 的 `compaction/summary` 事件上，模型看到的摘要里没有任何指向它所遮蔽内容的引用，也没有工具能把那一段读回来——即使只追加的日志里一个字节都没丢。提案给出的方案是拆成「冻结的索引 checkpoint + 一个可变的状态 checkpoint」并加 `history_read` / `history_search` 两个工具，请求前缀变成 `[system][stubs…][state][tail]`，让 miss 的起点从位置 0 后移（`:46-47, :53`）。**状态是 proposed，尚未实现。**
-4. **阈值建立在 4 字符/token 的启发式上**（见 [04 LLM 层](04-llm-adapter.md)）。对中文和代码偏差都不小；而 DeepSeek 默认窗口 1,000,000 × 0.8 = 800,000，出厂配置下自动压缩极少触发。真正常见的入口反而是溢出恢复。
+4. **阈值建立在 4 字符/token 的启发式上**（见 [04 LLM 层](dsh-llm-adapter.md)）。对中文和代码偏差都不小；而 DeepSeek 默认窗口 1,000,000 × 0.8 = 800,000，出厂配置下自动压缩极少触发。真正常见的入口反而是溢出恢复。
 5. **只有单摘要节点，没有分级或分段**。区间永远从头开始、结果永远是一条 checkpoint 消息。摘要质量完全依赖那一份固定的英文模板。
 6. **剪枝按字符不按 token**。8192 个字符对英文和对中文意味着差别很大的 token 量。
 7. **压力路径失败只是 warn**（`packages/compaction/compaction-basic/src/index.ts:160-161`）。压不动的会话会继续膨胀，直到撞上 provider 的窗口，然后走溢出恢复；如果那次也压不动，`maxOverflowRetries` 用完就把原始失败抛出去。
@@ -355,7 +355,7 @@ export const PRUNE_MARKER = '\n\n[... tool result middle pruned ...]\n\n'
 - **切点约束**：dsh 用「tool 配对平衡」的 cut，pi 用「合法切点白名单」，OpenCode 允许在 turn 内切分。三者都在解决同一个问题——不能留下悬空的工具调用。
 - **摘要请求的头**：只有 dsh 刻意让它与主对话请求对齐。OpenCode 和 pi 都用独立的 summarizer system prompt，Codex 本地实现用 `base_instructions` 加空工具列表。上游提案的自评（`.agents/notes/proposed/feature/2026-07-06-recallable-compaction.md:13`）：「none of the surveyed implementations makes compaction prefix-cache-aware」（被调查过的这些实现里，没有一个让压缩这件事意识到前缀缓存的存在）。
 - **压缩之外的便宜办法**：Claude Code 的 `/rewind`（回退到一个已缓存的前缀）和 Codex 的 token-budget 新窗口都绕开了「摘要」这件事本身。dsh 的对应物是模型无关的剪枝，它同样不花模型的钱，只是保守得多。
-- **压缩后的重新注入**：Claude Code 会把 CLAUDE.md 和已用 skill 的正文重新注入，Codex 会重新注入初始上下文并对齐位置，OpenCode 会追加一条续跑消息。dsh 什么都不重注入，压缩之后 surface 上只多了那一条 checkpoint。唯一的例外是运行时上下文快照：**如果**被压区间恰好盖住了那条还留着的快照，`RuntimeContextProjection` 的 `retained` 会被置空，下一步于是重发一份完整快照（机制见 [01 System Prompt](01-system-prompt.md) 的 `retained` 三态；本条是从那段逻辑推出来的，**是推断**，本文开头那个 fixture 里被替换的是 `seq 4`，运行时快照 `seq 5` 并没被盖住，所以看不到这个效果）。
+- **压缩后的重新注入**：Claude Code 会把 CLAUDE.md 和已用 skill 的正文重新注入，Codex 会重新注入初始上下文并对齐位置，OpenCode 会追加一条续跑消息。dsh 什么都不重注入，压缩之后 surface 上只多了那一条 checkpoint。唯一的例外是运行时上下文快照：**如果**被压区间恰好盖住了那条还留着的快照，`RuntimeContextProjection` 的 `retained` 会被置空，下一步于是重发一份完整快照（机制见 [01 System Prompt](dsh-system-prompt.md) 的 `retained` 三态；本条是从那段逻辑推出来的，**是推断**，本文开头那个 fixture 里被替换的是 `seq 4`，运行时快照 `seq 5` 并没被盖住，所以看不到这个效果）。
 
 ## 怎么自己核
 
@@ -388,7 +388,7 @@ sed -n '145,163p' packages/compaction/compaction-basic/src/summarizer.ts
 sed -n '31,66p'   packages/compaction/compaction-basic/src/summarizer.ts
 ```
 
-相关阅读：`replace` 与 surface 的规则见 [05 Session](05-session.md)；前缀缓存为什么只在这里被打断见 [02 KV-Cache](02-kv-cache.md)；`purpose:'compaction'` 与 `CONTEXT_WINDOW_EXCEEDED` 的来龙去脉见 [04 LLM 层](04-llm-adapter.md)；`agent/pre-step` 与 `agent/request-error` 这两个扩展点见 [03 Agent 循环](03-agent-loop.md)；跨 harness 的完整对照见 [14 横向对比](14-comparison.md)；术语见 [附录 A 词汇表](appendix-a-glossary.md)。
+相关阅读：`replace` 与 surface 的规则见 [05 Session](dsh-session.md)；前缀缓存为什么只在这里被打断见 [02 KV-Cache](dsh-kv-cache.md)；`purpose:'compaction'` 与 `CONTEXT_WINDOW_EXCEEDED` 的来龙去脉见 [04 LLM 层](dsh-llm-adapter.md)；`agent/pre-step` 与 `agent/request-error` 这两个扩展点见 [03 Agent 循环](dsh-agent-loop.md)；跨 harness 的完整对照见 [14 横向对比](../00-overview.md)；术语见 [附录 A 词汇表](../appendix-a-glossary.md)。
 
 ## 自检
 

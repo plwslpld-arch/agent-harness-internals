@@ -187,7 +187,7 @@ dsh 把权限拆成三个互不包含的东西。搞混它们是理解这套系�
 三点要注意：
 
 - `web_fetch` 存在但**默认关掉**（`packages/bundle/base/cordis.patch.yml:417` 的 `fetch: false`），理由写在上面十几行的注释里（`:399-401`）：这个 provider 把 SSRF 防护推给了调用方，而请求目标是模型选的。（**SSRF**：服务端请求伪造，骗服务端替攻击者去访问它本不该访问的地址，比如云环境的元数据接口。）
-- `run_code` 是保留名，只在 `tools.mode` 为 `code`/`both` 时出现；默认组合注释明说保持 `native`（`packages/bundle/base/cordis.patch.yml:422-423`）。见 [09 扩展与 Code Mode](09-extensions-and-code-mode.md)。
+- `run_code` 是保留名，只在 `tools.mode` 为 `code`/`both` 时出现；默认组合注释明说保持 `native`（`packages/bundle/base/cordis.patch.yml:422-423`）。见 [09 扩展与 Code Mode](dsh-extensions-and-code-mode.md)。
 - `terminal_*`、`lsp`、`session_*`、`cordis_*`、`schedule_*` 都在仓库里但不在这两套组合中。
 
 发给模型的 schema 是投影过的（`packages/core/tools/src/index.ts:1234-1236`、`:1256-1267`）：只有 `name` / `description` / `parameters` 三个字段出去，`timeoutMs`、`isConcurrencySafe`、`presentCall`/`presentResult` 这些**永远不发给模型**。
@@ -207,7 +207,7 @@ dsh 把权限拆成三个互不包含的东西。搞混它们是理解这套系�
 - `subagent`：给子代理的必须是一份完整、能独立成立的 prompt，因为**它看不见当前这段对话**。默认阻塞等结果，`run_in_background: true` 才后台跑。
 - `report`：把选定内容报告给启动你的那个 agent，**只有直接父级收得到**。它只注册在 continuable 子 agent 的 scope 里（**continuable** 指可以被继续追加下一轮的子 agent，与用完即弃的 one-shot 相对），别的 agent 根本看不见这个工具。
 - `job_output`：流式任务只返回上次读取之后的新输出，每次响应结尾都带一个 `[status: ...]`；读取默认不阻塞，除非显式 `wait: true`。
-- `skill`：把某个可用 skill 的完整说明加载进来，调用时要填会话 skill 目录里的**准确名字**。目录本身不进 system prompt，理由见 [08 编排层](08-orchestration.md)。
+- `skill`：把某个可用 skill 的完整说明加载进来，调用时要填会话 skill 目录里的**准确名字**。目录本身不进 system prompt，理由见 [08 编排层](dsh-orchestration.md)。
 - `workflow`：跑一段 JavaScript 工作流脚本，用来大批量编排子代理。
 - `ralph`：只有直接的人类明确要求 Ralph 循环、或者要求「每轮换一个全新 agent」时才用。
 - `exit_plan_mode`：只在 plan 模式下用，把计划交给用户过目，批准之后离开 plan 模式。
@@ -231,7 +231,7 @@ dsh 把权限拆成三个互不包含的东西。搞混它们是理解这套系�
   }
 ```
 
-fail-closed 到了偏执的程度：未声明、返回了别的东西、抛异常、工具不存在，一律 exclusive。而且 `defineTool`（上游定义一个工具的唯一入口：名字、描述、参数 schema、执行体、这些元数据一次性声明完）会先校验参数再调分类器，参数非法直接当 exclusive（`packages/core/tools/src/schema.ts:610-615`）。整个仓库里 opt-in 的一共 8 处，用 `grep -rn "isConcurrencySafe: () => true" packages/*/*/src/*.ts` 一眼能数完（不加冒号后缀会把接口声明和分类器本身也数进来）。调度细节见 [03 Agent Loop](03-agent-loop.md)。
+fail-closed 到了偏执的程度：未声明、返回了别的东西、抛异常、工具不存在，一律 exclusive。而且 `defineTool`（上游定义一个工具的唯一入口：名字、描述、参数 schema、执行体、这些元数据一次性声明完）会先校验参数再调分类器，参数非法直接当 exclusive（`packages/core/tools/src/schema.ts:610-615`）。整个仓库里 opt-in 的一共 8 处，用 `grep -rn "isConcurrencySafe: () => true" packages/*/*/src/*.ts` 一眼能数完（不加冒号后缀会把接口声明和分类器本身也数进来）。调度细节见 [03 Agent Loop](dsh-agent-loop.md)。
 
 ## `ToolRuntime` 的执行流水线
 
@@ -359,7 +359,7 @@ fail-closed 到了偏执的程度：未声明、返回了别的东西、抛异�
 
 中间那行 `v8 ignore` 注释的意思是「只有注册表自己铸出来的 execution 才会走到这套分阶段调度方法，所以这条分支覆盖率工具永远够不着」；紧跟的报错说的是调度器的不变量被破坏了，取消状态丢了。
 
-`bodyInvoked` 只在 `dispatchToolBody` 真正要调 `tool.execute` 的那一瞬间置位（`packages/core/tools/src/index.ts:1532-1560`）。所以：进了工具体再取消 → `ABORTED`（文本 `Error: tool call aborted`）；派发前就取消 → `ABORTED_BEFORE_DISPATCH`（文本 `Error: tool call aborted before dispatch`）。这两个码就是前面 `cancel-tool-calls` 快照里那对结果的来源。还有一种 `ABORTED_BEFORE_DISPATCH` 不经过 `ToolRuntime`：调度器在取消后给**根本没启动**的调用补写合成结果，那是 agent-loop 干的，见 [03 Agent Loop](03-agent-loop.md)。
+`bodyInvoked` 只在 `dispatchToolBody` 真正要调 `tool.execute` 的那一瞬间置位（`packages/core/tools/src/index.ts:1532-1560`）。所以：进了工具体再取消 → `ABORTED`（文本 `Error: tool call aborted`）；派发前就取消 → `ABORTED_BEFORE_DISPATCH`（文本 `Error: tool call aborted before dispatch`）。这两个码就是前面 `cancel-tool-calls` 快照里那对结果的来源。还有一种 `ABORTED_BEFORE_DISPATCH` 不经过 `ToolRuntime`：调度器在取消后给**根本没启动**的调用补写合成结果，那是 agent-loop 干的，见 [03 Agent Loop](dsh-agent-loop.md)。
 
 ### `fuseToolSignals`：取消不会丢
 
@@ -465,7 +465,7 @@ schema 里的 enum 是封闭的目标词汇 `ESCALATION_TARGETS = ['workspace-wr
 
 ## 两段运行时上下文的原文
 
-模型是怎么知道当前策略的？靠两段注册在 `ctx.systemPrompt.context()` 上的运行时上下文。它们**不进 system prompt**，而是每个 step 被渲染、去重、以一条 user 角色消息追加进历史（机制见 [03 Agent Loop](03-agent-loop.md)，缓存影响见 [02 KV-Cache](02-kv-cache.md)；system prompt 本身的构成见 [01 System Prompt](01-system-prompt.md)）。
+模型是怎么知道当前策略的？靠两段注册在 `ctx.systemPrompt.context()` 上的运行时上下文。它们**不进 system prompt**，而是每个 step 被渲染、去重、以一条 user 角色消息追加进历史（机制见 [03 Agent Loop](dsh-agent-loop.md)，缓存影响见 [02 KV-Cache](dsh-kv-cache.md)；system prompt 本身的构成见 [01 System Prompt](dsh-system-prompt.md)）。
 
 `sandbox:policy`，order 110（`packages/sandbox/sandbox-policy/src/index.ts:113-122`），三种模式三段原文（`packages/sandbox/sandbox-policy/src/index.ts:38-52`）：
 
@@ -594,7 +594,7 @@ grep -n "^### \`" docs/tool-catalog.md
 
 想确认「默认不弹窗」这个结论，最直接的读法是把上面两条 `grep` 的结果和 `packages/bundle/base/cordis.patch.yml` 对一遍：调用审批的只有升级和 `ask`，产生 `ask` 的只有 hooks 桥，而默认 bundle 里没有 hooks 桥。
 
-相关的其它篇：工具调度与取消语义见 [03 Agent Loop](03-agent-loop.md)；这两段运行时上下文为什么不进 system prompt 见 [02 KV-Cache](02-kv-cache.md)；子代理的完整委托流程见 [08 Orchestration](08-orchestration.md)；Code Mode 下工具怎么呈现见 [09 扩展与 Code Mode](09-extensions-and-code-mode.md)；术语见 [附录 A 术语表](appendix-a-glossary.md)。
+相关的其它篇：工具调度与取消语义见 [03 Agent Loop](dsh-agent-loop.md)；这两段运行时上下文为什么不进 system prompt 见 [02 KV-Cache](dsh-kv-cache.md)；子代理的完整委托流程见 [08 Orchestration](dsh-orchestration.md)；Code Mode 下工具怎么呈现见 [09 扩展与 Code Mode](dsh-extensions-and-code-mode.md)；术语见 [附录 A 术语表](../appendix-a-glossary.md)。
 
 ## 自检
 

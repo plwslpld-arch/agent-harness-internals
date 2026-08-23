@@ -54,7 +54,7 @@ const install: InvariantInstaller = Object.assign((ctx: Context, fail: Invariant
 
 这段在 `packages/core/agent-loop/src/invariant.ts:19-42`。它做的事情是：**把马上要发给模型的 `options.messages`，和从 append-only 会话日志现场重新折叠出来的 `session.deriveMessages()`，做 JSON 全等比较**；再把请求的 `model`/`system`/`temperature`/`maxTokens`/`stop`/`tools` 和日志里折叠出的 `request/header` 逐项比一遍（`packages/core/agent-loop/src/invariant.ts:44-52`）。任何一项不等，就抛出。
 
-这条断言是[《05 Session》](05-session.md)里「模型可见 ⟺ 已记录」那条原则的运行时执法者。设计记录写得比代码更直白：`.agents/notes/implemented/architecture/2026-07-05-reconstructable-requests.md` 第 17 行说「Anything that reaches a model request must be reconstructable from the session log and the immutable content-addressed objects it references.」（凡是能进到模型请求里的东西，都必须可以从会话日志、以及日志引用的那些不可变的内容寻址对象里重新推导出来。「内容寻址」指用内容哈希当 key 存的对象，日志里只留一个 hash 指针）。invariant 就是把这句话变成一个会在开发期炸掉的检查。
+这条断言是[《05 Session》](dsh-session.md)里「模型可见 ⟺ 已记录」那条原则的运行时执法者。设计记录写得比代码更直白：`.agents/notes/implemented/architecture/2026-07-05-reconstructable-requests.md` 第 17 行说「Anything that reaches a model request must be reconstructable from the session log and the immutable content-addressed objects it references.」（凡是能进到模型请求里的东西，都必须可以从会话日志、以及日志引用的那些不可变的内容寻址对象里重新推导出来。「内容寻址」指用内容哈希当 key 存的对象，日志里只留一个 hash 指针）。invariant 就是把这句话变成一个会在开发期炸掉的检查。
 
 第二段是 prompt 装配的结构校验，`packages/core/system-prompt/src/invariant.ts:46-52`：
 
@@ -68,7 +68,7 @@ const install: InvariantInstaller = (ctx, fail) => {
 }
 ```
 
-注意它包住的是 `next()` 的**返回值**，也就是所有插件都改完之后的那份权威装配结果。`validateAssembly`（`packages/core/system-prompt/src/invariant.ts:16-43`）检查 section 名非空且不重名、context 名非空且不重名、tool 名非空、变量名匹配 `/^[a-z][a-z0-9_]*$/`。这些看起来琐碎，但它们保证的是[《01 System Prompt》](01-system-prompt.md)里那份逐字文本不会因为两个插件抢同一个 section 名而静默丢一段。
+注意它包住的是 `next()` 的**返回值**，也就是所有插件都改完之后的那份权威装配结果。`validateAssembly`（`packages/core/system-prompt/src/invariant.ts:16-43`）检查 section 名非空且不重名、context 名非空且不重名、tool 名非空、变量名匹配 `/^[a-z][a-z0-9_]*$/`。这些看起来琐碎，但它们保证的是[《01 System Prompt》](dsh-system-prompt.md)里那份逐字文本不会因为两个插件抢同一个 section 名而静默丢一段。
 
 第三段可以对比着看，`packages/core/session/src/invariant.ts` 250 行里全是会话日志的语法规则：
 
@@ -134,7 +134,7 @@ const install: InvariantInstaller = () => {}
 
 证明不了的，逐条写清楚：
 
-- **不证明前缀稳定**。`packages/core/agent-loop/src/invariant.ts` 比的是「本次请求 vs 本次日志」，它从不比较「本次请求 vs 上次请求」。也就是说，一个每步都重写 system prompt 的插件可以让 KV-cache 全线塌方，而这条 invariant 一声不吭，因为日志也如实记下了那个被改写的 header。缓存稳定性靠的是[《02 KV-Cache》](02-kv-cache.md)里讲的那些设计约束和快照 fixture，不是 invariant。
+- **不证明前缀稳定**。`packages/core/agent-loop/src/invariant.ts` 比的是「本次请求 vs 本次日志」，它从不比较「本次请求 vs 上次请求」。也就是说，一个每步都重写 system prompt 的插件可以让 KV-cache 全线塌方，而这条 invariant 一声不吭，因为日志也如实记下了那个被改写的 header。缓存稳定性靠的是[《02 KV-Cache》](dsh-kv-cache.md)里讲的那些设计约束和快照 fixture，不是 invariant。
 - **不证明发行版正确**。发行版根本不挂它。它是开发期与测试期的诊断，不是生产护栏。真正常开的是 Session 自己的不可变性与来源事件校验（`packages/runtime-diagnostics/invariants/README.md` 明确把这部分划在服务之外）。
 - **不证明语义正确**。它只知道 `deriveMessages()` 和 loop 构造出的数组一致；如果两边共用了同一个有 bug 的推导，它们会一致地错。
 - **190 个包没有任何运行时检查**。这不是覆盖率漏洞，是设计：纯工具库、薄实现、组合包、二进制入口、持久化适配器都被明确列为「没有可断言关系」的类别。
@@ -160,7 +160,7 @@ const install: InvariantInstaller = () => {}
 | `client-runtime` | jsdom 里的 slot 测试台：真 Cordis `Context` + 生产的 `SlotRegistry` 和 web-react 渲染器 + 类型化的 session/workspace 替身。替身实现的是功能插件通过 ctx 看到的同一批对外面（`TestSessions implements ISessions`），所以生产接口一改，测试台**编译期**就红。 |
 | `loader-smoke` | 通过 Cordis Loader 起一个真子进程跑 app + `cordis.yml`，`resolveExampleLaunch` 在本地 `src` 模式和 CI `lib` 模式之间选。这是「按发布产物的真实入口路径测试」那条规则的载体。 |
 
-它们撑起来的规模：`packages/` 下非测试 TS/TSX 源码 244,956 行，`tests/` 目录下 292,314 行，**测试比源码多 19%**。测试文件 909 个（口径与行数同一套，见[附录 B](appendix-b-verification.md)）。而且覆盖率门禁是逐文件 100%：`vitest.config.ts:273-278` 写着 `perFile: true` 加四个 100，注释是「100% or it doesn't merge … Per-file so a well-covered big file can't subsidize a bare one.」（不到 100% 就别想合进主干；按文件逐个算，免得一个覆盖得很好的大文件替一个几乎没测的小文件把数字补上去）（`vitest.config.ts:269-270`）
+它们撑起来的规模：`packages/` 下非测试 TS/TSX 源码 244,956 行，`tests/` 目录下 292,314 行，**测试比源码多 19%**。测试文件 909 个（口径与行数同一套，见[附录 B](../appendix-b-verification.md)）。而且覆盖率门禁是逐文件 100%：`vitest.config.ts:273-278` 写着 `perFile: true` 加四个 100，注释是「100% or it doesn't merge … Per-file so a well-covered big file can't subsidize a bare one.」（不到 100% 就别想合进主干；按文件逐个算，免得一个覆盖得很好的大文件替一个几乎没测的小文件把数字补上去）（`vitest.config.ts:269-270`）
 
 `docs/testing.md:10` 还补了一句很清醒的话：「Line coverage is necessary, never sufficient — it proves lines ran, not that the feature works as shipped.」（行覆盖率是必要条件，永远不是充分条件：它能证明的只是这些行跑过了，证明不了功能按发布出去的那个样子还能用。）
 
@@ -263,13 +263,13 @@ dsh 有 28 个文档门禁，编在 `scripts/run-gates.ts:215-249` 的 `docSyncL
 | pi | 无 | 无 | 无 | 无 |
 | mini-swe-agent | 无 | 无 | 无 | 无 |
 
-**结构化决策记录树只有 dsh 有。** Codex 的测试量和快照量并不低（715 个 `.snap` 是很扎实的回归网），但它把「为什么」放在 PR 描述和 CHANGELOG 里，几个月后要回答「当初为什么不选 X」只能翻 git log。dsh 反过来：没有 CHANGELOG，但有 739 篇带 `## Alternatives considered` 的笔记；具体读哪些，见[《15 设计记录导读》](15-agent-notes-guide.md)。
+**结构化决策记录树只有 dsh 有。** Codex 的测试量和快照量并不低（715 个 `.snap` 是很扎实的回归网），但它把「为什么」放在 PR 描述和 CHANGELOG 里，几个月后要回答「当初为什么不选 X」只能翻 git log。dsh 反过来：没有 CHANGELOG，但有 739 篇带 `## Alternatives considered` 的笔记；具体读哪些，见[《15 设计记录导读》](dsh-agent-notes-guide.md)。
 
 至于「模型收到的逐字 prompt 存在仓库里、被 CI diff」这件事，四家都没有等价物。这也是本仓库大量引用 `system-prompt.expected.md` 的原因。
 
 ## 十二、怎么自己核
 
-以下命令都不需要凭据，在 dsh 的 checkout 根目录跑（完整的核对方法见[附录 B](appendix-b-verification.md)）：
+以下命令都不需要凭据，在 dsh 的 checkout 根目录跑（完整的核对方法见[附录 B](../appendix-b-verification.md)）：
 
 ```bash
 # invariant 的三个数字

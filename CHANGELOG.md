@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased — Harness Internals
+
+### Added
+
+- 新增 Gemini CLI、Claude Agent SDK、lm-evaluation-harness、Inspect AI、Terminal-Bench 1 与 SWE-bench 六个锁定来源，总来源数增至 11。
+- 新增 A1–A10 agent harness 对照、E1–E4 eval harness 分析、英文 README 与四张机制图。
+- 新增 `coverage_min` 跨仓覆盖率门禁与证据矩阵门禁；Windows Git 长路径和工作树扫描均有回归测试。
+
+### Changed
+
+- 项目更名为 Harness Internals；原 DeepSeek Harness 深读迁入 `docs/deep/`，内容与源码锚点继续保留。
+- README、角色入口、NOTICE 与第三方边界统一为 agent harness + eval harness 范围。
+- 公开分数采用 arXiv:2605.23950 v1 Table 2 的可复核口径，并明确本仓库未复跑、不作普遍外推。
+
 所有重要变化记录在此。研究基线由 `sources/sources.lock.yml` 独立固定。
 
 ## [Unreleased] — 2026-08-16 重构：从「索引 + 制度」转向「机制 + 对照」
@@ -18,7 +32,7 @@
 ### Changed
 
 - **12 篇 + 2 附录 → 16 篇 + 2 附录**，每篇先给「模型/进程真实看到的东西」，再讲机制、设计取舍、失效点，并就地给出与其它 harness 的对照。
-- **横向对照从「数行数」改成「比机制」**：新的 [14 篇](docs/14-comparison.md) 按 prompt 装配、缓存策略、压缩、循环、审批沙箱、会话、扩展七个维度对比 dsh / Claude Code / Codex / OpenCode / pi / mini-swe-agent，每格带文件行号。
+- **横向对照从「数行数」改成「比机制」**：新的 [双 Harness 总览](docs/00-overview.md) 将 agent harness 与 eval harness 放进同一套可核验证据框架。
 - **frontmatter 简化**为 `title` / `sources` / `last_verified` / `status`；去掉 `depth`、`audience`、`evidence` 三个无信息量的字段，以及全部行内证据标签（推断改为正文明写）。
 - **上游来源从 15 个收敛到 5 个**：只保留真正被逐行引用的 dsh 与四个对照实现。
 
@@ -26,9 +40,9 @@
 
 - **`check:anchors` 门禁**：抽查正文里每一处 `路径:行号` 是否指向真实存在的行，越界或指向空行即失败。此前 CI 只校验「文件存在」，行号写错也能过。
   引用后面跟「原文片段」时还会做子串匹配，把「行号对、但指到了相邻的另一个声明」这类错也挡在 CI 里。
-- 全新覆盖此前完全空白的部分：[Web 客户端与 host](docs/11-web-client-and-host.md)（39 个包、7.2 万行，全仓最大）、[Extensions 与 Code Mode](docs/09-extensions-and-code-mode.md)、[自证与工程化](docs/13-self-verification.md)、[设计记录导读](docs/15-agent-notes-guide.md)。
-- [01 System Prompt](docs/01-system-prompt.md) 给出逐字重建的默认首轮请求：完整 system 字符串、工具清单、以及注入到历史里的每一条消息。
-- [02 KV-Cache](docs/02-kv-cache.md) 补齐运行时机制：wire 请求怎么拼、`request/header` 的三种 reason、什么会打断前缀、命中率遥测链。
+- 全新覆盖此前完全空白的部分：[Web 客户端与 host](docs/deep/dsh-web-client-and-host.md)（39 个包、7.2 万行，全仓最大）、[Extensions 与 Code Mode](docs/deep/dsh-extensions-and-code-mode.md)、[自证与工程化](docs/deep/dsh-self-verification.md)、[设计记录导读](docs/deep/dsh-agent-notes-guide.md)。
+- [DSH System Prompt](docs/deep/dsh-system-prompt.md) 给出逐字重建的默认首轮请求：完整 system 字符串、工具清单、以及注入到历史里的每一条消息。
+- [DSH KV-Cache](docs/deep/dsh-kv-cache.md) 补齐运行时机制：wire 请求怎么拼、`request/header` 的三种 reason、什么会打断前缀、命中率遥测链。
 
 ### Fixed
 

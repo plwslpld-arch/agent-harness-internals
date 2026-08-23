@@ -86,7 +86,7 @@ lifecycle 四种：`proposed/`（还没做，或只做了一部分）、`impleme
 - **每个非平凡改动必须在同一 PR 里增改至少一篇笔记**（`.agents/notes/README.md:46`）。
 - **implemented 不许被改写成另一个决定。** 事实（路径、包名、默认值）要跟着代码同步更新，但决定本身要反转就得写新笔记并交叉链接。
 - **archived 是冻结树**（`.agents/notes/README.md:42`：「Once sealed, every archived triplet is permanently frozen」，一旦封存，归档的那一套三件套就永久冻住），只允许五种改动，由 `scripts/verify-archived-agent-notes.ts` 用 append-only 的哈希清单校验。
-- 格式由 `scripts/verify-agent-note-format.ts` 强制，细节见[《13 自证与工程化》](13-self-verification.md)。
+- 格式由 `scripts/verify-agent-note-format.ts` 强制，细节见[《13 自证与工程化》](dsh-self-verification.md)。
 
 ## 三、按主题的十四篇
 
@@ -112,7 +112,7 @@ lifecycle 四种：`proposed/`（还没做，或只做了一部分）、`impleme
 
 | 笔记 | 论点 | 读它能解决什么 |
 | --- | --- | --- |
-| `implemented/bug-fix/2026-07-21-compaction-summary-prefix-cache-reuse.md`<br>07-21 · implemented | 摘要调用逐字复用上一条路由请求的前缀：「The summarization directive moves from the **front** of the request (a fresh `system` prompt) to the **end** of the conversation」（`:13`），这句话是说，那条要求做摘要的指令从请求最前面的一段新 `system` prompt，挪到了对话的最末尾。于是它是暖缓存的前缀扩展而不是新请求。 | 「压缩那次辅助调用长什么样、为什么连用不上的 `tools` 也要带上」。见[《06 压缩》](06-compaction.md)。 |
+| `implemented/bug-fix/2026-07-21-compaction-summary-prefix-cache-reuse.md`<br>07-21 · implemented | 摘要调用逐字复用上一条路由请求的前缀：「The summarization directive moves from the **front** of the request (a fresh `system` prompt) to the **end** of the conversation」（`:13`），这句话是说，那条要求做摘要的指令从请求最前面的一段新 `system` prompt，挪到了对话的最末尾。于是它是暖缓存的前缀扩展而不是新请求。 | 「压缩那次辅助调用长什么样、为什么连用不上的 `tools` 也要带上」。见[《06 压缩》](dsh-compaction.md)。 |
 | `implemented/architecture/2026-07-10-after-call-compaction-pressure-and-overflow-recovery.md`<br>07-10 · implemented | 压力判定挪到**下一次 pre-step 边界**，用上一次调用的真实 usage；provider 因超窗拒绝时走窄的恢复路径，只有 surface（这次请求摆到模型面前的那一整面：prompt、工具、消息）确实变化才允许 retry。 | 「压缩在生命周期哪个点判定、超限失败后怎么自动恢复」。 |
 | `implemented/architecture/2026-07-15-replay-token-meter-service.md`<br>07-15 · implemented | `ctx.tokenMeter`：以最新精确 usage 为锚点 + 保守启发式重定价，暴露 `logRevision`。 | 「界面上那个 token 数字怎么来的、准不准」。 |
 
@@ -129,7 +129,7 @@ lifecycle 四种：`proposed/`（还没做，或只做了一部分）、`impleme
 | --- | --- | --- |
 | `implemented/feature/2026-07-10-parallel-tool-call-execution.md`<br>07-10 · implemented | 每个工具可选一个同步纯函数分类器 `isConcurrencySafe(args)`，只有显式 `true` 才并行，其余 fail-closed（拿不准就按不安全算）为独占并成为排序屏障。 | 「我的工具怎样才能被并行、为什么 bash 永远独占」。 |
 | `implemented/feature/2026-06-21-subagent-capability-seam.md`<br>06-21 · implemented | seam 指一处留好的能力接缝：接口定死，谁来实现由配置挑。subagent 是**按名字注册的 provider 注册表**（对标 LLM adapter），不是单实例服务；fork 与 fresh 是两个独立后端，不是请求上的开关。 | 「为什么 subagent 不像 bash 那样单实例、怎么同时暴露多种委派方式」。 |
-| `implemented/feature/2026-07-06-sandbox.md`<br>07-06 · implemented | 「One seam, one per-platform chain of local backends, one consumer, and two levers on top」（`:17`），意思是一个接缝、每个平台一条本地后端链、一个消费方，上面再架两个开关：每次调用的一次性提权 + 每会话模式，全部从叶子 `cordis.yml` 组合，不动 agent-loop。 | 「`[sandbox: file access denied]` 是什么意思、模型怎么合法提权」。见[《07 工具、审批与沙箱》](07-tools-approval-sandbox.md)。 |
+| `implemented/feature/2026-07-06-sandbox.md`<br>07-06 · implemented | 「One seam, one per-platform chain of local backends, one consumer, and two levers on top」（`:17`），意思是一个接缝、每个平台一条本地后端链、一个消费方，上面再架两个开关：每次调用的一次性提权 + 每会话模式，全部从叶子 `cordis.yml` 组合，不动 agent-loop。 | 「`[sandbox: file access denied]` 是什么意思、模型怎么合法提权」。见[《07 工具、审批与沙箱》](dsh-tools-approval-sandbox.md)。 |
 
 ## 四、`rejected/` 十一篇：信息密度最高的一批
 
@@ -153,9 +153,9 @@ proposed 里最值得读的是 `proposed/feature/2026-07-06-recallable-compactio
 
 （压完一轮之后，请求前缀是 `[system][stubs…][state][tail]` 这个形状。冻结的 stub 每轮逐字节都一样，所以未命中要等到替换上一份 state checkpoint 的那个 token 才开始。）
 
-**它还没实现**。读[《06 压缩》](06-compaction.md)和[《02 KV-Cache》](02-kv-cache.md)时把这篇当作「作者自己知道的短板清单」。
+**它还没实现**。读[《06 压缩》](dsh-compaction.md)和[《02 KV-Cache》](dsh-kv-cache.md)时把这篇当作「作者自己知道的短板清单」。
 
-其余 24 篇里另外点名两篇，它们各自补上了正文某一篇的已知短板：`proposed/testing/2026-06-11-mutation-testing.md` 提议用变异测试对冲逐文件 100% 覆盖率，理由是覆盖率只证明行跑过，恰好接住[《13 自证与工程化》](13-self-verification.md)里那个「100% 覆盖率骗过的那一次」；`proposed/architecture/2026-07-19-required-cancellation-through-tool-capability-seams.md` 提议让漏传 `AbortSignal` 变成编译错误，对应[《07 工具、审批与沙箱》](07-tools-approval-sandbox.md)里取消路径靠约定而非类型保证的那一段。
+其余 24 篇里另外点名两篇，它们各自补上了正文某一篇的已知短板：`proposed/testing/2026-06-11-mutation-testing.md` 提议用变异测试对冲逐文件 100% 覆盖率，理由是覆盖率只证明行跑过，恰好接住[《13 自证与工程化》](dsh-self-verification.md)里那个「100% 覆盖率骗过的那一次」；`proposed/architecture/2026-07-19-required-cancellation-through-tool-capability-seams.md` 提议让漏传 `AbortSignal` 变成编译错误，对应[《07 工具、审批与沙箱》](dsh-tools-approval-sandbox.md)里取消路径靠约定而非类型保证的那一段。
 
 ## 六、`.agents/skills/`：写给贡献者（主要是 agent）的十一份操作手册
 
@@ -202,7 +202,7 @@ skill 不是设计记录，是**可加载的工作流程**。11 个目录，每�
 
 这不是说别家没记决策，而是说决策记录在别处：PR 描述、issue 讨论、提交信息。区别在于**可检索性和格式约束**：dsh 的 739 篇笔记每一篇都有 `## Alternatives considered`，路径直接编码了状态，三个脚本门禁盯着格式，而且「被拒绝的方案」被单独保存了十一篇。翻 git log 找不到「当初为什么不选 X」，翻 `rejected/` 十分钟就能读完。
 
-代价在[《13 自证与工程化》](13-self-verification.md)里算过：739 × 3 个文件，加上每个非平凡 PR 都要动笔记的规则。
+代价在[《13 自证与工程化》](dsh-self-verification.md)里算过：739 × 3 个文件，加上每个非平凡 PR 都要动笔记的规则。
 
 ## 九、怎么自己核
 
