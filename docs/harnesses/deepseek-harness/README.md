@@ -43,17 +43,19 @@ Eval 位于右侧横切接入，而不是循环中的第二个「裁判模型」
 
 | 顺序 | 模块 | 状态 | 先回答的问题 |
 | ---: | --- | --- | --- |
-| 00 | 主线入口 | 已复核 | 整个运行时怎样连起来，一项任务怎样穿过边界？ |
-| 01 | 启动与 preset | 已复核 | bundle、profile、Cordis 与 preset 怎样得到有效插件树？ |
-| 02 | Prompt、Context 与缓存 | 已复核 | 模型输入如何装配，哪些变化会破坏稳定前缀？ |
-| 03 | 循环、模型与工具 | 已复核 | 流式响应、工具闭环、重试、取消和终止如何协作？ |
+<!-- course-navigation:start -->
+| 00 | [主线入口](README.md) | 已复核 | 整个运行时怎样连起来，一项任务怎样穿过边界？ |
+| 01 | [启动与 preset](01-boot-preset.md) | 已复核 | bundle、profile、Cordis 与 preset 怎样得到有效插件树？ |
+| 02 | [Prompt、Context 与缓存](02-prompt-context-cache.md) | 已复核 | 模型输入如何装配，哪些变化会破坏稳定前缀？ |
+| 03 | [循环、模型与工具](03-loop-model-tool.md) | 已复核 | 流式响应、工具闭环、重试、取消和终止如何协作？ |
 | 04 | [工具安全](04-tools-security.md) | 已复核 | Guard、审批、策略与平台 Sandbox 怎样分层？ |
 | 05 | [会话与压缩](05-session-compaction.md) | 已复核 | 原始事件、派生 Context、摘要、Spill 与恢复谁是权威？ |
 | 06 | [编排与扩展](06-orchestration-extensions.md) | 已复核 | Plan、Goal、Subagent、Workflow、Skill 与运行时代码怎样接入？ |
 | 07 | [产品表面与评测](07-surfaces-feedback-eval.md) | 已复核 | Web、ACP、SDK、反馈、遥测和 Eval 接口怎样共享核心？ |
 | 08 | [自验证与限制](08-verification-design-limits.md) | 已复核 | 测试、设计记录和门禁能证明什么，不能证明什么？ |
+<!-- course-navigation:end -->
 
-状态表是发布契约，不是进度装饰。只有正文、Claim、图示、来源和自检一起通过门禁，模块才会变成「已复核」。未发布模块的名称先说明阅读顺序，但不会以空链接进入正式导航。
+状态表是发布契约，不是进度装饰。九篇课程的正文、Claim、图示、来源和自检已经整批通过门禁；任意一篇退出发布状态，DSH 主线都会被导航检查判为不完整。
 
 状态先于导航。
 

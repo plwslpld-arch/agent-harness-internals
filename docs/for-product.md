@@ -31,7 +31,7 @@ status: reviewed
 
 **各家做法**：DeepSeek 和 OpenAI 是服务端自动匹配前缀，客户端基本只能「别去动它」（OpenAI 侧还留了一个把会话 ID 当缓存键的旋钮）；Anthropic 是另一套模型，要客户端显式打最多 4 个缓存断点，Claude Code 把断点分成四层（静态部分 → 项目说明 → 会话上下文 → 对话消息）。
 
-**深读**：[02 KV-Cache](deep/dsh-kv-cache.md)
+**深读**：[02 KV-Cache](harnesses/deepseek-harness/02-prompt-context-cache.md)
 
 ---
 
@@ -43,7 +43,7 @@ status: reviewed
 
 **产品启发**：任何「用户可以随时切换的状态」（模式、权限、模型选择、语言）都要问一句：它进请求的哪个位置。用户感觉不到差别，账单和延迟能感觉到。
 
-**深读**：[01 System Prompt](deep/dsh-system-prompt.md) 的运行时快照一节
+**深读**：[01 System Prompt](harnesses/deepseek-harness/02-prompt-context-cache.md) 的运行时快照一节
 
 ---
 
@@ -55,7 +55,7 @@ status: reviewed
 
 **产品启发**：「一键切换模型」这个功能在长对话里是有代价的，值得在 UI 上给用户一个提示，或者干脆限制在新会话才能切。
 
-**深读**：[02 KV-Cache](deep/dsh-kv-cache.md) 的「其它场景逐一」
+**深读**：[02 KV-Cache](harnesses/deepseek-harness/02-prompt-context-cache.md) 的「其它场景逐一」
 
 ---
 
@@ -77,7 +77,7 @@ status: reviewed
 
 **产品启发**：压缩是必然会发生的，问题是**用户知不知道它发生了**。目前多数产品是静默的，用户只感觉到「AI 变笨了」。给一个明确提示（「已压缩上下文，早期细节可能丢失」）成本很低，对信任的帮助很大。
 
-**深读**：[06 压缩](deep/dsh-compaction.md)
+**深读**：[06 压缩](harnesses/deepseek-harness/05-session-compaction.md)
 
 ---
 
@@ -91,7 +91,7 @@ pi 走的是相反的路：给总结请求换一个会话 ID 并禁止写缓存�
 
 **产品启发**：Claude Code 有个更省的替代动作 `/rewind`，回退到一个已经缓存过的位置，比压缩便宜。值得考虑给用户这个选项。
 
-**深读**：[06 压缩](deep/dsh-compaction.md)
+**深读**：[06 压缩](harnesses/deepseek-harness/05-session-compaction.md)
 
 ---
 
@@ -105,7 +105,7 @@ pi 走的是相反的路：给总结请求换一个会话 ID 并禁止写缓存�
 
 **产品启发**：这是个高频困惑点。要么做文件监听，要么在 UI 上明说「改完请重开会话」。
 
-**深读**：[01 System Prompt](deep/dsh-system-prompt.md) 的注入链一节
+**深读**：[01 System Prompt](harnesses/deepseek-harness/02-prompt-context-cache.md) 的注入链一节
 
 ---
 
@@ -127,7 +127,7 @@ pi 走的是相反的路：给总结请求换一个会话 ID 并禁止写缓存�
 
 **产品启发**：「有没有权限管理」问不到点子上。要问「是审批还是沙箱、原生 Windows 上有没有」。另外，让用户点习惯「同意」的设计等于没有防护。
 
-**深读**：[07 工具、审批与沙箱](deep/dsh-tools-approval-sandbox.md)
+**深读**：[07 工具、审批与沙箱](harnesses/deepseek-harness/04-tools-security.md)
 
 ---
 
@@ -137,7 +137,7 @@ pi 走的是相反的路：给总结请求换一个会话 ID 并禁止写缓存�
 
 **产品启发**：这类错误提示要区分「你没权限」和「命令写错了」，否则模型会陷入无意义的重试循环，用户也搞不清状况。
 
-**深读**：[07 工具、审批与沙箱](deep/dsh-tools-approval-sandbox.md)
+**深读**：[07 工具、审批与沙箱](harnesses/deepseek-harness/04-tools-security.md)
 
 ---
 
@@ -153,7 +153,7 @@ dsh 的默认 system prompt **极简**：一句身份、一句角色设定、每
 
 **产品启发**：如果你的产品基于 dsh，**行为质量高度依赖你自己写的 persona 和项目说明文件**，开箱默认体验会偏薄。这是个刻意的设计选择（harness 不替部署方做产品决策），但要知道这笔账在哪。
 
-**深读**：[01 System Prompt](deep/dsh-system-prompt.md)
+**深读**：[01 System Prompt](harnesses/deepseek-harness/02-prompt-context-cache.md)
 
 ---
 
@@ -163,7 +163,7 @@ dsh 的默认 system prompt **极简**：一句身份、一句角色设定、每
 
 **产品启发**：工具描述是产品文案的一部分，值得像写用户文案一样打磨。dsh 里 `bash` 这一个工具的描述就有 1,836 个字符。
 
-**深读**：[01 System Prompt](deep/dsh-system-prompt.md)、[07 工具、审批与沙箱](deep/dsh-tools-approval-sandbox.md)
+**深读**：[01 System Prompt](harnesses/deepseek-harness/02-prompt-context-cache.md)、[07 工具、审批与沙箱](harnesses/deepseek-harness/04-tools-security.md)
 
 ---
 
@@ -175,7 +175,7 @@ Claude Code 的做法更彻底：把模式切换本身做成两个**工具**（�
 
 **产品启发**：「模式切换」这个交互有一个便宜的实现方式和一个贵的实现方式，值得在设计阶段就问清楚。
 
-**深读**：[02 KV-Cache](deep/dsh-kv-cache.md)、[08 编排层](deep/dsh-orchestration.md)
+**深读**：[02 KV-Cache](harnesses/deepseek-harness/02-prompt-context-cache.md)、[08 编排层](harnesses/deepseek-harness/06-orchestration-extensions.md)
 
 ---
 
@@ -185,7 +185,7 @@ Claude Code 的做法更彻底：把模式切换本身做成两个**工具**（�
 
 **产品启发**：「后台任务 + 完成通知」这套交互，模型侧的规矩要写进工具描述，UI 侧还要给用户一个可见的任务列表。两边缺一个，用户就会看到「它好像忘了这件事」。
 
-**深读**：[08 编排层](deep/dsh-orchestration.md)
+**深读**：[08 编排层](harnesses/deepseek-harness/06-orchestration-extensions.md)
 
 ---
 
@@ -206,7 +206,7 @@ Claude Code 的做法更彻底：把模式切换本身做成两个**工具**（�
 
 **产品启发**：「能不能恢复」和「能不能分叉」是两个不同的能力。分叉（从某一步开出一条新路）在调试和探索场景里很有用，但需要存储结构支持。
 
-**深读**：[05 Session](deep/dsh-session.md)
+**深读**：[05 Session](harnesses/deepseek-harness/05-session-compaction.md)
 
 ---
 
@@ -218,7 +218,7 @@ dsh 把工具顺序做成了确定的（默认按名字排序，跨机器一致�
 
 **产品启发**：做 A/B 测试或质量评测时，只对齐「模型名」是不够的。要记下完整配置：提示词版本、工具集、工具顺序、压缩是否触发过。
 
-**深读**：[01 System Prompt](deep/dsh-system-prompt.md)、[模型输入、输出与工具结果](foundations/03-model-tool-io.md)
+**深读**：[01 System Prompt](harnesses/deepseek-harness/02-prompt-context-cache.md)、[模型输入、输出与工具结果](foundations/03-model-tool-io.md)
 
 ---
 

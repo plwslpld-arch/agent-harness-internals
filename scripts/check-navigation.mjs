@@ -58,6 +58,11 @@ export function navigationFailures(content, resolveDocument, options = {}) {
         continue;
       }
       linkedTargets.add(target);
+      for (const rule of options.forbiddenPrefixes ?? []) {
+        if (target.startsWith(rule.prefix)) {
+          errors.push(`${target}: ${rule.name}不得进入正式导航`);
+        }
+      }
       const document = resolveDocument(target);
       if (typeof document !== 'string') {
         errors.push(`${target}: 正式导航目标不存在`);
@@ -122,6 +127,19 @@ function main() {
             'foundations/06-trace-feedback-eval.md',
           ]
         : [];
+    const dshTargets = relativePath === 'docs/harnesses/deepseek-harness/README.md'
+      ? [
+          'README.md',
+          '01-boot-preset.md',
+          '02-prompt-context-cache.md',
+          '03-loop-model-tool.md',
+          '04-tools-security.md',
+          '05-session-compaction.md',
+          '06-orchestration-extensions.md',
+          '07-surfaces-feedback-eval.md',
+          '08-verification-design-limits.md',
+        ]
+      : [];
     const fileErrors = navigationFailures(content, (target) => {
       checked += 1;
       const absolute = resolve(dirname(path), target);
@@ -129,9 +147,17 @@ function main() {
       if (repositoryRelative.startsWith('..') || isAbsolute(repositoryRelative)) return undefined;
       return existsSync(absolute) ? readFileSync(absolute, 'utf8') : undefined;
     }, {
-      requiredBatches: foundationTargets.length > 0
-        ? [{ name: '共同基础', targets: foundationTargets }]
-        : [],
+      requiredBatches: [
+        ...(foundationTargets.length > 0 ? [{ name: '共同基础', targets: foundationTargets }] : []),
+        ...(dshTargets.length > 0 ? [{ name: 'DSH 主线', targets: dshTargets }] : []),
+      ],
+      forbiddenPrefixes: relativePath === 'README.md'
+        ? [{ name: '扩展样本', prefix: 'docs/samples/' }]
+        : relativePath === 'docs/00-start-here.md'
+          ? [{ name: '扩展样本', prefix: 'samples/' }]
+          : relativePath === 'docs/harnesses/deepseek-harness/README.md'
+            ? [{ name: '扩展样本', prefix: '../../samples/' }]
+            : [],
     });
     for (const error of fileErrors) errors.push(`${relativePath}: ${error}`);
   }

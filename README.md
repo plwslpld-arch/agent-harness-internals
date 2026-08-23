@@ -10,7 +10,7 @@
 
 **Agent Harness 是唯一主线；Eval 是横切验证能力。** 仓库不会再建设一套与 Agent Harness 并列的 Eval Harness 百科。Inspect AI、SWE-bench、Terminal-Bench 和 LM Evaluation Harness 只在需要回答「任务怎样定义、轨迹怎样收集、结果怎样评分、失败能否重试」时作为外部参照出现。缺少证据，就保留未知。
 
-> 当前状态：仓库正在覆盖式重建。治理、证据门禁和正式品牌已经完成阶段复核；共同基础 6/6 已达到 `reviewed` 并开放正式导航，六条一级主线仍处于 `outline`。未完成内容不会以链接冒充成品。
+> 当前状态：仓库正在覆盖式重建。治理、证据门禁、正式品牌和共同基础 6/6 已完成阶段复核；DSH 9/9 已达到 `reviewed` 并开放第一条一级主线，其余五条主线仍处于 `outline`。未完成内容不会以链接冒充成品。
 
 ## 这里研究的不是「模型排行榜」
 
@@ -45,7 +45,7 @@
 
 | 主线 | 主要证据面 | 将回答的核心问题 | 当前状态 |
 | --- | --- | --- | --- |
-| DSH | DeepSeek Harness 锁定源码与上游测试 | 多包 TypeScript Harness 怎样组织模型、工具、会话、Code Mode 与评测能力 | `outline` |
+| DSH | DeepSeek Harness 锁定源码与上游测试 | 多包 TypeScript Harness 怎样组织模型、工具、会话、Code Mode 与评测能力 | `reviewed` |
 | Codex | Rust 核心源码、协议、测试与官方文档 | CLI、工具、沙箱、审批、会话、压缩和多表面怎样连接 | `outline` |
 | Gemini CLI | Core/CLI 源码、Policy、Safety、Confirmation 与测试 | 工具调度、策略确认、会话和扩展怎样形成完整执行链 | `outline` |
 | Claude | 官方公开文档、Python SDK、TypeScript SDK 与示例 | Claude Code 的公开契约与 Agent SDK 的可见实现边界分别在哪里 | `outline` |
@@ -77,7 +77,7 @@ Eval 不与六条主线争夺主导航，而是在每条主线中重复回答同
 
 ## 阅读路径
 
-正式课程导航只会出现 `reviewed` 和 `verified` 页面。六篇共同基础已经整批完成复核并开放；六条项目主线会继续显示状态，但达到发布门槛前不提供课程链接。
+正式课程导航只会出现 `reviewed` 和 `verified` 页面。六篇共同基础与 DSH 九篇课程已经整批完成复核并开放；其余五条项目主线继续显示状态，但达到发布门槛前不提供课程链接。
 
 <!-- course-navigation:start -->
 [从总入口开始：先建立概念、状态与证据口径](docs/00-start-here.md)
@@ -88,6 +88,8 @@ Eval 不与六条主线争夺主导航，而是在每条主线中重复回答同
 4. [工具、权限与 Sandbox](docs/foundations/04-tools-permissions-sandbox.md)
 5. [Session、Context、Compaction 与 Memory](docs/foundations/05-session-context-memory.md)
 6. [Trace、Feedback 与评测接入](docs/foundations/06-trace-feedback-eval.md)
+
+第一条项目主线：[DeepSeek Harness 源码主线](docs/harnesses/deepseek-harness/README.md)
 <!-- course-navigation:end -->
 
 | 你的目标 | 建议路径 | 需要的背景 |

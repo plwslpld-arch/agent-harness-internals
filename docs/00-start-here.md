@@ -32,7 +32,7 @@ sources: []
 
 | 主线 | 入口证据 | 独特研究重点 | 当前状态 |
 | --- | --- | --- | --- |
-| DSH | TypeScript 多包源码与测试 | 上下文、KV-Cache、Code Mode、工具、会话和内置评测如何协作 | `outline` |
+| DSH | TypeScript 多包源码与测试 | 上下文、KV-Cache、Code Mode、工具、会话和内置评测如何协作 | `reviewed` |
 | Codex | Rust 核心、协议、测试和官方文档 | 多表面入口、工具策略、沙箱审批、压缩与恢复怎样连接 | `outline` |
 | Gemini CLI | Core/CLI、Policy、Safety 与 Confirmation 源码 | 策略确认、工具调度、会话和扩展的分层关系 | `outline` |
 | Claude | 官方公开文档与 Python/TypeScript SDK | 闭源产品契约和开源 SDK 实现的证据边界 | `outline` |
@@ -58,6 +58,8 @@ Claude 主线采用双边界：Claude Code 的公开行为只引用官方文档�
 4. [工具、权限与 Sandbox](foundations/04-tools-permissions-sandbox.md)
 5. [Session、Context、Compaction 与 Memory](foundations/05-session-context-memory.md)
 6. [Trace、Feedback 与评测接入](foundations/06-trace-feedback-eval.md)
+
+第一条项目主线：[DeepSeek Harness 源码主线](harnesses/deepseek-harness/README.md)
 <!-- course-navigation:end -->
 
 如果你准备实现或改造 Harness，选一条与你技术栈最接近的主线从头读完，不要只抽取功能表。完整跟踪真实输入、状态变化、工具结果、失败路径与终止条件后，再去横向比较其他实现；这能减少把表面 API 当成系统语义的风险。
@@ -80,7 +82,7 @@ Claude 主线采用双边界：Claude Code 的公开行为只引用官方文档�
 
 `stale` 用来保护读者免受过期证据误导，它不评价文章的永久质量。当上游 Commit、文档或实验环境发生漂移，页面就应退出正式导航，直到重新绑定来源并复核受影响结论。状态表可以继续显示它，以便读者知道缺口，却不能把它当成仍然有效的课程。
 
-当前正式导航包含这个总入口和六篇共同基础。六条主线的状态会公开显示，但在达到 `reviewed` 前不提供课程链接。文件存在、篇幅很长或测试通过，都不能绕过这条发布规则。
+当前正式导航包含这个总入口、六篇共同基础和 DSH 九篇课程。其余五条主线的状态会公开显示，但在达到 `reviewed` 前不提供课程链接。文件存在、篇幅很长或测试通过，都不能绕过这条发布规则。
 
 ## 证据方法
 

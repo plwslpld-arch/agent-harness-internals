@@ -108,3 +108,50 @@ ${targets.map((target) => `[基础](${target})`).join('\n')}
     '共同基础批量发布失败：foundations/06.md status=draft',
   ]);
 });
+
+test('DSH 主线九篇必须完整且全部达到发布状态', () => {
+  const targets = [
+    'README.md',
+    '01-boot-preset.md',
+    '02-prompt-context-cache.md',
+    '03-loop-model-tool.md',
+    '04-tools-security.md',
+    '05-session-compaction.md',
+    '06-orchestration-extensions.md',
+    '07-surfaces-feedback-eval.md',
+    '08-verification-design-limits.md',
+  ];
+  const batch = [{ name: 'DSH 主线', targets }];
+  const documents = Object.fromEntries(targets.map((target) => [target, '---\nstatus: reviewed\n---\n']));
+  const incomplete = `<!-- course-navigation:start -->
+${targets.slice(0, 8).map((target) => `[DSH](${target})`).join('\n')}
+<!-- course-navigation:end -->`;
+
+  assert.deepEqual(navigationFailures(incomplete, (target) => documents[target], { requiredBatches: batch }), [
+    'DSH 主线批量导航不完整：缺少 08-verification-design-limits.md',
+  ]);
+
+  documents['08-verification-design-limits.md'] = '---\nstatus: outline\n---\n';
+  const complete = `<!-- course-navigation:start -->
+${targets.map((target) => `[DSH](${target})`).join('\n')}
+<!-- course-navigation:end -->`;
+  assert.deepEqual(navigationFailures(complete, (target) => documents[target], { requiredBatches: batch }), [
+    '08-verification-design-limits.md: 正式导航不能链接 status=outline',
+    'DSH 主线批量发布失败：08-verification-design-limits.md status=outline',
+  ]);
+});
+
+test('扩展样本不得进入正式导航', () => {
+  const content = `<!-- course-navigation:start -->
+[主线](reviewed.md)
+[扩展样本](samples/mini-swe-agent.md)
+<!-- course-navigation:end -->`;
+  const documents = {
+    'reviewed.md': '---\nstatus: reviewed\n---\n',
+    'samples/mini-swe-agent.md': '---\nstatus: reviewed\n---\n',
+  };
+
+  assert.deepEqual(navigationFailures(content, (target) => documents[target], {
+    forbiddenPrefixes: [{ name: '扩展样本', prefix: 'samples/' }],
+  }), ['samples/mini-swe-agent.md: 扩展样本不得进入正式导航']);
+});
