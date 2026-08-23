@@ -14,6 +14,7 @@
     "check:claims": "node scripts/verify-claims.mjs",
     "check:navigation": "node scripts/check-navigation.mjs",
     "check:content": "node scripts/check-content-contract.mjs",
+    "check:visuals": "node scripts/check-visuals.mjs",
     "check:anchors": "node scripts/verify-anchors.mjs",
     "check:coverage": "node scripts/check-coverage.mjs",
     "check:matrix": "node scripts/check-matrix.mjs",
@@ -23,8 +24,8 @@
     "check:portability": "node scripts/verify-portability.mjs",
     "check:licenses": "node scripts/verify-licenses.mjs",
     "check:secrets": "node scripts/scan-secrets.mjs",
-    "test": "node --test scripts/tests/analysis-metadata.test.mjs scripts/tests/article-contract.test.mjs scripts/tests/claims.test.mjs scripts/tests/content-contract.test.mjs scripts/tests/coverage.test.mjs scripts/tests/git-longpaths.test.mjs scripts/tests/gitlink.test.mjs scripts/tests/license-hash.test.mjs scripts/tests/matrix.test.mjs scripts/tests/navigation.test.mjs scripts/tests/project-files.test.mjs scripts/tests/review-history.test.mjs scripts/tests/run-local-evidence.test.mjs scripts/tests/source-profiles.test.mjs",
-    "check": "npm run sources:verify && npm run check:analysis && npm run check:claims && npm run check:navigation && npm run check:content && npm run check:anchors && npm run check:coverage && npm run check:matrix && npm run check:style && npm run check:portability && npm run check:licenses && npm run check:links && npm run check:secrets && npm test",
+    "test": "node --test scripts/tests/analysis-metadata.test.mjs scripts/tests/article-contract.test.mjs scripts/tests/claims.test.mjs scripts/tests/content-contract.test.mjs scripts/tests/coverage.test.mjs scripts/tests/git-longpaths.test.mjs scripts/tests/gitlink.test.mjs scripts/tests/license-hash.test.mjs scripts/tests/matrix.test.mjs scripts/tests/navigation.test.mjs scripts/tests/project-files.test.mjs scripts/tests/review-history.test.mjs scripts/tests/run-local-evidence.test.mjs scripts/tests/source-profiles.test.mjs scripts/tests/visuals.test.mjs",
+    "check": "npm run sources:verify && npm run check:analysis && npm run check:claims && npm run check:navigation && npm run check:content && npm run check:visuals && npm run check:anchors && npm run check:coverage && npm run check:matrix && npm run check:style && npm run check:portability && npm run check:licenses && npm run check:links && npm run check:secrets && npm test",
     "check:style": "node scripts/check-style.mjs",
     "style:report": "node scripts/check-style.mjs --report"
   }
