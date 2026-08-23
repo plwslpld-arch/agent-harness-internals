@@ -48,6 +48,14 @@
       "scope": "docs/foundations/02-agent-turn.md",
       "alt": "一次真实智能体交互从用户目标、模型工具调用到继续或终止的中文时序图",
       "claims": ["foundation.turn.continue-or-stop"]
+    },
+    {
+      "id": "foundation-model-tool-io",
+      "path": "assets/diagrams/foundations/03-model-tool-io.svg",
+      "type": "data-flow",
+      "scope": "docs/foundations/03-model-tool-io.md",
+      "alt": "模型消息、工具调用和工具结果沿稳定调用标识经过适配与执行的中文数据流图",
+      "claims": ["foundation.io.tool-result-correlation"]
     }
   ]
 }

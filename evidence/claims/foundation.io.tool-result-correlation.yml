@@ -1,0 +1,48 @@
+{
+  "id": "foundation.io.tool-result-correlation",
+  "harness": "foundation",
+  "dimension": "io.tool-result-correlation",
+  "statement": "工具结果要参与后续模型推理，Harness 必须保留它与原工具调用之间的稳定关联，并在构造下一次模型输入时按当前 Provider 契约重新序列化；关联字段名和消息角色不是跨项目统一协议。",
+  "capability": "not-applicable",
+  "version": "locked-sources-2026-08-23",
+  "surface": "message-adapter",
+  "platform": "all",
+  "mode": "cross-implementation-analysis",
+  "evidence_level": "D",
+  "inference": "Claude Agent SDK Python 的公开类型以 ToolUseBlock.id 和 ToolResultBlock.tool_use_id 表达关联，对应解析测试保留该字段；OpenCode 的转换层则用同一个 tool.id 构造 ToolCallPart 与 ToolResultPart，并把非 Provider 执行的结果转换为 tool 角色消息，测试断言调用与结果 ID 一致。两种实现支持稳定关联和重新进入模型消息是共同需求，但角色、字段名、内容块与 Provider 元数据处理明显不同，因此共同表述是 D 级分析推断。Claude 证据只覆盖公开 SDK 契约，不代表闭源 Claude Code 内部实现。",
+  "evidence": [
+    {
+      "type": "source",
+      "source": "claude-agent-sdk-python",
+      "commit": "542fefb3b94be87760b2513fff889b91bb5b6672",
+      "path": "src/claude_agent_sdk/types.py",
+      "lines": "949-964",
+      "excerpt": "tool_use_id: str"
+    },
+    {
+      "type": "upstream-test",
+      "source": "claude-agent-sdk-python",
+      "commit": "542fefb3b94be87760b2513fff889b91bb5b6672",
+      "path": "tests/test_message_parser.py",
+      "lines": "113-132",
+      "excerpt": "assert message.content[0].tool_use_id == \"tool_789\""
+    },
+    {
+      "type": "source",
+      "source": "opencode",
+      "commit": "3a31c4ea801915c0b050df4b3842997ea62b6e93",
+      "path": "packages/core/src/session/runner/to-llm-message.ts",
+      "lines": "30-53",
+      "excerpt": "id: tool.id"
+    },
+    {
+      "type": "upstream-test",
+      "source": "opencode",
+      "commit": "3a31c4ea801915c0b050df4b3842997ea62b6e93",
+      "path": "packages/core/test/session-runner-message.test.ts",
+      "lines": "235-287",
+      "excerpt": "type: \"tool-result\", id: \"completed\""
+    }
+  ],
+  "last_verified": "2026-08-23"
+}
