@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 940" role="img" aria-labelledby="title desc">
+  <title id="title">DeepSeek Harness 系统架构</title>
+  <desc id="desc">从产品表面经插件组合进入智能体运行框架核心，再连接模型、执行环境与评测消费者的分层架构。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0l14 7-14 7z" fill="#087F7C"/></marker>
+    <marker id="dash-arrow" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0l14 7-14 7z" fill="#7B5AA6"/></marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#18344F" flood-opacity=".12"/></filter>
+  </defs>
+  <rect width="1400" height="940" rx="34" fill="#F6F9FC"/>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <text x="700" y="55" text-anchor="middle" fill="#17324D" font-size="36" font-weight="760">DeepSeek Harness：能力由组合产生，任务由事件贯穿</text>
+    <text x="700" y="91" text-anchor="middle" fill="#50677D" font-size="19">锁定提交的课程投影；具体启用集合仍受配置、平台与模式约束</text>
+
+    <rect x="55" y="126" width="1290" height="128" rx="24" fill="#E9F2FF" stroke="#3569A8" stroke-width="2.5" filter="url(#shadow)"/>
+    <text x="84" y="162" fill="#285383" font-size="22" font-weight="760">一　产品表面：接收目标，选择会话，投影事件</text>
+    <g font-size="19" text-anchor="middle" fill="#17324D">
+      <rect x="90" y="181" width="210" height="48" rx="14" fill="#FFFFFF"/><text x="195" y="212">网页与命令行</text>
+      <rect x="330" y="181" width="210" height="48" rx="14" fill="#FFFFFF"/><text x="435" y="212">无界面运行</text>
+      <rect x="570" y="181" width="210" height="48" rx="14" fill="#FFFFFF"/><text x="675" y="212">ACP 协议</text>
+      <rect x="810" y="181" width="210" height="48" rx="14" fill="#FFFFFF"/><text x="915" y="212">SDK 接口</text>
+      <rect x="1050" y="181" width="255" height="48" rx="14" fill="#FFFFFF"/><text x="1177" y="212">命令与自动触发</text>
+    </g>
+
+    <rect x="55" y="294" width="1290" height="150" rx="24" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2.5" filter="url(#shadow)"/>
+    <text x="84" y="331" fill="#955A00" font-size="22" font-weight="760">二　启动与组合：把发行层、部署层和 Agent 选择合成有效插件树</text>
+    <g font-size="18" text-anchor="middle">
+      <rect x="92" y="352" width="230" height="62" rx="14" fill="#FFFFFF" stroke="#D8A84D"/><text x="207" y="378" fill="#17324D" font-weight="720">基础与模式发行层</text><text x="207" y="401" fill="#50677D">提供共享服务行</text>
+      <rect x="357" y="352" width="230" height="62" rx="14" fill="#FFFFFF" stroke="#D8A84D"/><text x="472" y="378" fill="#17324D" font-weight="720">部署配置与补丁</text><text x="472" y="401" fill="#50677D">叠加部署覆盖</text>
+      <rect x="622" y="352" width="230" height="62" rx="14" fill="#FFFFFF" stroke="#D8A84D"/><text x="737" y="378" fill="#17324D" font-weight="720">插件服务图</text><text x="737" y="401" fill="#50677D">按依赖激活生命周期</text>
+      <rect x="887" y="352" width="230" height="62" rx="14" fill="#FFFFFF" stroke="#D8A84D"/><text x="1002" y="378" fill="#17324D" font-weight="720">智能体预设</text><text x="1002" y="401" fill="#50677D">选择工具、提示与扩展</text>
+      <rect x="1152" y="352" width="150" height="62" rx="14" fill="#FFFFFF" stroke="#D8A84D"/><text x="1227" y="378" fill="#17324D" font-weight="720">有效运行时</text><text x="1227" y="401" fill="#50677D">不是固定清单</text>
+    </g>
+    <g fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"><path d="M322 383h27"/><path d="M587 383h27"/><path d="M852 383h27"/><path d="M1117 383h27"/></g>
+
+    <rect x="55" y="486" width="925" height="326" rx="26" fill="#E7F5F3" stroke="#087F7C" stroke-width="3" filter="url(#shadow)"/>
+    <text x="84" y="526" fill="#086E6B" font-size="24" font-weight="760">三　Agent Harness 核心：状态机、服务和证据面</text>
+    <g font-size="18">
+      <rect x="92" y="555" width="250" height="92" rx="18" fill="#FFFFFF" stroke="#51A9A5"/><text x="217" y="586" text-anchor="middle" fill="#17324D" font-weight="760">Prompt 与上下文</text><text x="217" y="615" text-anchor="middle" fill="#50677D">指令、历史、工具结构</text>
+      <rect x="392" y="555" width="250" height="92" rx="18" fill="#17324D"/><text x="517" y="586" text-anchor="middle" fill="#FFFFFF" font-weight="760">Agent Loop</text><text x="517" y="615" text-anchor="middle" fill="#D3E1EA">轮次、步骤、继续或终止</text>
+      <rect x="692" y="555" width="250" height="92" rx="18" fill="#FFFFFF" stroke="#51A9A5"/><text x="817" y="586" text-anchor="middle" fill="#17324D" font-weight="760">LLM 路由与适配</text><text x="817" y="615" text-anchor="middle" fill="#50677D">请求、流式块、错误</text>
+      <rect x="92" y="686" width="250" height="92" rx="18" fill="#FFFFFF" stroke="#51A9A5"/><text x="217" y="717" text-anchor="middle" fill="#17324D" font-weight="760">工具与安全</text><text x="217" y="746" text-anchor="middle" fill="#50677D">注册、策略、审批、隔离</text>
+      <rect x="392" y="686" width="250" height="92" rx="18" fill="#FFFFFF" stroke="#51A9A5"/><text x="517" y="717" text-anchor="middle" fill="#17324D" font-weight="760">Session 事件</text><text x="517" y="746" text-anchor="middle" fill="#50677D">日志、投影、持久化、恢复</text>
+      <rect x="692" y="686" width="250" height="92" rx="18" fill="#FFFFFF" stroke="#51A9A5"/><text x="817" y="717" text-anchor="middle" fill="#17324D" font-weight="760">编排与扩展</text><text x="817" y="746" text-anchor="middle" fill="#50677D">目标、委派、技能、工作流</text>
+    </g>
+    <g fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"><path d="M342 600h42"/><path d="M642 600h42"/><path d="M517 647v31"/><path d="M392 732h-42"/><path d="M642 732h42"/></g>
+
+    <rect x="1020" y="486" width="325" height="326" rx="26" fill="#F0ECF8" stroke="#795DA7" stroke-width="2.5" filter="url(#shadow)"/>
+    <text x="1048" y="526" fill="#60458C" font-size="23" font-weight="760">四　外部能力与消费者</text>
+    <g font-size="18" text-anchor="middle">
+      <rect x="1054" y="555" width="257" height="58" rx="15" fill="#FFFFFF"/><text x="1182" y="590" fill="#17324D">模型服务与凭据</text>
+      <rect x="1054" y="634" width="257" height="58" rx="15" fill="#FFFFFF"/><text x="1182" y="669" fill="#17324D">文件、进程与隔离后端</text>
+      <rect x="1054" y="713" width="257" height="66" rx="15" fill="#FFFFFF"/><text x="1182" y="741" fill="#17324D">反馈、遥测与独立评测</text><text x="1182" y="765" fill="#8A3D2F" font-size="15">三者语义不能合并</text>
+    </g>
+    <g fill="none" stroke="#795DA7" stroke-width="4" stroke-dasharray="10 8" marker-end="url(#dash-arrow)"><path d="M940 600h106"/><path d="M940 732h106"/></g>
+
+    <path d="M700 254v32" fill="none" stroke="#087F7C" stroke-width="5" marker-end="url(#arrow)"/>
+    <path d="M700 444v34" fill="none" stroke="#087F7C" stroke-width="5" marker-end="url(#arrow)"/>
+    <rect x="55" y="852" width="1290" height="52" rx="16" fill="#17324D"/>
+    <text x="700" y="885" text-anchor="middle" fill="#FFFFFF" font-size="18">阅读规则：配置说明“可能装什么”，有效服务图说明“这次装了什么”，事件与产物说明“这次实际发生了什么”</text>
+  </g>
+</svg>

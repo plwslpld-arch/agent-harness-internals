@@ -1,0 +1,64 @@
+{
+  "id": "deepseek-harness.architecture.composed-runtime",
+  "harness": "deepseek-harness",
+  "dimension": "architecture.composed-runtime",
+  "statement": "在锁定 DeepSeek Harness 中，基础 bundle 提供 LLM、Session、Agent、持久化与安全服务行，standard agent preset 再贡献 persona、模型可见工具、压缩和委派选择；具体有效能力由 profile、补丁、平台、模式与 preset 共同组合，不是一份对所有运行都固定的清单。",
+  "capability": "default",
+  "version": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+  "surface": "runtime-composition",
+  "platform": "all",
+  "mode": "standard-preset-with-profile-dependent-overrides",
+  "evidence_level": "D",
+  "inference": "base bundle 直接列出宿主共享服务；standard preset 的文件注释和配置把 agent-plane 的 persona、工具、压缩与委派选择和 host composition 区分开。把这些源码事实投影成课程的四层系统图属于跨配置与运行时的分析推断；最终启用集合仍需检查有效 Cordis 树。",
+  "evidence": [
+    {
+      "type": "source",
+      "source": "deepseek-harness",
+      "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+      "path": "packages/bundle/base/cordis.patch.yml",
+      "lines": "24-30",
+      "excerpt": "- id: llm"
+    },
+    {
+      "type": "source",
+      "source": "deepseek-harness",
+      "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+      "path": "packages/bundle/base/cordis.patch.yml",
+      "lines": "58-73",
+      "excerpt": "- id: agent"
+    },
+    {
+      "type": "source",
+      "source": "deepseek-harness",
+      "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+      "path": "packages/bundle/base/cordis.patch.yml",
+      "lines": "98-101",
+      "excerpt": "- id: session-persistence-jsonl"
+    },
+    {
+      "type": "source",
+      "source": "deepseek-harness",
+      "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+      "path": "packages/bundle/base/cordis.patch.yml",
+      "lines": "163-205",
+      "excerpt": "- id: sandbox"
+    },
+    {
+      "type": "source",
+      "source": "deepseek-harness",
+      "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+      "path": "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+      "lines": "1-18",
+      "excerpt": "This file is an AGENT-PLANE composition."
+    },
+    {
+      "type": "source",
+      "source": "deepseek-harness",
+      "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+      "path": "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+      "lines": "44-60",
+      "excerpt": "- id: tool-bash"
+    }
+  ],
+  "last_verified": "2026-08-24"
+}

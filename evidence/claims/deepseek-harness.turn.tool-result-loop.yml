@@ -1,0 +1,31 @@
+{
+  "id": "deepseek-harness.turn.tool-result-loop",
+  "harness": "deepseek-harness",
+  "dimension": "turn.tool-result-loop",
+  "statement": "在锁定 DeepSeek Harness Agent Loop 中，模型响应包含工具调用时，Harness 执行工具并把结果写入 Session；结果会进入下一次模型请求，直到响应不再包含工具调用或其他终止条件收敛。",
+  "capability": "default",
+  "version": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+  "surface": "agent-loop",
+  "platform": "all",
+  "mode": "registered-tool",
+  "evidence_level": "B",
+  "evidence": [
+    {
+      "type": "source",
+      "source": "deepseek-harness",
+      "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+      "path": "packages/core/agent-loop/src/agent.ts",
+      "lines": "332-418",
+      "excerpt": "const toolCalls = message.content.filter(block => block.type === 'tool-call')"
+    },
+    {
+      "type": "upstream-test",
+      "source": "deepseek-harness",
+      "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+      "path": "packages/core/agent-loop/tests/loop.spec.ts",
+      "lines": "198-232",
+      "excerpt": "expect(adapter.requests).toHaveLength(2)"
+    }
+  ],
+  "last_verified": "2026-08-24"
+}

@@ -80,6 +80,22 @@
       "scope": "docs/foundations/06-trace-feedback-eval.md",
       "alt": "固定试验、恢复尝试、轨迹制品、评分反馈和独立发布评测的中文流程图",
       "claims": ["foundation.eval.trial-attempt-stability"]
+    },
+    {
+      "id": "deepseek-harness-system-architecture",
+      "path": "assets/diagrams/deepseek-harness/system-architecture.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/deepseek-harness/README.md",
+      "alt": "DeepSeek Harness 从产品表面、插件组合到模型工具会话和评测接入的中文系统架构图",
+      "claims": ["deepseek-harness.architecture.composed-runtime"]
+    },
+    {
+      "id": "deepseek-harness-end-to-end-task",
+      "path": "assets/diagrams/deepseek-harness/end-to-end-task.svg",
+      "type": "flow",
+      "scope": "docs/harnesses/deepseek-harness/README.md",
+      "alt": "DeepSeek Harness 端到端工具任务从用户目标到事件产物和评测接入的中文流程图",
+      "claims": ["deepseek-harness.turn.tool-result-loop"]
     }
   ]
 }
