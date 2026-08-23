@@ -1,0 +1,57 @@
+{
+  "stage": "phase-1-brand-entry",
+  "date": "2026-08-23",
+  "commit": "6c50a1b469a3994ea23a621f06a43606f2e8ff93",
+  "promises": [
+    {"id": "p-brand-candidates", "statement": "三个非吉祥物 Logo 方向具有多尺寸、背景、灰度和单色渲染证据，并经过对抗评分。"},
+    {"id": "p-final-assets", "statement": "正式核心标记、中文组合标和 GitHub 社交预览来自评审赢家并完成实图复核。"},
+    {"id": "p-chinese-entry", "statement": "README 与总入口用中文完整解释定位、六条主线、Eval 横切能力、阅读路径、状态和证据边界。"},
+    {"id": "p-honest-navigation", "statement": "正式导航只开放已复核总入口，未完成主线只显示状态。"},
+    {"id": "p-legacy-cleanup", "statement": "英文 README、旧 Logo、旧定位图和公开引用已经退出当前树。"},
+    {"id": "p-github-target", "statement": "包名、中文工作流、About、Topics、Social preview 和分支保护目标可机器核对，远端应用保留到最终部署。"},
+    {"id": "p-node24", "statement": "本地和 GitHub 工作流显式使用 Node 24，仓库不依赖 NVM 或 .nvmrc。"}
+  ],
+  "evidence": [
+    {"id": "e-candidate-review", "promise": "p-brand-candidates", "type": "render", "reference": "evidence/reviews/brand-candidates/contact-sheet.png", "summary": "三套候选、六种尺寸和三种视觉压力条件集中展示；另有二十七张独立样张。"},
+    {"id": "e-brand-selection", "promise": "p-brand-candidates", "type": "file", "reference": "evidence/reviews/2026-08-23-brand-selection.yml", "summary": "按七个维度评分并为每个候选记录至少三个失败模式，约束括架获选。"},
+    {"id": "e-final-render", "promise": "p-final-assets", "type": "render", "reference": "evidence/reviews/brand-final-render.png", "summary": "正式社交预览、核心标记尺寸以及组合标浅色和深色背景均完成目视复核。"},
+    {"id": "e-brand-tests", "promise": "p-final-assets", "type": "test", "reference": "scripts/tests/brand.test.mjs", "summary": "校验评审赢家、正式资产、PNG 尺寸、README、仓库标识、Node 和远端元数据。"},
+    {"id": "e-readme", "promise": "p-chinese-entry", "type": "file", "reference": "README.md", "summary": "公共入口使用正式组合标，并完整解释六条主线、Eval、状态、证据等级、能力状态和本地验证。"},
+    {"id": "e-start-entry", "promise": "p-chinese-entry", "type": "file", "reference": "docs/00-start-here.md", "summary": "已复核总入口达到 start 内容契约，包含概念图、阅读路径、导航规则、证据、自检和边界。"},
+    {"id": "e-start-render", "promise": "p-chinese-entry", "type": "render", "reference": "evidence/reviews/start-entry-render.png", "summary": "总入口架构图经过渲染复核，箭头遮字问题已修复。"},
+    {"id": "e-navigation", "promise": "p-honest-navigation", "type": "command", "reference": "node scripts/check-navigation.mjs", "summary": "只发现并通过一个正式导航文章链接，目标状态为 reviewed。"},
+    {"id": "e-project-cleanup", "promise": "p-legacy-cleanup", "type": "test", "reference": "scripts/tests/project-files.test.mjs", "summary": "禁止英文 README、五张旧图及其公开引用回到当前树。"},
+    {"id": "e-github-metadata", "promise": "p-github-target", "type": "file", "reference": ".github/repository-metadata.yml", "summary": "固定最终仓库名、中文 About、六条主线 Topics、Social preview 和分支保护目标。"},
+    {"id": "e-node-workflows", "promise": "p-node24", "type": "file", "reference": ".github/workflows/", "summary": "验证和上游漂移工作流均使用中文可见名称并显式配置 Node 24。"}
+  ],
+  "findings": [
+    {"id": "f-social-clipping", "priority": "high", "status": "resolved", "summary": "社交预览首轮渲染的主标题和六条主线在右侧被截断。"},
+    {"id": "f-diagram-arrow-overlap", "priority": "high", "status": "resolved", "summary": "总入口架构图首轮箭头按线宽缩放，覆盖多个节点文字。"},
+    {"id": "f-visual-english-concepts", "priority": "medium", "status": "resolved", "summary": "总入口图最初直接显示 Trial、Attempt、Artifact、Scorer 等英文概念词。"},
+    {"id": "f-hidden-nvm-workflow", "priority": "high", "status": "resolved", "summary": "上游漂移工作流曾继续读取 .nvmrc，和仓库 Node 24 契约冲突。"},
+    {"id": "f-logo-generic-directions", "priority": "medium", "status": "resolved", "summary": "并行轨道小尺寸碎裂，分层内核容易与数据库和技术栈图标混淆。"},
+    {"id": "f-bracket-similarity", "priority": "medium", "status": "resolved", "summary": "约束括架可能被看成普通代码括号，需要保留非对称任务轨迹与三个核对点。"},
+    {"id": "f-legacy-content-tree", "priority": "medium", "status": "open", "summary": "旧目录仍保留尚未覆盖式重写的正文；它们不在正式导航中，后续基础与六条主线阶段必须逐步替换或删除。"},
+    {"id": "f-remote-not-deployed", "priority": "medium", "status": "open", "summary": "GitHub 远端仍使用旧名称、旧 About 和旧 Topics；为避免指向未合并内容，统一保留到最终部署阶段。"},
+    {"id": "f-contributors-history", "priority": "medium", "status": "open", "summary": "历史提交消息中的 Codex/Claude 协作者尾注尚未清理；必须在所有内容提交结束后受控重写。"},
+    {"id": "f-github-rendering", "priority": "low", "status": "open", "summary": "组合标深色等效配色和 Social preview 本地渲染已检查，GitHub 实际暗色显示与卡片上传要在最终部署后复核。"},
+    {"id": "f-legacy-style-warnings", "priority": "low", "status": "open", "summary": "两个待覆盖式重写的旧页面仍有非阻断句长节奏提醒。"}
+  ],
+  "resolutions": [
+    {"id": "f-social-clipping", "action": "缩小并左移标题、说明和主线文字，重新生成 1280×640 PNG 并目视确认右边界完整。", "evidence": ["e-final-render", "e-brand-tests"]},
+    {"id": "f-diagram-arrow-overlap", "action": "把 SVG Marker 改为固定用户空间尺寸，重新渲染后确认节点文字与箭头分离。", "evidence": ["e-start-render"]},
+    {"id": "f-visual-english-concepts", "action": "图中改用统计试次与恢复尝试、运行轨迹与产物、评分器和反馈，不通过扩大自然语言白名单绕过。", "evidence": ["e-start-render"]},
+    {"id": "f-hidden-nvm-workflow", "action": "删除 .nvmrc，两个工作流都显式配置 Node 24，并在品牌门禁中拒绝 NVM 残留。", "evidence": ["e-node-workflows", "e-brand-tests"]},
+    {"id": "f-logo-generic-directions", "action": "淘汰并行轨道与分层内核，只把最高分约束括架派生为正式资产。", "evidence": ["e-candidate-review", "e-brand-selection"]},
+    {"id": "f-bracket-similarity", "action": "保留断开的左右边界、对角轨迹和三种核对点，不把正式标记简化成纯代码括号。", "evidence": ["e-brand-selection", "e-final-render"]}
+  ],
+  "commands": [
+    {"command": "node --version", "exit_code": 0, "summary": "输出 v24.19.0。"},
+    {"command": "node scripts/check-all.mjs", "exit_code": 0, "summary": "17 组聚合检查、82 项单元测试、4 个正式 SVG、1 个正式导航链接和 1607 处旧正文源码锚点通过。"},
+    {"command": "node scripts/verify-sources.mjs --profile all", "exit_code": 0, "summary": "12 个来源定义与 12 个全量 Checkout 全部通过。"},
+    {"command": "打开 brand-final-render.png 与 start-entry-render.png 执行逐项目视复核", "exit_code": 0, "summary": "最终版本没有文字截断、箭头遮字、字体缺失、负形粘连或背景失读。"},
+    {"command": "gh repo view plwslpld-arch/harness-internals --json name,description,repositoryTopics,defaultBranchRef,visibility,url", "exit_code": 0, "summary": "确认远端仍是旧名称和旧对外信息，尚未提前部署阶段 1 元数据。"},
+    {"command": "git diff --check", "exit_code": 0, "summary": "没有空白错误。"}
+  ],
+  "result": "pass"
+}
