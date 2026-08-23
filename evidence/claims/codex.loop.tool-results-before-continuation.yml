@@ -1,0 +1,18 @@
+{
+  "id": "codex.loop.tool-results-before-continuation",
+  "harness": "codex",
+  "dimension": "loop.tool-results-before-continuation",
+  "statement": "在锁定 Codex 中，同一模型响应的工具调用可按工具能力并行执行，但 Future 按调用顺序进入有序容器并按序写入会话；当前批次结果结算后，外层才用更新历史继续采样。",
+  "capability": "default",
+  "version": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+  "surface": "core-tool-runtime",
+  "platform": "upstream-test-supported-platforms",
+  "mode": "tool-parallel-capability-dependent",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/src/tools/parallel.rs","lines":"112-175","excerpt":"let supports_parallel = router.tool_supports_parallel(&call);"},
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/src/session/turn.rs","lines":"2130-2153","excerpt":"while let Some(res) = in_flight.next().await"},
+    {"type":"upstream-test","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/tests/suite/tool_parallelism.rs","lines":"228-298","excerpt":"all function calls must come before outputs"}
+  ],
+  "last_verified": "2026-08-24"
+}

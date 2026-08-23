@@ -192,6 +192,14 @@
       "scope": "docs/harnesses/codex/02-thread-task-turn.md",
       "alt": "Codex 从持久线程身份、活动会话、后台任务到轮次状态和协议事件的中文生命周期图",
       "claims": ["codex.thread.turn-task-state-separation"]
+    },
+    {
+      "id": "codex-model-tool-loop",
+      "path": "assets/diagrams/codex/03-model-tool-loop.svg",
+      "type": "sequence",
+      "scope": "docs/harnesses/codex/03-model-tool-loop.md",
+      "alt": "Codex 模型响应流、工具路由、并行执行、有序结果提交、重试与终止的中文时序图",
+      "claims": ["codex.loop.tool-results-before-continuation"]
     }
   ]
 }

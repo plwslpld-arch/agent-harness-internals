@@ -65,10 +65,10 @@
 
 ### Task 5：Responses、模型流与工具闭环
 
-- [ ] 完成 `03-model-tool-loop.md`、中文时序图和工具结算 Claim。
-- [ ] 覆盖请求构造、流事件、Tool Registry、Router、并行调用、有序结果、重试、取消和终止。
-- [ ] 区分供应商重试、工具恢复、Turn 结算和 Eval Attempt。
-- [ ] 提交：`docs(codex): 发布模型与工具闭环课程`。
+- [x] 完成 `03-model-tool-loop.md`、中文时序图和工具结算 Claim。
+- [x] 覆盖请求构造、流事件、Tool Registry、Router、并行调用、有序结果、重试、取消和终止。
+- [x] 区分供应商重试、工具恢复、Turn 结算和 Eval Attempt。
+- [x] 提交：`docs(codex): 发布模型与工具闭环课程`。
 
 ### Task 6：Exec Policy、审批、升级与多平台 Sandbox
 

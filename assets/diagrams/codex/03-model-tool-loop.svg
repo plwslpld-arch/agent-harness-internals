@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 940" role="img" aria-labelledby="title desc">
+  <title id="title">Codex 模型与工具闭环时序</title>
+  <desc id="desc">模型响应流产生多个工具调用，经能力门控并行执行、有序结算、写入会话后再继续采样，同时标出重试和取消边界的中文时序图。</desc>
+  <defs><marker id="a" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto"><path d="M0 0l14 7-14 7z" fill="#087F7C"/></marker><marker id="w" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto"><path d="M0 0l14 7-14 7z" fill="#D2673A"/></marker><filter id="s" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#17324D" flood-opacity=".12"/></filter></defs>
+  <rect width="1400" height="940" rx="34" fill="#F6F9FC"/>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <text x="700" y="55" text-anchor="middle" fill="#17324D" font-size="36" font-weight="760">并行改变耗时，不改变工具结果的可关联顺序</text>
+    <text x="700" y="91" text-anchor="middle" fill="#50677D" font-size="19">当前批次先完整结算，再把结果交给下一次模型采样</text>
+    <g font-size="19" text-anchor="middle" font-weight="760">
+      <rect x="55" y="130" width="230" height="64" rx="16" fill="#E9F2FF" stroke="#3569A8" stroke-width="2"/><text x="170" y="170" fill="#285383">轮次循环</text>
+      <rect x="320" y="130" width="230" height="64" rx="16" fill="#E7F5F3" stroke="#087F7C" stroke-width="2"/><text x="435" y="170" fill="#086E6B">模型响应流</text>
+      <rect x="585" y="130" width="230" height="64" rx="16" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2"/><text x="700" y="170" fill="#955A00">工具路由</text>
+      <rect x="850" y="130" width="230" height="64" rx="16" fill="#FFF0E8" stroke="#D2673A" stroke-width="2"/><text x="965" y="170" fill="#8A3D2F">执行门</text>
+      <rect x="1115" y="130" width="230" height="64" rx="16" fill="#F0ECF8" stroke="#76559B" stroke-width="2"/><text x="1230" y="170" fill="#60458C">会话历史</text>
+    </g>
+    <g stroke="#A7B8C8" stroke-width="2" stroke-dasharray="8 8"><path d="M170 194v610"/><path d="M435 194v610"/><path d="M700 194v610"/><path d="M965 194v610"/><path d="M1230 194v610"/></g>
+    <g fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#a)">
+      <path d="M170 240h252"/><path d="M435 304h252"/><path d="M700 368h252"/><path d="M700 432h252"/><path d="M700 496h252"/><path d="M965 560h252"/><path d="M965 624h252"/><path d="M965 688h252"/><path d="M1230 752H183"/>
+    </g>
+    <g font-size="18" fill="#17324D">
+      <text x="190" y="230">一　发送提示与工具规格</text><text x="455" y="294">二　流式输出三个工具调用</text>
+      <text x="720" y="358">三　调用一：查询并行能力</text><text x="720" y="422">四　调用二：查询并行能力</text><text x="720" y="486">五　调用三：查询并行能力</text>
+      <text x="985" y="550">六　结果一按调用顺序写入</text><text x="985" y="614">七　结果二按调用顺序写入</text><text x="985" y="678">八　结果三按调用顺序写入</text>
+      <text x="500" y="742">九　完整历史进入下一次采样</text>
+    </g>
+    <rect x="610" y="525" width="190" height="176" rx="18" fill="#FFFFFF" stroke="#51A9A5" stroke-width="2" filter="url(#s)"/>
+    <text x="705" y="560" text-anchor="middle" fill="#17324D" font-size="18" font-weight="760">有序结算器</text><text x="705" y="596" text-anchor="middle" fill="#50677D" font-size="17">工具可以先完成</text><text x="705" y="628" text-anchor="middle" fill="#50677D" font-size="17">结果仍按入队顺序</text><text x="705" y="660" text-anchor="middle" fill="#8A3D2F" font-size="17">调用标识不可丢失</text>
+    <rect x="55" y="832" width="1290" height="72" rx="18" fill="#17324D"/>
+    <text x="84" y="861" fill="#FFFFFF" font-size="19" font-weight="760">边界：</text><text x="170" y="861" fill="#D3E1EA" font-size="18">可重试模型流受上限约束；工具副作用不得因采样重试而重复</text>
+    <text x="170" y="889" fill="#7FE0D5" font-size="17">取消发生在排队、执行中或终态之后，要保留不同生命周期与可关联结果</text>
+    <path d="M435 790v34" fill="none" stroke="#D2673A" stroke-width="4" marker-end="url(#w)"/>
+  </g>
+</svg>
