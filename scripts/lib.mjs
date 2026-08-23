@@ -35,7 +35,7 @@ export function run(command, args, options = {}) {
 }
 
 export function git(cwd, args, options = {}) {
-  const output = run('git', ['-c', 'advice.detachedHead=false', ...args], { cwd, ...options });
+  const output = run('git', ['-c', 'advice.detachedHead=false', '-c', 'core.longpaths=true', ...args], { cwd, ...options });
   return typeof output === 'string' ? output.trim() : '';
 }
 
