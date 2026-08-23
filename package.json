@@ -14,6 +14,7 @@
     "check:claims": "node scripts/verify-claims.mjs",
     "check:navigation": "node scripts/check-navigation.mjs",
     "check:content": "node scripts/check-content-contract.mjs",
+    "check:brand": "node scripts/check-brand.mjs",
     "check:visuals": "node scripts/check-visuals.mjs",
     "check:reviews": "node scripts/verify-reviews.mjs",
     "check:anchors": "node scripts/verify-anchors.mjs",

@@ -10,6 +10,7 @@ export const checkCommands = [
   { label: '关键结论注册表', args: ['scripts/verify-claims.mjs'] },
   { label: '正式导航状态', args: ['scripts/check-navigation.mjs'] },
   { label: '内容质量契约', args: ['scripts/check-content-contract.mjs'] },
+  { label: '品牌与仓库元数据', args: ['scripts/check-brand.mjs'] },
   { label: '中文视觉资产', args: ['scripts/check-visuals.mjs'] },
   { label: '阶段对抗复核', args: ['scripts/verify-reviews.mjs'] },
   { label: '源码锚点', args: ['scripts/verify-anchors.mjs'] },

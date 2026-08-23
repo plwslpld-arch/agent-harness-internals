@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "name": "agent-harness-internals",
+  "visibility": "public",
+  "about": "以 Agent Harness 为主线的中文源码知识库，覆盖六种实现及其评测接入。",
+  "topics": [
+    "agent-harness",
+    "coding-agents",
+    "source-code-analysis",
+    "ai-evaluation",
+    "chinese"
+  ],
+  "socialPreview": "assets/brand/social-preview.png",
+  "applyAt": "phase-6-deployment"
+}

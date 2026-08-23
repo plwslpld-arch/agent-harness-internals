@@ -40,12 +40,12 @@
 - 输入：品牌 Manifest、README、图示 Manifest、正式资产和 GitHub 目标元数据。
 - 输出：`validateBrandManifest()`、`validateRepositoryMetadata()`、`check:brand`。
 
-- [ ] 先写失败测试，覆盖仓库标识、中文标题、Logo 禁用元素、正式资产清单、Social preview 尺寸、About 和 Topics。
-- [ ] 运行测试，确认因缺少实现而失败。
-- [ ] 最小实现品牌门禁并接入聚合检查。
-- [ ] 运行单测与 `check:brand`，确认通过。
-- [ ] 反向注入旧仓库名、机器人描述、英文 About、错误尺寸和缺失资产，确认门禁逐一拒绝。
-- [ ] 提交：`feat(brand): 建立品牌与仓库元数据契约`。
+- [x] 先写失败测试，覆盖仓库标识、中文标题、Logo 禁用元素、正式资产清单、Social preview 尺寸、About 和 Topics。
+- [x] 运行测试，确认因缺少实现而失败。
+- [x] 最小实现品牌门禁并接入聚合检查。
+- [x] 运行单测与 `check:brand`，确认通过。
+- [x] 反向注入旧仓库名、机器人描述、英文 About、错误尺寸和缺失资产，确认门禁逐一拒绝。
+- [x] 提交：`feat(brand): 建立品牌与仓库元数据契约`。
 
 ### Task 2：三个矢量 Logo 候选
 
@@ -204,4 +204,3 @@
 5. 英文 README、旧 Logo、旧英文图和旧仓库标识不再出现在公开树。
 6. GitHub 目标元数据可机器检查，但远端变更保留到最终部署阶段。
 7. Node 24 聚合检查通过，阶段复核记录没有未解决高严重度发现。
-
