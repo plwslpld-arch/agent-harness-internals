@@ -1,98 +1,107 @@
 <p align="center">
-  <img src="assets/deepseek-harness-atlas.svg" width="152" alt="DeepSeek Harness Internals">
+  <img src="assets/harness-internals.svg" width="168" alt="Harness Internals">
 </p>
 
-<h1 align="center">DeepSeek Harness Internals</h1>
+<h1 align="center">Harness Internals</h1>
 
-<p align="center">从源码读懂一个现代 agent harness 是怎么造出来的</p>
+<p align="center">两种 harness，一个可核对的源码知识库</p>
 
 <p align="center">
-  <a href="https://github.com/plwslpld-arch/deepseek-harness-internals/actions/workflows/verify.yml"><img alt="Verify" src="https://github.com/plwslpld-arch/deepseek-harness-internals/actions/workflows/verify.yml/badge.svg?branch=main"></a>
-  <img alt="DeepSeek Harness" src="https://img.shields.io/badge/DeepSeek-Harness-4D6BFE">
+  <a href="README.en.md">English</a> ·
+  <a href="https://github.com/plwslpld-arch/harness-internals/actions/workflows/verify.yml"><img alt="Verify" src="https://github.com/plwslpld-arch/harness-internals/actions/workflows/verify.yml/badge.svg?branch=main"></a>
   <a href="LICENSE-CODE"><img alt="Code MIT" src="https://img.shields.io/badge/code-MIT-2F855A"></a>
   <a href="LICENSE-DOCS"><img alt="Docs CC BY 4.0" src="https://img.shields.io/badge/docs-CC_BY_4.0-D97706"></a>
 </p>
 
----
+> 原名 `deepseek-harness-internals`。DeepSeek Harness 的逐包深读完整保留在 [`docs/deep/`](docs/deep/)。
 
 ## 这是什么
 
-[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（简称 dsh）是 DeepSeek 在 2026 年 8 月开源的 agent harness：包在模型外面、负责拼上下文、调工具、管权限、记轨迹的那一层。
+模型不会自己读文件、调工具、保留会话，也不会决定一个 benchmark 怎样判分。包在模型外面的两层软件，决定了任务如何执行、结果如何被解释：
 
-这个仓库是它的中文源码分析。**目标只有一个：把「模型每一步到底收到了什么、这些东西是怎么被拼出来的」讲到你能自己复现的程度**，然后告诉你 Claude Code、Codex、OpenCode、pi、mini-swe-agent 在同一件事上是怎么做的。
+- **agent harness** 把模型变成可行动的 agent：装配上下文、暴露工具、执行循环、处理权限、保存轨迹、恢复失败。
+- **eval harness** 把一次运行变成可比较的证据：定义任务与环境、调度 Trial、收集产物、执行 scorer、冻结统计口径。
 
-研发路线需要能读 TypeScript，但不需要用过 dsh；产品和决策路线完全不用读代码。所有结论绑定上游一个固定 commit，行号由 CI 校验。
+它们不能分开研究。最终分数同时受模型、agent harness、eval harness 和环境影响；只报模型名与一个 pass@1，会把这些变量压成一个无法归因的数字。这个仓库把四种 agent harness 与四种 eval harness 放在同一套维度、同一套 commit 锁和同一套 CI 证据门禁下。
 
-## 从哪读：先看你是谁
+![Agent harness 与 eval harness 的耦合](assets/harness-coupling.svg)
 
-| 你是 | 从这里进 | 需要读代码吗 |
+## 从哪读
+
+| 你的问题 | 入口 | 是否读代码 |
 | --- | --- | --- |
-| **产品经理 / 交互** | [产品视角：用户看到的现象，背后是哪条机制](docs/for-product.md) | 不需要 |
-| **技术决策 / 运营 / 安全评审** | [成本、部署与风险](docs/for-ops.md) | 不需要 |
-| **完全没接触过这个领域** | [不写代码也要懂的：agent harness 到底是什么](docs/concepts.md) | 不需要 |
-| **研发，想搞懂内部构造** | [00 总览](docs/00-overview.md)，然后按下表顺序 | 需要，能读 TypeScript |
-| **只想要选型结论** | [14 横向对照](docs/14-comparison.md) | 不需要 |
+| 第一次听到 harness | [概念入门](docs/concepts.md) | 不需要 |
+| 做产品与交互 | [产品视角](docs/for-product.md) | 不需要 |
+| 做成本、安全与部署决策 | [运维与风险](docs/for-ops.md) | 不需要 |
+| 想理解 agent 是怎样跑起来的 | [Part A 总览](docs/00-overview.md#part-aagent-harness) | 可选 |
+| 想理解 benchmark 分数怎样产生 | [Part B 总览](docs/00-overview.md#part-beval-harness) | 可选 |
+| 深挖 DeepSeek Harness | [DSH 深度层](docs/deep/dsh-overview.md) | 需要 TypeScript |
+| 自己复核结论 | [验证手册](docs/appendix-b-verification.md) | 需要命令行 |
 
-研发路线里最有信息量的三篇：[System Prompt](docs/01-system-prompt.md) → [KV-Cache](docs/02-kv-cache.md) → [横向对照](docs/14-comparison.md)。
+## Part A：agent harness
 
-**想系统地读**，按下面的顺序：
+对照主角是 DeepSeek Harness、OpenAI Codex、Gemini CLI，以及 Claude Agent SDK 所公开的 Claude 契约面。Claude Code 本体闭源；契约面之外不作源码级推断。
 
-| # | 文章 | 读完你会明白 |
+| 维度 | 文章 | 核心问题 |
 | --- | --- | --- |
-| 00 | [总览](docs/00-overview.md) | 一次请求从进程启动到落盘的完整路径，以及 50 个包组各管什么 |
-| 01 | [System Prompt](docs/01-system-prompt.md) | 模型第一眼看到的那段文字逐字长什么样、由谁贡献、顺序怎么定 |
-| 02 | [KV-Cache](docs/02-kv-cache.md) | 为什么 dsh 没有一行缓存管理代码却能一直命中，以及什么时候会塌 |
-| 03 | [Agent Loop](docs/03-agent-loop.md) | 一个 turn 里发生了什么，工具怎么并行、怎么取消 |
-| 04 | [LLM 层](docs/04-llm-adapter.md) | 请求 JSON 怎么序列化、SSE 怎么解析、重试怎么退避 |
-| 05 | [Session](docs/05-session.md) | 事件日志、surface 投影、以及「模型可见 ⟺ 已记录」这条不变量 |
-| 06 | [压缩](docs/06-compaction.md) | 什么时候触发、砍哪一段、摘要请求怎么少付一次全价 |
-| 07 | [工具、审批与沙箱](docs/07-tools-approval-sandbox.md) | 到底什么时候会弹窗（不是你以为的那样），以及沙箱怎么落地 |
-| 08 | [编排层](docs/08-orchestration.md) | 子代理、计划、待办、目标、钩子、工作流、技能各挂在循环的哪个点 |
-| 09 | [Extensions 与 Code Mode](docs/09-extensions-and-code-mode.md) | 让模型在运行时改自己的插件树，以及只给它一个 `run_code` 会怎样 |
-| 10 | [Cordis、启动与 preset](docs/10-cordis-boot-preset.md) | 默认到底装了什么、四个 preset 差在哪、为什么要 fork Cordis |
-| 11 | [Web 客户端与 host](docs/11-web-client-and-host.md) | 40 个 UI 包如何把事件日志变成你看到的界面 |
-| 12 | [产品表面与协议](docs/12-surfaces-and-protocols.md) | Web / headless / ACP / MCP / SDK / Python 各是什么，谁驱动谁 |
-| 13 | [自证与工程化](docs/13-self-verification.md) | 227 个 `invariant.ts`（真正装了检查的只有 37 个）、测试多于源码、文档门禁，一个仓库如何证明自己没坏 |
-| 14 | [横向对照](docs/14-comparison.md) | 六个 harness 在七个维度上的机制差异：prompt 装配、缓存、压缩、循环、审批沙箱、会话、扩展 |
-| 15 | [设计记录导读](docs/15-agent-notes-guide.md) | 739 篇 Agent Note 里最值得读的那些，以及上游文档的分工 |
-| A | [术语表](docs/appendix-a-glossary.md) | 每条带源码出处 |
-| B | [怎么自己核对](docs/appendix-b-verification.md) | 不用凭据能核什么、要凭据才能核什么 |
+| A1 | [System Prompt](docs/a1-system-prompt.md) | 模型第一眼看见什么，谁决定顺序 |
+| A2 | [KV-Cache](docs/a2-kv-cache.md) | 前缀怎样保持稳定，何时失效 |
+| A3 | [Agent Loop](docs/a3-agent-loop.md) | 请求、工具和恢复怎样形成闭环 |
+| A4 | [Compaction](docs/a4-compaction.md) | 超长轨迹怎样压缩，丢掉什么 |
+| A5 | [Tools、Approval、Sandbox](docs/a5-tools-approval-sandbox.md) | 能做什么、谁批准、边界在哪里 |
+| A6 | [Session](docs/a6-session.md) | 事件、轨迹与恢复怎样落盘 |
+| A7 | [Extensions](docs/a7-extensions.md) | 插件与协议如何扩展能力面 |
+| A8 | [Code Mode](docs/a8-code-mode.md) | 让模型写代码驱动工具意味着什么 |
+| A9 | [Surfaces](docs/a9-surfaces.md) | CLI、Web、SDK 与协议怎样接入 |
+| A10 | [Orchestration](docs/a10-orchestration.md) | 子代理、计划和工作流挂在哪里 |
 
-另外三篇不需要读代码：[概念入门](docs/concepts.md)、[产品视角](docs/for-product.md)、[成本与风险](docs/for-ops.md)。加起来一共 21 篇。
+![四种 agent harness 的维度矩阵](assets/agent-harness-matrix.svg)
 
-每篇开头写清楚了讲给谁、读完能回答什么，结尾有几道自检题。自检考的是「为什么这么设计」，不考「某个常量叫什么」，答不上来就回去看对应那一节。引用的英文原文一律带中文翻译，不用另开一个翻译窗口。
+DeepSeek Harness 的 15 篇原始逐包分析已经迁入 [`docs/deep/`](docs/deep/)；它们不是被压成摘要，而是作为单一实现的深度证据层继续维护。另有一张 [DSH 包组与 Codex crate 的子系统映射](assets/dsh-codex-subsystems.svg)，用于看不同目录结构如何落到共同抽象。
 
-## 结论是怎么来的
+## Part B：eval harness
 
-四种依据，正文里直接说清楚是哪一种：
+| 维度 | 文章 | 核心问题 |
+| --- | --- | --- |
+| E1 | [什么是 eval harness](docs/e1-what-is-eval-harness.md) | 它与 benchmark、agent runner 有何区别 |
+| E2 | [Tasks 与 Environments](docs/e2-tasks-and-envs.md) | 输入、镜像、状态和隔离如何固定 |
+| E3 | [Run 与 Score](docs/e3-run-and-score.md) | Trial、Attempt、产物和 scorer 如何连接 |
+| E4 | [Harness 如何改变分数](docs/e4-harness-decides-score.md) | 模型、agent harness 与 eval harness 如何耦合 |
 
-- **源码**：锁定 commit 下的真实代码，带 `路径:行号`；
-- **上游测试与 fixture**：尤其是 `system-prompt.expected.md` 这类渲染快照，它们是最好读的证据；
-- **官方文档**：涉及 Claude Code 这类闭源产品时只用公开文档，不用泄露的 prompt 转储；
-- **作者推断**：在正文里明写「这是推断」，不藏在标签里。
+公开研究的一个受控网格显示：在 SWE-bench Verified 的 100 题子集上，同一模型从最小 harness 换到完整 harness，平均 pass@1 可移动 8.5–13.0 个百分点；该实验的平均 harness 方差是模型方差的 7.80 倍。这里引用的是 2026-05-07 的 [arXiv:2605.23950](https://arxiv.org/abs/2605.23950)，本仓库没有复跑，也不把它外推成普遍规律。
 
-CI 会做一件别处不太做的事：**抽查正文里每一处 `路径:行号` 是否真的指向那一行**（`npm run check:anchors`）。行号写错、上游漂移，门禁直接失败。这是「结论可追溯」的唯一硬保证。
+![Harness 与 model 的受控交叉](assets/harness-model-cross.svg)
 
-带 `DEEPSEEK_API_KEY` 的端到端验证**已经跑过**：上游的 `request-cache.e2e.ts` 与 `llm-deepseek/adapter.e2e.ts` 用真实 key 全部通过（去掉 key 则整组 skip），另有一个本仓库自己写的探针脚本量到了具体的缓存数字：改 system 一句话命中率从 85.7% 掉到 0，摘要请求复用前缀能拿到 93.4% 而另起 system prompt 是 0%。命令、环境、原始数字见 [research/runtime-evidence](research/runtime-evidence/)。正文里的实验只写跑过的，不写「预期输出」。
+## 结论怎样被约束
 
-## 本地跑一遍
+每篇分析把依据分成四类：锁定 commit 下的源码、上游测试与 fixture、官方文档、以及正文明写的「这是推断」。仓库不会把 artifact 检查说成生产部署证明，也不会把第三方 benchmark pass 说成个人能力或发布授权。
+
+CI 在普通链接和测试之外执行三道专门门禁：
+
+1. **anchors**：逐条确认 `repo!path:line` 仍指向锁定源码中的真实行。
+2. **coverage**：每篇 A/E 文章必须达到 frontmatter 声明的跨仓最低覆盖数。
+3. **matrix**：标记过的对照矩阵中，每个数据格必须有源码锚点、官方 HTTPS 链接，或明确写「这是推断」。
+
+训练奖励、checkpoint 选择与独立发布评估在文档中严格分开。Trial 是统计单位；Attempt 只用于恢复基础设施错误，不能把产品失败重试成通过。
+
+## 本地验证
+
+需要 Node.js 22.19 或更高版本；CI 使用 Node 24。
 
 ```bash
-git clone https://github.com/plwslpld-arch/deepseek-harness-internals.git
-cd deepseek-harness-internals
-npm run bootstrap   # 按 lock 拉取 5 个上游 checkout
-npm run check       # 全部门禁
+git clone https://github.com/plwslpld-arch/harness-internals.git
+cd harness-internals
+npm run bootstrap   # 按 lock 拉取 11 个上游 checkout
+npm run check       # 来源、证据、许可、链接、敏感信息与测试
 ```
 
-拉取的 5 个来源：dsh 本体，以及横向对照要用到的 Codex、OpenCode、pi、mini-swe-agent。都按 commit 锁定，见 [sources/sources.lock.yml](sources/sources.lock.yml)。
+11 个来源按完整 commit 锁定，但不 vendor 到发布内容：DeepSeek Harness、Codex、Gemini CLI、Claude Agent SDK、OpenCode、pi、mini-swe-agent、lm-evaluation-harness、Inspect AI、Terminal-Bench 1、SWE-bench。机器可读清单见 [`sources/sources.lock.yml`](sources/sources.lock.yml)。
 
-## 几点说明
+## 边界与许可
 
-- 这不是 DeepSeek 的官方仓库、镜像或贡献入口。
-- 上游自己有 112 篇英文文档、739 篇设计记录，讲得比这里全。这里补的是它不会写的：跨包的因果链、失效条件、横向对比、以及「当初为什么这么定」。
-- Claude Code 闭源，相关内容只依据公开文档。
-- Logo 的鱼形主标取自 dsh 上游 MIT 源码里的图标并加了子标，只用于标明研究对象，不代表 DeepSeek 认可或参与本项目。
+- 这不是 DeepSeek、OpenAI、Google、Anthropic 或任何 eval 项目的官方仓库、镜像或贡献入口。
+- Claude 相关确定性结论只覆盖 MIT SDK 的公开契约；闭源实现只引用官方公开资料，不使用泄露的 prompt 转储。
+- 本仓库不生产新的 benchmark 分数；公开结果会写明日期、来源、口径和是否复跑。
+- 原创代码按 [MIT](LICENSE-CODE) 授权，原创文档按 [CC BY 4.0](LICENSE-DOCS) 授权；第三方边界见 [THIRD_PARTY.md](THIRD_PARTY.md)。
 
-## 其它
-
-代码 [MIT](LICENSE-CODE)，文档 [CC BY 4.0](LICENSE-DOCS)。第三方边界见 [THIRD_PARTY.md](THIRD_PARTY.md)，写作与维护规则见 [AGENTS.md](AGENTS.md)，贡献方式见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+维护规则见 [AGENTS.md](AGENTS.md)，贡献方式见 [CONTRIBUTING.md](CONTRIBUTING.md)，变更记录见 [CHANGELOG.md](CHANGELOG.md)。

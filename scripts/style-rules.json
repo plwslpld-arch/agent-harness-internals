@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "note": "中文文风门禁的规则表。阈值由现有 21 篇正文标定，改阈值要同时改 AGENTS.md 里的说明。severity 取 error（进门禁）或 warn（只报告）。",
+  "note": "中文文风门禁的规则表。阈值由项目正文样本标定，改阈值要同时改 AGENTS.md 里的说明。severity 取 error（进门禁）或 warn（只报告）。",
   "targets": ["docs/*.md", "README.md", "CONTRIBUTING.md"],
   "rules": {
     "dashDensity": {
@@ -61,7 +61,7 @@
       "severity": "warn",
       "minCoefficientOfVariation": 0.6,
       "minSentences": 40,
-      "why": "句长过于均匀是 AI 腔里词表查不出来的那一半。现有 21 篇正文的变异系数在 0.6 到 0.75 之间，低于 0.6 说明句子被写齐了。实验性规则，先只报告。"
+      "why": "句长过于均匀是 AI 腔里词表查不出来的那一半。现有正文样本的变异系数大多在 0.6 到 0.75 之间，低于 0.6 说明句子被写齐了。实验性规则，先只报告。"
     },
     "sentenceLength": {
       "severity": "warn",

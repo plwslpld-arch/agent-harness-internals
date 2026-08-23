@@ -21,7 +21,7 @@
 ## 本地跑一遍
 
 ```bash
-npm run bootstrap   # 按 lock 拉取 5 个上游 checkout
+npm run bootstrap   # 按 lock 拉取 11 个上游 checkout
 npm run check       # 全部门禁
 ```
 
