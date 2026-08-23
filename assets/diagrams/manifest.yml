@@ -32,6 +32,14 @@
       "scope": "repository",
       "alt": "Agent Harness 主线与 Eval 横切验证的中文架构关系图",
       "claims": []
+    },
+    {
+      "id": "foundation-boundaries-four-layers",
+      "path": "assets/diagrams/foundations/01-boundaries.svg",
+      "type": "architecture",
+      "scope": "docs/foundations/01-boundaries.md",
+      "alt": "一次 Agent 任务的模型、Agent Harness、执行环境与 Eval 四层职责和归因边界图",
+      "claims": ["foundation.boundaries.four-layers"]
     }
   ]
 }

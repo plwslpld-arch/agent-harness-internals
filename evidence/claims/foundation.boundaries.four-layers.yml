@@ -1,0 +1,40 @@
+{
+  "id": "foundation.boundaries.four-layers",
+  "harness": "foundation",
+  "dimension": "boundaries.four-layers",
+  "statement": "本仓库将一次 Agent 任务拆成模型、Agent Harness、执行环境和 Eval 四个可分别记录的责任层；结果变化只有在其他层保持可比时才能归因到被改变的一层。",
+  "capability": "not-applicable",
+  "version": "locked-sources-2026-08-23",
+  "surface": "repository-analysis",
+  "platform": "all",
+  "mode": "analysis-framework",
+  "evidence_level": "D",
+  "inference": "DSH 文档把持久会话事实与 Agent 实时控制分开，Codex 源码明确由 Turn 循环处理模型回复和工具回送，Inspect AI 的 Task 则独立配置数据集、求解器、评分器与沙箱。三者共同支持这些职责可以被分别观察；四层名称、边界和单变量归因规则是本仓库为了避免混淆而制定的分析框架，不是任何单一上游声明的行业标准。",
+  "evidence": [
+    {
+      "type": "source",
+      "source": "deepseek-harness",
+      "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+      "path": "docs/agent-lifecycle.zh.md",
+      "lines": "8-8",
+      "excerpt": "持久的回放事实保存在 `session/event` 中，实时控制与状态则保存在 `agent/*` 中"
+    },
+    {
+      "type": "source",
+      "source": "codex",
+      "commit": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+      "path": "codex-rs/core/src/session/turn.rs",
+      "lines": "139-153",
+      "excerpt": "If the model requests a function call, we execute it and send the output"
+    },
+    {
+      "type": "source",
+      "source": "inspect-ai",
+      "commit": "5679e7e526c546c86fb8f831033eb0dcfc3dea64",
+      "path": "src/inspect_ai/_eval/task/task.py",
+      "lines": "76-95",
+      "excerpt": "scorer: \"Scorers\" | None = None"
+    }
+  ],
+  "last_verified": "2026-08-23"
+}

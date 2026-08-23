@@ -62,13 +62,13 @@
 - 修改：`assets/diagrams/manifest.yml`
 - 修改：`evidence/claims/foundations/evidence-map.yml`
 
-- [ ] 锁定模型、Harness、环境和 Eval 四层边界的直接证据与明确推断。
-- [ ] 写失败反例：只换模型、只换 Harness、只换环境或只换 Scorer 时，哪些结论不能归因。
-- [ ] 完成四层归因图并渲染检查窄屏、深浅背景和箭头方向。
-- [ ] 正文解释非目标：Harness 不是模型、Eval 不是第二个 Agent、环境不是 Sandbox 的同义词。
-- [ ] 注册关键 Claim；若四层联合归因属于跨证据推断，使用 D 而不是伪装成 C。
-- [ ] 运行元数据、Claim、内容、视觉、链接和文风检查。
-- [ ] 提交：`docs(foundations): 发布 Agent Harness 职责与边界`。
+- [x] 锁定模型、Harness、环境和 Eval 四层边界的直接证据与明确推断。
+- [x] 写失败反例：只换模型、只换 Harness、只换环境或只换 Scorer 时，哪些结论不能归因。
+- [x] 完成四层归因图并渲染检查窄屏、深浅背景和箭头方向。
+- [x] 正文解释非目标：Harness 不是模型、Eval 不是第二个 Agent、环境不是 Sandbox 的同义词。
+- [x] 注册关键 Claim；若四层联合归因属于跨证据推断，使用 D 而不是伪装成 C。
+- [x] 运行元数据、Claim、内容、视觉、链接和文风检查。
+- [x] 提交：`docs(foundations): 发布 Agent Harness 职责与边界`。
 
 ### Task 3：一次真实 Agent Turn
 
