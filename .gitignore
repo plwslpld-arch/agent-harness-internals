@@ -14,6 +14,7 @@ coverage/
 
 # 本地 agent 工具配置，不属于仓库内容。
 .claude/
+.worktrees/
 
 # Generated temporary files and local experiment output.
 .tmp/
