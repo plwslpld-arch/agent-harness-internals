@@ -9,6 +9,27 @@ export const sourcesDir = join(root, 'sources');
 export const checkoutsDir = join(sourcesDir, 'checkouts');
 // 生成目录不入库：主干只保留人工分析，索引由 CI 生成并发布到 gh-pages 分支。
 export const generatedDir = join(root, '.generated');
+export const sourceProfiles = new Set(['core', 'samples', 'eval', 'all']);
+
+export function parseSourceProfiles(args) {
+  const selected = new Set();
+  for (let index = 0; index < args.length; index += 1) {
+    if (args[index] !== '--profile') continue;
+    const profile = args[index + 1];
+    if (!sourceProfiles.has(profile)) {
+      throw new Error(`非法来源配置：${profile ?? '(缺失)'}`);
+    }
+    selected.add(profile);
+    index += 1;
+  }
+  return selected.size ? selected : new Set(['core']);
+}
+
+export function selectManifestSources(manifest, profiles) {
+  if (profiles.has('all')) return manifest.sources;
+  return manifest.sources.filter((source) =>
+    (source.profiles ?? []).some((profile) => profiles.has(profile)));
+}
 
 export function readDocument(path) {
   try {
