@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "source": "deepseek-harness",
+  "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+  "courseRoot": "docs/harnesses/deepseek-harness",
+  "modules": [
+    {
+      "id": "dsh-overview",
+      "file": "docs/harnesses/deepseek-harness/README.md",
+      "question": "DSH 的系统边界和一次真实工具任务如何贯穿启动、循环、工具、会话与产品表面？",
+      "candidateEvidence": [
+        {"path": "packages/core/agent-loop/src/agent.ts", "type": "source", "reason": "Agent 主循环与请求、工具、终止的核心入口。"},
+        {"path": "packages/core/agent-loop/tests/agent.spec.ts", "type": "upstream-test", "reason": "核心 Agent 行为测试。"},
+        {"path": "examples/acp-agent/tests/snapshots/tool-call-turn/session.jsonl", "type": "upstream-fixture", "reason": "真实工具回合的持久会话夹具。"},
+        {"path": "examples/acp-agent/tests/snapshots/tool-call-turn/stdout.expected.jsonl", "type": "upstream-fixture", "reason": "同一回合的协议输出期望。"}
+      ],
+      "plannedClaims": ["deepseek-harness.architecture.composed-runtime", "deepseek-harness.turn.tool-result-loop"]
+    },
+    {
+      "id": "dsh-boot-preset",
+      "file": "docs/harnesses/deepseek-harness/01-boot-preset.md",
+      "question": "Cordis、bundle、profile、preset 与 Agent 配置按什么顺序装配？",
+      "candidateEvidence": [
+        {"path": "packages/boot/app-boot/src/index.ts", "type": "source", "reason": "应用启动与配置装配入口。"},
+        {"path": "packages/boot/app-boot/tests/app-boot.spec.ts", "type": "upstream-test", "reason": "启动组合测试。"},
+        {"path": "packages/bundle/base/cordis.patch.yml", "type": "source", "reason": "基础 bundle 的真实 Cordis patch。"},
+        {"path": "apps/cli/config/agent-presets/standard/agent.cordis.yml", "type": "source", "reason": "标准 Agent preset 的实际装配。"}
+      ],
+      "plannedClaims": ["deepseek-harness.boot.profile-preset-composition"]
+    },
+    {
+      "id": "dsh-prompt-cache",
+      "file": "docs/harnesses/deepseek-harness/02-prompt-context-cache.md",
+      "question": "稳定 System Prompt、运行时 Context 与请求前缀如何影响缓存？",
+      "candidateEvidence": [
+        {"path": "packages/core/system-prompt/src/index.ts", "type": "source", "reason": "System Prompt section 装配。"},
+        {"path": "packages/core/system-prompt/tests/system-prompt.spec.ts", "type": "upstream-test", "reason": "提示装配与顺序测试。"},
+        {"path": "packages/core/session/src/request-header.ts", "type": "source", "reason": "请求头事件与前缀身份。"},
+        {"path": "packages/core/agent-loop/tests/request-cache.e2e.ts", "type": "upstream-test", "reason": "缓存使用端到端证据。"},
+        {"path": "packages/llm/llm-deepseek/src/serialize.ts", "type": "source", "reason": "DeepSeek Provider 请求序列化。"}
+      ],
+      "plannedClaims": ["deepseek-harness.context.stable-prefix-runtime-tail"]
+    },
+    {
+      "id": "dsh-loop-model-tool",
+      "file": "docs/harnesses/deepseek-harness/03-loop-model-tool.md",
+      "question": "模型流、工具调用、有序结算、重试和终止怎样形成一个真实 Turn？",
+      "candidateEvidence": [
+        {"path": "packages/core/agent-loop/src/agent.ts", "type": "source", "reason": "核心循环。"},
+        {"path": "packages/core/agent-loop/src/tool-calls.ts", "type": "source", "reason": "工具调用执行与结算。"},
+        {"path": "packages/core/agent-loop/tests/loop.spec.ts", "type": "upstream-test", "reason": "循环继续与终止测试。"},
+        {"path": "packages/core/agent-loop/tests/tool-calls.spec.ts", "type": "upstream-test", "reason": "工具调用测试。"},
+        {"path": "packages/llm/llm/src/index.ts", "type": "source", "reason": "LLM 抽象与流式结果表面。"}
+      ],
+      "plannedClaims": ["deepseek-harness.loop.tool-results-before-next-request"]
+    },
+    {
+      "id": "dsh-tools-security",
+      "file": "docs/harnesses/deepseek-harness/04-tools-security.md",
+      "question": "工具、Guard、审批、策略与多平台 Sandbox 怎样分层？",
+      "candidateEvidence": [
+        {"path": "packages/core/tools/src/index.ts", "type": "source", "reason": "工具定义与调用约定。"},
+        {"path": "packages/interaction/user-approval/src/index.ts", "type": "source", "reason": "用户审批表面。"},
+        {"path": "packages/sandbox/sandbox/src/escalation.ts", "type": "source", "reason": "权限升级与 Sandbox 抽象。"},
+        {"path": "packages/sandbox/sandbox/tests/escalation.spec.ts", "type": "upstream-test", "reason": "升级行为测试。"},
+        {"path": "packages/sandbox/sandbox-local/tests/bwrap.e2e.ts", "type": "upstream-test", "reason": "Linux Bubblewrap 实验表面。"},
+        {"path": "packages/sandbox/sandbox-windows-acl/tests/provider-chain.spec.ts", "type": "upstream-test", "reason": "Windows ACL Provider 链测试。"}
+      ],
+      "plannedClaims": ["deepseek-harness.security.approval-sandbox-separation"]
+    },
+    {
+      "id": "dsh-session-compaction",
+      "file": "docs/harnesses/deepseek-harness/05-session-compaction.md",
+      "question": "事件日志、surface、持久化、恢复、Compaction 与 Spill 如何分工？",
+      "candidateEvidence": [
+        {"path": "packages/core/session/src/types.ts", "type": "source", "reason": "Session 事件类型。"},
+        {"path": "packages/core/session/src/surface.ts", "type": "source", "reason": "事件到模型 surface 的投影。"},
+        {"path": "packages/session/session-persistence/src/coordinator.ts", "type": "source", "reason": "持久化协调与检查点。"},
+        {"path": "packages/session/session-persistence/tests/persistence.spec.ts", "type": "upstream-test", "reason": "持久化测试。"},
+        {"path": "packages/compaction/compaction-basic/src/region.ts", "type": "source", "reason": "压缩区域选择。"},
+        {"path": "examples/acp-agent/tests/snapshots/session-query-spill/session.jsonl", "type": "upstream-fixture", "reason": "Session 查询输出外溢夹具。"}
+      ],
+      "plannedClaims": ["deepseek-harness.session.log-surface-separation", "deepseek-harness.session.recovery-does-not-replay-committed-tools"]
+    },
+    {
+      "id": "dsh-orchestration-extensions",
+      "file": "docs/harnesses/deepseek-harness/06-orchestration-extensions.md",
+      "question": "外层策略、子代理、工作流、技能、扩展和代码运行时怎样接入核心循环？",
+      "candidateEvidence": [
+        {"path": "packages/subagent/README.md", "type": "official-repo-doc", "reason": "Subagent 组合与边界。"},
+        {"path": "packages/workflow/workflow/src/index.ts", "type": "source", "reason": "Workflow 核心。"},
+        {"path": "packages/workflow/workflow/tests/workflow.spec.ts", "type": "upstream-test", "reason": "Workflow 行为测试。"},
+        {"path": "packages/extensions/README.md", "type": "official-repo-doc", "reason": "Extension 体系入口。"},
+        {"path": "packages/extensions/tool-cordis/tests/cordis-lifecycle.spec.ts", "type": "upstream-test", "reason": "运行时 Cordis 工具生命周期。"},
+        {"path": "examples/acp-agent/tests/snapshots/subagent-depth-two-rejection/session.jsonl", "type": "upstream-fixture", "reason": "递归深度拒绝的真实会话夹具。"}
+      ],
+      "plannedClaims": ["deepseek-harness.orchestration.extensions-share-core-loop"]
+    },
+    {
+      "id": "dsh-surfaces-feedback-eval",
+      "file": "docs/harnesses/deepseek-harness/07-surfaces-feedback-eval.md",
+      "question": "多产品表面、反馈、遥测与评测怎样共享核心又保持语义边界？",
+      "candidateEvidence": [
+        {"path": "packages/acp/acp/src/index.ts", "type": "source", "reason": "ACP 适配入口。"},
+        {"path": "packages/acp/acp/tests/turns.spec.ts", "type": "upstream-test", "reason": "ACP Turn 测试。"},
+        {"path": "python/sdk/src/deepseek_harness/client.py", "type": "source", "reason": "Python SDK 客户端表面。"},
+        {"path": "packages/feedback/message-feedback/src/types.ts", "type": "source", "reason": "消息反馈数据约定。"},
+        {"path": "apps/web/tests/message-feedback.e2e.ts", "type": "upstream-test", "reason": "Web 消息反馈端到端测试。"},
+        {"path": "apps/web/tests/feedback-command.e2e.ts", "type": "upstream-test", "reason": "Session 反馈命令端到端测试。"}
+      ],
+      "plannedClaims": ["deepseek-harness.feedback.is-not-training-reward", "deepseek-harness.surfaces.protocol-adapters-not-identical"]
+    },
+    {
+      "id": "dsh-verification-design",
+      "file": "docs/harnesses/deepseek-harness/08-verification-design-limits.md",
+      "question": "运行时不变量、测试、文档同步和设计记录能证明什么，不能证明什么？",
+      "candidateEvidence": [
+        {"path": "packages/runtime-diagnostics/invariants/src/index.ts", "type": "source", "reason": "运行时不变量服务。"},
+        {"path": "packages/runtime-diagnostics/invariants/tests/service.spec.ts", "type": "upstream-test", "reason": "不变量服务测试。"},
+        {"path": "scripts/test-invariants.ts", "type": "source", "reason": "不变量测试编排。"},
+        {"path": "scripts/test-invariants.spec.ts", "type": "upstream-test", "reason": "编排测试。"},
+        {"path": ".agents/notes/README.md", "type": "official-repo-doc", "reason": "设计记录生命周期规则。"}
+      ],
+      "plannedClaims": ["deepseek-harness.verification.internal-gates-have-bounded-scope"]
+    }
+  ],
+  "legacyCoverage": [
+    {"legacy": "docs/deep/dsh-overview.md", "destinations": ["README.md"]},
+    {"legacy": "docs/deep/dsh-cordis-boot-preset.md", "destinations": ["01-boot-preset.md"]},
+    {"legacy": "docs/deep/dsh-system-prompt.md", "destinations": ["02-prompt-context-cache.md"]},
+    {"legacy": "docs/deep/dsh-kv-cache.md", "destinations": ["02-prompt-context-cache.md"]},
+    {"legacy": "docs/deep/dsh-agent-loop.md", "destinations": ["README.md", "03-loop-model-tool.md"]},
+    {"legacy": "docs/deep/dsh-llm-adapter.md", "destinations": ["03-loop-model-tool.md"]},
+    {"legacy": "docs/deep/dsh-tools-approval-sandbox.md", "destinations": ["04-tools-security.md"]},
+    {"legacy": "docs/deep/dsh-session.md", "destinations": ["05-session-compaction.md"]},
+    {"legacy": "docs/deep/dsh-compaction.md", "destinations": ["05-session-compaction.md"]},
+    {"legacy": "docs/deep/dsh-orchestration.md", "destinations": ["06-orchestration-extensions.md"]},
+    {"legacy": "docs/deep/dsh-extensions-and-code-mode.md", "destinations": ["06-orchestration-extensions.md"]},
+    {"legacy": "docs/deep/dsh-surfaces-and-protocols.md", "destinations": ["07-surfaces-feedback-eval.md"]},
+    {"legacy": "docs/deep/dsh-web-client-and-host.md", "destinations": ["07-surfaces-feedback-eval.md"]},
+    {"legacy": "docs/deep/dsh-self-verification.md", "destinations": ["08-verification-design-limits.md"]},
+    {"legacy": "docs/deep/dsh-agent-notes-guide.md", "destinations": ["08-verification-design-limits.md"]}
+  ],
+  "risks": [
+    {"id": "legacy-reviewed-is-not-new-review", "severity": "high", "mitigation": "旧状态不继承；每篇新课重新通过 Harness 内容、Claim、图示和阶段复核。"},
+    {"id": "directory-name-is-not-proof", "severity": "high", "mitigation": "正式 Claim 必须落到锁定源码行号和上游测试，README 或目录名只作导航。"},
+    {"id": "platform-sandbox-generalization", "severity": "high", "mitigation": "Linux、macOS 和 Windows 证据分开，未运行平台不升级为实验级结论。"},
+    {"id": "feedback-reward-collapse", "severity": "high", "mitigation": "消息反馈、Session 反馈、遥测、训练适配和发布评测分别登记。"},
+    {"id": "self-verification-overclaim", "severity": "high", "mitigation": "上游门禁只证明其约束范围，不写成生产就绪或无缺陷。"}
+  ]
+}

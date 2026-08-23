@@ -208,3 +208,42 @@ test('共同基础必须达到深度并引用正式中文图与 Claim', () => {
     content: foundationContent().replace(foundationDeepProse, paragraph.repeat(8)),
   }).join('\n'), /至少 2600/u);
 });
+
+test('一级主线入口必须同时具备两张核心图、课程状态表与 Claim', () => {
+  const entryAdditions = `
+## 课程状态与顺序
+
+| 序号 | 课程 | 状态 |
+| --- | --- | --- |
+| 00 | 总览 | reviewed |
+
+![系统架构图](../../../assets/diagrams/deepseek-harness/system-architecture.svg)
+
+![端到端任务流程图](../../../assets/diagrams/deepseek-harness/end-to-end-task.svg)
+
+Claim: deepseek-harness.architecture.layered-runtime
+`;
+  const entry = {
+    relativePath: 'docs/harnesses/deepseek-harness/README.md',
+    content: `${harnessContent()}${entryAdditions}`,
+    metadata: { status: 'reviewed' },
+  };
+
+  assert.deepEqual(contentContractFailures(entry), []);
+  assert.match(contentContractFailures({
+    ...entry,
+    content: entry.content.replace('![系统架构图](../../../assets/diagrams/deepseek-harness/system-architecture.svg)', ''),
+  }).join('\n'), /系统架构图/u);
+  assert.match(contentContractFailures({
+    ...entry,
+    content: entry.content.replace('![端到端任务流程图](../../../assets/diagrams/deepseek-harness/end-to-end-task.svg)', ''),
+  }).join('\n'), /端到端任务流程图/u);
+  assert.match(contentContractFailures({
+    ...entry,
+    content: entry.content.replace('## 课程状态与顺序', '## 课程'),
+  }).join('\n'), /课程状态与顺序/u);
+  assert.match(contentContractFailures({
+    ...entry,
+    content: entry.content.replace('Claim: deepseek-harness.architecture.layered-runtime', ''),
+  }).join('\n'), /Claim/u);
+});

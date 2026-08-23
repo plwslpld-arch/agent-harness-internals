@@ -98,6 +98,22 @@ function harnessFailures(content, errors) {
   checkSelfReview(content, errors);
 }
 
+function harnessEntryFailures(content, errors) {
+  const course = requireSection(content, '课程状态与顺序', errors);
+  if (course !== null && !/^\|[^\n]*状态[^\n]*\|/mu.test(course)) {
+    errors.push('“课程状态与顺序”必须包含状态表');
+  }
+  if (!/!\[[^\]]*系统架构[^\]]*\]\((?:\.\.\/)+assets\/diagrams\/[a-z0-9/_.-]+\/system-architecture\.svg\)/u.test(content)) {
+    errors.push('一级主线入口必须嵌入正式中文系统架构图');
+  }
+  if (!/!\[[^\]]*端到端任务[^\]]*\]\((?:\.\.\/)+assets\/diagrams\/[a-z0-9/_.-]+\/end-to-end-task\.svg\)/u.test(content)) {
+    errors.push('一级主线入口必须嵌入正式中文端到端任务流程图');
+  }
+  if (!/\bClaim:\s*[a-z0-9][a-z0-9-]*(?:\.[a-z0-9][a-z0-9-]*)+/u.test(content)) {
+    errors.push('一级主线入口必须引用至少一个正式 Claim');
+  }
+}
+
 function foundationFailures(content, errors) {
   for (const heading of ['读者会得到什么', '核心概念', '最小例子', '常见误区', '验证方法']) {
     requireSection(content, heading, errors);
@@ -159,7 +175,10 @@ export function contentContractFailures(article) {
   const content = article.content ?? '';
 
   if (kind === 'start') startFailures(content, errors);
-  else if (kind === 'harness') harnessFailures(content, errors);
+  else if (kind === 'harness') {
+    harnessFailures(content, errors);
+    if (article.relativePath.endsWith('/README.md')) harnessEntryFailures(content, errors);
+  }
   else if (kind === 'foundation') foundationFailures(content, errors);
   else if (kind === 'comparison') comparisonFailures(content, errors);
   else if (kind === 'role') roleFailures(content, errors);
