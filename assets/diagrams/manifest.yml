@@ -96,6 +96,14 @@
       "scope": "docs/harnesses/deepseek-harness/README.md",
       "alt": "DeepSeek Harness 端到端工具任务从用户目标到事件产物和评测接入的中文流程图",
       "claims": ["deepseek-harness.turn.tool-result-loop"]
+    },
+    {
+      "id": "deepseek-harness-boot-preset",
+      "path": "assets/diagrams/deepseek-harness/01-boot-preset.svg",
+      "type": "flow",
+      "scope": "docs/harnesses/deepseek-harness/01-boot-preset.md",
+      "alt": "DSH 从启动输入、分层补丁、插件激活到智能体预设和会话加入的中文装配图",
+      "claims": ["deepseek-harness.boot.profile-preset-composition"]
     }
   ]
 }

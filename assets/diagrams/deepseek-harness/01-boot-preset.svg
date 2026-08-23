@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 940" role="img" aria-labelledby="title desc">
+  <title id="title">DSH 启动、插件组合与智能体预设</title>
+  <desc id="desc">启动输入依次确定有序发行层、部署补丁和有效插件树，插件全部激活后挂载智能体预设，会话再加入对应作用域。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0l14 7-14 7z" fill="#087F7C"/></marker>
+    <marker id="fail" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0l14 7-14 7z" fill="#B34A3C"/></marker>
+    <filter id="shadow" x="-12%" y="-12%" width="124%" height="135%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#17324D" flood-opacity=".12"/></filter>
+  </defs>
+  <rect width="1400" height="940" rx="34" fill="#F7FAFC"/>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <text x="700" y="55" text-anchor="middle" fill="#17324D" font-size="36" font-weight="760">DSH 启动装配：覆盖顺序不等于激活顺序</text>
+    <text x="700" y="91" text-anchor="middle" fill="#50677D" font-size="19">先计算有效插件行，再按服务依赖激活，最后让会话加入智能体预设作用域</text>
+
+    <rect x="55" y="130" width="1290" height="168" rx="25" fill="#E9F2FF" stroke="#3569A8" stroke-width="2.5"/>
+    <text x="83" y="168" fill="#285383" font-size="23" font-weight="760">一　启动输入：只冻结这次进程需要的事实</text>
+    <g font-size="18" text-anchor="middle" fill="#17324D">
+      <rect x="92" y="195" width="240" height="70" rx="16" fill="#FFFFFF"/><text x="212" y="224" font-weight="720">进程环境快照</text><text x="212" y="249" fill="#50677D">模式、凭据引用、平台</text>
+      <rect x="372" y="195" width="240" height="70" rx="16" fill="#FFFFFF"/><text x="492" y="224" font-weight="720">部署组合名称</text><text x="492" y="249" fill="#50677D">选择哪组发行层</text>
+      <rect x="652" y="195" width="240" height="70" rx="16" fill="#FFFFFF"/><text x="772" y="224" font-weight="720">追加补丁参数</text><text x="772" y="249" fill="#50677D">按命令行顺序覆盖</text>
+      <rect x="932" y="195" width="370" height="70" rx="16" fill="#FFFFFF"/><text x="1117" y="224" font-weight="720">智能体预设选择</text><text x="1117" y="249" fill="#50677D">决定会话采用哪类模型可见能力</text>
+    </g>
+
+    <rect x="55" y="340" width="1290" height="238" rx="25" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2.5"/>
+    <text x="83" y="380" fill="#955A00" font-size="23" font-weight="760">二　覆盖链：同一目标的后层结果进入有效插件树</text>
+    <g font-size="18" text-anchor="middle" filter="url(#shadow)">
+      <rect x="89" y="416" width="205" height="104" rx="17" fill="#FFFFFF" stroke="#D8A84D"/><text x="191" y="448" fill="#17324D" font-weight="760">有序发行层</text><text x="191" y="476" fill="#50677D">基础层＋模式层</text><text x="191" y="501" fill="#50677D">插入共享服务</text>
+      <rect x="327" y="416" width="205" height="104" rx="17" fill="#FFFFFF" stroke="#D8A84D"/><text x="429" y="448" fill="#17324D" font-weight="760">部署专用补丁</text><text x="429" y="476" fill="#50677D">覆盖该组合</text><text x="429" y="501" fill="#50677D">可在长进程热更新</text>
+      <rect x="565" y="416" width="205" height="104" rx="17" fill="#FFFFFF" stroke="#D8A84D"/><text x="667" y="448" fill="#17324D" font-weight="760">机器级补丁</text><text x="667" y="476" fill="#50677D">覆盖所有组合</text><text x="667" y="501" fill="#50677D">仍低于命令行层</text>
+      <rect x="803" y="416" width="205" height="104" rx="17" fill="#FFFFFF" stroke="#D8A84D"/><text x="905" y="448" fill="#17324D" font-weight="760">命令行覆盖</text><text x="905" y="476" fill="#50677D">按出现顺序叠加</text><text x="905" y="501" fill="#50677D">只影响本次启动</text>
+      <rect x="1041" y="416" width="260" height="104" rx="17" fill="#17324D"/><text x="1171" y="448" fill="#FFFFFF" font-weight="760">有效插件行</text><text x="1171" y="476" fill="#D3E1EA">按标识得到最终配置</text><text x="1171" y="501" fill="#F3C4BA">不是已激活证明</text>
+    </g>
+    <g fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"><path d="M294 468h25"/><path d="M532 468h25"/><path d="M770 468h25"/><path d="M1008 468h25"/></g>
+
+    <rect x="55" y="620" width="850" height="254" rx="25" fill="#E7F5F3" stroke="#087F7C" stroke-width="3"/>
+    <text x="83" y="660" fill="#086E6B" font-size="23" font-weight="760">三　依赖激活：文件行号不决定服务启动顺序</text>
+    <g font-size="18" text-anchor="middle" filter="url(#shadow)">
+      <rect x="91" y="700" width="220" height="105" rx="17" fill="#FFFFFF" stroke="#51A9A5"/><text x="201" y="735" fill="#17324D" font-weight="760">插件装载器</text><text x="201" y="764" fill="#50677D">导入模块并建立生命周期</text>
+      <rect x="367" y="700" width="220" height="105" rx="17" fill="#FFFFFF" stroke="#51A9A5"/><text x="477" y="735" fill="#17324D" font-weight="760">服务依赖解析</text><text x="477" y="764" fill="#50677D">提供者与使用者连接</text>
+      <rect x="643" y="700" width="220" height="105" rx="17" fill="#17324D"/><text x="753" y="735" fill="#FFFFFF" font-weight="760">全树活动审计</text><text x="753" y="764" fill="#D3E1EA">启用条目必须全部活动</text>
+    </g>
+    <g fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"><path d="M311 752h48"/><path d="M587 752h48"/></g>
+
+    <rect x="945" y="620" width="400" height="254" rx="25" fill="#F0ECF8" stroke="#795DA7" stroke-width="2.5"/>
+    <text x="973" y="660" fill="#60458C" font-size="23" font-weight="760">四　预设作用域与会话</text>
+    <rect x="982" y="700" width="326" height="70" rx="17" fill="#FFFFFF" stroke="#9C83BF"/>
+    <text x="1145" y="729" text-anchor="middle" fill="#17324D" font-size="18" font-weight="760">常驻智能体预设</text>
+    <text x="1145" y="753" text-anchor="middle" fill="#50677D" font-size="16">提示、工具、压缩、委派选择</text>
+    <rect x="982" y="791" width="326" height="54" rx="17" fill="#FFFFFF" stroke="#9C83BF"/>
+    <text x="1145" y="824" text-anchor="middle" fill="#17324D" font-size="18">会话按父作用域加入</text>
+    <path d="M1145 770v13" fill="none" stroke="#795DA7" stroke-width="4" marker-end="url(#arrow)"/>
+
+    <path d="M1170 578v34" fill="none" stroke="#087F7C" stroke-width="5" marker-end="url(#arrow)"/>
+    <path d="M1040 578v18q0 24-24 24H760" fill="none" stroke="#087F7C" stroke-width="5" marker-end="url(#arrow)"/>
+    <path d="M753 805v32q0 26 26 26h180" fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"/>
+
+    <path d="M477 805v52" fill="none" stroke="#B34A3C" stroke-width="4" stroke-dasharray="9 7" marker-end="url(#fail)"/>
+    <text x="477" y="897" text-anchor="middle" fill="#8A3D2F" font-size="17">无法导入、激活失败或缺少服务：拒绝启动，不保留半空进程</text>
+  </g>
+</svg>

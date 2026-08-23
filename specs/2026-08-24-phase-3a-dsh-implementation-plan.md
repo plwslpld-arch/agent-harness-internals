@@ -66,11 +66,11 @@
 
 ### Task 3：启动、Cordis、bundle、profile 与 preset
 
-- [ ] 完成 `01-boot-preset.md`、中文装配图和限定 Claim。
-- [ ] 覆盖 CLI 输入、配置合并、插件依赖、bundle/profile/preset 和 Agent 组合输出。
-- [ ] 解释缺失注入、配置求值时序、帮助命令误启动和默认组合漂移。
-- [ ] 运行局部门禁、渲染复核和反向检查。
-- [ ] 提交：`docs(dsh): 发布启动与 preset 课程`。
+- [x] 完成 `01-boot-preset.md`、中文装配图和限定 Claim。
+- [x] 覆盖 CLI 输入、配置合并、插件依赖、bundle/profile/preset 和 Agent 组合输出。
+- [x] 解释缺失注入、配置求值时序、帮助命令误启动和默认组合漂移。
+- [x] 运行局部门禁、渲染复核和反向检查。
+- [x] 提交：`docs(dsh): 发布启动与 preset 课程`。
 
 ### Task 4：System Prompt、Context 与 KV Cache
 

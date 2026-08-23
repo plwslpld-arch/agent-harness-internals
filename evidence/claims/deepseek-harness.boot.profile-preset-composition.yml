@@ -1,0 +1,48 @@
+{
+  "id": "deepseek-harness.boot.profile-preset-composition",
+  "harness": "deepseek-harness",
+  "dimension": "boot.profile-preset-composition",
+  "statement": "在锁定 DSH 中，profile 按清单顺序加载 bundle patch，再应用 profile 自身 patch；有效插件树激活后，agent preset 作为独立的 Agent 平面贡献 persona、模型可见工具和扩展选择，而模型路由、持久化与安全栈仍由宿主组合提供。",
+  "capability": "default",
+  "version": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+  "surface": "boot-and-agent-preset",
+  "platform": "all",
+  "mode": "profile-launcher-standard-preset",
+  "evidence_level": "D",
+  "inference": "profile 源码与测试直接证明有序 bundle 层和 profile 自身层的覆盖顺序；standard preset 的真实配置说明 Agent 平面与宿主组合的职责划分。把进程级组合和会话加入预设画成一条端到端装配链属于跨配置推断，且最终能力仍受额外补丁、平台和所选 preset 约束。",
+  "evidence": [
+    {
+      "type": "source",
+      "source": "deepseek-harness",
+      "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+      "path": "packages/boot/app-boot/src/profile.ts",
+      "lines": "371-402",
+      "excerpt": "const bundles = manifest.dsh?.profile?.bundles ?? []"
+    },
+    {
+      "type": "upstream-test",
+      "source": "deepseek-harness",
+      "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+      "path": "packages/boot/app-boot/tests/profile.spec.ts",
+      "lines": "121-137",
+      "excerpt": "expect(profile.layers.map(layer => layer.packageName)).toEqual(['bundle-a', 'bundle-b'])"
+    },
+    {
+      "type": "source",
+      "source": "deepseek-harness",
+      "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+      "path": "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+      "lines": "1-18",
+      "excerpt": "This file is an AGENT-PLANE composition."
+    },
+    {
+      "type": "upstream-test",
+      "source": "deepseek-harness",
+      "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+      "path": "packages/boot/app-boot/tests/app-boot.spec.ts",
+      "lines": "719-724",
+      "excerpt": "rejects (never exits 0 half-empty) when a config names a plugin that cannot be imported"
+    }
+  ],
+  "last_verified": "2026-08-24"
+}
