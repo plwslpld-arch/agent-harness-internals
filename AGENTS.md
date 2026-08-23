@@ -40,6 +40,31 @@ cp -r shuorenhua ~/.claude/skills/shuorenhua
 
 改本仓库的文章时按 `docs` 场景走：档位 `minimal`、scope `bounded`、无源引用 `audit-only`，**不要升到 `aggressive`**——技术文档压过头会把信息一起压掉。
 
+**为什么是这个 skill 而不是星更多的那些。** 去 AI 味的中文 skill 有十几个，`op7418/Humanizer-zh` 星数是它的十几倍。选「说人话」的唯一理由是它带 `references/protected-spans.md`：这个仓库有一千多处 `路径:行号`、几百个代码块和大量上游英文原文，改写工具如果没有 protected spans 的概念，动一次锚点就废。改写完必须跑 `check:anchors` 确认锚点一处未少，这是机器验的，不靠人工确认。
+
+**写作时的节奏要求。** 词表能查的病灶交给门禁，查不出来的那一半是句子节奏：句长过于均匀就是模型腔。现有正文的句长变异系数在 0.6 到 0.88 之间，均句长 20 到 30 字。写完可以跑 `npm run style:report` 看自己这篇落在哪里，低于 0.6 说明句子被写齐了，回去把长短句拉开。
+
+## 文风门禁
+
+`npm run check:style` 把上面这些规矩里能机器判的部分变成门禁，规则表在 [`scripts/style-rules.json`](scripts/style-rules.json)，阈值由现有正文标定，改阈值要同时改这里的说明。
+
+| 规则 | 判据 | 级别 |
+| --- | --- | --- |
+| 破折号密度 | 每千中文字 ≤ 1.0，且绝对数 ≥ 3 才判失败 | error |
+| 禁用表达 | 「值得注意的是」「换句话说」「综上所述」等二十余条，一处都不许 | error |
+| 「不是 X，而是 Y」对仗 | 每千中文字 ≤ 0.6 | error |
+| 引号统一 | 中文正文只用「」 | error |
+| 英文引文带中文 | 英文引用块之后 3 行内必须出现中文 | error |
+| 句长变异系数 | ≥ 0.6 | warn |
+| 均句长 | 18 到 45 字 | warn |
+
+两条关于阈值的说明，改规则前先读：
+
+- **对仗按密度卡而不按绝对数卡。** 「不是删事件，而是往 surface 上追加一条替换事件」这类是精确澄清，不是修辞。抽查现有正文，按绝对数卡会误伤八篇好文章。
+- **`> —— 路径:行号` 是引用出处行，不计入破折号密度。** 它是引用格式，不是连接符。
+
+`protected spans` 与 `check:anchors` 用同一套定义：frontmatter、代码块、行内 code、`路径:行号` 引用。这些内容不参与文风判断。
+
 这个仓库额外有几类内容属于 protected spans，一个字符都不能动：所有 `路径:行号` 引用（`check:anchors` 会校验）、代码块、被引用的上游英文原文、frontmatter、表格里的数字与路径。
 
 几条本仓库实测出来的高频病灶，写的时候自己先避开：破折号 `——` 当万能连接符、「不是 X，而是 Y」的对仗、「值得注意的是」这类开场、「一句话总结 / 三件事值得先记住」这种套路引导句、以及直角引号与弯引号混用（统一用「」，英文原文里的引号保持原样）。
@@ -53,6 +78,7 @@ cp -r shuorenhua ~/.claude/skills/shuorenhua
 | `sources/` | 上游 submodule 与 commit 锁定。 |
 | `research/runtime-evidence/` | 真实运行记录：环境、命令、退出码、产物。**没跑过的实验不要写进这里。** |
 | `scripts/` | 零依赖的校验脚本。 |
+| `specs/` | 设计与改造方案。不是正文，不参与 `check:analysis`，但参与 `check:style`。 |
 
 ## frontmatter
 
@@ -80,6 +106,7 @@ status: draft
 | `sources:verify` | submodule 与 lock 一致、无本地改动 |
 | `check:analysis` | frontmatter 完整、commit 与 lock 一致、路径存在 |
 | `check:anchors` | **正文里的 `文件:行号` 真的指向那一行**（行号越界或指向空行即失败）；引用后面跟了「原文片段」时，还会校验那段文字确实出现在被引区间里 |
+| `check:style` | 中文文风：破折号密度、禁用表达、对仗句、引号统一、英文引文带中文；句长节奏只报告不拦 |
 | `check:portability` | LF 换行、无机器绝对路径、零依赖 |
 | `check:licenses` | 许可证文件与哈希 |
 | `check:links` | 相对链接目标存在 |
