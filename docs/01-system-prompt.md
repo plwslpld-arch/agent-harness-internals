@@ -295,10 +295,10 @@ export function renderPrompt(assembly: PromptAssembly): string {
 
 ### `toolOrder` 与字典序
 
-`orderTools` 在 `:164-178`：
+`orderTools` 在 `packages/core/system-prompt/src/index.ts:164-178`：
 
-- 没配 ⇒ `tools.sort(compareToolNames)`（`:169`），纯 code-unit 比较，注释写明「locale-independent, so the order is identical on every machine」（`:180`）。这句是说：比较不受语言环境影响，所以在任何机器上排出来的顺序都完全一样。这一点对缓存很要紧，工具顺序变了请求字节就变了。
-- 配了 ⇒ 加载时校验必须恰好含一次 `'<unlisted-tools>'`、不许重复（`:146-157`）；装配时校验列出的名字都在 `knownNames` 里（`:170-173`），所以配错名字是**第一个 turn** 炸，不是启动炸。未列出的按字典序插到 rest 位置。
+- 没配 ⇒ `tools.sort(compareToolNames)`（`packages/core/system-prompt/src/index.ts:169`），纯 code-unit 比较，注释写明「locale-independent, so the order is identical on every machine」（`packages/core/system-prompt/src/index.ts:180`）。这句是说：比较不受语言环境影响，所以在任何机器上排出来的顺序都完全一样。这一点对缓存很要紧，工具顺序变了请求字节就变了。
+- 配了 ⇒ 加载时校验必须恰好含一次 `'<unlisted-tools>'`、不许重复（`packages/core/system-prompt/src/index.ts:146-157`）；装配时校验列出的名字都在 `knownNames` 里（`packages/core/system-prompt/src/index.ts:170-173`），所以配错名字是**第一个 turn** 炸，不是启动炸。未列出的按字典序插到 rest 位置。
 
 为什么要多这一层？`.agents/notes/implemented/feature/2026-07-06-explicit-tool-order.md` 记着：工具顺序影响请求字节、缓存和持久 header，而注册顺序受并发 import 影响，CI 出现过快照漂移。解法是「在列表诞生的地方规范化」，让无序列表不可表示。
 
