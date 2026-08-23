@@ -1,0 +1,23 @@
+{
+  "id": "deepseek-harness.orchestration.extensions-share-core-loop",
+  "harness": "deepseek-harness",
+  "dimension": "orchestration.extensions-share-core-loop",
+  "statement": "在锁定 DSH 中，Plan、Todo、Goal 等会话能力通过提示、工具和事件接入当前 Agent；Workflow 与 Ralph 复用 Subagent Runtime 创建子 Agent；Code Mode 与 Cordis Extension 仍通过工具注册表暴露入口，因此这些外层能力最终共享 Agent Loop、Session 与工具安全边界。",
+  "capability": "optional",
+  "version": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+  "surface": "orchestration-and-runtime-extension",
+  "platform": "all",
+  "mode": "composed-plugins",
+  "evidence_level": "D",
+  "evidence": [
+    {"type":"source","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/plan/plan-mode/src/index.ts","lines":"1-20","excerpt":"policy enforce restrictions independently and do not read or write plan"},
+    {"type":"source","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/goal/tool-goal/src/index.ts","lines":"1-4","excerpt":"persisted same-session goal domain"},
+    {"type":"source","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/subagent/subagent-in-process-driver/src/index.ts","lines":"106-178","excerpt":"const handle = await parent.ctx.agents.create({"},
+    {"type":"source","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/workflow/workflow-worker-thread/src/host.ts","lines":"352-365","excerpt":"run = await this.subagents.start(this.provider, {"},
+    {"type":"upstream-test","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/todo/tool-todo/tests/integration.spec.ts","lines":"49-72","excerpt":"expect(findEvent(log, 'tool/call').data.name).toBe('todo_write')"},
+    {"type":"source","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/core/tools/src/code-mode.ts","lines":"1-6","excerpt":"Programs call the registry's agent-visible"},
+    {"type":"source","source":"deepseek-harness","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e","path":"packages/extensions/tool-cordis/src/index.ts","lines":"27-60","excerpt":"ctx.tools.register(defineTool({"}
+  ],
+  "inference": "子代理 Driver 创建共享 Agent，Workflow host 复用 Subagent Runtime，Todo 和 Cordis 动态能力从共同工具注册表进入；结合这些跨包调用链，可以把多类外层编排投影到共同 Loop、Session 与安全链。具体能力是否出现仍取决于 bundle、preset、Provider 能力和产品表面。",
+  "last_verified": "2026-08-24"
+}

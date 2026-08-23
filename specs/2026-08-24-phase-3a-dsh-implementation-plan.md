@@ -102,10 +102,10 @@
 
 ### Task 8：编排、Subagent、Skill、Extension 与 Code Runtime
 
-- [ ] 完成 `06-orchestration-extensions.md`、中文编排图和扩展边界 Claim。
-- [ ] 覆盖 Plan、Goal、Todo、Ralph、Workflow、Hook、Subagent、Skill、MCP、Extension 与 Code Mode。
-- [ ] 解释 one-shot、前缀复用、递归委派、运行时代码和权限继承风险。
-- [ ] 提交：`docs(dsh): 发布编排扩展与代码运行时课程`。
+- [x] 完成 `06-orchestration-extensions.md`、中文编排图和扩展边界 Claim。
+- [x] 覆盖 Plan、Goal、Todo、Ralph、Workflow、Hook、Subagent、Skill、MCP、Extension 与 Code Mode。
+- [x] 解释 one-shot、前缀复用、递归委派、运行时代码和权限继承风险。
+- [x] 提交：`docs(dsh): 发布编排扩展与代码运行时课程`。
 
 ### Task 9：产品表面、反馈与评测接入
 

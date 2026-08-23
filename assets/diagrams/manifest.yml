@@ -136,6 +136,14 @@
       "scope": "docs/harnesses/deepseek-harness/05-session-compaction.md",
       "alt": "DSH 从追加事件日志派生模型表面、压缩替换、持久化恢复与外部大文本存储的中文状态图",
       "claims": ["deepseek-harness.session.log-surface-separation", "deepseek-harness.session.recovery-does-not-replay-committed-tools"]
+    },
+    {
+      "id": "deepseek-harness-orchestration-extensions",
+      "path": "assets/diagrams/deepseek-harness/06-orchestration-extensions.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/deepseek-harness/06-orchestration-extensions.md",
+      "alt": "DSH 从当前会话控制、子智能体和批量编排到能力入口、代码编排与运行时修改的中文架构图",
+      "claims": ["deepseek-harness.orchestration.extensions-share-core-loop"]
     }
   ]
 }
