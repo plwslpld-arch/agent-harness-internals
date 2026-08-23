@@ -2,7 +2,7 @@
 title: 工具、审批与沙箱：到底什么时候会弹窗
 sources: [{"repo":"deepseek-harness","path":"packages/core/tools/src/index.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/sandbox/sandbox/src/escalation.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/interaction/user-approval/src/index.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
 last_verified: 2026-08-16
-status: draft
+status: stale
 ---
 
 # 工具、审批与沙箱：到底什么时候会弹窗

@@ -2,7 +2,7 @@
 title: Web 客户端与 host：39 个 UI 包如何把事件日志变成界面
 sources: [{"repo":"deepseek-harness","path":"packages/client","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
 last_verified: 2026-08-16
-status: draft
+status: stale
 ---
 
 # Web 客户端与 host：39 个 UI 包如何把事件日志变成界面

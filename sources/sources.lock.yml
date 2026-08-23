@@ -1,30 +1,30 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-14T03:50:34.452Z",
+  "generatedAt": "2026-08-21T20:03:37+08:00",
   "sources": [
     {
       "id": "deepseek-harness",
-      "commit": "47f943859bef60e4160492346772ded9b24f765a",
+      "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
       "licenseSha256": "ebb4f09972aee8608be255debaf78451a68e95c290f55c240dec2ecfa16ea6be"
     },
     {
       "id": "codex",
-      "commit": "c4941302c73c6322b153bba13ac0a9f4396301d6",
+      "commit": "c9b19deb09c1841ce7acc33ddb96276030936a29",
       "licenseSha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc"
     },
     {
       "id": "opencode",
-      "commit": "4643e65ad6334de3e4e68dedc201d5fbb828c9fe",
+      "commit": "3a31c4ea801915c0b050df4b3842997ea62b6e93",
       "licenseSha256": "625f0f619133f89bbbb2abe37369613dfa1885eba1e50d02170deb62bb42cb6b"
     },
     {
       "id": "pi",
-      "commit": "086c32e74530564922d011ade23ff582c9d63116",
+      "commit": "c1279a65b3ef6b0b19950ed1771d5933241c240f",
       "licenseSha256": "0457f5bcec3b3b211605dfb5d1a49042fd638f3686a410fe099c24a25af13c48"
     },
     {
       "id": "mini-swe-agent",
-      "commit": "a83fcae82d2a08f0ee0c688f9d137b3566c097f8",
+      "commit": "25941c89cfbc91eb40b3f8756348c91d9977d57e",
       "licenseSha256": "0f796e58f91d1c07bb2c1b1d0f8bf3a83017c3a5dec1bdc6fae733b2cd2e875b"
     }
   ]

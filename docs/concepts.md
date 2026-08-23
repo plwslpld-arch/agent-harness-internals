@@ -2,7 +2,7 @@
 title: 不写代码也要懂的：agent harness 到底是什么
 sources: [{"repo":"deepseek-harness","path":"README.md","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
 last_verified: 2026-08-16
-status: draft
+status: stale
 ---
 
 # 不写代码也要懂的：agent harness 到底是什么

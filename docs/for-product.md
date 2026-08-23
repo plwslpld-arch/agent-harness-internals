@@ -2,7 +2,7 @@
 title: 产品视角：用户看到的现象，背后是哪条机制
 sources: [{"repo":"deepseek-harness","path":"packages/core/agent-loop/src/agent.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
 last_verified: 2026-08-16
-status: draft
+status: stale
 ---
 
 # 产品视角：用户看到的现象，背后是哪条机制
