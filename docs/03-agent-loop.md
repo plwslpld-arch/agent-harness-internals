@@ -1,8 +1,8 @@
 ---
 title: Agent Loop：一个 turn 里到底发生了什么
-sources: [{"repo":"deepseek-harness","path":"packages/core/agent-loop/src/agent.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/core/agent-loop/src/tool-calls.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}, {"repo":"deepseek-harness","path":"packages/core/agent/src/runtime-types.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
-last_verified: 2026-08-16
-status: stale
+sources: [{"repo":"deepseek-harness","path":"packages/core/agent-loop/src/agent.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}, {"repo":"deepseek-harness","path":"packages/core/agent-loop/src/tool-calls.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}, {"repo":"deepseek-harness","path":"packages/core/agent/src/runtime-types.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}]
+last_verified: 2026-08-23
+status: reviewed
 ---
 
 # Agent Loop：一个 turn 里到底发生了什么
@@ -15,7 +15,7 @@ status: stale
 
 ## 先看见：一条真实的会话日志
 
-dsh 的上游仓库里存了一批端到端快照，每个快照是一个跑得起来的 ACP 会话（ACP 是 dsh 对外的一种 stdio JSON-RPC 协议表面，见 [12 产品表面与协议](12-surfaces-and-protocols.md)），产物包括完整的 session 日志（会话事件日志，一条一行往后追加，模型看到的历史就是从它投影出来的）。这批快照分两类，`recorded` 这个布尔量决定是哪一类（`packages/test-support/acp-snapshot/src/suite.ts:88`）：`recorded: true` 的会被 `test:snapshot:record` 拿真 API 重录，`recorded: false` 的是**手写或手工采集**的 fixture，永不重录，用于那些活模型不肯稳定复现的场景（provider 错误、取消、脚本化的重复动作）。commit 47f9438 上是 38 比 40。
+dsh 的上游仓库里存了一批端到端快照，每个快照是一个跑得起来的 ACP 会话（ACP 是 dsh 对外的一种 stdio JSON-RPC 协议表面，见 [12 产品表面与协议](12-surfaces-and-protocols.md)），产物包括完整的 session 日志（会话事件日志，一条一行往后追加，模型看到的历史就是从它投影出来的）。这批快照分两类，`recorded` 这个布尔量决定是哪一类（`packages/test-support/acp-snapshot/src/suite.ts:88`）：`recorded: true` 的会被 `test:snapshot:record` 拿真 API 重录，`recorded: false` 的是**手写或手工采集**的 fixture，永不重录，用于那些活模型不肯稳定复现的场景（provider 错误、取消、脚本化的重复动作）。commit `b150a55` 上是 39 比 45。
 
 下面这个 `parallel-tool-calls` 属于后者（`examples/acp-agent/tests/acp.snapshot.ts:214-218`），所以别把它的 usage 数字（模型返回的 token 用量）当真实计量看；**它作为「事件顺序长什么样」的证据是可信的**，因为回放同样要过 session 层的全部校验。我把每行的 `type` 和关键字段抽出来，把 `assistant/chunk`（两个 step 一共 13 条流式碎片）折叠成了一行：
 

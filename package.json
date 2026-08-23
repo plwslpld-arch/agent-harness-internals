@@ -12,14 +12,15 @@
     "evidence:local": "node scripts/run-local-evidence.mjs",
     "check:analysis": "node scripts/verify-analysis.mjs",
     "check:anchors": "node scripts/verify-anchors.mjs",
+    "check:coverage": "node scripts/check-coverage.mjs",
     "check:drift": "node scripts/check-drift.mjs",
     "drift:report": "node scripts/check-drift.mjs --fetch --write",
     "check:links": "node scripts/check-links.mjs",
     "check:portability": "node scripts/verify-portability.mjs",
     "check:licenses": "node scripts/verify-licenses.mjs",
     "check:secrets": "node scripts/scan-secrets.mjs",
-    "test": "node --test scripts/tests/analysis-metadata.test.mjs scripts/tests/gitlink.test.mjs scripts/tests/license-hash.test.mjs scripts/tests/run-local-evidence.test.mjs",
-    "check": "npm run sources:verify && npm run check:analysis && npm run check:anchors && npm run check:style && npm run check:portability && npm run check:licenses && npm run check:links && npm run check:secrets && npm test",
+    "test": "node --test scripts/tests/analysis-metadata.test.mjs scripts/tests/coverage.test.mjs scripts/tests/gitlink.test.mjs scripts/tests/license-hash.test.mjs scripts/tests/review-history.test.mjs scripts/tests/run-local-evidence.test.mjs",
+    "check": "npm run sources:verify && npm run check:analysis && npm run check:anchors && npm run check:coverage && npm run check:style && npm run check:portability && npm run check:licenses && npm run check:links && npm run check:secrets && npm test",
     "check:style": "node scripts/check-style.mjs",
     "style:report": "node scripts/check-style.mjs --report"
   }

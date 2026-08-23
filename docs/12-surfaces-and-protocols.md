@@ -1,8 +1,8 @@
 ---
 title: 产品表面与协议：Web / headless / ACP / MCP / SDK / Python
-sources: [{"repo":"deepseek-harness","path":"packages/acp/acp/src/index.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
-last_verified: 2026-08-16
-status: stale
+sources: [{"repo":"deepseek-harness","path":"packages/acp/acp/src/index.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}]
+last_verified: 2026-08-23
+status: reviewed
 ---
 
 # 产品表面与协议：Web / headless / ACP / MCP / SDK / Python
@@ -411,7 +411,7 @@ Follow [Get started with the Python SDK](docs/user/guide/python-sdk.md) to insta
 
 上一版分析把 DSML 列进了 dsh 的协议面清单。这是错的。
 
-在 `47f94385` 上跑：
+在 `b150a551` 上跑：
 
 ```bash
 grep -riI "dsml" --exclude-dir=node_modules --exclude-dir=.git . | wc -l

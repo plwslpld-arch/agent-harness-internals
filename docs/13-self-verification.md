@@ -1,8 +1,8 @@
 ---
 title: 自证与工程化：一个仓库如何证明自己没坏
-sources: [{"repo":"deepseek-harness","path":"packages/runtime-diagnostics/invariants/src/index.ts","commit":"47f943859bef60e4160492346772ded9b24f765a"}]
-last_verified: 2026-08-16
-status: stale
+sources: [{"repo":"deepseek-harness","path":"packages/runtime-diagnostics/invariants/src/index.ts","commit":"b150a551b8d465e31e418e1b2eaf5e79bbb7d28e"}]
+last_verified: 2026-08-23
+status: reviewed
 ---
 
 # 自证与工程化：一个仓库如何证明自己没坏
@@ -11,7 +11,7 @@ status: stale
 
 先回答一个问题：假如有个插件在每一步都悄悄改写 system prompt，把 KV-cache 全线打穿，你希望哪道防线报警？
 
-dsh 有 219 个包、219 个运行时断言文件（其中 35 个真装了检查）、26.8 万行测试、28 个文档门禁。这道题它一个都答不上来。会话日志会如实记下那份被改写的 prompt，于是请求和日志仍然逐字节相等，断言看不出任何异常。
+dsh 有 227 个包、227 个运行时断言文件（其中 37 个真装了检查）、29.2 万行测试、28 个文档门禁。这道题它一个都答不上来。会话日志会如实记下那份被改写的 prompt，于是请求和日志仍然逐字节相等，断言看不出任何异常。
 
 这篇讲的就是这套自证机制究竟在证明什么、证明不了什么，以及它已经漏过的那一次。
 
@@ -82,17 +82,17 @@ const install: InvariantInstaller = (ctx, fail) => {
 
 三段代码的共同点：断言的对象都是**事件流或可变数据之间的关系**，不是某个函数的返回值。这是写在根 `AGENTS.md:103` 里的硬规矩：「Runtime invariants assert owned relationships. Check authoritative event streams or mutable data, not service or method presence, plugin metadata or effects, or fixed pure examples.」（运行时不变量只断言自己拥有的那层关系。要查的是权威事件流或可变数据，不要去查某个服务或方法在不在、插件的元数据或副作用是什么、几个写死的纯函数样例算得对不对。）翻译成人话就是：别把 invariant 当单元测试写，单元测试该干的活它不干。
 
-## 二、219 个包，219 个 `invariant.ts`
+## 二、227 个包，227 个 `invariant.ts`
 
 `packages/AGENTS.md:18` 写着「Every package owns `./invariant`」（每个包都拥有自己的 `./invariant`）。这是字面意义上的：
 
 ```bash
-ls -d packages/*/*/ | wc -l                                  # 219
-find packages -name invariant.ts -path '*/src/*' | wc -l     # 219
-grep -rl "No runtime invariant:" packages --include=invariant.ts | wc -l   # 184
+ls -d packages/*/*/ | wc -l                                  # 227
+find packages -name invariant.ts -path '*/src/*' | wc -l     # 227
+grep -rl "No runtime invariant:" packages --include=invariant.ts | wc -l   # 190
 ```
 
-219 个包各有一个 `src/invariant.ts`，其中 184 个是**带理由的空实现**，只有 35 个真的装了检查。空实现长这样（`packages/llm/llm-deepseek/src/invariant.ts:17-21`）：
+227 个包各有一个 `src/invariant.ts`，其中 190 个是**带理由的空实现**，只有 37 个真的装了检查。空实现长这样（`packages/llm/llm-deepseek/src/invariant.ts:17-21`）：
 
 ```ts
 /**
@@ -137,7 +137,7 @@ const install: InvariantInstaller = () => {}
 - **不证明前缀稳定**。`packages/core/agent-loop/src/invariant.ts` 比的是「本次请求 vs 本次日志」，它从不比较「本次请求 vs 上次请求」。也就是说，一个每步都重写 system prompt 的插件可以让 KV-cache 全线塌方，而这条 invariant 一声不吭，因为日志也如实记下了那个被改写的 header。缓存稳定性靠的是[《02 KV-Cache》](02-kv-cache.md)里讲的那些设计约束和快照 fixture，不是 invariant。
 - **不证明发行版正确**。发行版根本不挂它。它是开发期与测试期的诊断，不是生产护栏。真正常开的是 Session 自己的不可变性与来源事件校验（`packages/runtime-diagnostics/invariants/README.md` 明确把这部分划在服务之外）。
 - **不证明语义正确**。它只知道 `deriveMessages()` 和 loop 构造出的数组一致；如果两边共用了同一个有 bug 的推导，它们会一致地错。
-- **184 个包没有任何运行时检查**。这不是覆盖率漏洞，是设计：纯工具库、薄实现、组合包、二进制入口、持久化适配器都被明确列为「没有可断言关系」的类别。
+- **190 个包没有任何运行时检查**。这不是覆盖率漏洞，是设计：纯工具库、薄实现、组合包、二进制入口、持久化适配器都被明确列为「没有可断言关系」的类别。
 
 ## 四、`packages/runtime-diagnostics/invariants` 只有 200 行
 
@@ -145,11 +145,11 @@ const install: InvariantInstaller = () => {}
 
 `register(packageName, installer)` 的实现（`packages/runtime-diagnostics/invariants/src/index.ts:136-197`）值得看一眼：包名先进 `registrations` 集合占位（重名直接抛错，两个插件不可能悄悄争抢同一个包名），然后在 `ctx.effect(...)` 里判断过滤器；被过滤掉就只留占位、不装检查；没被过滤就 `ctx.plugin(...)` 起一个子 fiber 跑 installer（`packages/runtime-diagnostics/invariants/src/index.ts:166-168`），installer 的 `inject` 声明决定这个子 fiber 能拿到哪些服务。installer 失败会 dispose 子 fiber 并释放占位，两件事原子完成。
 
-「服务不 import 产品包，产品包不 import 服务」这个双向解耦，是这套东西能塞进 219 个包而不把依赖图搅成一团的原因。
+「服务不 import 产品包，产品包不 import 服务」这个双向解耦，是这套东西能塞进 227 个包而不把依赖图搅成一团的原因。
 
 ## 五、六个 test-support 包：让哪些测试成为可能
 
-219 个包里有 6 个专门用来测别的包，全在 `packages/test-support/`。它们各自解锁一类原本做不了的测试：
+227 个包里有 6 个专门用来测别的包，全在 `packages/test-support/`。它们各自解锁一类原本做不了的测试：
 
 | 包 | 让什么变得可能 |
 | --- | --- |
@@ -160,7 +160,7 @@ const install: InvariantInstaller = () => {}
 | `client-runtime` | jsdom 里的 slot 测试台：真 Cordis `Context` + 生产的 `SlotRegistry` 和 web-react 渲染器 + 类型化的 session/workspace 替身。替身实现的是功能插件通过 ctx 看到的同一批对外面（`TestSessions implements ISessions`），所以生产接口一改，测试台**编译期**就红。 |
 | `loader-smoke` | 通过 Cordis Loader 起一个真子进程跑 app + `cordis.yml`，`resolveExampleLaunch` 在本地 `src` 模式和 CI `lib` 模式之间选。这是「按发布产物的真实入口路径测试」那条规则的载体。 |
 
-它们撑起来的规模：`packages/` 下非测试 TS/TSX 源码 228,300 行，`tests/` 目录下 268,040 行，**测试比源码多 17%**。测试文件 854 个（口径与行数同一套，见[附录 B](appendix-b-verification.md)）。而且覆盖率门禁是逐文件 100%：`vitest.config.ts:273-278` 写着 `perFile: true` 加四个 100，注释是「100% or it doesn't merge … Per-file so a well-covered big file can't subsidize a bare one.」（不到 100% 就别想合进主干；按文件逐个算，免得一个覆盖得很好的大文件替一个几乎没测的小文件把数字补上去）（`vitest.config.ts:269-270`）
+它们撑起来的规模：`packages/` 下非测试 TS/TSX 源码 244,956 行，`tests/` 目录下 292,314 行，**测试比源码多 19%**。测试文件 909 个（口径与行数同一套，见[附录 B](appendix-b-verification.md)）。而且覆盖率门禁是逐文件 100%：`vitest.config.ts:273-278` 写着 `perFile: true` 加四个 100，注释是「100% or it doesn't merge … Per-file so a well-covered big file can't subsidize a bare one.」（不到 100% 就别想合进主干；按文件逐个算，免得一个覆盖得很好的大文件替一个几乎没测的小文件把数字补上去）（`vitest.config.ts:269-270`）
 
 `docs/testing.md:10` 还补了一句很清醒的话：「Line coverage is necessary, never sufficient — it proves lines ran, not that the feature works as shipped.」（行覆盖率是必要条件，永远不是充分条件：它能证明的只是这些行跑过了，证明不了功能按发布出去的那个样子还能用。）
 
@@ -204,13 +204,13 @@ You are a coding assistant powered by the deepseek-v4-flash model. Your working 
 
 dsh 有 28 个文档门禁，编在 `scripts/run-gates.ts:215-249` 的 `docSyncLeafGates()` 里，一条 `pnpm run doc-sync` 全跑。挑几条对读者有用的：
 
-**每个包 README 必须有 `## Model Experience`。** 这是 `.agents/notes/implemented/process/2026-07-12-package-model-experience-contract.md` 定的，脚本是 `scripts/verify-package-readme-model-experience.ts`。它把 219 个包分成四类：
+**每个包 README 必须有 `## Model Experience`。** 这是 `.agents/notes/implemented/process/2026-07-12-package-model-experience-contract.md` 定的，脚本是 `scripts/verify-package-readme-model-experience.ts`。它把 227 个包分成四类：
 
 - **4 个豁免包**，列在 `scripts/verify-package-readme-model-experience.ts:32-37` 的 `NO_MODEL_EXPERIENCE_SECTION` 表里，每个带一句审计理由：`packages/core/scope`（模型无关的注册与生命周期原语）、`packages/util/brand`（编译期擦除的类型原语）、`packages/util/home-paths`、`packages/util/launch-environment`（只解析宿主路径/环境值）。这四个包**必须没有**这个小节，写了反而失败。注释里写得很清楚：理由留在这里作为可复查的审计证据，「so an absent section cannot be mistaken for forgotten documentation」（这样一来，「这里没有这一节」就不会被误读成「文档写漏了」）。
-- **121 个「一句话」包**，在 `SENTENCE_MODEL_EXPERIENCE` 表里（`scripts/verify-package-readme-model-experience.ts:44-165`），又分 `indirect`（55 个，模型可见效果由别的包渲染，如 `packages/shell/shell` → 「delegates all model rendering to dsh-tool-bash」，意思是模型看到的东西全部交给 dsh-tool-bash 去渲染）和 `none`（66 个，压根不面向模型，如浏览器端 UI 层）。
-- **其余 94 个包**必须写完整的三段：`#### What the model sees` / `#### Token effect` / `#### KV Cache effect`（三个小标题定义在 `scripts/verify-package-readme-model-experience.ts:15-17`）。
+- **125 个「一句话」包**，在 `SENTENCE_MODEL_EXPERIENCE` 表里（`scripts/verify-package-readme-model-experience.ts:44-165`），又分 `indirect`（58 个，模型可见效果由别的包渲染，如 `packages/shell/shell` → 「delegates all model rendering to dsh-tool-bash」，意思是模型看到的东西全部交给 dsh-tool-bash 去渲染）和 `none`（67 个，压根不面向模型，如浏览器端 UI 层）。
+- **其余 98 个包**必须写完整的三段：`#### What the model sees` / `#### Token effect` / `#### KV Cache effect`（三个小标题定义在 `scripts/verify-package-readme-model-experience.ts:15-17`）。
 
-所以 `grep -l "^#### KV Cache effect" packages/*/*/README.md | wc -l` 得到 215 = 219 − 4。这是一份机器校验过的、逐包的「我对 prompt / token / KV-cache 有什么影响」清单，**可以直接当索引用**：想知道哪些包会动缓存前缀，grep 这个小标题然后读下面那句话就行。
+所以 `grep -l "^#### KV Cache effect" packages/*/*/README.md | wc -l` 得到 223 = 227 − 4。这是一份机器校验过的、逐包的「我对 prompt / token / KV-cache 有什么影响」清单，**可以直接当索引用**：想知道哪些包会动缓存前缀，grep 这个小标题然后读下面那句话就行。
 
 **Agent Note 有格式门禁。** `scripts/verify-agent-note-format.ts` 强制：第 1 行必须是 `# Agent Note: <title>`、第 2 行空、第 3 行是对应 lifecycle 的 `Status:` 语法（`scripts/verify-agent-note-format.ts:22-26`）、第 4 行空；第一个 `##` 必须是 `## Problem`；proposed 必须有 Proposal/Acceptance criteria/Risks，implemented 必须有 Decision/Consequences（`scripts/verify-agent-note-format.ts:29-33`）；implemented 里出现 `## Proposal` / `## Plan` / `## Migration plan` / `## Acceptance criteria` 一律拒绝，理由写在错误信息里：「an implemented Agent Note states what is」（一篇 implemented 状态的 Agent Note 说的是「现在是什么样」，不是「打算怎么做」）（`scripts/verify-agent-note-format.ts:74`）。`## Alternatives considered` 强制，2026-07-05 之前的老笔记可以用一行豁免注释代替，之后的不行（`scripts/verify-agent-note-format.ts:13-16`、`:82`）。
 
@@ -230,8 +230,8 @@ dsh 有 28 个文档门禁，编在 `scripts/run-gates.ts:215-249` 的 `docSyncL
 ## 八、构建与发布
 
 - **构建**：`tsc -b` 出 JS，`tsdown` 打包。`tsdown.config.ts:19-20` 里 workspace 是 `vendor/*` + `packages/*/*` + `apps/cli`，每个包固定三个入口：`lib/types/{index,invariant,startup}.js`。注意 `invariant` 是一等构建入口，不是可选附件。
-- **版本**：`packages/*/*` 219 个 `package.json` 全是 `0.1.0-rc.5`，跟根 `package.json:3` 一致。
-- **没有 CHANGELOG**。仓库里根本没有这个文件。变更史靠 git tag（`dsh-v*` / `vendor-<pkg>-v*` / `landlock-run-v*`）加 683 篇 Agent Note，三条独立发布序列见 `.agents/notes/implemented/process/2026-08-10-npm-release-sequences.md`。
+- **版本**：`packages/*/*` 227 个 `package.json` 全是 `0.1.1-rc.2`，跟根 `package.json:3` 一致。
+- **没有 CHANGELOG**。仓库里根本没有这个文件。变更史靠 git tag（`dsh-v*` / `vendor-<pkg>-v*` / `landlock-run-v*`）加 739 篇 Agent Note，三条独立发布序列见 `.agents/notes/implemented/process/2026-08-10-npm-release-sequences.md`。
 - **Python SDK 打成单文件可执行**：`scripts/build-exe-for-python-sdk.ts:26` 固定 `@yao-pkg/pkg@6.21.0`，走 `--sea` 路线（`scripts/build-exe-for-python-sdk.ts:391`），产出 `dsh-jsonrpc-agent-pkg-<platform>-<arch>` 装进平台 wheel。理由在 `.agents/notes/implemented/architecture/2026-07-10-single-file-executable-sdk-runtime-distribution.md`。
 - **native landlock**：`native/landlock-run/` 是一个约 300 行 C11、静态链接 musl 的「先自限再 exec」启动器，发成 entry 包 + 两个平台包，靠 npm 的 `os`/`cpu` 字段分发。它 fail-closed（失败时往「关」的方向倒）：内核不支持就不跑命令。
 
@@ -245,11 +245,11 @@ dsh 有 28 个文档门禁，编在 `scripts/run-gates.ts:215-249` 的 `docSyncL
 
 四篇 postmortem 沉淀出的通用规则收在 `docs/defensive-patterns.md`，7 条，每条都是真出过的缺陷类别：正交结果各自独立上报（`docs/defensive-patterns.md:9`）、公共契约两侧都要守（`docs/defensive-patterns.md:13`，正是本文第三节引的那条「middleware and consumer defects remain thrown」的另一面）、异步状态不是同步状态、dispose 必须到静默而不只是发出请求、在派发器里包住回调异常、不给不可信输出环境变量与可预测路径、unlink 形似链接的路径。
 
-**门禁能证明的东西是有边界的**。35 个真装了检查的 invariant、26.8 万行测试、28 个文档门禁，合起来仍然挡不住「测试和产品走了两条不同的加载路径」这类错误；只有把真实入口路径本身变成被测对象才行。
+**门禁能证明的东西是有边界的**。37 个真装了检查的 invariant、29.2 万行测试、28 个文档门禁，合起来仍然挡不住「测试和产品走了两条不同的加载路径」这类错误；只有把真实入口路径本身变成被测对象才行。
 
 ## 十、这套自证要花多少钱
 
-前面几节的数字（测试行数见 §五、invariant 的 219/184 见 §二、文档门禁的 28 条见 §七、快照场景数见 §六）不必再列一遍，这里只记它们换算成的**日常摩擦**：改一句 README 可能连带改 `.zh.md`、重录 sidecar、重新生成三份目录；改一句 prompt 要 review 一批 fixture diff；每一个新 `if` 分支要么有测试要么有一条带理由的 `v8 ignore`；而且每个非平凡改动都必须在同一个 PR 里增改至少一篇 Agent Note（`.agents/notes/README.md:46`），那批笔记连同它们的 `.zh.md` 与索引一起，是仓库里文件数最多的一类产物。这套成本只有在一个前提下划算：**主要贡献者是 agent，而 agent 不会记得上下文**。11 个 `.agents/skills/` 技能（评审、找简化、归档笔记、推送前选测试集…）指向的是同一个前提。人类团队大概率负担不起这个比例；但如果每个 PR 的作者都是新来的，把「为什么这么定」和「怎么证明没坏」写成机器可校验的产物，就不再是洁癖。
+前面几节的数字（测试行数见 §五、invariant 的 227/190 见 §二、文档门禁的 28 条见 §七、快照场景数见 §六）不必再列一遍，这里只记它们换算成的**日常摩擦**：改一句 README 可能连带改 `.zh.md`、重录 sidecar、重新生成三份目录；改一句 prompt 要 review 一批 fixture diff；每一个新 `if` 分支要么有测试要么有一条带理由的 `v8 ignore`；而且每个非平凡改动都必须在同一个 PR 里增改至少一篇 Agent Note（`.agents/notes/README.md:46`），那批笔记连同它们的 `.zh.md` 与索引一起，是仓库里文件数最多的一类产物。这套成本只有在一个前提下划算：**主要贡献者是 agent，而 agent 不会记得上下文**。11 个 `.agents/skills/` 技能（评审、找简化、归档笔记、推送前选测试集…）指向的是同一个前提。人类团队大概率负担不起这个比例；但如果每个 PR 的作者都是新来的，把「为什么这么定」和「怎么证明没坏」写成机器可校验的产物，就不再是洁癖。
 
 ## 十一、别人怎么做
 
@@ -257,13 +257,13 @@ dsh 有 28 个文档门禁，编在 `scripts/run-gates.ts:215-249` 的 `docSyncL
 
 | | 结构化决策记录 | 运行时不变量 | 快照证据 | CHANGELOG |
 | --- | --- | --- | --- | --- |
-| dsh | `.agents/notes/` 683 篇，路径即状态，三个门禁脚本 | 219 个 `invariant.ts`，35 个可执行 | 93 个 keyless 场景，含逐字 system prompt | 无（tag + 笔记） |
+| dsh | `.agents/notes/` 739 篇，路径即状态，三个门禁脚本 | 227 个 `invariant.ts`，37 个可执行 | 93 个 keyless 场景，含逐字 system prompt | 无（tag + 笔记） |
 | Codex | 无（`docs/` 15 篇用户文档，无 ADR 树） | 无 | 715 个 insta `.snap`，1,023 个路径含 `tests` 的 `.rs` | 有 |
 | OpenCode | 无 | 无（唯一同名文件是 e2e 视觉稳定性工具） | 3 个 `__snapshots__` 目录 | 无 |
 | pi | 无 | 无 | 无 | 无 |
 | mini-swe-agent | 无 | 无 | 无 | 无 |
 
-**结构化决策记录树只有 dsh 有。** Codex 的测试量和快照量并不低（715 个 `.snap` 是很扎实的回归网），但它把「为什么」放在 PR 描述和 CHANGELOG 里，几个月后要回答「当初为什么不选 X」只能翻 git log。dsh 反过来：没有 CHANGELOG，但有 683 篇带 `## Alternatives considered` 的笔记；具体读哪些，见[《15 设计记录导读》](15-agent-notes-guide.md)。
+**结构化决策记录树只有 dsh 有。** Codex 的测试量和快照量并不低（715 个 `.snap` 是很扎实的回归网），但它把「为什么」放在 PR 描述和 CHANGELOG 里，几个月后要回答「当初为什么不选 X」只能翻 git log。dsh 反过来：没有 CHANGELOG，但有 739 篇带 `## Alternatives considered` 的笔记；具体读哪些，见[《15 设计记录导读》](15-agent-notes-guide.md)。
 
 至于「模型收到的逐字 prompt 存在仓库里、被 CI diff」这件事，四家都没有等价物。这也是本仓库大量引用 `system-prompt.expected.md` 的原因。
 
@@ -277,7 +277,7 @@ ls -d packages/*/*/ | wc -l
 find packages -name invariant.ts -path '*/src/*' | wc -l
 grep -rl "No runtime invariant:" packages --include=invariant.ts | wc -l
 
-# 219 - 4 = 215：带 KV Cache effect 小节的包
+# 227 - 4 = 223：带 KV Cache effect 小节的包
 grep -l "^#### KV Cache effect" packages/*/*/README.md | wc -l
 
 # 模型第一眼看到的全部文字
@@ -308,6 +308,6 @@ sed -n '300,322p' packages/core/agent-loop/src/agent.ts
 
 答：它比的是「本次请求 vs 本次日志」，从来不比「本次请求 vs 上次请求」。一个每步都重写 system prompt 的插件，会让日志同样记下那份改写后的 header，两边照样相等，断言一声不吭。缓存前缀的稳定性靠的是设计约束和快照 fixture，不是 invariant。想抓这类问题，你得引入一个跨请求的比较对象，而这套机制里没有。
 
-**3. 184 个包写的是空 invariant，为什么这不叫覆盖率漏洞？门禁怎么防止有人用空实现糊弄过去？**
+**3. 190 个包写的是空 invariant，为什么这不叫覆盖率漏洞？门禁怎么防止有人用空实现糊弄过去？**
 
 答：这些包（纯工具库、薄实现、组合包、二进制入口、持久化适配器）本来就没有自己拥有的事件序列或可变数据关系，能断言的东西都在它所属的那道接缝上，由别的包守。门禁的做法是让「没有」也变成一次表态：空的 `install` 必须在声明里写上 `No runtime invariant:` 加理由，否则 AST 检查直接失败；非空的 `install` 如果拿了 `fail` 参数却从不引用，同样失败。糊弄不过去的原因是，写一个永远不会报错的检查比写空实现更难过关。
