@@ -11,7 +11,7 @@ import { fail } from './lib.mjs';
 const depthRules = {
   start: { characters: 2200, paragraphs: 10 },
   harness: { characters: 2400, paragraphs: 12 },
-  foundation: { characters: 1800, paragraphs: 8 },
+  foundation: { characters: 2600, paragraphs: 10 },
   comparison: { characters: 2200, paragraphs: 10 },
   role: { characters: 1600, paragraphs: 8 },
   lab: { characters: 2000, paragraphs: 8 },
@@ -101,6 +101,12 @@ function harnessFailures(content, errors) {
 function foundationFailures(content, errors) {
   for (const heading of ['读者会得到什么', '核心概念', '最小例子', '常见误区', '验证方法']) {
     requireSection(content, heading, errors);
+  }
+  if (!/!\[[^\]]*[\u3400-\u9fff][^\]]*\]\((?:\.\.\/)+assets\/diagrams\/[a-z0-9/_.-]+\.svg\)/u.test(content)) {
+    errors.push('共同基础必须嵌入带中文替代文本的正式中文 SVG');
+  }
+  if (!/\bClaim:\s*[a-z0-9][a-z0-9-]*(?:\.[a-z0-9][a-z0-9-]*)+/u.test(content)) {
+    errors.push('共同基础必须引用至少一个正式 Claim');
   }
   checkSelfReview(content, errors);
 }

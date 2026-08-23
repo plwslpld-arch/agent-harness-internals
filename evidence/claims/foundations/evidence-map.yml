@@ -1,0 +1,385 @@
+{
+  "schemaVersion": 1,
+  "purpose": "阶段 2 共同基础的写作前证据地图。它只登记锁定版本中真实存在的候选证据面，不等同于已验证 Claim，也不把单个项目实现提升为行业通则。",
+  "rules": [
+    "每篇正文至少使用两个不同证据面；源码与其同文件测试仍按两个证据面记录，但跨实现结论还必须增加第二个项目。",
+    "候选路径只证明存在可核查表面；正式 Claim 仍需锁定行号、摘录、平台、模式和证据等级。",
+    "共同抽象默认使用 D 级推断；只有结论严格限定到单个锁定实现且源码与上游测试同时支持时，才考虑 B 级。",
+    "Claude 条目只描述公开 Agent SDK 契约，不推断闭源 Claude Code 内部实现。",
+    "Trial 与 Attempt 的统计口径首先是本仓库采用的评测契约，不宣称所有上游默认采用同一语义。"
+  ],
+  "articles": [
+    {
+      "id": "foundation.boundaries",
+      "file": "docs/foundations/01-boundaries.md",
+      "question": "模型、Agent Harness、执行环境和 Eval 分别负责什么，结果变化可以归因到哪一层？",
+      "candidateEvidence": [
+        {
+          "source": "deepseek-harness",
+          "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+          "path": "docs/agent-lifecycle.zh.md",
+          "type": "official-doc",
+          "scope": "project-example",
+          "reason": "直接描述 DSH 的 Agent 生命周期，可用于识别 Harness 编排职责，但不能单独证明四层是通用标准。"
+        },
+        {
+          "source": "codex",
+          "commit": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+          "path": "codex-rs/core/src/session/turn.rs",
+          "type": "source",
+          "scope": "project-example",
+          "reason": "提供 Codex Turn 编排的源码表面，用于和模型输出、工具环境区分。"
+        },
+        {
+          "source": "inspect-ai",
+          "commit": "5679e7e526c546c86fb8f831033eb0dcfc3dea64",
+          "path": "src/inspect_ai/_eval/task/task.py",
+          "type": "source",
+          "scope": "eval-example",
+          "reason": "提供独立 Eval 中任务定义的源码表面，用于说明 Eval 不是第二个 Agent Loop。"
+        }
+      ],
+      "plannedClaims": [
+        {
+          "id": "foundation.boundaries.four-layers",
+          "level": "D",
+          "boundary": "四层是本仓库用于控制变量和归因的分析框架；项目证据只说明这些职责在不同实现中可分别观察。"
+        }
+      ]
+    },
+    {
+      "id": "foundation.agent-turn",
+      "file": "docs/foundations/02-agent-turn.md",
+      "question": "一次真实 Agent Turn 如何从用户输入走到模型响应、工具调用、结果回送和终止？",
+      "candidateEvidence": [
+        {
+          "source": "gemini-cli",
+          "commit": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+          "path": "packages/core/src/core/turn.ts",
+          "type": "source",
+          "scope": "project-example",
+          "reason": "提供 Gemini CLI Turn 的直接实现表面。"
+        },
+        {
+          "source": "gemini-cli",
+          "commit": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+          "path": "packages/core/src/core/turn.test.ts",
+          "type": "upstream-test",
+          "scope": "project-example",
+          "reason": "为 Turn 的继续、事件和终止行为提供上游测试表面。"
+        },
+        {
+          "source": "pi",
+          "commit": "c1279a65b3ef6b0b19950ed1771d5933241c240f",
+          "path": "packages/agent/src/agent-loop.ts",
+          "type": "source",
+          "scope": "project-example",
+          "reason": "提供第二种 Agent Loop 的实现，用于识别共同阶段与项目特有命名。"
+        },
+        {
+          "source": "pi",
+          "commit": "c1279a65b3ef6b0b19950ed1771d5933241c240f",
+          "path": "packages/agent/test/agent-loop.test.ts",
+          "type": "upstream-test",
+          "scope": "project-example",
+          "reason": "提供 pi Agent Loop 的上游行为测试表面。"
+        },
+        {
+          "source": "deepseek-harness",
+          "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+          "path": "examples/jsonrpc-agent/tests/snapshots/text-turn/session.jsonl",
+          "type": "artifact",
+          "scope": "project-example",
+          "reason": "提供可读取的真实会话事件序列，便于正文构造最小例子。"
+        }
+      ],
+      "plannedClaims": [
+        {
+          "id": "foundation.turn.continue-or-stop",
+          "level": "D",
+          "boundary": "循环是否继续由 Harness 根据模型输出、工具结果和终止条件决定；具体事件名与停止条件因项目而异。"
+        }
+      ]
+    },
+    {
+      "id": "foundation.model-tool-io",
+      "file": "docs/foundations/03-model-tool-io.md",
+      "question": "模型消息、工具 Schema、工具调用和工具结果怎样保持身份、顺序与关联？",
+      "candidateEvidence": [
+        {
+          "source": "claude-agent-sdk-python",
+          "commit": "542fefb3b94be87760b2513fff889b91bb5b6672",
+          "path": "src/claude_agent_sdk/types.py",
+          "type": "source",
+          "scope": "public-sdk-contract",
+          "reason": "提供公开 SDK 的消息和内容块类型，不用于推断 Claude Code 内部实现。"
+        },
+        {
+          "source": "claude-agent-sdk-python",
+          "commit": "542fefb3b94be87760b2513fff889b91bb5b6672",
+          "path": "src/claude_agent_sdk/_internal/message_parser.py",
+          "type": "source",
+          "scope": "public-sdk-adapter",
+          "reason": "展示公开 SDK 如何把传输数据解析为公开类型。"
+        },
+        {
+          "source": "claude-agent-sdk-python",
+          "commit": "542fefb3b94be87760b2513fff889b91bb5b6672",
+          "path": "tests/test_message_parser.py",
+          "type": "upstream-test",
+          "scope": "public-sdk-contract",
+          "reason": "为消息解析、未知类型和字段关联提供上游测试表面。"
+        },
+        {
+          "source": "opencode",
+          "commit": "3a31c4ea801915c0b050df4b3842997ea62b6e93",
+          "path": "packages/core/src/session/runner/to-llm-message.ts",
+          "type": "source",
+          "scope": "project-example",
+          "reason": "展示另一实现把会话消息转换为模型输入的适配边界。"
+        },
+        {
+          "source": "opencode",
+          "commit": "3a31c4ea801915c0b050df4b3842997ea62b6e93",
+          "path": "packages/core/test/session-runner-message.test.ts",
+          "type": "upstream-test",
+          "scope": "project-example",
+          "reason": "提供 OpenCode 消息转换和运行行为的测试表面。"
+        }
+      ],
+      "plannedClaims": [
+        {
+          "id": "foundation.io.tool-result-correlation",
+          "level": "D",
+          "boundary": "工具结果必须与原调用保持可追踪关联并重新进入后续模型上下文；字段名和序列化格式不是通用协议。"
+        }
+      ]
+    },
+    {
+      "id": "foundation.tools-permissions-sandbox",
+      "file": "docs/foundations/04-tools-permissions-sandbox.md",
+      "question": "工具暴露、策略判断、用户审批和 OS 或容器隔离为什么是不同安全边界？",
+      "candidateEvidence": [
+        {
+          "source": "gemini-cli",
+          "commit": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+          "path": "packages/core/src/policy/policy-engine.ts",
+          "type": "source",
+          "scope": "project-example",
+          "reason": "提供策略决策的直接实现表面。"
+        },
+        {
+          "source": "gemini-cli",
+          "commit": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+          "path": "packages/core/src/policy/policy-engine.test.ts",
+          "type": "upstream-test",
+          "scope": "project-example",
+          "reason": "提供策略匹配与决策的上游测试表面。"
+        },
+        {
+          "source": "gemini-cli",
+          "commit": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+          "path": "packages/core/src/sandbox/linux/LinuxSandboxManager.ts",
+          "type": "source",
+          "scope": "linux-project-example",
+          "reason": "提供独立于策略引擎的 Linux 隔离实现表面。"
+        },
+        {
+          "source": "codex",
+          "commit": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+          "path": "codex-rs/core/src/tools/approvals.rs",
+          "type": "source",
+          "scope": "project-example",
+          "reason": "提供工具审批路径的源码表面。"
+        },
+        {
+          "source": "codex",
+          "commit": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+          "path": "codex-rs/core/src/tools/sandboxing.rs",
+          "type": "source",
+          "scope": "project-example",
+          "reason": "提供与审批分离的沙箱选择和执行约束表面。"
+        },
+        {
+          "source": "codex",
+          "commit": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+          "path": "codex-rs/core/src/tools/sandboxing_tests.rs",
+          "type": "upstream-test",
+          "scope": "project-example",
+          "reason": "为 Codex 沙箱行为提供上游测试表面。"
+        }
+      ],
+      "plannedClaims": [
+        {
+          "id": "foundation.security.permission-is-not-sandbox",
+          "level": "D",
+          "boundary": "策略允许或用户批准不等于 OS 级隔离已经生效；不同项目的默认策略与平台支持必须分别核对。"
+        }
+      ]
+    },
+    {
+      "id": "foundation.session-context-memory",
+      "file": "docs/foundations/05-session-context-memory.md",
+      "question": "Session、单次请求 Context、Compaction、外部 Memory 与恢复点分别保存什么？",
+      "candidateEvidence": [
+        {
+          "source": "claude-agent-sdk-python",
+          "commit": "542fefb3b94be87760b2513fff889b91bb5b6672",
+          "path": "src/claude_agent_sdk/_internal/session_store.py",
+          "type": "source",
+          "scope": "public-sdk-contract",
+          "reason": "提供公开 SDK 的会话持久化契约表面。"
+        },
+        {
+          "source": "claude-agent-sdk-python",
+          "commit": "542fefb3b94be87760b2513fff889b91bb5b6672",
+          "path": "tests/test_session_store_conformance.py",
+          "type": "upstream-test",
+          "scope": "public-sdk-contract",
+          "reason": "提供会话存储一致性测试，不推断闭源客户端内部状态。"
+        },
+        {
+          "source": "pi",
+          "commit": "c1279a65b3ef6b0b19950ed1771d5933241c240f",
+          "path": "packages/session-backends/sqlite-node/src/sqlite/storage/sessions.ts",
+          "type": "source",
+          "scope": "project-example",
+          "reason": "提供持久 Session 存储的第二种实现。"
+        },
+        {
+          "source": "pi",
+          "commit": "c1279a65b3ef6b0b19950ed1771d5933241c240f",
+          "path": "packages/session-backends/sqlite-node/test/conformance.test.ts",
+          "type": "upstream-test",
+          "scope": "project-example",
+          "reason": "提供 pi 会话后端一致性测试表面。"
+        },
+        {
+          "source": "gemini-cli",
+          "commit": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+          "path": "packages/core/src/context/chatCompressionService.ts",
+          "type": "source",
+          "scope": "project-example",
+          "reason": "提供派生请求上下文压缩的实现表面，用于和持久 Session 区分。"
+        },
+        {
+          "source": "gemini-cli",
+          "commit": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+          "path": "packages/core/src/context/chatCompressionService.test.ts",
+          "type": "upstream-test",
+          "scope": "project-example",
+          "reason": "提供压缩触发和结果处理的上游测试表面。"
+        }
+      ],
+      "plannedClaims": [
+        {
+          "id": "foundation.state.session-is-not-context",
+          "level": "D",
+          "boundary": "Session 可持久保存事件或身份，而每次模型请求的 Context 是可重建、裁剪或压缩的派生输入；具体持久字段因项目而异。"
+        }
+      ]
+    },
+    {
+      "id": "foundation.trace-feedback-eval",
+      "file": "docs/foundations/06-trace-feedback-eval.md",
+      "question": "Trace、Artifact、Trial、Attempt、Scorer 与 Feedback 如何组成可复核评测链？",
+      "candidateEvidence": [
+        {
+          "source": "inspect-ai",
+          "commit": "5679e7e526c546c86fb8f831033eb0dcfc3dea64",
+          "path": "src/inspect_ai/log/_transcript.py",
+          "type": "source",
+          "scope": "eval-example",
+          "reason": "提供 Eval Transcript 的直接数据与事件表面。"
+        },
+        {
+          "source": "inspect-ai",
+          "commit": "5679e7e526c546c86fb8f831033eb0dcfc3dea64",
+          "path": "src/inspect_ai/_eval/score.py",
+          "type": "source",
+          "scope": "eval-example",
+          "reason": "提供评分阶段与运行阶段分离的源码表面。"
+        },
+        {
+          "source": "inspect-ai",
+          "commit": "5679e7e526c546c86fb8f831033eb0dcfc3dea64",
+          "path": "tests/_eval/test_score.py",
+          "type": "upstream-test",
+          "scope": "eval-example",
+          "reason": "为评分行为提供上游测试表面。"
+        },
+        {
+          "source": "terminal-bench",
+          "commit": "d28711d0da2675d0bb1d56de45ae5df6082438a3",
+          "path": "terminal_bench/harness/models.py",
+          "type": "source",
+          "scope": "eval-example",
+          "reason": "提供 Run、Trial 结果和 n_attempts 的实际模型，可用于解释上游命名与本仓库统计契约的差别。"
+        },
+        {
+          "source": "terminal-bench",
+          "commit": "d28711d0da2675d0bb1d56de45ae5df6082438a3",
+          "path": "tests/unit/models/test_harness_models.py",
+          "type": "upstream-test",
+          "scope": "eval-example",
+          "reason": "为 Terminal-Bench 结果模型和指标提供上游测试表面。"
+        },
+        {
+          "source": "deepseek-harness",
+          "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+          "path": "docs/subsystems/feedback.zh.md",
+          "type": "official-doc",
+          "scope": "project-example",
+          "reason": "提供 Agent Harness 内反馈表面的项目例子；它不等同于训练奖励或独立发布评测。"
+        },
+        {
+          "source": "deepseek-harness",
+          "commit": "b150a551b8d465e31e418e1b2eaf5e79bbb7d28e",
+          "path": "apps/web/tests/feedback-command.e2e.ts",
+          "type": "upstream-test",
+          "scope": "project-example",
+          "reason": "提供反馈命令的上游端到端测试表面。"
+        }
+      ],
+      "plannedClaims": [
+        {
+          "id": "foundation.eval.trial-attempt-stability",
+          "level": "D",
+          "boundary": "这是本仓库采用的统计契约：Trial 是固定分母，Attempt 只记录基础设施恢复；不能声称 Terminal-Bench 或 Inspect 默认采用完全相同的术语语义。"
+        }
+      ]
+    }
+  ],
+  "globalRisks": [
+    {
+      "id": "single-project-generalization",
+      "severity": "high",
+      "mitigation": "跨实现结论使用 D 级，正文同时列出至少两个项目并明确例外。"
+    },
+    {
+      "id": "path-is-not-behavior-proof",
+      "severity": "high",
+      "mitigation": "正式 Claim 必须补行号与摘录；只看到文件名不得写成行为已证明。"
+    },
+    {
+      "id": "closed-source-claude-inference",
+      "severity": "high",
+      "mitigation": "Claude 只写公开 SDK 契约，闭源内部能力标记 unknown 或不讨论。"
+    },
+    {
+      "id": "permission-sandbox-collapse",
+      "severity": "high",
+      "mitigation": "分别引用策略与隔离证据，图中保持两层边界。"
+    },
+    {
+      "id": "trial-denominator-drift",
+      "severity": "high",
+      "mitigation": "正文将本仓库 Trial/Attempt 定义标成规范性约定，并和上游原词分栏。"
+    },
+    {
+      "id": "feedback-release-eval-collapse",
+      "severity": "high",
+      "mitigation": "训练奖励、Checkpoint 选择和独立发布 Eval 分开描述；缺少 Adapter 语义时标记 external、absent 或 unknown。"
+    }
+  ]
+}

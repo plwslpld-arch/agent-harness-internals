@@ -73,6 +73,58 @@ ${deepProse}
 `;
 }
 
+const foundationDeepProse = Array.from({ length: 34 }, (_, index) =>
+  `${paragraph}第 ${index + 1} 段会继续区分直接事实、项目示例和跨实现推断，避免把一个实现的命名扩大成共同标准。`).join('\n\n');
+
+function foundationContent() {
+  return `# Agent Harness 的职责与边界
+
+## 读者会得到什么
+
+读完后可以区分模型、Harness、环境和评测的责任边界。
+
+## 核心概念
+
+![四层职责边界图](../../assets/diagrams/foundations/01-boundaries.svg)
+
+Claim: foundation.boundaries.four-layers
+
+${foundationDeepProse}
+
+## 最小例子
+
+同一个输入只改变工具权限，用来观察 Harness 层带来的差异。
+
+## 常见误区
+
+不能把一次结果变化全部归因于模型。
+
+## 验证方法
+
+固定另外三层，只改变一个变量并记录运行产物。
+
+## 自检
+
+### 问题 1
+
+为什么要分层？
+
+**答案：** 为了避免错误归因。
+
+### 问题 2
+
+环境与 Harness 是否相同？
+
+**答案：** 不同，环境提供外部状态与资源。
+
+### 问题 3
+
+评测是否负责执行工具？
+
+**答案：** 通常不负责，评测固定任务并解释产物。
+`;
+}
+
 function article(content = harnessContent(), status = 'reviewed') {
   return {
     relativePath: 'docs/harnesses/codex/03-tools.md',
@@ -134,4 +186,25 @@ test('基础、比较、角色和实验文章使用各自结构', () => {
     const failures = contentContractFailures({ relativePath, content: '# 空壳\n', metadata: { status: 'reviewed' } });
     assert.match(failures.join('\n'), new RegExp(expected, 'u'), `${kind} 应检查 ${expected}`);
   }
+});
+
+test('共同基础必须达到深度并引用正式中文图与 Claim', () => {
+  const article = {
+    relativePath: 'docs/foundations/01-boundaries.md',
+    content: foundationContent(),
+    metadata: { status: 'reviewed' },
+  };
+  assert.deepEqual(contentContractFailures(article), []);
+  assert.match(contentContractFailures({
+    ...article,
+    content: foundationContent().replace('![四层职责边界图](../../assets/diagrams/foundations/01-boundaries.svg)', ''),
+  }).join('\n'), /正式中文 SVG/u);
+  assert.match(contentContractFailures({
+    ...article,
+    content: foundationContent().replace('Claim: foundation.boundaries.four-layers', ''),
+  }).join('\n'), /Claim/u);
+  assert.match(contentContractFailures({
+    ...article,
+    content: foundationContent().replace(foundationDeepProse, paragraph.repeat(8)),
+  }).join('\n'), /至少 2600/u);
 });
