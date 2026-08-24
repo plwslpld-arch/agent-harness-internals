@@ -1,0 +1,11 @@
+{
+  "id":"loop-tools-execution","title":"循环、工具与执行","article":"docs/comparisons/02-loop-tools-execution.md","question":"六条主线怎样把模型流、工具调用、结果回送和终止信号归约为一次任务循环？","control_variables":["同一类文本加单工具任务","工具副作用在受控临时工作区","自然停止与任务正确分开"],
+  "entries":[
+    {"harness":"deepseek-harness","capability":"default","evidence_level":"B","claims":["deepseek-harness.loop.tool-results-before-next-request"],"statement":"循环先持久化并回送工具结果，再形成下一次模型请求；模型结束原因不能跳过未结算工具。","conditions":["上游测试覆盖锁定循环分支，不证明任意外部工具实现正确。"]},
+    {"harness":"codex","capability":"default","evidence_level":"B","claims":["codex.turn.tool-result-loop"],"statement":"Turn 内的模型事件、工具调度与结果项形成闭环，线程和任务层另行管理取消、恢复与最终状态。","conditions":["工具可见性、审批与沙箱策略必须随运行表面一并冻结。"]},
+    {"harness":"gemini-cli","capability":"default","evidence_level":"B","claims":["gemini-cli.scheduler.tool-batch-has-own-state"],"statement":"Scheduler 为工具批次维护独立状态并结算响应，Turn 完成不等于文件和用户目标已正确。","conditions":["确认、策略拒绝和并行批次会改变可执行路径。"]},
+    {"harness":"claude","capability":"default","evidence_level":"B","claims":["claude.task.transport-control-loop"],"statement":"Python SDK 的 Query/Client、Transport、控制协议和消息流共同承载循环；协议终结只代表 SDK 表面生命周期。","conditions":["不从 SDK Transport 推断 Claude Code 闭源运行时内部状态机。"]},
+    {"harness":"pi","capability":"default","evidence_level":"B","claims":["pi.agent.loop-interprets-multiple-stop-signals"],"statement":"Agent Core 解释多种停止信号并管理工具循环，Coding Agent 再叠加资源、Session 和产品表面。","conditions":["默认宿主权限与外部隔离条件单独记录。"]},
+    {"harness":"opencode","capability":"default","evidence_level":"B","claims":["opencode.session.processor-interprets-stream-events"],"statement":"Session Prompt 组装循环，Processor 将流事件归约为消息部件和继续、压缩或停止控制结果。","conditions":["Processor 停止和 Session Idle 都不自动给出任务 Verdict。"]}
+  ]
+}

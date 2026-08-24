@@ -1,0 +1,11 @@
+{
+  "id":"permissions-state-recovery","title":"权限、安全、状态与恢复","article":"docs/comparisons/03-permissions-state-recovery.md","question":"六条主线怎样区分应用层权限、操作系统隔离、持久会话、模型上下文、摘要与副作用恢复？","control_variables":["同一文件写入与受控命令副作用","同一中断和恢复场景","应用策略与外部沙箱分别观察"],
+  "entries":[
+    {"harness":"deepseek-harness","capability":"default","evidence_level":"D","claims":["deepseek-harness.security.approval-sandbox-separation"],"statement":"工具 Guard、审批与平台 Sandbox 是连续但不同层，Session 恢复也不能重放已提交工具来伪造回滚。","conditions":["平台执行边界和外部资源需用拒绝探针另验。"]},
+    {"harness":"codex","capability":"default","evidence_level":"B","claims":["codex.security.approval-policy-sandbox-separation"],"statement":"审批策略决定是否继续，Sandbox Policy 决定执行边界，Rollout/History/Context 又保存不同状态投影。","conditions":["Linux、Windows 和网络执行边界不可互相外推。"]},
+    {"harness":"gemini-cli","capability":"default","evidence_level":"B","claims":["gemini-cli.security.confirmation-policy-sandbox-separation"],"statement":"Confirmation、Policy、Safety 与 Sandbox 分层；记录历史、模型 Context 和压缩摘要不能合并为无损状态。","conditions":["具体确认模式和沙箱实现受平台与配置影响。"]},
+    {"harness":"claude","capability":"default","evidence_level":"C","claims":["claude.permissions.allowed-tools-are-not-availability"],"statement":"Allowed Tools 描述调用许可而非工具实际可用性；Resume/Store 镜像和闭源产品 Checkpoint 也必须按公开契约限定。","conditions":["工具存在、权限允许、Transport 可用和执行成功分别判断。"]},
+    {"harness":"pi","capability":"extension","evidence_level":"C","claims":["pi.security.examples-are-not-default-boundaries"],"statement":"默认 Coding Agent 继承宿主权限，确认与容器示例属于扩展或外部部署；Session Context 是持久历史的派生投影。","conditions":["强隔离必须由真实容器、虚拟机或沙箱配置证明。"]},
+    {"harness":"opencode","capability":"default","evidence_level":"B","claims":["opencode.permission.ask-is-not-os-sandbox"],"statement":"Permission Ask/Allow/Deny 控制应用调用，Snapshot/Revert 主要处理工作树；网络、数据库和外部目录副作用不保证回滚。","conditions":["运行进程的宿主权限和分享副本必须另行审计。"]}
+  ]
+}

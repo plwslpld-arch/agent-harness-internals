@@ -10,6 +10,7 @@ test('聚合检查显式使用 core 来源并包含全部新门禁', () => {
   for (const required of [
     'scripts/verify-analysis.mjs',
     'scripts/verify-claims.mjs',
+    'scripts/verify-comparison-matrices.mjs',
     'scripts/check-navigation.mjs',
     'scripts/check-content-contract.mjs',
     'scripts/check-visuals.mjs',

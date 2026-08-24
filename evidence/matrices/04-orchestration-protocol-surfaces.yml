@@ -1,0 +1,11 @@
+{
+  "id":"orchestration-protocol-surfaces","title":"编排、扩展、协议与产品表面","article":"docs/comparisons/04-orchestration-protocol-surfaces.md","question":"六条主线怎样通过子任务、扩展和协议把同一任务核心暴露给不同客户端？","control_variables":["同一父任务与单个子任务","同一外部工具协议能力","客户端投影与服务端事实分开"],
+  "entries":[
+    {"harness":"deepseek-harness","capability":"optional","evidence_level":"D","claims":["deepseek-harness.orchestration.extensions-share-core-loop"],"statement":"Goal、Todo、Subagent、Workflow、Skill、MCP 与 Code Runtime 复用核心循环，但各自增加状态和失败边界。","conditions":["扩展被发现、模型可见和成功执行是不同状态。"]},
+    {"harness":"codex","capability":"optional","evidence_level":"D","claims":["codex.extensions.capabilities-are-dynamically-assembled"],"statement":"Skill、Hook、MCP、Connector、Code Mode 与 Subagent 动态改变工具和上下文表面，多客户端只投影共享核心的一部分。","conditions":["线程作用域、协作模式和协议版本必须固定。"]},
+    {"harness":"gemini-cli","capability":"optional","evidence_level":"B","claims":["gemini-cli.extensions.capabilities-are-dynamically-assembled"],"statement":"Agent、Hook、Skill 与 MCP 经配置和策略装配，CLI、IDE、Headless 输出使用不同投影与交互责任。","conditions":["发现和连接成功都不代表策略允许或任务完成。"]},
+    {"harness":"claude","capability":"optional","evidence_level":"D","claims":["claude.extensions.configuration-is-not-execution"],"statement":"MCP、Agent 与 Skill 配置只能证明能力声明；Python SDK MCP Bridge 和闭源 Claude Code 产品表面不能互相替代。","conditions":["闭源产品扩展行为按官方契约，SDK 行为按各自公开版本。"]},
+    {"harness":"pi","capability":"extension","evidence_level":"B","claims":["pi.extensions.can-change-runtime-surfaces"],"statement":"Extension 可改写 Prompt、工具和事件表面，Protocol/Server/Client 与 TUI 再把核心状态映射到不同进程和界面。","conditions":["扩展代码继承宿主能力，协议连接不等于任务成功。"]},
+    {"harness":"opencode","capability":"default","evidence_level":"B","claims":["opencode.extensions.change-runtime-surfaces"],"statement":"Agent、Skill、Plugin、MCP 与 LSP 改变运行表面，Server/Protocol/SDK 为 TUI、Web、Desktop 和 ACP 提供共享服务核心。","conditions":["各客户端缓存、路由、窗口和协议状态不构成服务端权威事实。"]}
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "id":"runtime-config-model-input","title":"运行边界、配置与模型输入","article":"docs/comparisons/01-runtime-config-model-input.md","question":"六条主线怎样从产品入口、项目上下文和分层配置形成一次真实模型请求？","control_variables":["同一任务目标与初始工作区","相同模型能力类别但不假定 Provider 等价","只比较锁定版本公开表面"],
+  "entries":[
+    {"harness":"deepseek-harness","capability":"default","evidence_level":"D","claims":["deepseek-harness.boot.profile-preset-composition"],"statement":"启动 Profile、Preset 与运行组件共同装配实例，不能把某个包或 Preset 名称直接当成最终有效配置。","conditions":["推断来自锁定源码的组合关系；具体部署覆盖仍需读取有效实例。"]},
+    {"harness":"codex","capability":"default","evidence_level":"B","claims":["codex.config.layered-and-thread-scoped"],"statement":"配置经多层来源合并并进入线程与请求上下文，模型和指令选择受当前线程表面约束。","conditions":["只覆盖锁定 Rust 核心与上游测试，不代表云端产品所有托管策略。"]},
+    {"harness":"gemini-cli","capability":"default","evidence_level":"B","claims":["gemini-cli.config.layered-effective-settings"],"statement":"全局、工作区、环境与运行参数形成有效设置，Prompt 与工具表面随后按策略和模型条件装配。","conditions":["模型目录、认证和真实服务可达性分别核对。"]},
+    {"harness":"claude","capability":"default","evidence_level":"D","claims":["claude.architecture.product-sdk-boundaries"],"statement":"Claude Code 公开产品契约、Python SDK 实现与 TypeScript SDK 材料是三种证据面，不能用 SDK 反推闭源产品内部 Prompt 装配。","conditions":["闭源产品行为只接受官方公开契约；实现细节仅落到公开 SDK 源码范围。"]},
+    {"harness":"pi","capability":"default","evidence_level":"D","claims":["pi.architecture.layers-are-composed"],"statement":"AI、Agent 与 Coding Agent 分层组合，模型输入由上层资源、会话和扩展装配，设计文档不自动成为现行运行能力。","conditions":["只比较锁定现行源码；未来设计和扩展示例单独标注。"]},
+    {"harness":"opencode","capability":"default","evidence_level":"B","claims":["opencode.config.layers-build-instance"],"statement":"Project/Instance 固定运行目录，配置层合并后 Provider 才构建当前实例的模型表面；目录命中不是请求成功。","conditions":["认证、区域、网络、配额和 SDK 解析仍是运行条件。"]}
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "id":"observability-eval-deployment","title":"可观测性、独立评测与部署维护","article":"docs/comparisons/05-observability-eval-deployment.md","question":"六条主线留下哪些运行证据，怎样接入独立评分、训练反馈、候选选择和发布治理？","control_variables":["固定 Dataset、Trial 与 Artifact Schema","同一外部 Scorer 版本","训练、候选选择和发布 Holdout 隔离"],
+  "entries":[
+    {"harness":"deepseek-harness","capability":"optional","evidence_level":"D","claims":["deepseek-harness.feedback.is-not-training-reward"],"statement":"Feedback 与运行记录可以进入外部评测和改进流程，但反馈事件本身不定义训练奖励或发布授权。","conditions":["外部 Scorer、统计门槛和发布治理需另行实现。"]},
+    {"harness":"codex","capability":"optional","evidence_level":"D","claims":["codex.feedback-trace.is-not-release-eval"],"statement":"Rollout Trace、Telemetry 与 Feedback 提供运行证据，不自动冻结 Trial、执行独立评分或批准发布。","conditions":["云端与本地表面的数据可见性和保留策略分别核对。"]},
+    {"harness":"gemini-cli","capability":"optional","evidence_level":"B","claims":["gemini-cli.telemetry.tool-decisions-are-not-eval"],"statement":"Telemetry 可记录工具决策和运行事件，但固定任务、Artifact Scorer 与独立发布门禁仍由外部评测契约承担。","conditions":["采集开关、导出器和后端留存是部署条件。"]},
+    {"harness":"claude","capability":"not-applicable","evidence_level":"D","claims":["claude.feedback.is-not-training-or-release-reward"],"statement":"公开 Feedback、Usage 与消息契约不能证明训练 Reward 或 Release Eval；闭源服务内部训练用途保持未知。","conditions":["只声明公开可核范围，不推断 Anthropic 内部数据处理。"]},
+    {"harness":"pi","capability":"default","evidence_level":"B","claims":["pi.telemetry.contract-is-not-scorer"],"statement":"Telemetry Schema 与 Eval Harness 能记录和汇总运行证据，但外部 Score 语义、RewardAdapter 和独立发布阈值仍需显式提供。","conditions":["Session 分享、遥测、测试 Artifact 和 Scorer 分别治理。"]},
+    {"harness":"opencode","capability":"not-applicable","evidence_level":"D","claims":["opencode.telemetry-and-tests-are-not-release-eval"],"statement":"OpenTelemetry、Share 与上游测试提供可关联证据，没有内置固定 Trial、版本化 Scorer、训练适配或发布 Holdout。","conditions":["独立评测责任链是本仓库规范建议，不冒充上游能力。"]}
+  ]
+}
