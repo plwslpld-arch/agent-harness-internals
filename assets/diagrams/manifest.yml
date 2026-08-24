@@ -208,6 +208,14 @@
       "scope": "docs/harnesses/codex/04-exec-policy-sandbox.md",
       "alt": "Codex 从命令解析、执行策略、审批与权限描述到多平台沙箱、网络代理和进程结果的中文安全边界图",
       "claims": ["codex.security.approval-policy-sandbox-separation", "codex.security.platform-enforcement-differs"]
+    },
+    {
+      "id": "codex-rollout-history-memory",
+      "path": "assets/diagrams/codex/05-rollout-history-memory.svg",
+      "type": "data-flow",
+      "scope": "docs/harnesses/codex/05-rollout-history-memory.md",
+      "alt": "Codex 从追加记录、线程存储到模型上下文、压缩替代、恢复投影与长期记忆的中文数据权威图",
+      "claims": ["codex.rollout.store-history-context-separation", "codex.compaction.resume-has-bounded-semantics"]
     }
   ]
 }

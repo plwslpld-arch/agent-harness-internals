@@ -1,0 +1,19 @@
+{
+  "id": "codex.rollout.store-history-context-separation",
+  "harness": "codex",
+  "dimension": "rollout.store-history-context-separation",
+  "statement": "锁定 Codex 将 ThreadId 持久句柄、RolloutItem 记录、恢复初始历史和模型可见 Context 分层表示；它们相关但不共享同一权威范围。",
+  "capability": "default",
+  "version": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+  "surface": "thread-persistence-and-model-history",
+  "platform": "all",
+  "mode": "storage-backend-dependent",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/thread-store/src/lib.rs","lines":"1-5","excerpt":"Application code should treat [`codex_protocol::ThreadId`] as the only durable thread handle."},
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/history/src/lib.rs","lines":"93-105","excerpt":"pub enum RolloutItem {"},
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/history/src/lib.rs","lines":"209-221","excerpt":"pub enum InitialHistory {"},
+    {"type":"upstream-test","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/tests/suite/resume.rs","lines":"23-74","excerpt":"expected initial messages to be present for resumed session"}
+  ],
+  "last_verified": "2026-08-24"
+}

@@ -1,0 +1,20 @@
+{
+  "id": "codex.compaction.resume-has-bounded-semantics",
+  "harness": "codex",
+  "dimension": "compaction.resume-has-bounded-semantics",
+  "statement": "锁定 Codex 的压缩会构造替代模型历史并持久化 Compacted 检查点，恢复则从持久项重建事件与上下文；这证明有界恢复语义，但不保证摘要无损、外部副作用恰好一次或所有崩溃点可恢复。",
+  "capability": "default",
+  "version": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+  "surface": "core-compaction-and-resume",
+  "platform": "upstream-test-supported-platforms",
+  "mode": "history-and-provider-dependent",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/src/compact.rs","lines":"347-384","excerpt":"sess.replace_compacted_history("},
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/history/src/lib.rs","lines":"141-150","excerpt":"pub struct CompactedItem {"},
+    {"type":"upstream-test","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/tests/suite/compact.rs","lines":"635-697","excerpt":"expected a Compacted entry containing the summarizer output"},
+    {"type":"upstream-test","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/tests/suite/resume.rs","lines":"23-74","excerpt":"assert_eq!(completed.turn_id, started.turn_id);"}
+  ],
+  "limitations": ["未证明摘要无损。", "未覆盖所有崩溃点和外部副作用幂等性。"],
+  "last_verified": "2026-08-24"
+}

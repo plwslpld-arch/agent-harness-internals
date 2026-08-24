@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 980" role="img" aria-labelledby="title desc">
+  <title id="title">Codex 记录与记忆数据权威</title>
+  <desc id="desc">追加记录经线程存储解析为恢复事件和模型上下文，压缩生成替代历史，长期记忆由跨线程摘要派生，各层权威范围不同。</desc>
+  <defs><marker id="a" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto"><path d="M0 0l14 7-14 7z" fill="#087F7C"/></marker><marker id="d" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto"><path d="M0 0l14 7-14 7z" fill="#D2673A"/></marker><filter id="s" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#17324D" flood-opacity=".12"/></filter></defs>
+  <rect width="1400" height="980" rx="34" fill="#F6F9FC"/>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <text x="700" y="55" text-anchor="middle" fill="#17324D" font-size="36" font-weight="760">保存、恢复、压缩与记忆不是同一层数据</text>
+    <text x="700" y="91" text-anchor="middle" fill="#50677D" font-size="19">先标出权威记录，再追踪每个派生视图的损失与消费者</text>
+    <g filter="url(#s)">
+      <rect x="55" y="140" width="390" height="188" rx="22" fill="#E9F2FF" stroke="#3569A8" stroke-width="2"/><text x="250" y="184" text-anchor="middle" fill="#285383" font-size="25" font-weight="760">追加式运行记录</text><text x="88" y="224" fill="#50677D" font-size="18">会话元数据　模型响应　轮次上下文</text><text x="88" y="258" fill="#50677D" font-size="18">事件　世界状态　压缩检查点</text><text x="88" y="296" fill="#8A3D2F" font-size="17">保留可恢复事实，不等于事务日志</text>
+      <rect x="505" y="140" width="390" height="188" rx="22" fill="#F0ECF8" stroke="#76559B" stroke-width="2"/><text x="700" y="184" text-anchor="middle" fill="#60458C" font-size="25" font-weight="760">线程存储与稳定身份</text><text x="538" y="224" fill="#50677D" font-size="18">线程标识解析到具体存储后端</text><text x="538" y="258" fill="#50677D" font-size="18">读取　追加　归档　恢复　派生</text><text x="538" y="296" fill="#8A3D2F" font-size="17">句柄稳定，不承诺底层永不迁移</text>
+      <rect x="955" y="140" width="390" height="188" rx="22" fill="#E7F5F3" stroke="#087F7C" stroke-width="2"/><text x="1150" y="184" text-anchor="middle" fill="#086E6B" font-size="25" font-weight="760">活动会话历史</text><text x="988" y="224" fill="#50677D" font-size="18">恢复已有项并结合当前配置</text><text x="988" y="258" fill="#50677D" font-size="18">生成产品事件与模型可见视图</text><text x="988" y="296" fill="#8A3D2F" font-size="17">派生视图不能反推全部原始记录</text>
+    </g>
+    <g fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#a)"><path d="M445 234h48"/><path d="M895 234h48"/></g>
+    <text x="700" y="390" text-anchor="middle" fill="#17324D" font-size="27" font-weight="760">两条不同的派生路径</text>
+    <g filter="url(#s)">
+      <rect x="90" y="435" width="560" height="180" rx="22" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2"/><text x="370" y="480" text-anchor="middle" fill="#955A00" font-size="24" font-weight="760">上下文压缩检查点</text><text x="125" y="520" fill="#50677D" font-size="18">请求摘要 → 构造替代历史 → 写入压缩项</text><text x="125" y="555" fill="#50677D" font-size="18">后续采样保留用户消息、摘要与新消息</text><text x="125" y="590" fill="#8A3D2F" font-size="17">摘要有损，多次压缩可能降低准确性</text>
+      <rect x="750" y="435" width="560" height="180" rx="22" fill="#FFF0E8" stroke="#D2673A" stroke-width="2"/><text x="1030" y="480" text-anchor="middle" fill="#8A3D2F" font-size="24" font-weight="760">跨线程长期记忆</text><text x="785" y="520" fill="#50677D" font-size="18">扫描运行记录 → 生成摘要 → 分阶段整合</text><text x="785" y="555" fill="#50677D" font-size="18">独立文件布局、扩展输入与保留策略</text><text x="785" y="590" fill="#8A3D2F" font-size="17">派生知识不能覆盖线程事实与外部权威</text>
+    </g>
+    <path d="M1150 328v72H370v23" fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#a)"/><path d="M1150 328v72H1030v23" fill="none" stroke="#D2673A" stroke-width="4" stroke-dasharray="10 8" marker-end="url(#d)"/>
+    <g filter="url(#s)">
+      <rect x="90" y="685" width="560" height="130" rx="20" fill="#E7F5F3" stroke="#087F7C" stroke-width="2"/><text x="370" y="728" text-anchor="middle" fill="#086E6B" font-size="23" font-weight="760">恢复与派生线程</text><text x="370" y="764" text-anchor="middle" fill="#50677D" font-size="18">恢复延续原身份；派生线程建立新身份并保留来源</text><text x="370" y="793" text-anchor="middle" fill="#8A3D2F" font-size="17">读取已提交结果，不默认重放旧副作用</text>
+      <rect x="750" y="685" width="560" height="130" rx="20" fill="#E9F2FF" stroke="#3569A8" stroke-width="2"/><text x="1030" y="728" text-anchor="middle" fill="#285383" font-size="23" font-weight="760">独立核对与发布门禁</text><text x="1030" y="764" text-anchor="middle" fill="#50677D" font-size="18">回查原始记录、任务产物与外部权威源</text><text x="1030" y="793" text-anchor="middle" fill="#8A3D2F" font-size="17">恢复成功与记忆命中都不等于任务通过</text>
+    </g>
+    <path d="M370 615v58" fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#a)"/><path d="M1030 615v58" fill="none" stroke="#D2673A" stroke-width="4" stroke-dasharray="10 8" marker-end="url(#d)"/>
+    <rect x="55" y="860" width="1290" height="82" rx="18" fill="#17324D"/><text x="84" y="895" fill="#FFFFFF" font-size="20" font-weight="760">核心边界：</text><text x="215" y="895" fill="#D3E1EA" font-size="18">模型上下文是有界投影；压缩摘要和长期记忆都是派生工件</text><text x="215" y="925" fill="#7FE0D5" font-size="18">任何恢复结论都要标出提交点、身份、原始记录与未重放的外部副作用</text>
+  </g>
+</svg>

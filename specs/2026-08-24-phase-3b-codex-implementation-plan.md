@@ -79,10 +79,10 @@
 
 ### Task 7：Rollout、History、Thread Store、恢复、Compaction 与 Memory
 
-- [ ] 完成 `05-rollout-history-memory.md`、中文状态与数据权威图和恢复 Claim。
-- [ ] 覆盖 Rollout Item、历史视图、Thread Store、SQLite、resume/fork、Compaction 和长期 Memory。
-- [ ] 明确原始记录、派生模型 Context、压缩摘要、线程元数据和记忆文件的权威关系。
-- [ ] 提交：`docs(codex): 发布记录恢复与记忆课程`。
+- [x] 完成 `05-rollout-history-memory.md`、中文状态与数据权威图和恢复 Claim。
+- [x] 覆盖 Rollout Item、历史视图、Thread Store、SQLite、resume/fork、Compaction 和长期 Memory。
+- [x] 明确原始记录、派生模型 Context、压缩摘要、线程元数据和记忆文件的权威关系。
+- [x] 提交：`docs(codex): 发布记录恢复与记忆课程`。
 
 ### Task 8：Skill、Hook、Plugin、MCP、Connector 与 Code Mode
 
