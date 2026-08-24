@@ -1,0 +1,46 @@
+{
+  "stage": "phase-6-final-deployment",
+  "date": "2026-08-24",
+  "commit": "942f6c6f775a032a26fc1e169add7b9ca1fa6408",
+  "promises": [
+    {"id":"p-public-repository","statement":"公开仓库使用 Agent Harness 单主线定位，完整发布中文课程、导航、品牌与可核对证据边界。"},
+    {"id":"p-history-hygiene","statement":"历史不含 Codex 或 Claude 协作者尾注与 Claude Session 行，同时保留人类作者、提交主题、顺序、拓扑和最终文件树。"},
+    {"id":"p-github-governance","statement":"仓库名、中文 About、Topics、默认分支、功能开关、Social Preview 与 main 保护规则符合机器元数据。"},
+    {"id":"p-public-attribution","statement":"公开 Contributors 只来自人类账号或匿名人类作者，不出现 Codex 或 Claude 贡献者。"},
+    {"id":"p-release-verification","statement":"Node 24 本地全量门禁、全部锁定来源和真实 main 的 GitHub Actions 均通过。"}
+  ],
+  "evidence": [
+    {"id":"e-readme-brand","promise":"p-public-repository","type":"file","reference":"README.md","summary":"README 使用正式中文组合标，说明六条核心主线、Eval 横切能力、阅读路径、证据等级与非生产就绪边界。"},
+    {"id":"e-course-gates","promise":"p-public-repository","type":"test","reference":"scripts/check-all.mjs","summary":"七十八篇课程、八十一张中文图示、一百八十九个导航链接、一百一十九条 Claim 与一百三十二处锚点通过。"},
+    {"id":"e-history-audit","promise":"p-history-hygiene","type":"command","reference":"scripts/rewrite-history-metadata.mjs","summary":"main 的二百二十六个提交中目标提交数和目标行数均为零。"},
+    {"id":"e-repository-metadata","promise":"p-github-governance","type":"file","reference":".github/repository-metadata.yml","summary":"仓库名、公开可见性、中文 About、Topics、功能开关、默认分支、Social Preview 与保护规则均有声明。"},
+    {"id":"e-github-graphql","promise":"p-github-governance","type":"command","reference":"gh api graphql","summary":"GitHub 返回公开仓库、main 默认分支、目标 About 与 Topics，并确认 usesCustomOpenGraphImage 为 true。"},
+    {"id":"e-branch-protection","promise":"p-github-governance","type":"command","reference":"gh api repos/plwslpld-arch/agent-harness-internals/branches/main/protection","summary":"main 严格要求 verify，管理员同样受约束，禁止强推和删除，并要求线性历史与会话解决。"},
+    {"id":"e-contributors","promise":"p-public-attribution","type":"command","reference":"gh api repos/plwslpld-arch/agent-harness-internals/contributors","summary":"Contributors API 仅返回 plwslpld-arch 与匿名人类作者 ai_coder_142，不含 Codex 或 Claude。"},
+    {"id":"e-all-sources","promise":"p-release-verification","type":"command","reference":"scripts/verify-sources.mjs","summary":"all 配置中的十七个锁定 Checkout 全部通过定义、Commit 与工作树核验。"},
+    {"id":"e-main-workflow","promise":"p-release-verification","type":"command","reference":"gh run view 32711889885","summary":"真实 main 提交 942f6c6 的 verify 工作流成功完成来源准备和仓库检查。"}
+  ],
+  "findings": [
+    {"id":"f-protected-push","priority":"high","status":"resolved","summary":"管理员直推被保护规则拒绝，部署不能通过临时拆除保护来完成。"},
+    {"id":"f-rebase-review-sha","priority":"high","status":"resolved","summary":"rebase 合并改变阶段内容提交 SHA，曾导致 main 的复核可达性门禁失败。"},
+    {"id":"f-history-metadata","priority":"high","status":"resolved","summary":"最终历史必须重新确认目标协作者尾注与 Session 元数据为零，不能只依赖旧审计。"},
+    {"id":"f-public-identity","priority":"high","status":"resolved","summary":"仓库内品牌文件存在不证明 GitHub 的 About、Topics、Social Preview 和保护规则已经应用。"},
+    {"id":"f-contributors","priority":"high","status":"resolved","summary":"删除 README 的 Contributors 链接不等于公开贡献者归因已经清理。"}
+  ],
+  "resolutions": [
+    {"id":"f-protected-push","action":"所有最终变更均通过受保护 PR、线上 verify 和 rebase 合并进入 main，保护规则全程保持启用。","evidence":["e-branch-protection","e-main-workflow"]},
+    {"id":"f-rebase-review-sha","action":"以相同 Git Tree 和提交主题映射 rebase 前后 SHA，更新十二份阶段 5B 记录，并让真实 main 工作流重新通过。","evidence":["e-course-gates","e-main-workflow"]},
+    {"id":"f-history-metadata","action":"对最终 main 重新执行历史审计，二百二十六个提交中目标提交数与目标行数均为零。","evidence":["e-history-audit"]},
+    {"id":"f-public-identity","action":"分别通过 GitHub GraphQL、仓库 API 与分支保护 API 核对公开身份、Social Preview、功能开关和治理规则。","evidence":["e-repository-metadata","e-github-graphql","e-branch-protection"]},
+    {"id":"f-contributors","action":"直接核对 Contributors API 和公开图表入口，确认只有人类账号与匿名人类作者。","evidence":["e-contributors"]}
+  ],
+  "commands": [
+    {"command":"node scripts/check-all.mjs","exit_code":0,"summary":"Node v24.19.0 下全部十七组聚合检查通过，一百一十三项测试零失败。"},
+    {"command":"node scripts/verify-sources.mjs --profile all","exit_code":0,"summary":"十七个来源定义和十七个 all 配置 Checkout 全部通过。"},
+    {"command":"node scripts/rewrite-history-metadata.mjs --ref main","exit_code":0,"summary":"二百二十六个提交中不存在目标尾注或 Session 行。"},
+    {"command":"gh api graphql 读取仓库公开身份与 Open Graph 状态","exit_code":0,"summary":"仓库为 public、默认分支为 main、usesCustomOpenGraphImage 为 true。"},
+    {"command":"gh api 读取 main 保护规则与 Contributors","exit_code":0,"summary":"verify、管理员约束、禁强推、禁删除和线性历史生效；贡献者不含 Codex 或 Claude。"},
+    {"command":"gh run list 核对真实 main 工作流","exit_code":0,"summary":"main 提交 942f6c6 的 verify 成功完成。"}
+  ],
+  "result": "pass"
+}

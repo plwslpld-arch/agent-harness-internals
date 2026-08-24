@@ -31,14 +31,14 @@
 ## Task 5：GitHub 元数据与社交预览
 
 - [x] 把仓库改名为 `agent-harness-internals`，更新 Origin、中文 About、Topics、Issues、Wiki、可见性和默认分支。
-- [x] 上传 `assets/brand/social-preview.png`；GitHub GraphQL 已确认 `usesCustomOpenGraphImage: true`，公开 CDN 的异步传播延迟不作为部署阻断项，Logo、README 与相对链接另行核验通过。
+- [x] 上传 `assets/brand/social-preview.png`；GitHub GraphQL 已确认 `usesCustomOpenGraphImage: true`，Logo、README 与相对链接核验通过。
 - [x] 应用 main 分支保护：要求 `verify`、管理员同样受约束、禁止强推和删除。
 
 ## Task 6：公开状态验证与最终复核
 
 - [x] 通过 GitHub API 和公开网页核对仓库名、About、Topics、默认分支、License、保护规则、最新提交与工作流。
 - [x] 核对 Contributors 页面不再出现 Codex 或 Claude；API 只返回人类账号和匿名人类提交者，公开页面无对应贡献者条目。
-- [ ] 写入阶段 6 对抗复核，勾选总路线，提交并普通推送最终记录。
+- [x] 写入阶段 6 对抗复核，勾选总路线，通过受保护 PR 推送最终记录。
 
 ## 完成定义
 

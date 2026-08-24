@@ -37,7 +37,7 @@
 - [x] 阶段 5B：全仓教学深度重写。
   - 计划：`specs/2026-08-24-phase-5b-learning-depth-implementation-plan.md`
   - 验收：六条主线不再是研究摘要；每篇都讲清核心概念、设计理由、实现思路与贯穿案例，共同基础、比较、角色、实验和扩展样本按各自课程职责完成复审。
-- [ ] 阶段 6：全仓审计、合并、推送和 GitHub 部署。
+- [x] 阶段 6：全仓审计、合并、推送和 GitHub 部署。
   - 验收：Node 24 完整检查通过；历史提交消息中的 Codex/Claude `Co-Authored-By` 与 Claude Session 元数据已受控移除，人类作者和内容历史保留；仓库名、About、Topics、Social preview、保护规则、Contributors 和公开页面完成核验。
 
 ## 每阶段固定闭环
