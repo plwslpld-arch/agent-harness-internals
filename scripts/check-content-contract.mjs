@@ -136,6 +136,20 @@ function piEntryFailures(content, errors) {
   if (claims.size < 2) errors.push('pi 一级入口必须引用至少两个正式 Claim');
 }
 
+function opencodeEntryFailures(content, errors) {
+  if (!/Project\/Config[\s\S]{0,260}Provider[\s\S]{0,260}Session[\s\S]{0,260}(?:Processor|工具)/u.test(content)) {
+    errors.push('OpenCode 一级入口必须声明 Project/Config、Provider、Session 与 Processor/工具的服务化任务主链');
+  }
+  if (!/权限[\s\S]{0,180}(?:不等于|不是)[\s\S]{0,80}(?:沙箱|操作系统隔离)/u.test(content)) {
+    errors.push('OpenCode 一级入口必须声明权限询问不等于操作系统沙箱');
+  }
+  if (!/(?:测试|Telemetry|遥测|Share|分享)[\s\S]{0,260}(?:不等于|不能替代)[\s\S]{0,120}(?:独立评测|发布门禁|Scorer)/u.test(content)) {
+    errors.push('OpenCode 一级入口必须声明测试、遥测或分享不能替代独立评测与发布门禁');
+  }
+  const claims = new Set(content.match(/^Claim:\s+[a-z0-9.-]+$/gmu) ?? []);
+  if (claims.size < 2) errors.push('OpenCode 一级入口必须引用至少两个正式 Claim');
+}
+
 function harnessEntryFailures(content, errors, relativePath) {
   const course = requireSection(content, '课程状态与顺序', errors);
   if (course !== null && !/^\|[^\n]*状态[^\n]*\|/mu.test(course)) {
@@ -152,6 +166,7 @@ function harnessEntryFailures(content, errors, relativePath) {
   }
   if (relativePath === 'docs/harnesses/claude/README.md') claudeEntryFailures(content, errors);
   if (relativePath === 'docs/harnesses/pi/README.md') piEntryFailures(content, errors);
+  if (relativePath === 'docs/harnesses/opencode/README.md') opencodeEntryFailures(content, errors);
 }
 
 function foundationFailures(content, errors) {

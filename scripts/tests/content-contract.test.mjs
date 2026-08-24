@@ -361,3 +361,36 @@ Claim: pi.task.coding-agent-composes-core
     content: entry.content.replace('Claim: pi.task.coding-agent-composes-core', ''),
   }).join('\n'), /至少两个正式 Claim/u);
 });
+
+test('OpenCode 一级入口必须声明服务化主链、权限边界与独立评测出口', () => {
+  const entry = {
+    relativePath: 'docs/harnesses/opencode/README.md',
+    metadata: { status: 'reviewed' },
+    content: `${harnessContent()}
+## 课程状态与顺序
+
+| 序号 | 课程 | 状态 |
+| --- | --- | --- |
+| 00 | 总览 | 已复核 |
+
+![OpenCode 中文系统架构图](../../../assets/diagrams/opencode/system-architecture.svg)
+
+![OpenCode 中文端到端任务流程图](../../../assets/diagrams/opencode/end-to-end-task.svg)
+
+OpenCode 的服务化任务主链从 Project/Config 进入 Provider，再由 Session Prompt 和 Processor 驱动模型、工具与消息状态。
+
+权限规则和用户询问不等于操作系统沙箱；真实副作用仍发生在宿主或另行部署的隔离边界内。
+
+测试、Telemetry 与 Share 能留下运行证据，但不能替代独立评测、Scorer 和发布门禁。
+
+Claim: opencode.architecture.service-core-multiple-surfaces
+
+Claim: opencode.task.session-processor-closes-loop
+`,
+  };
+  assert.deepEqual(contentContractFailures(entry), []);
+  assert.match(contentContractFailures({...entry, content: entry.content.replace('OpenCode 的服务化任务主链从 Project/Config 进入 Provider，再由 Session Prompt 和 Processor 驱动模型、工具与消息状态。', '')}).join('\n'), /Project\/Config/u);
+  assert.match(contentContractFailures({...entry, content: entry.content.replace('权限规则和用户询问不等于操作系统沙箱；真实副作用仍发生在宿主或另行部署的隔离边界内。', '')}).join('\n'), /操作系统沙箱/u);
+  assert.match(contentContractFailures({...entry, content: entry.content.replace('测试、Telemetry 与 Share 能留下运行证据，但不能替代独立评测、Scorer 和发布门禁。', '')}).join('\n'), /独立评测/u);
+  assert.match(contentContractFailures({...entry, content: entry.content.replace('Claim: opencode.task.session-processor-closes-loop', '')}).join('\n'), /至少两个正式 Claim/u);
+});
