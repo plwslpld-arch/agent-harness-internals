@@ -26,7 +26,7 @@
 - [x] Gemini CLI 九篇：重点补齐 Core/CLI 分工、Policy/Safety/Confirmation、工具、调度、会话和评测的教学链。
 - [x] Claude 九篇：重点补齐闭源产品可观察边界、工具权限、Hook、子代理、会话、SDK 映射和评测出口的教学链。
 - [x] pi 九篇：重点补齐 AI、Agent、Coding Agent、Protocol、Session、Telemetry 与 Evals 的模块责任和宿主边界。
-- [ ] OpenCode 九篇：重点补齐 Provider、Session、Permission、Server、Protocol、多客户端与独立评测出口。
+- [x] OpenCode 九篇：重点补齐 Provider、Session、Permission、Server、Protocol、多客户端与独立评测出口。
 - [ ] 每条主线完成后单独运行内容、锚点、来源、链接、图示与中文门禁，并写一份对抗复核记录。
 
 ## Task 4：补强横向课程与实践材料

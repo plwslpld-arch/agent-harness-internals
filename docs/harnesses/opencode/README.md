@@ -21,6 +21,108 @@ OpenCode 的服务化任务主链从 Project/Config 进入 Provider，再由 Ses
 
 测试、Telemetry 与 Share 能留下运行证据，但不能替代独立评测、Scorer 和发布门禁。上游测试可以证明锁定夹具中的状态机行为，OpenTelemetry 可以记录请求 Span，Share 可以生成外部副本；三者都没有自动判断用户目标、补丁正确性、不可接受副作用或发布风险。
 
+## 核心概念
+
+OpenCode 的共享核心由 Project/Instance、Effective Config、Provider Runtime、Session Prompt、LLM Stream、Processor、Tool/Permission 和 Storage 组成。多种客户端围绕这套核心投影，不各自实现一套 Harness。分析任务时沿责任链追踪，而不是按包名或界面名称罗列功能。
+
+控制终态与产品终态严格分开。Provider Finish 描述生成结束，Processor 返回 continue/compact/stop，Session Idle 表示当前 Run 收敛，HTTP/ACP 成功表示表面协议完成；独立 Eval 才根据文件、测试和副作用判断任务正确。一个任务可以在前四层成功而最终失败。
+
+权限、隔离、恢复和评测也各有边界。Permission 决定应用是否调用工具，外部 Sandbox 决定 OS 能力，Snapshot/Revert 处理工作树，Trial/Scorer/Gate 处理质量决策。把它们合成一个 success 会隐藏不可逆副作用和证据缺口。
+
+| 层级 | 主要责任 | 关键证据 | 不拥有的结论 |
+| --- | --- | --- | --- |
+| Project/Config | 项目作用域与有效配置 | Instance Snapshot、Provenance | Provider 健康 |
+| Provider/LLM | 模型、认证和流事件 | Runtime、原始错误、Usage | 工具与任务成功 |
+| Session/Processor | 跨轮循环与 Part 归约 | Message/Part/Event | 产品正确性 |
+| Tool/Permission | 表面、规则和副作用执行 | Schema、Decision、Result | OS 强制隔离 |
+| Storage/Compaction | 持久历史与模型投影 | 原 Entry、Summary、Manifest | 摘要无损 |
+| Server/Surface | 请求、事件和客户端视图 | OpenAPI、Cursor、Snapshot | 最终文件正确 |
+| Share/Telemetry | 数据出站与观测 | URL/删除记录、Span | 评分与发布 |
+| Eval/Release | 固定 Trial、Scorer 和 Holdout | Artifact、Score、Gate | 修改运行事实 |
+
+## 为什么这样设计
+
+服务化核心让 CLI、Web、Desktop、SDK 和 ACP 共享 Session 与事件，也支持多项目长寿命进程。Instance Context 与 Location 将请求绑定正确目录，客户端只维护自己的表现状态。复用减少逻辑分叉，代价是必须处理版本、连接、作用域和缓存对账。
+
+Processor 把流事件归约为持久 Part，使实时 UI、Resume 和 Eval 使用同一会话事实；外层 Prompt Loop 再解释工具与压缩。Provider Adapter 不负责跨轮任务，客户端也不负责业务状态机，错误因此能定位到准确层级。
+
+应用层 Permission 保留可组合的人机决策，强隔离交给部署环境，避免用 Prompt 或确认框伪装安全边界。Snapshot/Revert 专注工作树，不假装撤销网络或数据库。每个机制只承诺可验证范围。
+
+Eval 作为横切出口而非第二主线，可以连接整个 Agent Harness 运行证据，同时保持 Scorer、RewardAdapter、Checkpoint 和 Release Holdout职责分离。这样既解释 OpenCode 自带测试/遥测/分享，也不夸大为完整生产发布系统。
+
+这套分层还提供跨 Harness 比较坐标：配置、循环、工具、状态、扩展、协议、表面和评测均按同一责任提问，同时保留 OpenCode 的服务化与 Message/Part 特征。
+
+## 实现思路
+
+学习与验证使用一条端到端 Layer Trace。以下结构是课程证据模型，不是 OpenCode 上游同名类型；每层记录输入输出、版本、终态和未知项。
+
+Trace 不复制所有敏感正文，而是用稳定 ID 与受控 Artifact 关联。公开课程可验证结构、源码锚点和合成案例，真实凭据、私有代码和生产数据仍留在授权环境。
+
+```ts
+interface OpenCodeLayerTrace {
+  layer: string;
+  revision: string;
+  inputDigest: string;
+  outputDigest: string;
+  terminal: string;
+  evidence: string[];
+  unknowns: string[];
+}
+```
+
+1. 固定 Commit、Directory、Worktree 与 Instance，保存所有配置来源和 Effective Config。
+2. 分别验证 Catalog、Provider Map、Language Runtime 与真实 Stream，认证正文不进入 Artifact。
+3. 记录 Prompt Assembly、最终 Tool Schema、Permission Ruleset、模型流与 Processor Part 转换。
+4. 将工具调用、用户答复、执行提交点、Snapshot/Patch 和外部副作用按 Call ID 关联。
+5. 为每次模型请求保存 History/Compaction Projection Manifest，不把 Summary 当原始历史。
+6. 对 Server/SDK/客户端保存版本、Location、Request、Cursor、Event 与 Surface Snapshot，处理断线对账。
+7. Share 与 Telemetry 分别留出站和观测证据，不进入产品 Verdict。
+8. Eval 固定 Trial/Attempt，Scorer 检查文件和测试；训练选择与独立 Release Holdout 分开。
+
+每层完成后反问下一层仍可能怎样失败，并写入 unknowns。删除设计文档或界面文本后结论仍必须由 Runtime、测试和 Artifact 支持；否则降低证据等级。
+
+当来源版本变化时只重新核对受影响 Layer，随后回放端到端不变量。局部锚点通过不能替整条任务链复验，尤其要重新检查权限、事件映射和 Eval 数据血缘。
+
+## 贯穿案例
+
+以「修复解析器测试且不得修改公共 API」为贯穿任务。用户从 Web 提交 Prompt，服务端创建 Session，模型调用 Read/Edit/Bash，Permission 询问一次，Context 随后压缩，ACP 同时观察，最终 Release Gate 检查结果。
+
+案例采用本地假 Provider、受控工具与临时仓库证明控制语义，真实模型和生产服务保持未验证。任何线上结论都需新增凭据来源、区域、版本和实际副作用证据。
+
+```json
+{
+  "case":"parser-fix-01",
+  "goal":"修复失败测试",
+  "constraint":"公共 API Diff 必须为空",
+  "surface":"web",
+  "observer":"acp",
+  "share":"disabled"
+}
+```
+
+1. Instance 解析 Directory 和 Effective Config，Provider Runtime 成功发起模型流。Catalog 可见与认证成功分别留证。
+2. Processor 将 Tool Call 写成 Part，Permission ask 得到 once；应用允许后，受限容器仍阻止项目外访问。
+3. Edit 产生 Snapshot Patch，Bash 成功运行测试命令但测试内容先失败。Tool completed 与产品失败并列记录。
+4. Compaction Summary 漏掉公共 API 约束，保真检查发现后修复；原 Message/Part 继续保留。
+5. Web 与 ACP 同步同一 Session，ACP 丢失一项私有 Metadata并记录 mapping-loss；表面仍不拥有 Verdict。
+6. Session Idle 后 Scorer读取最终文件、测试和 API Diff。即使测试通过，只要 API Diff 非空，Trial 失败。
+7. Share disabled 阻止外部副本，Telemetry Span ok 只提供诊断；Release Gate 在独立 Holdout 决定是否发布。
+
+```json
+{
+  "provider":"done",
+  "processor":"idle",
+  "permission":"once-allowed",
+  "sandbox":"outside-access-denied",
+  "compaction":"fidelity-repaired",
+  "surfaces":"synchronized-with-mapping-loss",
+  "eval":{"tests":"passed","apiDiff":"non-empty","verdict":"failed"},
+  "release":"rejected"
+}
+```
+
+案例中服务、流、工具、界面和遥测都能成功，产品仍失败。这种并列状态是主线的核心学习目标：每一层对自己的契约负责，最终证据链才能抵抗「客户端显示完成所以任务已完成」的错误推断。
+
 ## 系统架构
 
 ![OpenCode 从项目和配置、模型服务、会话循环、工具权限与持久消息组成共享服务核心，再投影到终端、服务器、开发包、桌面网页和编辑器协议的中文系统架构图](../../../assets/diagrams/opencode/system-architecture.svg)
