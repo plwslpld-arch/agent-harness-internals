@@ -19,6 +19,97 @@ sources: [{"repo":"codex","path":"codex-rs/cli/src/main.rs","commit":"c9b19deb09
 
 先固定证据边界。
 
+## 核心概念
+
+Codex 主线可以从八个连续边界理解：配置形成模型可见输入，Thread / Session / Turn 建立身份，Responses 流产生行动，ToolRouter 与安全链执行行动，Rollout 保存记录，扩展改变能力表面，子智能体形成线程图，产品适配器和 Eval 消费证据。任何一层的完成都只对自己的契约负责。
+
+| 边界 | 核心对象 | 主要问题 | 直接证据 |
+|---|---|---|---|
+| 配置与上下文 | 有效配置、AGENTS、Fragment | 本次模型看见什么 | 脱敏 Responses 请求 |
+| 运行身份 | Thread、Session、Task、Turn | 谁拥有状态、何时结算 | ID、Op / Event、Rollout |
+| 模型循环 | response、sample、follow-up | 何时继续采样 | 流事件、Turn 状态 |
+| 工具执行 | Router、call_id、result | 行动怎样路由并回送 | 调用、结果、外部产物 |
+| 安全强制 | Policy、Approval、Permission、Sandbox | 请求能否与如何执行 | 决策链、平台后端 |
+| 持久与记忆 | Rollout、Store、Compact、Memory | 什么可恢复、什么有损 | 追加记录、替代历史 |
+| 扩展与编排 | Skill、MCP、Code Mode、Subagent | 能力和多线程怎样组合 | 工具表哈希、线程图 |
+| 表面与评测 | CLI、App Server、Trace、Trial | 外部怎样驱动与评分 | 协议输出、Artifact、Score |
+
+Thread 是持久会话身份，Session 是当前活动运行时，Turn 是一次逻辑工作边界，Task 是驱动某种工作流的执行体。一个 Turn 可以有多次模型请求，一个 Thread 可以经历多个 Session，一个 Trial 也不必与 Turn 一一对应。学习时先把这些身份列出来，能避免大多数恢复与统计错误。
+
+模型工具闭环以 call_id 维持因果：首个 Responses 流提出函数调用，Router 找到运行时，安全链决定是否执行，结果进入 Session 历史，下一次采样才能据此继续。模型说「已完成」、命令退出零和 TurnComplete 分别是文本、进程与 Harness 状态，独立 Scorer 才产生任务判定。
+
+Rollout 是重要记录边界，却不包含全部外部世界；模型 Context 又只是 Rollout 与当前配置的有损投影。Compaction 通过摘要替换模型可见历史，Memory 从多个 Thread 提炼候选知识。恢复应读取已提交结果而非重放旧副作用，关键产物要保存内容哈希。
+
+扩展和子智能体扩大了组合空间。Skill 与动态工具要经过发现、信任、鉴权和投影，Code Mode 只改变工具表面，子 Agent 拥有独立 Thread。能力存在、模型可见、获准执行和实际成功是四个不同事实。
+
+## 为什么这样设计
+
+第一，共享 Rust 核心支持 CLI、TUI、无界面执行和 App Server 等表面，避免每个入口复制状态机；适配器仍保留各自传输、错误和终止契约。共享核心带来复用，不意味着协议等价。
+
+第二，Thread 身份、活动 Session 和 Turn 状态分层，使长生命周期历史可以跨进程恢复，同时保持一个 Session 内至多一个活动工作流。需要并行时创建有身份的子线程，而不是让两个匿名轮次竞争同一历史。
+
+第三，模型可见工具与真实 Registry 分离，允许动态能力投影、安全过滤和 Code Mode 表面切换。模型能提出什么与宿主能执行什么各自可审计，未知或未授权工具形成结构化结果。
+
+第四，策略、审批、权限描述与平台 Sandbox 分层，承认控制面决定和操作系统强制是两回事。平台无法兑现关键限制时失效关闭，用户批准也不自动升级为隔离证明。
+
+第五，Rollout、Trace、OTel、Feedback 与 Eval 分开，兼顾恢复、调试、运营和质量判定。观察通道可以缺失或有偏差，发布 Scorer 使用固定任务与独立产物，不让内部完成状态自己给自己打分。
+
+第六，以同一贯穿任务串联各 crate，是为了让读者先掌握数据流和责任边界，再深入包实现。目录结构会演进，稳定身份、提交点和证据方法更具迁移性；具体结论仍回到锁定源码与上游测试。
+
+## 实现思路
+
+学习这条主线时，以一个带工具副作用的固定任务建立证据包，比按 crate 目录遍历更有效。每篇文章都沿同一 run 深入一个边界，并回到共同身份。
+
+1. **冻结 Target。** 记录锁定提交、surface、模型、配置、工作目录、权限和工具表，生成 TrialId。
+2. **捕获请求。** 保存有效配置 provenance、AGENTS 与 Context 正规化报告，以及脱敏的实际 Responses 输入。
+3. **记录身份。** ThreadId、TurnId、sample index、submission ID 和 call_id 分列，不能互相替代。
+4. **追踪工具。** 从函数调用经 Router、Policy、Approval、Sandbox 到进程结果，保存每层决定和外部产物。
+5. **验证持久化。** 检查 Rollout 水位、恢复、压缩替代历史和 unknown 副作用，不默认重放工具。
+6. **冻结能力表面。** 保存 Skill、动态工具、Code Mode 与子线程图版本；回退或刷新创建新的运行条件。
+7. **比较产品投影。** 建立核心事件到 CLI 或 App Server 的映射，记录丢失字段和终态压缩。
+8. **独立评分。** 在干净环境检查补丁、测试和安全约束，训练 Reward 与发布 holdout 分离。
+
+```text
+target = freeze(source, surface, model, config, permissions, tools)
+thread, turn = start(target)
+request = build_model_visible_context(thread.rollout, target)
+response = sample(request)
+while response 包含工具调用:
+    results = execute_via_router_and_security(response.calls)
+    response = sample(history_with(results))
+artifacts = collect(rollout, trace, workspace, surface_output)
+score = independent_scorer(target.trial, artifacts)
+```
+
+这个最小实现保留清楚接口：配置解析不执行工具，Router 不批准自己，Sandbox 不判断任务正确，Trace 不产生 Score。接口之间用稳定 ID 与追加事件连接，任何派生摘要都可回到来源。具体 Rust 类型和 Feature 仍以锁定源码为准。
+
+验证采用故障矩阵而非单一成功演示：模型流提前关闭、未知工具、审批拒绝、后端缺失、工具副作用后崩溃、压缩丢约束、子线程通知重复和表面终态映射缺失。每次只改变一个轴，记录产品结果与 Trial 结果。
+
+## 贯穿案例
+
+贯穿任务沿用上游工具夹具：「运行 `echo tool harness`，读取输出并给出最终回复」。教学变体再要求 call_id 正确关联、禁止额外文件写入，并由独立 Scorer 检查最终文本与副作用。
+
+1. **创建运行。** 无界面 surface 根据配置创建 Thread 与 Turn，工具表含 `exec_command`；当前夹具使用不询问审批和禁用权限保护，仅用于工具往返。
+2. **首个采样。** Responses 模拟流提出带固定 call_id 的命令，输出处理器组装完整调用，Router 找到真实本地执行器。
+3. **执行与提交。** 安全配置按夹具条件处理，进程输出 `tool harness`；结果携带原 call_id 写入历史和 Rollout。
+4. **后续采样。** 第二次请求包含 `function_call_output`，模型返回 `all done`，核心发 TurnComplete。
+5. **表面投影。** 无界面入口输出最终文本与退出状态；Trace / Rollout 保存关联，OTel 是否采样不影响核心结算。
+6. **独立评分。** Scorer 检查命令、stdout、call_id、最终文本和无额外写入，才给 Trial pass。
+
+```json
+{"thread":"th-example","turn":"tr-example","callId":"exec-command-tool-call","command":"echo tool harness"}
+```
+
+```json
+{"processExit":0,"stdout":"tool harness\n","turnStop":"complete","artifactScore":"pass"}
+```
+
+安全反例保持同一任务，却把 PermissionProfile 改为只读并让命令尝试写文件。Policy 或 Sandbox 拒绝后，模型可以正常解释失败，Turn 也可能完成；Trial 因目标未完成判 fail。不能为了重试到通过悄悄切换权限。
+
+恢复反例发生在进程输出后、tool result 提交前。外部命令本例没有持久副作用，但替换成追加文件就可能重复；恢复器依据调用提交点和产物探测标记 unknown，不重放。Attempt 只描述基础设施恢复，分母仍是同一 Trial。
+
+表面反例把同一核心 Turn 交给 App Server。JSON-RPC 成功响应与无界面退出码不是同一语义，Eval Adapter 保留原始终态并分别评分。案例由此覆盖八篇文章的共同主线，也说明每条新增机制都必须回到身份、证据和独立判定。
+
 ## 系统全景
 
 ![Codex 从多种产品表面、线程与会话到模型工具循环、安全执行和持久化的中文系统架构图](../../../assets/diagrams/codex/system-architecture.svg)
