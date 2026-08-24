@@ -21,6 +21,96 @@ sources: [{"repo":"claude-agent-sdk-typescript","path":"README.md","commit":"482
 
 公开契约可以指导集成，却不是运行时源码。
 
+## 核心概念
+
+双 SDK 对齐不是找同名函数，而是比较同一语义问题在两个版本中的公开输入、输出、默认值、错误和生命周期。证据不对称时，矩阵也必须不对称：Python 列可以引用实现与测试，TypeScript 列只能在现有材料范围内引用公开契约、变更记录和示例。
+
+| 概念 | 含义 | 合格证据 | 常见误判 |
+| --- | --- | --- | --- |
+| 契约等价 | 同一条件下输入、输出和错误语义一致 | 两侧版本化 API 与契约测试 | 名称相同就等价 |
+| 部分等价 | 核心意图重叠但对象模型或边界不同 | 逐字段差异与限定条件 | 强行取最小公集后称完全一致 |
+| 单侧能力 | 只有一侧在锁定版本公开支持 | 版本文档、类型与 CHANGELOG | 另一侧一定永远没有 |
+| 实现未知 | 公开表面存在但主体源码不可核对 | 明确缺失空间与所需证据 | 用 Python 内部类补 TypeScript 图 |
+| 版本化矩阵 | 每个单元格绑定 SDK、CLI、平台和日期 | 可重建的快照与运行 Artifact | 永久功能清单 |
+| 中立投影 | 保留原始差异的共同事件模型 | 原始类型、未知字段与转换规则 | 把未知字段静默删除 |
+
+共同抽象应来自问题，例如「怎样中断当前运行」，而不是直接拿 `ClaudeSDKClient` 或 TypeScript `Query` 当跨语言架构。前者允许比较调用时机、结果和连接状态；后者会把一侧对象模型强加给另一侧。
+
+`unknown` 是有效结果。它表示当前证据不能回答实现问题，并为后续补证留下位置；它既不计作能力缺失，也不能在汇总时偷偷转成等价。差分报告应单列未知比例和原因。
+
+对齐的最小单位是带条件的行为，不是包名。相同 SDK 在不同 CLI、平台或设置来源下也可能形成两个矩阵快照。
+
+## 为什么这样设计
+
+第一，Python 与 TypeScript 包独立发布，版本号、CLI 捆绑和平台实现可能不同。版本化单元格能把差异定位到具体快照，避免今天的文档覆盖昨天的运行事实。
+
+第二，证据可见度不同。若为了表格整齐而把 Python 源码解释复制到 TypeScript 列，知识库会制造不存在的实现证据；若反过来只比较公开 API，又浪费了 Python 可核对的资源生命周期信息。允许列的证据等级不同，才能诚实且有用。
+
+第三，适配器需要共同语义，但评测需要保留原始差异。中立投影让上层统一统计工具、权限和终态；保留 raw type、版本和未知字段，又能在差异出现时回到具体 SDK 诊断。
+
+第四，契约对齐和结果对齐是两项实验。即使两个入口参数一致，模型、CLI、设置和平台仍可能让产物不同；只有分别运行相同 Trial，才能比较实际结果。
+
+第五，保留历史矩阵能解释升级风险。某项能力从 one-sided 变成 partial，可能是另一侧新增公开表面，也可能只是文档补充；不覆盖旧记录，才能区分功能变化、证据变化与测试覆盖变化，并为回滚提供依据。矩阵由此成为可复查的升级审计记录，而不是营销式功能列表，也能说明差异首次出现的位置。
+
+矩阵还必须说明比较方向与基准，防止证据可见的一侧被默认视为标准实现。
+
+## 实现思路
+
+实现一个版本化对齐器时，数据模型应以「维度—快照—证据—判定」为核心，而不是手写 Markdown 勾选表。下面是课程蓝图，不代表任一 SDK 内部组件。
+
+1. **锁定运行快照。** 保存两侧包版本、Commit、CLI 版本、平台、官方文档日期和安装包声明哈希。
+2. **定义中立维度。** 为入口、消息、权限、Hook、MCP、Session 与取消分别写出语义问题和最小可观察行为。
+3. **采集各侧证据。** TypeScript 使用公开参考、声明、CHANGELOG 和可运行夹具；Python额外使用源码和上游测试。每条证据声明覆盖范围。
+4. **计算单元格状态。** 只有输入、输出、默认值、错误和生命周期都相容才标 equivalent；否则用 partial、one-sided 或 unknown，并给理由。
+5. **运行共同场景。** 两侧分别执行同一固定 Trial，保留原始事件与环境，再由同一规范化器生成可比较 Artifact。
+6. **检测漂移。** 任一包、CLI 或文档变化只使受影响单元格 stale；重新采集后生成新矩阵，不覆盖旧快照。
+
+```text
+对齐(维度, Python快照, TypeScript快照):
+    P = 采集(维度, Python快照)
+    T = 采集(维度, TypeScript快照)
+    如果 任一侧证据缺失: 返回 unknown(缺失项)
+    如果 只有一侧公开能力: 返回 one-sided(版本与证据)
+    如果 输入输出默认值错误生命周期 全部兼容: 返回 equivalent(P, T)
+    返回 partial(逐字段差异, 适配策略)
+```
+
+规范化器必须采用可扩展事件：共同字段放顶层，`raw` 保留原负载哈希和未知字段。遇到新 Hook 或消息 subtype 时先产出 unknown event，不能为了旧 Schema 通过就丢弃。适配器的成功只证明转换完成，不证明两侧原始行为相同。
+
+矩阵生成器还应把证据等级写进每个单元格。Python 的 source+test、TypeScript 的 docs+declaration 即使得到相同契约判定，也要保留不同置信边界；汇总视图可以折叠展示，原始记录不能丢失。适配器发布时还要带上矩阵版本，使下游 Artifact 能反查当时采用的转换语义和未知字段策略。
+
+## 贯穿案例
+
+以「中断当前运行后连接能否继续使用」为对齐问题。Python 使用 `ClaudeSDKClient.interrupt()`，TypeScript 使用 Query 的 `interrupt()`；名称相近，但仍要比较前置连接、控制响应、终态消息、后续查询和 close 责任。
+
+1. **固定快照。** 记录 Python 0.2.143、TypeScript 0.3.241、各自 CLI 与平台，禁止一个用滚动 latest。
+2. **静态核对。** 两侧公开表面都有 interrupt；Python 可继续核对控制请求源码，TypeScript 内部发送方式保持 unknown。
+3. **运行相同 Trial。** 两侧启动一个可安全取消的长任务，在同一阶段调用 interrupt，继续读取到终态，再发送短查询。
+4. **生成中立事件。** 记录 interrupt requested、acknowledged、terminal received、connection reusable 和 finally closed，同时保留原始消息。
+5. **作出判定。** 若两侧都能继续查询，可把公开行为标为 equivalent；内部控制实现仍是 unknown，不能随行为判定一起升级。
+
+```json
+{"sdk":"python","interrupt":{"public":true,"controlSourceVisible":true},"connectionReusable":true}
+```
+
+```json
+{"sdk":"typescript","interrupt":{"public":true,"controlSourceVisible":false},"connectionReusable":true}
+```
+
+```json
+{
+  "dimension":"interrupt-and-reuse",
+  "contractParity":"equivalent-under-pinned-trial",
+  "implementationParity":"unknown",
+  "conditions":["固定 SDK 与 CLI","同平台","同一安全任务"],
+  "rawArtifactsPreserved":true
+}
+```
+
+如果 TypeScript 终态多一个新 subtype，规范化器应保留未知事件并把消息维度标为 partial，而不是删掉后继续宣称完全等价。若换 CLI 后行为改变，只使新快照重新评审；旧 Trial 仍是当时条件下的证据。
+
+对抗检查再交换实现顺序：先用 TypeScript 独有方法构造问题，再问 Python 是否有等价语义，而不是始终把 Python 当基准。只有双向检查，矩阵才不会系统性偏向证据更可见的一侧。最终判定还应附带可复现命令与原始事件哈希，供后续版本重放同一问题。
+
 ## 真实输入与输出
 
 ### 输入

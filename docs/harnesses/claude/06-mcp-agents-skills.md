@@ -23,6 +23,104 @@ Skill 是可发现的指令包，不等于普通 MCP Handler。Python `skills` �
 
 能力已装配，不等于能力已执行。
 
+## 核心概念
+
+扩展机制要沿三个问题拆开：能力从哪里来、以什么执行体运行、何时才算真正发生。MCP 主要提供工具协议，AgentDefinition 描述可委派执行体，Skill 提供按需加载的指令能力。它们都可能出现在初始化配置，却通过不同事件证明执行。
+
+| 概念 | 装配对象 | 执行位置 | 执行证据 |
+| --- | --- | --- | --- |
+| SDK MCP Server | Python Handler 与 Tool Schema | 应用 Python 进程 | Bridge 请求、Handler 进入、ToolResult |
+| stdio MCP | command、args、env | 独立子进程 | 握手、工具调用、进程与副作用 |
+| HTTP / SSE MCP | URL、headers、远端服务 | 网络端点 | 身份、请求 ID、响应与远端审计 |
+| AgentDefinition | 子智能体描述、Prompt、工具和上限 | Claude Code 公开子任务表面 | Agent 工具请求、任务开始、子消息与终态 |
+| Skill | 可发现指令与资源包 | 当前工作流按需加载 | Skill 请求、加载结果和上下文变化 |
+| Tool annotation | 只读、幂等等提示元数据 | 不单独执行 | 只能从 Schema 核对，不能证明约束生效 |
+
+### 注册、发现、选择、批准与执行
+
+这五个状态不能合并。配置中出现 Server 或 Agent 只是注册；初始化响应和工具列表说明能力可能被发现；模型产生 ToolUse 才是选择；权限流水线决定是否批准；Handler 进入或子任务开始才是执行。每一步都可能终止，Artifact 应保存最远到达状态。
+
+一个工具未执行，可能是没有注册、没有发现、模型没选、权限拒绝、连接失败或 Handler 报错。只记录最终 ToolResult 会让前四种情况看起来完全一样，也无法评价模型是否具备正确的工具选择能力。
+
+### 进程边界与信任边界
+
+进程内 MCP 省去外部进程和网络，但共享应用内存、凭据、事件循环与崩溃域；stdio 隔离 Runtime，却可能继承环境并留下子进程；HTTP/SSE 把故障和副作用推到远端，引入身份、重试和多租户问题。选择 Transport 是安全与运维决策，不只是性能选项。
+
+Agent 与 Skill 也不是隔离容器。Agent 可以拥有独立上下文和工具约束，却仍受父会话模式与宿主环境影响；Skill 加载指令，不自动获得执行权。实际文件、网络和凭据边界仍由权限与 Sandbox 决定。
+
+## 为什么这样设计
+
+第一，协议化工具让模型与领域能力解耦。应用可以把本地函数、独立进程或远端服务投影成相似工具表面，主循环不需要了解每种后端细节；不同 Transport 的故障与信任差异仍由宿主显式承担。
+
+第二，子智能体把复杂任务的上下文和轮次预算封装成可委派单元。主 Agent 只需看到描述和结果，不必承载全部中间推理；但定义与执行分开，避免配置加载就被误认为任务已经完成。
+
+第三，Skill 按需加载可减少初始上下文并复用专业流程。它不像子智能体那样创建新的执行体，也不像 MCP 那样直接定义副作用接口；保持这一区别，读者才能选择正确扩展点。
+
+第四，统一权限流水线位于扩展机制之外。无论工具来自内置、MCP、Agent 还是 Skill 触发的后续动作，都不能因扩展来源而绕过审批与隔离。这样新增能力不会自动扩大不可见的安全例外。
+
+第五，配置与执行证据分开让扩展可以延迟发现。大型工具集无需把全部 Schema 塞进首轮上下文，Skill 也可按需加载；能力目录仍能说明哪些资源已注册、哪些只在真实选择后产生成本和风险。该设计减少上下文浪费，但要求状态目录诚实记录未执行能力，使读者能分别评价发现效率、模型选择和实际执行可靠性，而不是只看最终答案。
+
+## 实现思路
+
+教学蓝图把装配器、能力目录、调用路由器和证据收集器分开。Python SDK 源码可以证明 SDK MCP Bridge 与初始化序列化；目录状态和统一 Artifact 是课程为安全接入给出的宿主实现建议。
+
+1. **规范化能力描述。** 为每项能力记录名称、来源、版本、执行边界、Schema、权限标签和所有者；拒绝冲突名称与未锁定来源。
+2. **按类型装配。** SDK Server 创建进程内 Bridge，stdio/HTTP/SSE 只把配置交给相应连接器，AgentDefinition 与 Skill 进入初始化字段；不把一种机制伪装成另一种。
+3. **建立状态目录。** 分别记录 registered、discovered、selected、approved、started、completed；任何状态只能由相应事件推进。
+4. **统一授权。** 模型选择后先进入 Hook、规则、权限模式和回调，再路由到 MCP、Agent 或 Skill；参数改写后重新验证 Schema。
+5. **设置执行预算。** 进程内 Handler 有超时和并发上限，stdio 有进程回收，HTTP 有身份与幂等键，Agent 有轮次与成本，Skill 有资源哈希和允许来源。
+6. **生成证据链。** 用 tool_use_id / task_id 关联模型选择、权限决定、Handler 或子任务、结果、副作用与父流程消费。
+
+```text
+调用 = 目录.lookup(模型请求.能力名)
+如果 调用.状态 != discovered: 返回 unavailable
+决定 = 权限链.evaluate(模型请求)
+记录(selected, 决定)
+如果 不允许: 返回 not_started
+
+如果 类型 == sdk_mcp: 结果 = bridge.call(冻结参数)
+如果 类型 == external_mcp: 结果 = connector.call(冻结参数, 幂等键)
+如果 类型 == agent: 结果 = task_manager.start(定义, 轮次与成本预算)
+如果 类型 == skill: 结果 = skill_loader.load(名称, 来源, 资源哈希)
+
+记录(started, completed或failed, 副作用)
+```
+
+能力目录不应把 initialization success 当成 completed。对于远端 MCP，甚至 discovered 也只说明 Schema 可见，服务端身份和调用结果要逐次验证；对于 Agent，任务终态还要确认父流程是否真正消费了结果。
+
+关闭路径按执行边界分别处理：Bridge 等待或取消进程内 Handler，stdio Connector 回收子进程，HTTP Connector 停止重试，任务管理器收敛子智能体。统一 close 只负责编排，不应假定所有能力都支持强制回滚。
+
+## 贯穿案例
+
+用户要求「查询内部缺陷库，让审查子智能体分析，并按团队检查清单输出报告」。应用注册进程内 `lookup_issue`、远端文档 MCP、reviewer Agent 和 review Skill。案例沿同一任务展示四种扩展机制各自的证据。
+
+1. **初始化装配。** SDK MCP Bridge 注册 `mcp__local__lookup_issue`；远端 Server 完成握手；reviewer 与 review Skill 被序列化。此时只到 discovered，没有 Handler 或子任务执行。
+2. **查询缺陷。** 模型选择本地工具，权限批准后 Bridge 把 JSON-RPC 送入 Python Handler。Handler 使用最小权限连接池返回脱敏记录，并记录 tool_use_id。
+3. **委派审查。** 主 Agent 调用 reviewer，任务事件显示开始；子智能体的 tools 只含 Read 和本地查询，maxTurns=4。达到终态只证明子任务收敛，仍需核对报告内容。
+4. **加载 Skill。** reviewer 调用 review Skill，加载固定资源哈希的检查清单。Skill 没有直接副作用；它影响后续上下文，实际读取或写入仍走工具权限。
+5. **汇总评分。** 父流程消费子任务结果并写报告。Eval 同时检查缺陷字段准确、敏感信息未泄露、轮次预算、远端 MCP 未被无意调用和最终文件内容。
+
+```json
+{"capability":"mcp__local__lookup_issue","registered":true,"discovered":true,"selected":true,"approved":true,"handlerEntered":true}
+```
+
+```json
+{"agent":"reviewer","taskId":"t1","started":true,"skillsLoaded":[{"name":"review","hash":"sha256:示例"}],"turns":3,"terminal":"completed"}
+```
+
+```json
+{
+  "task":"passed",
+  "evidence":{"parentConsumedTask":"t1","reportVerified":true},
+  "security":{"secretsExposed":false,"unexpectedRemoteCalls":0},
+  "limits":{"maxTurns":4,"actualTurns":3}
+}
+```
+
+把本地 Handler 改成抛异常，正确结果是 MCP error 回到模型，Query 可以继续；把 Agent 定义保留但禁止 Agent 工具，状态应停在 discovered 或 denied；删除 Skill 文件，initialize 字段仍可能存在，但加载必须失败。这三个反例分别证明注册不等于执行、定义不等于权限、名称不等于资源存在。
+
+再让远端文档 MCP 在响应前超时，必须用调用 ID 和幂等键判断是否可重试，不能把本地 lookup 的成功结果当成远端也成功。最终报告若缺少远端资料，Scorer应按任务契约失败或标成不完整。
+
 ## 真实输入与输出
 
 ### 输入

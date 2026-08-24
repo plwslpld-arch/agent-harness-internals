@@ -21,6 +21,87 @@ Python Agent SDK 提供可核对的主体源码与测试；本课程锁定提交
 
 先固定看得见的层，再讨论看不见的层。
 
+## 核心概念
+
+Claude 主线的第一张地图不是功能清单，而是责任与证据地图。应用、Python / TypeScript SDK、Claude Code CLI、闭源产品能力、模型与工具环境分别拥有不同状态；公开文档、源码、测试和实验也分别回答不同问题。
+
+| 概念 | 课程中的责任 | 直接证据 | 不能外推 |
+| --- | --- | --- | --- |
+| Agent Harness | 组织输入、模型、工具、权限、会话和终态 | 官方产品契约与可观察运行 | 闭源内部类图 |
+| Python SDK | 提供入口、Transport、控制协议和消息投影 | 锁定主体源码与测试 | TypeScript 内部实现 |
+| TypeScript SDK | 提供公开 Query、类型和控制表面 | 官方参考、CHANGELOG、公开示例 | 锁定仓库中不可见的 Runtime |
+| Claude Code 边界 | 承载公开工具、循环和上下文能力 | 官方文档与外部行为 | 私有调度器、存储和算法 |
+| Session | 保存可恢复的对话轨迹 | 协议、Store 与材料化源码 | 文件系统快照 |
+| Eval Adapter | 把运行事实变成独立评分 Artifact | 本课程规范与实验 | SDK 内置发布门禁 |
+
+从一次任务看，SDK 是应用与 Claude Code 的协议桥，不是模型 Client 的简单包装。普通消息与双向控制帧共享 Transport；权限、Hook 和进程内 MCP 都可能要求应用在运行中回写。Session Store 又位于次级镜像边界，不能代替正在运行的 Context。
+
+从证据看，Python 主线可以解释具体资源所有权，TypeScript 主线只能解释公开契约与版本变化。两侧能映射到共同概念，却必须保留证据等级和 unknown，不能为了画出对称架构而补齐不存在的源码。
+
+## 为什么这样设计
+
+第一，Claude Code 是闭源产品，课程必须在有用性与可核对性之间建立清楚边界。把产品画成不透明框仍能解释应用、SDK、工具和环境的责任；虚构内部模块反而让读者无法复查。
+
+第二，权限、会话和扩展都跨越进程。双向协议让应用回调与进程内 MCP 可以参与运行，外部 Server 与 Sandbox 又拥有独立故障域。分层后，读者能判断配置已发送、能力已选择、权限已批准和副作用已发生分别需要什么证据。
+
+第三，SDK Result 只报告协议终态。仓库把 Eval Adapter 放在 Harness 外侧，用固定 Trial、Artifact 与独立 Scorer 检查产物和安全，避免 Claude 自己的 success 成为发布证明。
+
+第四，课程按证据边界、入口、消息、权限、Session、扩展、双 SDK 对齐与 Eval 排序。这个顺序让后文复用前文对象：先知道来源能证明什么，再沿运行链理解状态，最后才进行跨实现比较和评测。
+
+第五，主线入口把跨篇对象固定下来，避免每篇文章重新发明 Session、Result、权限或执行成功的含义。读者可以沿同一任务从入口追到评测，也可以回到具体源码核对某个接缝；课程因此既能顺序学习，也能按问题查阅。
+
+也便于发现主线之间的证据断点。
+
+## 实现思路
+
+如果要基于公开契约构建一个 Claude Agent Harness，建议先完成最小可观察闭环，再逐步加入权限、恢复和扩展。以下是宿主实现蓝图，不是 Claude Code 内部实现。
+
+1. **锁定运行与证据。** 固定 SDK、CLI、模型、平台、设置来源和官方文档日期；记录选择 Python、TypeScript 还是 CLI 表面。
+2. **建立消息与控制通道。** 先启动读取循环并完成 initialize，分别路由普通消息、SDK 发起的控制响应和 CLI 发起的权限、Hook、MCP 请求。
+3. **接入权限与隔离。** 记录工具可见性、Hook、规则、模式、回调、最终参数和 Sandbox；任何 allow 都不能替代副作用观察。
+4. **管理生命周期与 Session。** 区分回合 Result、在途任务、输入结束、Interrupt、Disconnect 与进程退出；外部 Store 记录镜像水位和恢复材料化。
+5. **装配 MCP、Agent 与 Skill。** 为每项能力记录注册、发现、选择、批准、执行和完成，不把 initialize success 当成使用证据。
+6. **输出独立 Eval Artifact。** 保存原始事件、权限链、产物、测试、费用与副作用，由独立 Scorer 判定 Trial。
+
+```text
+RunSpec -> SDK/CLI入口 -> Transport与双向控制 -> Claude Code公开边界
+       -> 工具/Agent/Skill -> 权限与Sandbox -> 消息/Result/Session
+       -> Artifact Builder -> 独立Scorer -> 训练或发布的隔离决策
+```
+
+每增加一个能力，都要同时增加失败路径与恢复定义。例如接入 Session Store 时，不只实现 append / load，还要记录尾部水位、临时凭据和工作树哈希；接入 MCP 时，不只看到工具名，还要验证 Handler 进入、身份和副作用。
+
+宿主还需要一份统一事件 Schema，把 SDK 原始消息、控制帧、权限决定和外部副作用关联到 Run、Session、回合与调用 ID。Schema 可以增加新 subtype，但旧消费者必须保留未知事件，不能为了兼容而静默删除。
+
+## 贯穿案例
+
+假设用户要求「读取仓库报告、修正一个链接、运行检查，并在下一台主机继续」。应用选择 Python Client，以便处理中途 Edit 确认和显式 Session Store。
+
+1. **初始化。** SDK 启动默认 CLI Transport，完成双向 initialize；Read、Edit、Bash 和一个进程内校验工具进入能力目录。
+2. **执行与权限。** Read 自动批准但仍经过 Hook；Edit 流到 `can_use_tool` 获得单次批准；Bash 检查在受限 Sandbox 中运行。
+3. **消息与终态。** 应用保留 Assistant、工具结果和所有 Result；若有后台任务，中间 Result 不结束输入。最终检查通过后独立 Scorer 核对文件与禁止副作用。
+4. **镜像与恢复。** 本地转录先写，Store 镜像达到最终 UUID 后才标记跨主机可恢复；工作树快照与 Session ID 分开保存。
+5. **第二台主机继续。** SDK 材料化临时配置，核对工作树哈希后 resume；完成后清理临时目录并再次评分。
+
+```json
+{"surface":"python-client","tools":["Read","Edit","Bash","mcp__local__validate"],"session":"s1","workspace":"H1"}
+```
+
+```json
+{
+  "result":"passed",
+  "protocolTerminal":true,
+  "artifact":{"linkFixed":true,"checksPassed":true,"forbiddenSideEffects":0},
+  "resume":{"remoteTail":"u42","workspace":"H2","ready":true}
+}
+```
+
+若 Result success 但检查失败，Trial 仍失败；若 Store 只镜像到 u40，运行可以成功但跨主机恢复未就绪；若第二台主机的工作树不是 H2，会话能加载却必须报告环境不一致。三个反例分别验证协议、持久化和文件状态不能相互替代。
+
+学习者可以把案例切换成 TypeScript Query，重新执行相同任务契约。此时公开控制表面可以映射，但内部 Transport 仍保持 unknown；比较结果只覆盖消息、权限、产物与生命周期等可观察维度，不把 Python 源码复制到 TypeScript 侧。
+
+最后再故意让进程内 MCP Handler 抛错，确认错误作为 ToolResult 反馈、主循环仍可调整，Artifact 同时保留 Handler 失败和最终任务结果。这样一条案例就把入口、控制、权限、扩展、Session 和 Eval 的责任真正串起来。
+
 ## 系统全景
 
 ![Claude 应用通过双 SDK 公开表面连接 Claude Code 闭源产品边界，并把工具副作用、会话存储和独立评测分开的中文系统架构图](../../../assets/diagrams/claude/system-architecture.svg)

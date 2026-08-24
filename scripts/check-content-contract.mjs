@@ -10,7 +10,7 @@ import { fail } from './lib.mjs';
 
 const depthRules = {
   start: { characters: 2200, paragraphs: 10 },
-  harness: { characters: 2400, paragraphs: 12 },
+  harness: { characters: 6500, paragraphs: 18 },
   foundation: { characters: 2600, paragraphs: 10 },
   comparison: { characters: 2200, paragraphs: 10 },
   role: { characters: 1600, paragraphs: 8 },
@@ -74,6 +74,21 @@ function fencedBlocks(content) {
   return (content?.match(/```[^\n]*\n[\s\S]*?```/gu) ?? []).length;
 }
 
+function markdownTableDataRows(content) {
+  const rows = content?.split('\n').filter((line) => /^\|.+\|\s*$/u.test(line.trim())) ?? [];
+  return rows.filter((line) => !/^\|(?:\s*:?-+:?\s*\|)+\s*$/u.test(line.trim())).length - 1;
+}
+
+function requireSectionDepth(content, name, errors, minimum) {
+  const found = requireSection(content, name, errors);
+  if (found === null) return null;
+  const actual = explanatoryDepth(found);
+  if (actual.characters < minimum.characters || actual.paragraphs < minimum.paragraphs) {
+    errors.push(`“${name}”讲解不足：至少 ${minimum.characters} 个非空白字符和 ${minimum.paragraphs} 个有效段落，当前为 ${actual.characters} / ${actual.paragraphs}`);
+  }
+  return found;
+}
+
 function checkSelfReview(content, errors) {
   const selfReview = requireSection(content, '自检', errors);
   if (selfReview === null) return;
@@ -86,6 +101,25 @@ function checkSelfReview(content, errors) {
 
 function harnessFailures(content, errors) {
   requireSection(content, '读者会得到什么', errors);
+  const concepts = requireSectionDepth(content, '核心概念', errors, { characters: 600, paragraphs: 3 });
+  if (concepts !== null && markdownTableDataRows(concepts) < 4) {
+    errors.push('“核心概念”必须用表格解释至少 4 个概念、含义与重要性');
+  }
+  requireSectionDepth(content, '为什么这样设计', errors, { characters: 500, paragraphs: 3 });
+  const implementation = requireSectionDepth(content, '实现思路', errors, { characters: 700, paragraphs: 3 });
+  if (implementation !== null && orderedSteps(implementation) < 4) {
+    errors.push('“实现思路”必须包含至少 4 步实现流程');
+  }
+  if (implementation !== null && fencedBlocks(implementation) < 1) {
+    errors.push('“实现思路”必须包含可核对的伪代码或接口数据围栏');
+  }
+  const workedExample = requireSectionDepth(content, '贯穿案例', errors, { characters: 700, paragraphs: 3 });
+  if (workedExample !== null && orderedSteps(workedExample) < 4) {
+    errors.push('“贯穿案例”必须包含至少 4 步状态演进');
+  }
+  if (workedExample !== null && fencedBlocks(workedExample) < 2) {
+    errors.push('“贯穿案例”必须同时给出至少两份输入、状态或输出数据');
+  }
   const io = requireSection(content, '真实输入与输出', errors);
   if (io !== null && (!/^###\s+输入\s*$/mu.test(io) || !/^###\s+输出\s*$/mu.test(io) || fencedBlocks(io) < 2)) {
     errors.push('“真实输入与输出”必须同时给出输入、输出和对应数据围栏');
