@@ -520,6 +520,14 @@
       "scope": "docs/harnesses/opencode/03-tools-permission-question-patch.md",
       "alt": "OpenCode 工具从注册和模型可见性开始，经参数校验、权限规则与用户答复后执行副作用；应用层批准、快照和操作系统隔离边界分开的中文决策图",
       "claims": ["opencode.tools.registry-is-model-surface", "opencode.permission.ask-is-not-os-sandbox"]
+    },
+    {
+      "id": "opencode-storage-history-compaction-revert",
+      "path": "assets/diagrams/opencode/04-storage-history-compaction-revert.svg",
+      "type": "data-flow",
+      "scope": "docs/harnesses/opencode/04-storage-history-compaction-revert.md",
+      "alt": "OpenCode 持久会话历史经过压缩选择、摘要和近期尾部重排形成模型上下文，恢复流程另用快照和补丁处理工作树但不撤销外部副作用的中文数据流图",
+      "claims": ["opencode.history.model-messages-are-derived", "opencode.compaction.summary-is-not-lossless-history"]
     }
   ]
 }

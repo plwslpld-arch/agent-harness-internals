@@ -67,8 +67,8 @@
 
 ### Task 6：存储、历史、压缩与恢复
 
-- [ ] 创建课程、数据流图和 Claim；区分数据库历史、模型消息、摘要、裁剪、Snapshot、Revert 与 Artifact。
-- [ ] 提交：`docs(opencode): 发布历史压缩与恢复课程`。
+- [x] 创建课程、数据流图和 Claim；区分数据库历史、模型消息、摘要、裁剪、Snapshot、Revert 与 Artifact。
+- [x] 提交：`docs(opencode): 发布历史压缩与恢复课程`。
 
 ### Task 7：Agent、Skill、Plugin、MCP 与 LSP
 
