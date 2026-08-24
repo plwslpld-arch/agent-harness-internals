@@ -68,6 +68,12 @@
       "redistribution": {
         "policy": "metadata-and-analysis-only",
         "notes": "Official SDK contract surface only; do not infer closed-source Claude Code internals."
+      },
+      "analysisScope": {
+        "runtimeSource": "available",
+        "tests": "available",
+        "productInternals": "unavailable",
+        "notes": "Python SDK implementation and tests are reviewable at the locked commit; Claude Code product internals remain outside this source."
       }
     },
     {
@@ -85,6 +91,12 @@
       "redistribution": {
         "policy": "metadata-and-analysis-only",
         "notes": "Official SDK contract surface under Anthropic commercial terms; do not redistribute or infer closed-source Claude Code internals."
+      },
+      "analysisScope": {
+        "runtimeSource": "unavailable",
+        "tests": "examples-only",
+        "productInternals": "unavailable",
+        "notes": "The locked repository exposes README, CHANGELOG, license, scripts and Session Store examples, but not the SDK runtime implementation."
       }
     },
     {

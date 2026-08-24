@@ -1,0 +1,164 @@
+{
+  "harness": "claude",
+  "sources": [
+    {
+      "id": "claude-code-official-docs",
+      "kind": "official-documentation",
+      "availability": "public-contract-only",
+      "accessed": "2026-08-24",
+      "urls": [
+        "https://platform.claude.com/docs/en/agent-sdk/overview",
+        "https://platform.claude.com/docs/en/agent-sdk/python",
+        "https://platform.claude.com/docs/en/agent-sdk/typescript",
+        "https://code.claude.com/docs/en/permissions",
+        "https://code.claude.com/docs/en/hooks",
+        "https://code.claude.com/docs/en/tools-reference"
+      ],
+      "boundary": "只证明公开产品与 SDK 契约；不提供 Claude Code 内部类、调度器、存储布局或实现源码。"
+    },
+    {
+      "id": "claude-agent-sdk-python",
+      "kind": "locked-source-and-tests",
+      "commit": "542fefb3b94be87760b2513fff889b91bb5b6672",
+      "availability": "runtime-source-available",
+      "license": "MIT",
+      "boundary": "可核对 Python SDK 进程内实现、上游测试和示例；不能把 SDK 实现外推成 Claude Code 产品内部实现。"
+    },
+    {
+      "id": "claude-agent-sdk-typescript",
+      "kind": "locked-public-distribution-repository",
+      "commit": "48275071e804139579fabada9bb8d90cfe02b062",
+      "availability": "runtime-source-unavailable",
+      "license": "LicenseRef-Anthropic-Commercial-Terms",
+      "visible": ["README.md", "CHANGELOG.md", "LICENSE.md", "examples/session-stores"],
+      "boundary": "锁定仓库没有 SDK 主体源码；只用于核对公开说明、变更记录、许可证和未发布的 Session Store 示例。"
+    }
+  ],
+  "modules": [
+    {
+      "id": "claude-overview",
+      "article": "README.md",
+      "question": "应用、双 SDK、Claude Code CLI、工具、状态和独立 Eval 怎样形成可核对的责任链？",
+      "evidence": [
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/query.py","type":"source","reason":"单次 query 入口。"},
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/client.py","type":"source","reason":"交互式 Client 入口。"},
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/_internal/client.py","type":"source","reason":"Transport、Query 与 Session Store 的装配。"},
+        {"source":"claude-agent-sdk-typescript","path":"README.md","type":"public-contract","reason":"TypeScript 包入口和官方文档路由。"},
+        {"source":"claude-code-official-docs","url":"https://platform.claude.com/docs/en/agent-sdk/overview","type":"official-doc","reason":"产品与 SDK 的官方公开定位。"}
+      ],
+      "plannedClaims": ["claude.architecture.product-sdk-boundaries", "claude.task.transport-control-loop"]
+    },
+    {
+      "id": "claude-evidence-product-sdk-boundaries",
+      "article": "01-evidence-product-sdk-boundaries.md",
+      "question": "哪些事实来自闭源产品契约、Python 源码、TypeScript 公开分发仓库或课程推断？",
+      "evidence": [
+        {"source":"claude-agent-sdk-python","path":"LICENSE","type":"license","reason":"Python 仓库许可证。"},
+        {"source":"claude-agent-sdk-typescript","path":"LICENSE.md","type":"license","reason":"TypeScript 仓库独立许可证。"},
+        {"source":"claude-agent-sdk-typescript","path":"README.md","type":"public-contract","reason":"可见文件和官方文档入口。"}
+      ],
+      "plannedClaims": ["claude.evidence.closed-product-not-inferred-from-sdk", "claude.evidence.typescript-runtime-source-unavailable"]
+    },
+    {
+      "id": "claude-python-entry-transport-control",
+      "article": "02-python-entry-transport-control.md",
+      "question": "Python 入口怎样拥有 CLI 子进程、NDJSON 数据面和双向控制面？",
+      "evidence": [
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/query.py","type":"source","reason":"query 生命周期。"},
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/client.py","type":"source","reason":"ClaudeSDKClient 生命周期。"},
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/_internal/client.py","type":"source","reason":"统一 process_query 装配。"},
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/_internal/query.py","type":"source","reason":"控制请求、响应与初始化。"},
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/_internal/transport/subprocess_cli.py","type":"source","reason":"CLI 发现、进程和流。"},
+        {"source":"claude-agent-sdk-python","path":"tests/test_query.py","type":"upstream-test","reason":"流式输入、Hook、MCP 与权限回调。"}
+      ],
+      "plannedClaims": ["claude.python.transport-owns-cli-process", "claude.python.control-protocol-is-bidirectional"]
+    },
+    {
+      "id": "claude-messages-stream-lifecycle",
+      "article": "03-messages-stream-lifecycle.md",
+      "question": "消息、Result、输入结束、取消、关闭和进程退出各自结束哪一层？",
+      "evidence": [
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/types.py","type":"source","reason":"公开消息和结果类型。"},
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/_internal/message_parser.py","type":"source","reason":"CLI JSON 到 SDK 消息的解析。"},
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/_internal/query.py","type":"source","reason":"消息流、控制流和取消。"},
+        {"source":"claude-agent-sdk-python","path":"tests/test_message_parser.py","type":"upstream-test","reason":"消息分类与异常测试。"}
+      ],
+      "plannedClaims": ["claude.messages.result-is-protocol-terminal", "claude.lifecycle.close-and-cancel-are-distinct"]
+    },
+    {
+      "id": "claude-tools-permissions-hooks",
+      "article": "04-tools-permissions-hooks.md",
+      "question": "工具可用性、规则、Permission Mode、回调、Hook 和执行怎样分层？",
+      "evidence": [
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/types.py","type":"source","reason":"权限模式、更新与回调类型。"},
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/_internal/query.py","type":"source","reason":"can_use_tool 与 Hook 控制响应。"},
+        {"source":"claude-agent-sdk-python","path":"tests/test_query.py","type":"upstream-test","reason":"回调和 Hook 数据面保持打开。"},
+        {"source":"claude-code-official-docs","url":"https://code.claude.com/docs/en/permissions","type":"official-doc","reason":"deny、ask、allow 和作用域契约。"},
+        {"source":"claude-code-official-docs","url":"https://code.claude.com/docs/en/hooks","type":"official-doc","reason":"Hook 生命周期与决定契约。"}
+      ],
+      "plannedClaims": ["claude.permissions.allowed-tools-are-not-availability", "claude.hooks.can-modify-or-deny"]
+    },
+    {
+      "id": "claude-sessions-resume-store",
+      "article": "05-sessions-resume-store.md",
+      "question": "Session ID、恢复材料化、Transcript Mirror 和外部 Store 怎样保持边界？",
+      "evidence": [
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/_internal/session_resume.py","type":"source","reason":"外部状态材料化和清理。"},
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/_internal/session_store.py","type":"source","reason":"Store 协议和内存实现。"},
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/_internal/transcript_mirror_batcher.py","type":"source","reason":"Transcript 批量镜像。"},
+        {"source":"claude-agent-sdk-python","path":"tests/test_session_resume.py","type":"upstream-test","reason":"恢复与临时目录行为。"},
+        {"source":"claude-agent-sdk-typescript","path":"examples/session-stores/shared/conformance.ts","type":"example-test","reason":"公开示例的 Store 一致性契约。"}
+      ],
+      "plannedClaims": ["claude.sessions.resume-materializes-external-state", "claude.sessions.mirror-is-not-runtime-history"]
+    },
+    {
+      "id": "claude-mcp-agents-skills",
+      "article": "06-mcp-agents-skills.md",
+      "question": "进程内 MCP、外部 MCP、Agent 和 Skill 怎样装配而不等于已经执行？",
+      "evidence": [
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/__init__.py","type":"source","reason":"SDK MCP 工具与 Server 构造。"},
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/_internal/sdk_mcp_bridge.py","type":"source","reason":"进程内 MCP 请求桥。"},
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/types.py","type":"source","reason":"MCP、AgentDefinition 与 Setting Sources。"},
+        {"source":"claude-agent-sdk-python","path":"tests/test_sdk_mcp_integration.py","type":"upstream-test","reason":"工具调用结果和错误。"},
+        {"source":"claude-code-official-docs","url":"https://code.claude.com/docs/en/tools-reference","type":"official-doc","reason":"工具名、Skill 与 MCP 公开契约。"}
+      ],
+      "plannedClaims": ["claude.mcp.sdk-tools-run-in-process", "claude.extensions.configuration-is-not-execution"]
+    },
+    {
+      "id": "claude-typescript-contract-parity",
+      "article": "07-typescript-contract-parity.md",
+      "question": "怎样比较双 SDK 公开契约而不虚构 TypeScript 运行时源码或实现同构？",
+      "evidence": [
+        {"source":"claude-agent-sdk-typescript","path":"README.md","type":"public-contract","reason":"包安装、query 示例和文档入口。"},
+        {"source":"claude-agent-sdk-typescript","path":"CHANGELOG.md","type":"release-record","reason":"版本化公开变更。"},
+        {"source":"claude-agent-sdk-typescript","path":"examples/session-stores/shared/conformance.ts","type":"example-test","reason":"Session Store 示例契约。"},
+        {"source":"claude-code-official-docs","url":"https://platform.claude.com/docs/en/agent-sdk/typescript","type":"official-doc","reason":"TypeScript 公开 API。"},
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/types.py","type":"source","reason":"Python 对照基线。"}
+      ],
+      "plannedClaims": ["claude.typescript.public-contract-is-not-runtime-source", "claude.sdks.parity-must-be-versioned"]
+    },
+    {
+      "id": "claude-surfaces-errors-eval-design",
+      "article": "08-surfaces-errors-eval-design.md",
+      "question": "query、Client、CLI、Result、错误与反馈怎样进入独立 Eval 而不冒充任务成功？",
+      "evidence": [
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/query.py","type":"source","reason":"单次 query 表面。"},
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/client.py","type":"source","reason":"交互 Client 表面。"},
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/_errors.py","type":"source","reason":"SDK 错误类型。"},
+        {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/types.py","type":"source","reason":"Result subtype、成本与使用量。"},
+        {"source":"claude-agent-sdk-python","path":"tests/test_client.py","type":"upstream-test","reason":"Client 生命周期夹具。"}
+      ],
+      "plannedClaims": ["claude.surfaces.query-client-cli-are-not-equivalent", "claude.eval.requires-artifact-scorer", "claude.feedback.is-not-training-or-release-reward"]
+    }
+  ],
+  "risks": [
+    {"id":"sdk-to-product-inference","severity":"high","mitigation":"每篇标注证据所在层，不把 Python SDK 类画进 Claude Code 闭源框。"},
+    {"id":"typescript-docs-as-source","severity":"high","mitigation":"TypeScript 只引用公开文档、README、CHANGELOG 和真实示例路径，不写不存在的运行时源码行号。"},
+    {"id":"license-conflation","severity":"high","mitigation":"Python MIT 与 TypeScript 商业条款分别登记，不外推 Claude Code 产品条款。"},
+    {"id":"allowed-tools-as-availability","severity":"high","mitigation":"工具存在、模型可见、自动允许、询问、Hook、回调与执行逐层说明。"},
+    {"id":"result-as-eval-pass","severity":"high","mitigation":"协议 Result、进程退出、产物正确性和独立 Scorer 分开。"},
+    {"id":"mirror-as-runtime-history","severity":"high","mitigation":"外部 Transcript Mirror、恢复材料化和 Claude Code 运行时会话分别标注权威。"},
+    {"id":"feedback-as-reward","severity":"high","mitigation":"反馈和使用数据只作原始信号，RewardAdapter 与发布 Eval 另建版本化链路。"},
+    {"id":"upstream-test-production-proof","severity":"medium","mitigation":"上游测试只证明锁定夹具和平台条件，不作为线上模型或生产部署证明。"}
+  ]
+}

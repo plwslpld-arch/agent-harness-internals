@@ -273,3 +273,45 @@ Claim: gemini-cli.architecture.session-turn-scheduler
     content: entry.content.replace('gemini-cli/end-to-end-task.svg', 'gemini-cli/task.svg'),
   }).join('\n'), /端到端任务流程图/u);
 });
+
+test('Claude 一级入口必须声明闭源产品与双 SDK 的不对称证据边界', () => {
+  const entry = {
+    relativePath: 'docs/harnesses/claude/README.md',
+    metadata: { status: 'reviewed' },
+    content: `${harnessContent()}
+## 课程状态与顺序
+
+| 序号 | 课程 | 状态 |
+| --- | --- | --- |
+| 00 | 总览 | 已复核 |
+
+![Claude 中文系统架构图](../../../assets/diagrams/claude/system-architecture.svg)
+
+![Claude 中文端到端任务流程图](../../../assets/diagrams/claude/end-to-end-task.svg)
+
+Claude Code 是闭源产品，本课程只引用官方公开契约，不从 SDK 反推内部实现。Python Agent SDK 提供可核对的主体源码与测试；TypeScript Agent SDK 的锁定仓库没有 SDK 主体源码，只能核对公开 API、README、CHANGELOG 与 Session Store 示例。
+
+Claim: claude.architecture.product-sdk-boundaries
+
+Claim: claude.task.transport-control-loop
+`,
+  };
+
+  assert.deepEqual(contentContractFailures(entry), []);
+  assert.match(contentContractFailures({
+    ...entry,
+    content: entry.content.replace('Claude Code 是闭源产品，本课程只引用官方公开契约，不从 SDK 反推内部实现。', ''),
+  }).join('\n'), /闭源产品/u);
+  assert.match(contentContractFailures({
+    ...entry,
+    content: entry.content.replace('Python Agent SDK 提供可核对的主体源码与测试；', ''),
+  }).join('\n'), /Python Agent SDK/u);
+  assert.match(contentContractFailures({
+    ...entry,
+    content: entry.content.replace('TypeScript Agent SDK 的锁定仓库没有 SDK 主体源码，只能核对公开 API、README、CHANGELOG 与 Session Store 示例。', ''),
+  }).join('\n'), /TypeScript Agent SDK/u);
+  assert.match(contentContractFailures({
+    ...entry,
+    content: entry.content.replace('Claim: claude.task.transport-control-loop', ''),
+  }).join('\n'), /至少两个正式 Claim/u);
+});

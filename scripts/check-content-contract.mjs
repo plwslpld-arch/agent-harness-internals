@@ -98,7 +98,24 @@ function harnessFailures(content, errors) {
   checkSelfReview(content, errors);
 }
 
-function harnessEntryFailures(content, errors) {
+function claudeEntryFailures(content, errors) {
+  if (!/(?:Claude Code[^\n。；]{0,40}闭源产品|闭源产品[^\n。；]{0,40}Claude Code)/u.test(content)) {
+    errors.push('Claude 一级入口必须声明 Claude Code 是闭源产品，并限定为官方公开契约');
+  }
+  if (!/Python Agent SDK[^\n。；]{0,80}(?:主体源码|源码与测试)/u.test(content)) {
+    errors.push('Claude 一级入口必须声明 Python Agent SDK 具有可核对的主体源码与测试');
+  }
+  if (!/TypeScript Agent SDK[^\n。；]{0,120}(?:没有|不包含)[^\n。；]{0,40}主体源码/u.test(content)
+      || !/README/u.test(content)
+      || !/CHANGELOG/u.test(content)
+      || !/Session Store/u.test(content)) {
+    errors.push('Claude 一级入口必须声明 TypeScript Agent SDK 主体源码不可用，并限定 README、CHANGELOG 与 Session Store 示例边界');
+  }
+  const claims = new Set(content.match(/\bClaim:\s*[a-z0-9][a-z0-9-]*(?:\.[a-z0-9][a-z0-9-]*)+/gu) ?? []);
+  if (claims.size < 2) errors.push('Claude 一级入口必须引用至少两个正式 Claim');
+}
+
+function harnessEntryFailures(content, errors, relativePath) {
   const course = requireSection(content, '课程状态与顺序', errors);
   if (course !== null && !/^\|[^\n]*状态[^\n]*\|/mu.test(course)) {
     errors.push('“课程状态与顺序”必须包含状态表');
@@ -112,6 +129,7 @@ function harnessEntryFailures(content, errors) {
   if (!/\bClaim:\s*[a-z0-9][a-z0-9-]*(?:\.[a-z0-9][a-z0-9-]*)+/u.test(content)) {
     errors.push('一级主线入口必须引用至少一个正式 Claim');
   }
+  if (relativePath === 'docs/harnesses/claude/README.md') claudeEntryFailures(content, errors);
 }
 
 function foundationFailures(content, errors) {
@@ -177,7 +195,7 @@ export function contentContractFailures(article) {
   if (kind === 'start') startFailures(content, errors);
   else if (kind === 'harness') {
     harnessFailures(content, errors);
-    if (article.relativePath.endsWith('/README.md')) harnessEntryFailures(content, errors);
+    if (article.relativePath.endsWith('/README.md')) harnessEntryFailures(content, errors, article.relativePath);
   }
   else if (kind === 'foundation') foundationFailures(content, errors);
   else if (kind === 'comparison') comparisonFailures(content, errors);

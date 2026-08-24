@@ -51,11 +51,11 @@
 - 消费：双 SDK Lock、许可证和 Anthropic 官方文档。
 - 产出：九篇课程的源码/测试/官方文档证据表与 Claude 一级入口内容契约。
 
-- [ ] 写失败测试：Claude 一级入口必须有双边界声明、两张核心中文图、课程状态表和至少两条 Claim。
-- [ ] 运行测试并确认当前缺少 Claude 入口而失败。
-- [ ] 登记 Python SDK 主体源码、测试、TypeScript 仓库可见文件和官方文档；明确 TypeScript 主体源码 unavailable。
-- [ ] 运行来源、许可证、内容和敏感信息门禁。
-- [ ] 提交：`test(claude): 锁定双 SDK 证据边界`。
+- [x] 写失败测试：Claude 一级入口必须有双边界声明、两张核心中文图、课程状态表和至少两条 Claim。
+- [x] 运行测试并确认现有契约未阻止 Claude 入口丢失边界而失败。
+- [x] 登记 Python SDK 主体源码、测试、TypeScript 仓库可见文件和官方文档；明确 TypeScript 主体源码 unavailable。
+- [x] 运行来源、许可证、内容和敏感信息门禁。
+- [x] 提交：`test(claude): 锁定双 SDK 证据边界`。
 
 ### Task 2：发布 Claude 主线入口
 
