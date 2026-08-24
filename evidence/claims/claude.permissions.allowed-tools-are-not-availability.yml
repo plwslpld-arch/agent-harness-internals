@@ -1,0 +1,22 @@
+{
+  "id": "claude.permissions.allowed-tools-are-not-availability",
+  "harness": "claude",
+  "dimension": "permissions.allowed-tools-are-not-availability",
+  "statement": "Claude Agent SDK 的 allowed_tools 是自动批准规则来源，不是工具可用性清单；未列工具仍可保持模型可见并落入权限模式与 can_use_tool，裸名 disallowed_tools 才能移除整个工具定义。",
+  "capability": "default",
+  "version": "python@542fefb3b94be87760b2513fff889b91bb5b6672;official-doc@2026-08-24",
+  "surface": "agent-sdk-tool-permissions",
+  "platform": "python-sdk-and-claude-code-public-contract",
+  "mode": "permission-evaluation",
+  "evidence_level": "C",
+  "evidence": [
+    {"type":"source","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"README.md","lines":"57-64","excerpt":"`allowed_tools` is a permission allowlist"},
+    {"type":"official-doc","title":"配置权限","url":"https://code.claude.com/docs/en/agent-sdk/permissions","accessed":"2026-08-24"}
+  ],
+  "limitations": [
+    "官方在线规则可能随 Claude Code 版本变化，锁定 Python SDK 与当日产品契约不一定完全同版。",
+    "带范围的 deny 保留工具定义，只有裸名 deny 才能支持整个工具不可见这一结论。",
+    "模型可见不证明模型会选择工具，自动批准也不证明工具最终执行成功。"
+  ],
+  "last_verified": "2026-08-24"
+}

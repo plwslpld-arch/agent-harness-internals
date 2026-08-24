@@ -22,6 +22,7 @@ const allowedPhrases = [
   'SystemMessage',
   'StreamEvent',
   'RateLimitEvent',
+  'PreToolUse',
   'User',
   'System',
   'success',

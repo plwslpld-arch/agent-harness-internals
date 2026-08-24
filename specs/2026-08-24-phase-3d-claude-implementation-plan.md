@@ -115,11 +115,11 @@
 - 创建：`docs/harnesses/claude/04-tools-permissions-hooks.md`
 - 创建：`assets/diagrams/claude/04-tools-permissions-hooks.svg`
 - 创建：`evidence/claims/claude.permissions.allowed-tools-are-not-availability.yml`
-- 创建：`evidence/claims/claude.hooks-can-modify-or-deny.yml`
+- 创建：`evidence/claims/claude.hooks.can-modify-or-deny.yml`
 
-- [ ] 建立工具可用性、allowed/disallowed、permission mode、can_use_tool、PermissionUpdate、Hook 和最终执行的分层图。
-- [ ] 覆盖 bypassPermissions 安全前提、回调互斥条件、updated_input、interrupt 与 PreToolUse 决定。
-- [ ] 渲染复核，运行门禁并提交：`docs(claude): 发布工具权限与钩子课程`。
+- [x] 建立工具可用性、allowed/disallowed、permission mode、can_use_tool、PermissionUpdate、Hook 和最终执行的分层图。
+- [x] 覆盖 bypassPermissions 安全前提、回调互斥条件、updated_input、interrupt 与 PreToolUse 决定。
+- [x] 渲染复核，运行门禁并提交：`docs(claude): 发布工具权限与钩子课程`。
 
 ### Task 7：Session、恢复与外部 Store
 

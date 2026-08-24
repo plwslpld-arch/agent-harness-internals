@@ -1,0 +1,22 @@
+{
+  "id": "claude.hooks.can-modify-or-deny",
+  "harness": "claude",
+  "dimension": "hooks.can-modify-or-deny",
+  "statement": "Claude Code 公开契约允许 PreToolUse 在权限规则之前拒绝、询问、延后或替换工具输入；Python Agent SDK 将 Hook 和 can_use_tool 结果通过控制协议回送，但 Hook 放行仍不跳过 deny、ask 与最终执行边界。",
+  "capability": "optional",
+  "version": "python@542fefb3b94be87760b2513fff889b91bb5b6672;official-doc@2026-08-24",
+  "surface": "pre-tool-use-control",
+  "platform": "claude-code-public-contract-and-python-control-protocol",
+  "mode": "hook-and-permission-callback",
+  "evidence_level": "C",
+  "evidence": [
+    {"type":"official-doc","title":"Hook 参考","url":"https://code.claude.com/docs/en/hooks","accessed":"2026-08-24"},
+    {"type":"source","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"src/claude_agent_sdk/_internal/query.py","lines":"532-546","excerpt":"hook_output = await callback("}
+  ],
+  "limitations": [
+    "Python 源码证明回调适配与控制响应，不公开 Claude Code 内部 Hook 调度器实现。",
+    "updatedInput 替换完整输入，若未保留原字段可能改变工具语义或导致失败。",
+    "Hook 允许、权限批准和工具成功是三种不同结果，仍需核对 Sandbox 与副作用。"
+  ],
+  "last_verified": "2026-08-24"
+}
