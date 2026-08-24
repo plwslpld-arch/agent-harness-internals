@@ -480,6 +480,22 @@
       "scope": "docs/harnesses/pi/08-telemetry-evals-data-contracts.md",
       "alt": "pi 从遥测契约记录一次智能体运行，经固定评测试验保存轨迹与产物，再由外部评分、统计、训练适配和独立发布留出集分别作出不同决定的中文流程图",
       "claims": ["pi.telemetry.contract-is-not-scorer", "pi.eval.artifact-is-not-release-gate", "pi.session.sharing-is-external-and-opt-in"]
+    },
+    {
+      "id": "opencode-system-architecture",
+      "path": "assets/diagrams/opencode/system-architecture.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/opencode/README.md",
+      "alt": "OpenCode 从项目和配置、模型服务、会话循环、工具权限与持久消息组成共享服务核心，再投影到终端、服务器、开发包、桌面网页和编辑器协议的中文系统架构图",
+      "claims": ["opencode.architecture.service-core-multiple-surfaces"]
+    },
+    {
+      "id": "opencode-end-to-end-task",
+      "path": "assets/diagrams/opencode/end-to-end-task.svg",
+      "type": "flow",
+      "scope": "docs/harnesses/opencode/README.md",
+      "alt": "OpenCode 一次真实编码任务从项目上下文、配置和模型选择进入会话循环，经模型流、工具权限和执行结果回送，最终保存消息与文件产物并交给独立评测的中文流程图",
+      "claims": ["opencode.task.session-processor-closes-loop"]
     }
   ]
 }
