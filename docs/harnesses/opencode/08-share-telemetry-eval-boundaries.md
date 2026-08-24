@@ -19,6 +19,102 @@ OpenTelemetry 也是可选运行能力。模型流只有在实验配置开启且
 
 本篇后半段给出本仓库建议的 Eval Harness 契约。它不是 OpenCode 已内置的发布系统，而是利用 OpenCode 可导出的消息、工具状态、差异、文件产物、配置和测试结果，构造可复核 Artifact，再交给版本化外部 Scorer。证据边界必须保留：能采集不等于已评分，单次评分不等于统计稳定，训练奖励不等于独立发布授权。
 
+## 核心概念
+
+Share、Telemetry、Test、Eval、Training 和 Release 是六条职责链。Share 向外部服务复制会话投影，Telemetry 记录运行 Span，Test 验证锁定代码或产品断言，Eval 在固定 Trial 上调用 Scorer，Training 消费适配后的奖励，Release 使用独立 Holdout 作决策。它们可以共享 Run ID 和 Artifact，却不能共享决策权限。
+
+Share Policy 有 disabled、manual 与 auto 等有效状态。自动分享可在根会话创建后发生，运行标志也可能参与决策；ShareNext 同步 Session、Message、Part、Model 与 Diff，并保存远端 Secret/URL。Unshare 是一次远端删除请求和本地索引清理，不足以证明缓存、日志和已下载副本全域擦除。
+
+Trial 是不可变统计单位，Attempt 是恢复历史。产品失败不能创建新 Attempt 反复采样到成功，基础设施失败可按预注册预算恢复但保留全部记录。Scorer 输出 Score/Reason/Evidence 或 unscored；RewardAdapter 只有语义完整时才把它转换成 DPO、GRPO 或 RFT 信号。
+
+| 对象 | 主要职责 | 典型输出 | 不能授权 |
+| --- | --- | --- | --- |
+| Share | 复制会话投影到外部服务 | 远端 ID、Secret、URL | 数据全域删除证明 |
+| Telemetry | 记录模型和运行 Span | Trace、Attribute、Status | 任务分数 |
+| Upstream Test | 验证锁定夹具的代码行为 | pass/fail 与断言 | 真实部署可用性 |
+| Eval Harness | 固定 Dataset、Target 与 Trial | Trace、Artifact、Outcome | 自动发布 |
+| Scorer | 按版本化 Rubric 判断 Artifact | Score、Reason、Evidence | 修改原运行证据 |
+| RewardAdapter | 映射评分为训练信号 | 偏好对或标量奖励 | 独立发布评测 |
+| Checkpoint Selector | 在开发选择集挑候选 | Checkpoint Decision | 使用 Holdout 调参 |
+| Release Gate | 独立 Holdout 与风险门槛 | approve/reject/inconclusive | 被训练分数替代 |
+
+## 为什么这样设计
+
+分享与遥测服务于协作和观测，不应偷偷拥有质量结论。Share 可以让人查看会话，Span 可以解释延迟与错误；两者都可能缺失、延迟或失败。独立 Artifact 保存原始消息、补丁和测试，才能让 Scorer 不依赖外部链接或遥测后端长期可用。
+
+Trial/Attempt 分离防止选择性重试。固定分母后，基础设施恢复不会美化成功率，产品错误也不会被「再跑一次」删除。Canonical Attempt 选择规则、租约、幂等提交和 Artifact 哈希共同防止并发运行相互覆盖。
+
+训练与发布隔离是为了避免评测泄漏。RewardAdapter 影响模型或策略，开发集参与 Checkpoint 选择，这些数据都不能再声称独立。Release Holdout 使用未参与训练和选择的 Case，并执行正确性、安全、成本、延迟和回归门槛。
+
+分享策略单独治理数据出站，是因为自动模式可能不需要每次点击。有效配置、运行标志、远端组织、Secret、删除与保留政策都要审计；敏感任务默认禁用分享，不能因 URL 私密就假定合规。
+
+追加式质量记录还能支持重评。Rubric 更新时生成新 Score，旧分数与原 Artifact 保持不变；发布 Gate 明确引用采用的版本，避免后续覆盖让历史决策失去依据。
+
+## 实现思路
+
+教学质量链采用追加式记录，每个阶段只读前序 Artifact 并新增带版本的结果。以下结构是本仓库建议契约，不冒充 OpenCode 内置发布系统。
+
+Artifact 提交必须幂等并具备唯一 canonical 选择。并发 Attempt 可以完成，但只有符合预注册规则且哈希已固化的提交进入 Scorer；迟到结果留作诊断，不覆盖决策依据。
+
+```ts
+interface QualityChain {
+  trialId: string;
+  attempts: Array<{ id: string; outcome: string; artifactDigest?: string }>;
+  canonicalAttemptId?: string;
+  score?: { rubric: string; value?: number; reason: string; evidence: string[] };
+  rewardAdapter?: { capability: "full" | "partial" | "unavailable"; version: string };
+  release?: { holdout: string; decision: "approved" | "rejected" | "inconclusive" };
+}
+```
+
+1. 固定 Dataset、Case、Target Surface、Commit、Effective Config、Provider/Model、随机种子与预算，生成 Trial ID。
+2. 每次执行分配 Attempt ID。只有预注册的基础设施故障允许恢复；产品失败直接进入 Trial 结果。
+3. Artifact Writer 保存 Message/Part/Event、工具权限、工作树、测试、环境与遥测关联，计算不可变哈希并幂等提交。
+4. Share 依据最终 Policy 独立执行，上传前做数据分类与脱敏；分享链接只作为辅助引用，不是 Artifact 存储。
+5. Telemetry 开关、Tracer、采样与导出器分别记录；Span 缺失不自动等于功能未运行，Status ok 不自动等于任务通过。
+6. 外部 Scorer 盲读 Artifact，输出版本、分数、理由、证据和 unscored。Summary 不补造缺失分数。
+7. RewardAdapter 声明分数范围、缺失、拒绝、截断和聚合语义，再连接 DPO/GRPO/RFT；能力不足标 partial/unavailable。
+8. Selector 使用开发评测选候选，Release Gate 在独立 Holdout 执行预注册阈值和置信区间，输出可审计决策。
+
+数据删除也要追加证明。Unshare Response、本地索引清理、远端保留政策和访问副本分别记录；无法验证的范围明确写 unknown，不把 API 200 写成全域擦除。
+
+敏感字段脱敏采用结构化规则并版本化。密钥正文删除，路径和源码按授权最小化；Scorer 所需事实若因脱敏不可用，应返回 unscored，不能用缺失数据猜测通过。
+
+## 贯穿案例
+
+假设候选模型修复一个解析器错误。有效配置误设为 auto share，第一次 Attempt 因遥测导出器中断但 Agent 已完成错误补丁；运行者想重试。案例要求同时处理数据出站、观测失败、产品失败和发布分母。
+
+```json
+{
+  "trial":"parser-17@candidate-b@repeat-1",
+  "sharePolicy":"auto",
+  "attempt1":{"agent":"idle","telemetry":"export-failed","tests":"failed"},
+  "attemptBudget":2,
+  "rubric":"patch-tests-api-v2"
+}
+```
+
+1. 根 Session 创建后 auto policy 触发 ShareNext，远端收到 Session/Message/Part/Diff。数据出站与任务质量无关，审计立即记录 URL 类别和敏感字段检查。
+2. Telemetry 导出失败不改变 Agent 结果。Artifact 仍从本地 Session、补丁和测试构建，Span 缺失标为 observability-degraded。
+3. 测试失败属于产品错误，Attempt 1 不能按基础设施恢复重试成通过；Trial 直接保留失败。若 Telemetry 在 Agent 启动前阻断才按预注册规则判断基础设施故障。
+4. Scorer 读取补丁和测试给 0 分及证据引用；Share 链接和模型自述不参与判定。
+5. 该分数若进入训练，RewardAdapter 声明映射并只在训练数据使用；Checkpoint 选择与 Release Holdout保持隔离。
+6. 用户执行 Unshare，系统保存删除响应和本地清理，同时把服务端缓存/下载副本标为未验证。
+
+```json
+{
+  "share":{"created":"auto","unshareRequest":"succeeded","globalErasure":"unknown"},
+  "telemetry":{"export":"failed","taskImpact":"none"},
+  "trial":{"attempts":1,"productFailure":true,"score":0},
+  "training":{"adapter":"versioned"},
+  "release":{"decision":"rejected"}
+}
+```
+
+故障变体把分享同步队列置为失败。本地仍保存 URL，但远端对象可能只同步部分消息；Artifact 不引用它作为唯一证据。另一个变体删除 Score，Summary 必须报告 missing-score，Release Gate 不能从测试进程零退出或 Span ok 猜测通过。
+
+案例最终证明：数据已分享、运行可观测、上游测试通过、模型已训练和版本可发布可以同时得到不同真假值。只有每个角色在自己的证据范围内下结论，仓库才不会把「有记录」包装成「质量已证明」。
+
 ## 真实输入与输出
 
 ### 输入
