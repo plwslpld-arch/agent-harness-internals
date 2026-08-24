@@ -1,0 +1,38 @@
+{
+  "stage": "phase-5b-gemini-cli-learning",
+  "date": "2026-08-24",
+  "commit": "35fdf5a102a2109bbe9d9a2e9719142a577681df",
+  "promises": [
+    {"id":"p-learning-depth","statement":"Gemini CLI 入口与八篇正文均按内容契约 2.0 讲清 Core/CLI 配置、Turn、Scheduler、工具、安全、状态、扩展、表面和评测的完整教学链。"},
+    {"id":"p-evidence-boundary","statement":"锁定 TypeScript 源码、上游 Mock 测试、课程蓝图与独立 Eval 设计分别标注，不把模拟控制流外推为真实模型、工具副作用或生产隔离。"},
+    {"id":"p-adversarial-review","statement":"逐篇反查 Folder Trust 与有效配置、Finished 与 AgentEnd、Policy 与模型 SAFETY、压缩复核与无损性、本地 complete_task 与远程 A2A 终态等混淆。"}
+  ],
+  "evidence": [
+    {"id":"e-nine-articles","promise":"p-learning-depth","type":"file","reference":"docs/harnesses/gemini-cli/","summary":"九篇均包含概念表、设计理由、教学实现、贯穿案例、输入输出和产品特有反例。"},
+    {"id":"e-contract-v2","promise":"p-learning-depth","type":"test","reference":"scripts/check-content-contract.mjs","summary":"Gemini CLI 九篇定向执行内容契约 2.0，全部无失败项。"},
+    {"id":"e-boundary-articles","promise":"p-evidence-boundary","type":"file","reference":"docs/harnesses/gemini-cli/04-confirmation-policy-safety-sandbox.md","summary":"Policy、MessageBus、Sandbox、外层容器与 FinishReason.SAFETY 分列，Mock 与跨平台限制保持显式。"},
+    {"id":"e-analysis-anchors","promise":"p-evidence-boundary","type":"test","reference":"scripts/verify-analysis.mjs","summary":"八十篇来源绑定与一百三十二处源码行号抽查通过。"},
+    {"id":"e-claims-tests","promise":"p-adversarial-review","type":"test","reference":"scripts/verify-claims.mjs","summary":"一百一十九条关键结论无重复；一百一十二项仓库测试全部通过。"},
+    {"id":"e-links-visuals-style","promise":"p-adversarial-review","type":"test","reference":"scripts/check-visuals.mjs","summary":"一百一十二个 Markdown 本地链接和八十一张正式中文 SVG 通过；文风门禁无阻断错误。"}
+  ],
+  "findings": [
+    {"id":"f-safety-conflation","priority":"high","status":"resolved","summary":"模型 FinishReason.SAFETY、Policy 三态、确认与平台 Sandbox 容易被合写成统一安全结果。"},
+    {"id":"f-compression-proof","priority":"high","status":"resolved","summary":"二次模型复核容易被误写为摘要无损证明，忽略空复核回退与工具输出截断。"},
+    {"id":"f-tool-success-ambiguity","priority":"high","status":"resolved","summary":"评测案例初稿把 write_file 与 run_tests 都笼统标成工具 success，可能错误暗示测试断言失败的上游契约。"},
+    {"id":"f-style-rhythm","priority":"low","status":"open","summary":"Gemini CLI 多篇仍有句长节奏非阻断提醒，留到全仓总编辑统一润色。"}
+  ],
+  "resolutions": [
+    {"id":"f-safety-conflation","action":"新增五层安全概念表与贯穿反例，分别记录审批模式、Policy、确认来源、平台包装和模型 SAFETY 时间线。","evidence":["e-nine-articles","e-boundary-articles","e-contract-v2"]},
+    {"id":"f-compression-proof","action":"明确 verified summary 仍由模型复核且空结果可回退首版，课程 required-facts 检查与锁定源码流程分别标注。","evidence":["e-nine-articles","e-analysis-anchors"]},
+    {"id":"f-tool-success-ambiguity","action":"将案例改为写工具成功、测试工具返回断言失败，并把通用 success 反例显式限定为教学合成工具契约。","evidence":["e-nine-articles","e-claims-tests"]}
+  ],
+  "commands": [
+    {"command":"Gemini CLI 九篇 contentContractFailures 定向检查","exit_code":0,"summary":"入口与八篇正文全部通过内容契约 2.0。"},
+    {"command":"node scripts/verify-analysis.mjs && node scripts/verify-anchors.mjs","exit_code":0,"summary":"来源绑定与源码锚点保持有效。"},
+    {"command":"node scripts/verify-claims.mjs && node scripts/run-tests.mjs","exit_code":0,"summary":"一百一十九条 Claim 校验和一百一十二项测试通过。"},
+    {"command":"node scripts/check-links.mjs && node scripts/check-visuals.mjs","exit_code":0,"summary":"本地链接和正式中文 SVG 门禁通过。"},
+    {"command":"node scripts/check-style.mjs","exit_code":0,"summary":"无阻断文风错误，句长节奏仅为非阻断提醒。"},
+    {"command":"git diff --check","exit_code":0,"summary":"提交前无空白错误。"}
+  ],
+  "result": "pass"
+}
