@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 820" role="img" aria-labelledby="title desc">
+  <title id="title">pi 多模型服务流归一化</title>
+  <desc id="desc">模型目录、服务注册、认证和接口路由先决定请求能否发出，原始响应再转换成统一内容、用量、停止原因和终结事件。</desc>
+  <defs><marker id="a" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto"><path d="M0 0l14 7-14 7z" fill="#087F7C"/></marker><filter id="s"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#17324D" flood-opacity=".13"/></filter></defs>
+  <rect width="1400" height="820" rx="34" fill="#F6F9FC"/>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <text x="700" y="54" text-anchor="middle" font-size="35" font-weight="760" fill="#17324D">模型目录命中，只是请求链的第一步</text>
+    <text x="700" y="88" text-anchor="middle" font-size="18" fill="#50677D">认证、接口实现、网络与服务响应仍会分别失败</text>
+
+    <g font-size="17" text-anchor="middle">
+      <rect x="55" y="145" width="200" height="95" rx="19" fill="#E9F2FF" stroke="#3569A8" stroke-width="2.5"/><text x="155" y="180" font-weight="760" fill="#17324D">一　模型目录</text><text x="155" y="208" fill="#50677D">服务标识与模型标识</text><text x="155" y="231" fill="#50677D">基线、缓存、动态刷新</text>
+      <rect x="300" y="145" width="200" height="95" rx="19" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2.5"/><text x="400" y="180" font-weight="760" fill="#17324D">二　服务注册</text><text x="400" y="208" fill="#50677D">查找请求实现</text><text x="400" y="231" fill="#50677D">缺失时进入错误流</text>
+      <rect x="545" y="145" width="200" height="95" rx="19" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2.5"/><text x="645" y="180" font-weight="760" fill="#17324D">三　认证解析</text><text x="645" y="208" fill="#50677D">显式配置与凭据存储</text><text x="645" y="231" fill="#50677D">未配置时拒绝请求</text>
+      <rect x="790" y="145" width="200" height="95" rx="19" fill="#E7F5F3" stroke="#087F7C" stroke-width="2.5"/><text x="890" y="180" font-weight="760" fill="#17324D">四　接口路由</text><text x="890" y="208" fill="#50677D">消息转换与请求参数</text><text x="890" y="231" fill="#50677D">连接远端模型服务</text>
+      <rect x="1035" y="145" width="310" height="95" rx="19" fill="#F0EAF8" stroke="#76559B" stroke-width="2.5"/><text x="1190" y="180" font-weight="760" fill="#17324D">五　原始响应流</text><text x="1190" y="208" fill="#50677D">文本、思考、工具参数、错误</text><text x="1190" y="231" fill="#50677D">服务特有字段仍需保留</text>
+    </g>
+    <g stroke="#087F7C" stroke-width="4" marker-end="url(#a)"><path d="M255 192h37"/><path d="M500 192h37"/><path d="M745 192h37"/><path d="M990 192h37"/></g>
+
+    <rect x="55" y="310" width="1290" height="280" rx="26" fill="#E7F5F3" stroke="#087F7C" stroke-width="3" filter="url(#s)"/>
+    <text x="88" y="352" font-size="23" font-weight="760" fill="#076663">统一事件与最终消息</text>
+    <g font-size="17" text-anchor="middle" fill="#17324D">
+      <rect x="90" y="388" width="215" height="70" rx="15" fill="#fff"/><text x="197" y="417">开始事件</text><text x="197" y="443" fill="#50677D">初始部分消息</text>
+      <rect x="335" y="388" width="215" height="70" rx="15" fill="#fff"/><text x="442" y="417">思考增量</text><text x="442" y="443" fill="#50677D">开始／增量／结束</text>
+      <rect x="580" y="388" width="215" height="70" rx="15" fill="#fff"/><text x="687" y="417">文本增量</text><text x="687" y="443" fill="#50677D">开始／增量／结束</text>
+      <rect x="825" y="388" width="215" height="70" rx="15" fill="#fff"/><text x="932" y="417">工具调用增量</text><text x="932" y="443" fill="#50677D">完整参数在结束事件</text>
+      <rect x="1070" y="388" width="240" height="70" rx="15" fill="#fff"/><text x="1190" y="417">完成或错误</text><text x="1190" y="443" fill="#50677D">唯一终结事件</text>
+    </g>
+    <g stroke="#087F7C" stroke-width="3" marker-end="url(#a)"><path d="M305 423h22"/><path d="M550 423h22"/><path d="M795 423h22"/><path d="M1040 423h22"/></g>
+    <rect x="90" y="500" width="1220" height="60" rx="15" fill="#17324D"/>
+    <text x="700" y="526" text-anchor="middle" font-size="18" fill="#fff">最终消息：内容　服务与模型　用量　停止原因　原始停止原因　错误摘要</text>
+    <text x="700" y="550" text-anchor="middle" font-size="16" fill="#8EE1D8">共同字段便于上层控制；服务差异仍保留在诊断与兼容配置</text>
+
+    <rect x="55" y="645" width="610" height="105" rx="22" fill="#FFECE5" stroke="#C96138" stroke-width="2.5"/>
+    <text x="85" y="684" font-size="21" font-weight="760" fill="#9A3E24">可用性边界</text>
+    <text x="85" y="716" font-size="18" fill="#17324D">目录存在 ≠ 凭据有效 ≠ 网络可达 ≠ 请求成功</text>
+
+    <rect x="735" y="645" width="610" height="105" rx="22" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2.5"/>
+    <text x="765" y="684" font-size="21" font-weight="760" fill="#955A00">任务边界</text>
+    <text x="765" y="716" font-size="18" fill="#17324D">流完成 ≠ 工具完成 ≠ 用户目标正确 ≠ 允许发布</text>
+  </g>
+</svg>
+

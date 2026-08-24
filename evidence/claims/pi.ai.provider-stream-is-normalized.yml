@@ -1,0 +1,25 @@
+{
+  "id": "pi.ai.provider-stream-is-normalized",
+  "harness": "pi",
+  "dimension": "ai.provider-stream-is-normalized",
+  "statement": "锁定 pi-ai 用统一 AssistantMessage、ToolCall、Usage、StopReason 与 AssistantMessageEvent 协议承接不同 Provider；Models 先解析 Provider 与认证，再把请求委托给对应 stream 或 streamSimple，Faux Provider 测试锁定了思考、文本、工具调用和终结事件的顺序。",
+  "capability": "default",
+  "version": "c1279a65b3ef6b0b19950ed1771d5933241c240f",
+  "surface": "pi-ai-models-stream",
+  "platform": "provider-neutral-core",
+  "mode": "stream-normalization",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/ai/src/types.ts","lines":"372-467","excerpt":"export type StopReason = \"pending\" | \"stop\" | \"length\" | \"toolUse\" | \"error\" | \"aborted\" | \"deferred\";"},
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/ai/src/models.ts","lines":"667-695","excerpt":"return provider.streamSimple(requestModel, context, requestOptions as SimpleStreamOptions);"},
+    {"type":"upstream-test","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/ai/test/faux-provider.test.ts","lines":"49-68","excerpt":"expect(response.stopReason).toBe(\"toolUse\");"},
+    {"type":"upstream-test","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/ai/test/faux-provider.test.ts","lines":"382-408","excerpt":"expect(events.map((event) => event.type)).toEqual(["}
+  ],
+  "limitations": [
+    "统一类型不表示各 Provider 支持相同能力、成本、缓存或错误细节。",
+    "Faux Provider 是确定性夹具，不证明线上服务协议当前可用。",
+    "Provider 特有字段可能保留在兼容配置、原始停止原因或签名字段中。"
+  ],
+  "last_verified": "2026-08-24"
+}
+

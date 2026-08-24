@@ -74,7 +74,7 @@
 
 ### Task 4：多 Provider 与流归一化
 
-- [ ] 创建 `02-ai-provider-stream-normalization.md`、对应 SVG 和 Claim，覆盖 Models、Provider 注册、消息转换、流事件、Tool Call、Usage、StopReason、Context Overflow 与 Abort。
+- [x] 创建 `02-ai-provider-stream-normalization.md`、对应 SVG 和 Claim，覆盖 Models、Provider 注册、消息转换、流事件、Tool Call、Usage、StopReason、Context Overflow 与 Abort。
 - [ ] 明确模型目录或能力声明不证明当前凭据、区域和运行请求必然成功。
 - [ ] 渲染复核，运行门禁并提交：`docs(pi): 发布多 Provider 流归一化课程`。
 

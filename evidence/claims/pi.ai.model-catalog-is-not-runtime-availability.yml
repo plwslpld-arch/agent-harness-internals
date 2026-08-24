@@ -1,0 +1,25 @@
+{
+  "id": "pi.ai.model-catalog-is-not-runtime-availability",
+  "harness": "pi",
+  "dimension": "ai.model-catalog-is-not-runtime-availability",
+  "statement": "锁定 pi-ai 的 getModel 只在已登记模型目录中查找标识；真正 stream 还要找到 Provider、解析认证并满足对应 API 实现。目录命中不证明凭据、网络、区域、配额或请求运行成功。",
+  "capability": "default",
+  "version": "c1279a65b3ef6b0b19950ed1771d5933241c240f",
+  "surface": "models-catalog-and-auth",
+  "platform": "source-and-upstream-test",
+  "mode": "availability-boundary",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/ai/src/models.ts","lines":"305-318","excerpt":"return this.getModels(provider).find((model) => model.id === id);"},
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/ai/src/models.ts","lines":"628-664","excerpt":"throw new ModelsError(\"auth\", `Provider is not configured: ${model.provider}`);"},
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/ai/src/models.ts","lines":"781-791","excerpt":"has no API implementation"},
+    {"type":"upstream-test","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/ai/test/models-runtime.test.ts","lines":"1138-1157","excerpt":"expect(result.errorMessage).toContain(\"Unknown provider: ghost\");"}
+  ],
+  "limitations": [
+    "该 Claim 不否定模型目录对发现和配置的价值，只限定其证据范围。",
+    "上游测试使用测试 Provider，没有验证用户当前账户、区域或网络。",
+    "动态模型刷新还受网络允许、缓存和并发代次影响。"
+  ],
+  "last_verified": "2026-08-24"
+}
+
