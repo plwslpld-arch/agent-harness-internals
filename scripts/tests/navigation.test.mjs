@@ -141,6 +141,17 @@ ${targets.map((target) => `[DSH](${target})`).join('\n')}
   ]);
 });
 
+test('已配置为必需的主线不能用零链接绕过整批导航', () => {
+  const targets = ['README.md', '01-course.md', '02-course.md'];
+  const batch = [{ name: 'Codex 主线', targets, required: true }];
+  const content = `<!-- course-navigation:start -->
+<!-- course-navigation:end -->`;
+
+  assert.deepEqual(navigationFailures(content, () => undefined, { requiredBatches: batch }), [
+    'Codex 主线批量导航不完整：缺少 README.md、01-course.md、02-course.md',
+  ]);
+});
+
 test('扩展样本不得进入正式导航', () => {
   const content = `<!-- course-navigation:start -->
 [主线](reviewed.md)

@@ -37,17 +37,19 @@ Eval 位于轨迹出口。Trace、Telemetry、Feedback 或 Rollout 可成为评�
 
 | 顺序 | 模块 | 状态 | 先回答的问题 |
 | ---: | --- | --- | --- |
+<!-- course-navigation:start -->
 | 00 | [主线入口](README.md) | 已复核 | 多 crate 核心和多产品表面怎样完成一次真实 Turn？ |
-| 01 | 配置、Prompt 与 Context | 编写中 | 配置、基础指令、AGENTS 与上下文片段怎样形成请求？ |
-| 02 | Thread、Task 与 Turn | 编写中 | 持久线程、活动执行和单轮输入分别由谁持有？ |
-| 03 | 模型流与工具闭环 | 编写中 | Responses 流、路由、并行工具与结果提交怎样收敛？ |
-| 04 | 执行策略与沙箱 | 编写中 | 策略、审批、升级和多平台隔离怎样分层？ |
-| 05 | Rollout、历史与记忆 | 编写中 | 原始记录、模型上下文、压缩、恢复与长期记忆谁是权威？ |
-| 06 | 扩展与 Code Mode | 编写中 | Skill、Hook、Plugin、MCP、Connector 和运行时代码怎样接入？ |
-| 07 | 子智能体与编排 | 编写中 | 委派、消息、等待、取消和线程图怎样协作？ |
-| 08 | 产品表面、Trace 与 Eval | 编写中 | CLI、TUI、App Server、Cloud、SDK 和评测接入怎样保持语义边界？ |
+| 01 | [配置、Prompt 与 Context](01-config-prompt-context.md) | 已复核 | 配置、基础指令、AGENTS 与上下文片段怎样形成请求？ |
+| 02 | [Thread、Task 与 Turn](02-thread-task-turn.md) | 已复核 | 持久线程、活动执行和单轮输入分别由谁持有？ |
+| 03 | [模型流与工具闭环](03-model-tool-loop.md) | 已复核 | Responses 流、路由、并行工具与结果提交怎样收敛？ |
+| 04 | [执行策略与沙箱](04-exec-policy-sandbox.md) | 已复核 | 策略、审批、升级和多平台隔离怎样分层？ |
+| 05 | [Rollout、历史与记忆](05-rollout-history-memory.md) | 已复核 | 原始记录、模型上下文、压缩、恢复与长期记忆谁是权威？ |
+| 06 | [扩展与 Code Mode](06-extensions-code-mode.md) | 已复核 | Skill、Hook、Plugin、MCP、Connector 和运行时代码怎样接入？ |
+| 07 | [子智能体与编排](07-subagents-orchestration.md) | 已复核 | 委派、消息、等待、取消和线程图怎样协作？ |
+| 08 | [产品表面、Trace 与 Eval](08-surfaces-trace-eval-design.md) | 已复核 | CLI、TUI、App Server、Cloud、SDK 和评测接入怎样保持语义边界？ |
+<!-- course-navigation:end -->
 
-只有入口已经进入发布状态。其余模块完成正文、Claim、图示与复核后才会变成可点击的正式导航；目录名或计划存在不等于课程已经可用。
+状态表是发布契约，不是进度装饰。九篇课程的正文、Claim、图示、来源和自检已经整批通过门禁；任意一篇退出发布状态，Codex 主线都会被导航检查判为不完整。
 
 状态先于导航。
 

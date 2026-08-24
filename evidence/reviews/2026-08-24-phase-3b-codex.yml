@@ -1,0 +1,62 @@
+{
+  "stage": "phase-3b-codex",
+  "date": "2026-08-24",
+  "commit": "1e0dbd7bb23e814fb1115958adff77c97e93bc63",
+  "promises": [
+    {"id": "p-nine-course-line", "statement": "Codex 主线入口与八篇课程均达到 reviewed，沿真实 Turn 覆盖配置上下文、生命周期、模型工具闭环、安全执行、记录恢复、扩展、编排、产品表面与评测接入。"},
+    {"id": "p-locked-evidence", "statement": "关键架构、配置、状态、安全、恢复、扩展、编排和协议结论绑定锁定源码、上游测试与明确证据等级。"},
+    {"id": "p-security-state-boundaries", "statement": "审批、策略、权限描述、沙箱后端、Thread、Turn、Rollout、Context 与 Memory 保持责任和权威边界。"},
+    {"id": "p-eval-boundary", "statement": "Trace、遥测、Feedback、训练 RewardAdapter、Checkpoint 选择和独立发布 Eval 保持语义分离。"},
+    {"id": "p-chinese-visuals", "statement": "十张 Codex 正式图全部使用中文说明，保留的拉丁字符仅为项目、协议、代码或产品标识，并经集中渲染目检。"},
+    {"id": "p-atomic-navigation", "statement": "Codex 九篇在总入口和主线入口整批进入正式导航，缺失或降级任一篇都会失败，其他四条主线与扩展样本没有提前开放。"},
+    {"id": "p-node24-all-sources", "statement": "Node 24 聚合门禁与十二个锁定来源的 all 配置验证全部通过。"}
+  ],
+  "evidence": [
+    {"id": "e-course-files", "promise": "p-nine-course-line", "type": "file", "reference": "docs/harnesses/codex/", "summary": "入口与 01 至 08 共九篇状态均为 reviewed，每篇具备真实输入输出、调用链、失败限制、验证方法和带答案自检。"},
+    {"id": "e-content-contract", "promise": "p-nine-course-line", "type": "test", "reference": "scripts/check-content-contract.mjs", "summary": "一级主线入口契约和八篇 Harness 文章深度契约通过。"},
+    {"id": "e-claims", "promise": "p-locked-evidence", "type": "file", "reference": "evidence/claims/codex.*.yml", "summary": "十七条 Codex 公开 Claim 登记提交、表面、平台、模式、证据等级、摘录和推断。"},
+    {"id": "e-evidence-map", "promise": "p-locked-evidence", "type": "file", "reference": "evidence/claims/codex/evidence-map.yml", "summary": "九篇课程逐项登记源码、上游测试、计划 Claim 与高风险误读。"},
+    {"id": "e-security-article", "promise": "p-security-state-boundaries", "type": "file", "reference": "docs/harnesses/codex/04-exec-policy-sandbox.md", "summary": "分开 Exec Policy、审批、权限描述、平台后端与真实进程副作用，并明确未做三平台本地实测。"},
+    {"id": "e-state-article", "promise": "p-security-state-boundaries", "type": "file", "reference": "docs/harnesses/codex/05-rollout-history-memory.md", "summary": "分别解释 Thread Store、Rollout、模型 Context、压缩替代历史、恢复与长期 Memory 的消费者和权威范围。"},
+    {"id": "e-eval-article", "promise": "p-eval-boundary", "type": "file", "reference": "docs/harnesses/codex/08-surfaces-trace-eval-design.md", "summary": "把产品协议投影、Trace、OTel、Feedback、RewardAdapter 与独立 Eval 分层，并明确训练奖励不是发布门禁。"},
+    {"id": "e-diagram-sheet", "promise": "p-chinese-visuals", "type": "render", "reference": "evidence/reviews/phase-3b-codex-contact-sheet.png", "summary": "十图集中复核未发现文字截断、节点重叠、箭头误向或英文自然语言说明残留；必要专名与协议标识予以保留。"},
+    {"id": "e-visual-manifest", "promise": "p-chinese-visuals", "type": "file", "reference": "assets/diagrams/manifest.yml", "summary": "十张 Codex 图具有中文替代文本、合法图类型、文章范围和 Claim 绑定。"},
+    {"id": "e-navigation-test", "promise": "p-atomic-navigation", "type": "test", "reference": "scripts/tests/navigation.test.mjs", "summary": "Codex 九篇必须完整发布，必需批次不能以零链接绕过，扩展样本不得进入正式导航。"},
+    {"id": "e-navigation-files", "promise": "p-atomic-navigation", "type": "file", "reference": "docs/harnesses/codex/README.md", "summary": "入口状态表九篇均为已复核可点击链接，并明确状态表是发布契约。"},
+    {"id": "e-source-all", "promise": "p-node24-all-sources", "type": "command", "reference": "node scripts/verify-sources.mjs --profile all", "summary": "十二个来源定义与十二个 all 配置 Checkout 全部匹配锁定提交。"},
+    {"id": "e-check-all", "promise": "p-node24-all-sources", "type": "command", "reference": "node scripts/check-all.mjs", "summary": "十七组聚合检查、八十八项单元测试、三十四条 Claim、三十张正式图、六十五次正式导航核对与六十三篇 Markdown 链接检查通过。"}
+  ],
+  "findings": [
+    {"id": "f-internal-navigation-stale", "priority": "high", "status": "resolved", "summary": "Codex 已进入总导航，但主线入口仍把八篇正文标为编写中且没有链接，形成公开状态矛盾。"},
+    {"id": "f-approval-sandbox-collapse", "priority": "high", "status": "resolved", "summary": "安全主题容易把审批通过、策略允许、权限描述和操作系统沙箱兑现折叠成一个成功状态。"},
+    {"id": "f-state-authority-collapse", "priority": "high", "status": "resolved", "summary": "Thread Store、Rollout、模型 Context、压缩摘要与长期 Memory 容易被误写为同一份会话真相。"},
+    {"id": "f-feedback-eval-collapse", "priority": "high", "status": "resolved", "summary": "Trace、遥测或 Feedback 容易被升级成训练 Reward 或独立发布 Eval。"},
+    {"id": "f-platform-generalization", "priority": "high", "status": "resolved", "summary": "锁定源码中的多平台分支容易被外推成当前应用和三平台均已实测的完整保证。"},
+    {"id": "f-extension-presence-default-capability", "priority": "high", "status": "resolved", "summary": "crate、Feature、Skill、Plugin、MCP、Connector 或 Code Mode 目录存在容易被误读为默认启用且可执行。"},
+    {"id": "f-protocol-surface-equivalence", "priority": "high", "status": "resolved", "summary": "共享核心容易被误写成 CLI、无界面执行、App Server、Cloud 与 SDK 的停止状态和错误语义完全等价。"},
+    {"id": "f-target-environment-unverified", "priority": "medium", "status": "open", "summary": "本阶段没有现场运行线上模型服务、Linux 或 macOS 沙箱和真实 Cloud 表面，相关结论保持源码或上游测试级。"},
+    {"id": "f-current-app-drift", "priority": "medium", "status": "open", "summary": "当前桌面应用可能继续演进，课程只以锁定开源提交为源码权威，不用当前应用行为覆盖该证据边界。"},
+    {"id": "f-remote-not-deployed", "priority": "medium", "status": "open", "summary": "GitHub 仓库改名、About、Topics、社交预览、保护规则和 Contributors 留到阶段 6 统一部署。"},
+    {"id": "f-legacy-style-warning", "priority": "low", "status": "open", "summary": "附录 B 仍有一条非阻断句长节奏提醒，不影响 Codex 九篇正文。"}
+  ],
+  "resolutions": [
+    {"id": "f-internal-navigation-stale", "action": "把 Codex 入口八篇课程全部改为已复核链接，并新增必需批次零链接绕过失败测试。", "evidence": ["e-navigation-test", "e-navigation-files"]},
+    {"id": "f-approval-sandbox-collapse", "action": "安全课从结构化参数逐层记录策略、审批、权限描述、平台变换和进程结果，明确批准不创建隔离、退出零不等于 Eval 通过。", "evidence": ["e-security-article", "e-claims"]},
+    {"id": "f-state-authority-collapse", "action": "记录恢复课建立数据权威地图，分别定义持久身份、追加记录、模型投影、压缩工件与派生记忆。", "evidence": ["e-state-article", "e-claims"]},
+    {"id": "f-feedback-eval-collapse", "action": "评测课分别定义观测、反馈、训练适配和独立发布门禁，要求固定 Trial、Artifact、Scorer 与隔离 holdout。", "evidence": ["e-eval-article", "e-claims"]},
+    {"id": "f-platform-generalization", "action": "入口和安全课明确区分锁定源码、上游测试、当前应用与本地实测，跨平台架构只保留结构性推断等级。", "evidence": ["e-course-files", "e-security-article"]},
+    {"id": "f-extension-presence-default-capability", "action": "扩展课要求每项能力核对发现、启用、模型可见、真实执行器与安全路径，声明目录和 crate 存在不是默认能力证明。", "evidence": ["e-course-files", "e-claims"]},
+    {"id": "f-protocol-surface-equivalence", "action": "表面课要求逐表面映射事件、停止、错误和能力，不允许一个表面的测试替另一表面签字。", "evidence": ["e-eval-article", "e-claims"]}
+  ],
+  "commands": [
+    {"command": "node --version", "exit_code": 0, "summary": "输出 v24.19.0。"},
+    {"command": "node scripts/check-all.mjs", "exit_code": 0, "summary": "十七组聚合检查与八十八项单元测试通过，仅保留旧附录的一条文风提醒。"},
+    {"command": "node scripts/verify-sources.mjs --profile all", "exit_code": 0, "summary": "十二个来源定义与十二个 all 配置 Checkout 通过。"},
+    {"command": "渲染并打开 phase-3b-codex-contact-sheet.png", "exit_code": 0, "summary": "十图未见截断、重叠、箭头误向或英文自然语言说明残留。"},
+    {"command": "逐篇统计 status、Claim、失败与限制、验证方法和自检", "exit_code": 0, "summary": "九篇全部 reviewed，关键结论均有 Claim 或证据边界，每篇均包含后三类必需章节。"},
+    {"command": "node scripts/check-navigation.mjs", "exit_code": 0, "summary": "六十五次正式导航核对通过，Codex 九篇不能零链接或部分发布。"},
+    {"command": "node scripts/check-links.mjs", "exit_code": 0, "summary": "六十三篇 Markdown 的本地链接通过。"},
+    {"command": "git diff --check", "exit_code": 0, "summary": "没有空白错误。"}
+  ],
+  "result": "pass"
+}

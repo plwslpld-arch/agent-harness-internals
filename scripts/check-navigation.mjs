@@ -80,7 +80,7 @@ export function navigationFailures(content, resolveDocument, options = {}) {
   }
   for (const batch of options.requiredBatches ?? []) {
     const present = batch.targets.filter((target) => linkedTargets.has(target));
-    if (present.length === 0) continue;
+    if (present.length === 0 && !batch.required) continue;
     const missing = batch.targets.filter((target) => !linkedTargets.has(target));
     if (missing.length > 0) {
       errors.push(`${batch.name}批量导航不完整：缺少 ${missing.join('、')}`);
@@ -162,8 +162,8 @@ function main() {
     }, {
       requiredBatches: [
         ...(foundationTargets.length > 0 ? [{ name: '共同基础', targets: foundationTargets }] : []),
-        ...(dshTargets.length > 0 ? [{ name: 'DSH 主线', targets: dshTargets }] : []),
-        ...(codexTargets.length > 0 ? [{ name: 'Codex 主线', targets: codexTargets }] : []),
+        ...(dshTargets.length > 0 ? [{ name: 'DSH 主线', targets: dshTargets, required: true }] : []),
+        ...(codexTargets.length > 0 ? [{ name: 'Codex 主线', targets: codexTargets, required: true }] : []),
       ],
       forbiddenPrefixes: relativePath === 'README.md'
         ? [{ name: '扩展样本', prefix: 'docs/samples/' }]
