@@ -272,6 +272,14 @@
       "scope": "docs/harnesses/gemini-cli/02-turn-scheduler-routing.md",
       "alt": "Gemini CLI 模型路由、轮次事件、智能体会话结束判断和工具调度状态的中文生命周期图",
       "claims": ["gemini-cli.turn.finished-is-not-agent-success", "gemini-cli.scheduler.tool-batch-has-own-state"]
+    },
+    {
+      "id": "gemini-cli-tools-lifecycle",
+      "path": "assets/diagrams/gemini-cli/03-tools-lifecycle.svg",
+      "type": "sequence",
+      "scope": "docs/harnesses/gemini-cli/03-tools-lifecycle.md",
+      "alt": "Gemini CLI 工具从已知目录、活动过滤、模型请求、策略确认和执行到函数响应回送的中文生命周期图",
+      "claims": ["gemini-cli.tools.registration-is-not-execution", "gemini-cli.tools.responses-are-scheduler-settlements"]
     }
   ]
 }

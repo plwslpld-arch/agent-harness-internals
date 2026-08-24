@@ -70,10 +70,10 @@
 
 ### Task 5：Tool Registry 与工具生命周期
 
-- [ ] 完成 `03-tools-lifecycle.md`、中文工具时序图和 Function Response Claim。
-- [ ] 覆盖内建/MCP/发现工具、声明与实例、参数校验、排队、确认等待、并行执行、取消、错误与结果回送。
-- [ ] 用 Scheduler 测试核对有序结果和终止工具，不把注册成功、调用接受或进程退出零写成任务成功。
-- [ ] 提交：`docs(gemini-cli): 发布工具生命周期课程`。
+- [x] 完成 `03-tools-lifecycle.md`、中文工具时序图和 Function Response Claim。
+- [x] 覆盖内建/MCP/发现工具、声明与实例、参数校验、排队、确认等待、并行执行、取消、错误与结果回送。
+- [x] 用 Scheduler 测试核对有序结果和终止工具，不把注册成功、调用接受或进程退出零写成任务成功。
+- [x] 提交：`docs(gemini-cli): 发布工具生命周期课程`。
 
 ### Task 6：Confirmation、Policy、Safety 与 Sandbox
 

@@ -1,0 +1,23 @@
+{
+  "id": "gemini-cli.tools.registration-is-not-execution",
+  "harness": "gemini-cli",
+  "dimension": "tools.registration-is-not-execution",
+  "statement": "锁定 Gemini CLI 的 ToolRegistry 同时保留已知工具与活动工具视图；被排除工具仍可登记以便会话中启用，但不会进入活动工具声明，Scheduler 还需再次查找、构建调用、策略确认和执行。",
+  "capability": "default",
+  "version": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+  "surface": "core-tool-registry",
+  "platform": "cross-platform-source",
+  "mode": "builtin-discovered-mcp-filtered",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/tools/tool-registry.ts","lines":"231-282","excerpt":"excluded tools are still registered to allow for enabling them"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/tools/tool-registry.ts","lines":"546-803","excerpt":"private getActiveTools(): AnyDeclarativeTool[]"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/tools/tool-registry.test.ts","lines":"300-405","excerpt":"should exclude a tool when its current name is in excludeTools"}
+  ],
+  "limitations": [
+    "活动工具可见性仍会随设置、别名、MCP 生命周期、模型和会话更新而变化。",
+    "注册与模型可见都不证明 Policy、Confirmation、Sandbox 或具体后端允许执行。",
+    "发现命令及外部 MCP 工具带有额外进程、网络、Schema 和信任风险。"
+  ],
+  "last_verified": "2026-08-24"
+}

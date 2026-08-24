@@ -1,0 +1,24 @@
+{
+  "id": "gemini-cli.tools.responses-are-scheduler-settlements",
+  "harness": "gemini-cli",
+  "dimension": "tools.responses-are-scheduler-settlements",
+  "statement": "锁定 Gemini CLI 将工具不存在、参数无效、策略拒绝、成功、错误和取消都归约为带 callId 的 CompletedToolCall 与 responseParts；这些结果可回送模型，但只是 Scheduler 结算，不是任务正确性结论。",
+  "capability": "default",
+  "version": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+  "surface": "core-scheduler-executor",
+  "platform": "upstream-vitest-fixture",
+  "mode": "tool-result-normalization",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/scheduler/scheduler.ts","lines":"330-420","excerpt":"ToolErrorType.TOOL_NOT_REGISTERED"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/scheduler/tool-executor.ts","lines":"120-190","excerpt":"completedToolCall = await this.createSuccessResult("},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/scheduler/tool-executor.ts","lines":"299-475","excerpt":"responseParts: response"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/scheduler/scheduler.test.ts","lines":"330-378","excerpt":"ToolErrorType.INVALID_TOOL_PARAMS"}
+  ],
+  "limitations": [
+    "CompletedToolCall 的 Success 只说明执行器按工具契约返回无错误。",
+    "输出可能截断、蒸馏或保存到旁路文件，responseParts 不一定等于完整原始输出。",
+    "取消发生前工具可能已经产生部分副作用，Cancelled 不是自动回滚证明。"
+  ],
+  "last_verified": "2026-08-24"
+}
