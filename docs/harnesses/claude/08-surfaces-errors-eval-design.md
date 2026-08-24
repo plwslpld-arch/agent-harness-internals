@@ -21,6 +21,103 @@ sources: [{"repo":"claude-agent-sdk-python","path":"src/claude_agent_sdk/query.p
 
 独立评测必须继续检查目标产物。
 
+## 核心概念
+
+Eval 接入首先选择 Target 表面，再分类运行事实，最后由独立 Scorer 判定。表面决定能观察哪些消息与控制；错误分类决定是否允许恢复 Attempt；Artifact 保存事实；Scorer 才回答任务是否通过。把四者压成一个 success 会同时损坏诊断与统计。
+
+| 概念 | 责任 | 典型字段 | 不能替代 |
+| --- | --- | --- | --- |
+| Target surface | 决定怎样调用和观察 Claude | query、client、CLI、SDK 版本 | 任务验收标准 |
+| Trial | 固定一个统计任务与条件 | dataset ID、环境、模型、scorer | 可无限重试的运行次数 |
+| Attempt | 同一 Trial 的基础设施恢复 | attempt ID、故障分类、重试原因 | 新 Trial 或产品失败洗白 |
+| Artifact | 保存运行事实与产物 | 消息、控制、diff、测试、副作用 | 通过或失败结论 |
+| Error classifier | 区分连接、协议、工具、产品与评分失败 | error layer、recoverable | Scorer |
+| Scorer | 按固定契约检查目标与安全 | 分项结果、理由、证据 | Result subtype |
+| Feedback / Reward | 用户信号与训练适配 | 原始反馈、adapter version | 独立发布评测 |
+
+### 表面决定可见性
+
+一次性 `query()` 适合固定输入，Client 允许连接内继续输入和控制，CLI Adapter 只能从进程与公开输出格式观察。三者可能完成同一任务，却产生不同原始事件。共同 Artifact 应规范化语义，但必须保留 `surface` 和 raw event，不能假定缺失字段等于未发生。
+
+### 失败层决定重试纪律
+
+CLI 未找到、临时测试环境启动失败可能允许新 Attempt；模型达到 max turns、权限拒绝、工具业务错误、错误答案或越界修改属于产品路径，不能重试到通过。是否可恢复必须在 RunSpec 前定义，运行后看结果再决定会造成选择偏差。
+
+协议 success、进程 exit 0、工具成功、用户接受和 Scorer 通过是五个不同信号。它们可以互相矛盾：工具成功但改错文件，Result success 但测试失败，用户接受但触犯禁止修改区。最终发布只服从独立验收契约。
+
+## 为什么这样设计
+
+第一，表面差异会影响可观察证据。若只比较最终文本，Client 的 Interrupt、CLI 的 stderr 和 SDK 的结构化权限拒绝都被丢掉；显式 Target Adapter 让不同表面进入同一评测框架，又不抹平原始差异。
+
+第二，Trial 与 Attempt 分开保护统计分母。基础设施可以恢复，但产品失败不能通过多跑几次消失；固定 Trial 后，可靠性、成功率和成本才可比较。
+
+第三，Artifact 与 Scorer 分离允许重放。原始运行很贵，评分规则会演进；保存充分事实后可以用新版 Scorer 重新判断，同时保留旧评分版本，不必让 Target 自己宣布成功。
+
+第四，训练、Checkpoint 选择和发布评测隔离防止循环证明。Feedback 经 RewardAdapter 进入训练，开发集选择候选，未参与前两步的 holdout 才能估计发布表现。任何一层复用标签都会让结果偏高。
+
+第五，错误分层让预算和可靠性指标可解释。基础设施重试计入成本与稳定性，却不改变 Trial 分母；产品失败保留原样，才能知道模型、工具或策略真正在哪些任务上不可靠。否则更激进的重试会制造虚假的成功率提升，也无法准确解释延迟和费用来自任务还是恢复过程。
+
+这些边界共同保证每个结论都能回到稳定分母与独立证据。
+
+## 实现思路
+
+下面是跨表面 Eval Harness 的教学蓝图。Claude SDK 并不内置 Dataset、Trial、Artifact Scorer 或发布门禁；本节只说明怎样利用公开消息与错误表面接入独立系统。
+
+1. **编译 RunSpec。** 固定 Dataset 条目、Target surface、SDK / CLI / 模型、工作区快照、权限、工具、超时和 Scorer 版本。
+2. **运行 Target Adapter。** query、client 与 CLI 分别实现自己的启动、输入、控制和关闭，同时输出统一事件信封与原始负载哈希。
+3. **分类错误。** 依据预先定义规则标注 infrastructure、protocol、product、policy、tool 或 assertion，并决定是否允许同一 Trial 新 Attempt。
+4. **构建 Artifact。** 合并消息、控制链、异常 cause、stderr 摘要、退出码、文件差异、测试、费用与外部副作用；敏感信息脱敏但保持关联 ID。
+5. **独立评分。** Scorer 只读取固定验收契约和 Artifact，分别输出正确性、安全、预算与完整性；任何硬约束失败都不能被总分抵消。
+6. **隔离训练闭环。** Feedback Store 先审计，RewardAdapter 版本化转换，Checkpoint Selector 与 Release Eval 使用互斥数据分区。
+
+```text
+Trial = 编译(dataset_item, run_spec)
+对 attempt in 允许的基础设施恢复:
+    raw = target_adapter.run(Trial)
+    classification = error_classifier(raw)
+    artifact = build_artifact(Trial, raw, classification)
+    如果 classification 可恢复且尚未产生产品结果: 继续同一 Trial 的下一 Attempt
+    score = independent_scorer(artifact, Trial.acceptance_contract)
+    提交不可变 canonical Attempt
+    结束
+```
+
+Canonical Attempt 需要租约、fencing 或幂等提交，防止超时的旧运行在新 Attempt 之后覆盖结果。所有 Attempt 仍保留用于可靠性分析，但 Trial 只选择一份规范结果，分母不变。
+
+Scorer 不应调用 Target 的自然语言判断。代码任务直接执行锁定测试、检查 diff 范围与禁止副作用；事实问答检查结构和引用；外部动作读取目标系统状态。无法观察的条件标成 inconclusive，不猜成 pass。
+
+## 贯穿案例
+
+Dataset 要求修复解析器边界错误，禁止修改测试并要求全部 19 个回归测试通过。Trial 使用 Python Client，因为任务中需要一次权限确认；同时保留一个 CLI Target 用于后续表面对照。
+
+1. **编译 Trial。** 锁定工作树 W1、模型、Client 与 CLI 版本、默认权限、测试命令和禁止路径；Trial ID 在所有 Attempt 中不变。
+2. **第一次 Attempt 基础设施失败。** CLI 子进程在模型调用前因临时工作目录创建失败退出。分类器判 infrastructure，可开第二次 Attempt；这次不产生产品得分。
+3. **第二次 Attempt 正常收敛。** Result subtype success、exit 0，Agent 修改解析器并声称完成。Artifact 显示 18 个测试通过、1 个失败。
+4. **独立 Scorer 拒绝。** 正确性硬门槛失败，Trial 判 fail；不得因为基础设施已恢复或再试可能通过而创建第三次产品 Attempt。
+5. **训练与发布分开。** 人工审查将修正后的 patch 与失败 patch 形成 preference，经 RewardAdapter 进入训练；原 Trial 及发布 holdout 不用于证明该 Checkpoint 可发布。
+
+```json
+{"trialId":"parser-017","attempt":1,"classification":"infrastructure","productStarted":false,"retryAllowed":true}
+```
+
+```json
+{"trialId":"parser-017","attempt":2,"resultSubtype":"success","exitCode":0,"tests":{"passed":18,"failed":1},"retryAllowed":false}
+```
+
+```json
+{
+  "canonicalAttempt":2,
+  "score":{"correctness":"fail","safety":"pass","budget":"pass","overall":"fail"},
+  "reason":"固定回归测试仍有一项失败",
+  "trainingUse":"仅经审计 RewardAdapter 后可用",
+  "releaseDecision":"不能由该 Trial 单独证明"
+}
+```
+
+把第二次 Attempt 的 Result 改为 error_max_turns，但补丁恰好通过测试，Scorer 仍应按任务契约决定是否接受；协议错误与产物正确可以并存。把用户界面中的「接受修改」设为 true，也不能覆盖禁止路径或测试门槛。两个反例确保 Eval 不依赖单一上游信号。
+
+最后用相同 Trial 分别跑 query、Client 和 CLI，只比较共同的产物与安全指标，表面特有的控制事件单列。若结果不同，先定位版本、配置和可见工具，而不是直接给三个表面排序。
+
 ## 真实输入与输出
 
 ### 输入

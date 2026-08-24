@@ -21,6 +21,105 @@ Python SDK 的外部 `SessionStore` 采用双写架构。Claude Code 子进程�
 
 外部持久化是恢复输入和审计副本，不是正在运行的 Claude Code 内存、模型 Context 或文件系统快照。
 
+## 核心概念
+
+会话问题难，不是因为只有一种状态太大，而是因为多种状态恰好共享同一个 Session ID。对话转录、模型当前 Context、本地 JSONL、外部镜像、工作树和远端副作用的更新时间与权威来源都不同。恢复前必须先问「准备恢复哪一种状态」。
+
+| 概念 | 保存什么 | 谁先写 | 不包含什么 |
+| --- | --- | --- | --- |
+| Session ID | 对话链的逻辑标识 | Claude Code / SDK 协议 | 文件快照和完整运行状态 |
+| 本地转录 | 提示、工具轨迹、响应等 JSONL | CLI 子进程 | 当前模型 KV、未落盘内存 |
+| Transcript Mirror | CLI 发给 SDK 的转录副本事件 | 本地写入之后产生 | 同步提交保证 |
+| 外部 Session Store | 按 project、session、subpath 保存的二次副本 | SDK Batcher 追加 | 唯一权威和自动文件恢复 |
+| 恢复材料化 | 把外部条目重建为临时本地布局 | SDK 父进程 | CLI 直接连接数据库 |
+| `fork_session` | 从旧转录派生新对话 ID | CLI 公开行为 | Git 分支或工作树复制 |
+| 工作目录 | 工具真正读写的文件状态 | 工具与操作系统 | 自动随 Session 回滚 |
+
+### 权威与新鲜度
+
+本地转录是子进程首先写入的运行记录；外部 Store 只收到后续 Mirror。因而 Store 可以更耐久、更适合跨主机，却可能比本地尾部旧。所谓权威必须带问题：恢复对话时 Store 是输入来源，判断当前文件时磁盘才是来源，判断本轮模型看见什么还要看压缩后的 Context。
+
+Mirror 的批量与重试进一步拉开新鲜度。一个 Result 成功不保证最后一批已经进入远端；Store load 成功也不保证末尾完整。适配器应记录最后成功 UUID、批次序号和错误，应用在跨主机恢复前检查完整性标记。
+
+### 继续、指定恢复、分叉与截断
+
+`continue_conversation` 是按项目范围选择最近候选，适合单用户便利入口；显式 `resume` 用确定 Session ID；`fork_session` 产生新对话分支；`resume_session_at` 选择转录节点。四者改变的是历史选择，不负责恢复 Git、数据库或远端服务。
+
+多租户环境尤其不能只依赖 cwd 和最近时间。应用应把租户、逻辑项目和 Session 的映射保存在自己的授权域，调用 Store 时由服务端重新验证，而不是让知道 UUID 的客户端自由指定项目键。
+
+## 为什么这样设计
+
+第一，CLI 本地写入保持热路径简单可靠。若每个转录条目必须等待远端数据库确认，网络抖动会直接卡住模型循环；次级 Mirror 允许用户任务继续，同时把远端不完整性显式交给监控和恢复策略。
+
+第二，材料化复用了 CLI 已有的本地恢复格式。SDK 可以对接 S3、Redis 或数据库，却不要求闭源 CLI 内置每种后端驱动；适配器只实现统一 Store 契约，父进程负责把数据转换成本地布局。
+
+第三，对话分叉与工作树分叉被刻意解耦。不同应用可能选择共享目录、独立 worktree、容器快照或远端沙箱，SDK 不能假定一种文件事务模型。代价是宿主必须把 Session ID 与环境快照 ID 明确绑定。
+
+第四，Mirror 失败不终止 Session，保护了可用性，却使「运行成功」与「可跨主机恢复」成为两个完成条件。把这两个条件分开记录，比在 Store 暂时故障时终止所有工作更灵活，也要求发布门禁不能只检查 Result。
+
+最后，临时材料化把远端适配器与 CLI 的本地格式隔开。新后端只需遵守 Store 契约，不需要进入闭源 CLI；同时敏感配置的复制和清理集中在父进程，便于逐项审计。这个接缝提升可移植性，但不消除临时凭据风险，也让后端故障能够被单独替换和验证。
+
+## 实现思路
+
+教学实现由本地转录观察器、顺序 Batcher、Store Adapter、恢复材料化器和完整性检查器组成。前四个对象可对应锁定 SDK 的公开责任；版本标记、租户授权和工作树绑定是宿主需要补齐的生产蓝图。
+
+1. **定义复合键。** 使用受服务端控制的 tenant / project / session / subpath，禁止客户端直接拼接物理路径；稳定 UUID 条目作为幂等键。
+2. **本地成功后入队。** 每个 Mirror 保存来源文件、条目序号与 UUID；单进程按入队顺序分组，达到 Result、容量或关闭边界时刷新。
+3. **区分重试条件。** 明确未提交失败、可能部分提交和不可取消超时；只有可证明安全的失败重试，其他情况依赖 UUID 幂等和后续对账。
+4. **发布完整性水位。** 每个 Session 保存最后本地 UUID、最后远端 UUID、待刷新数量与 Mirror 错误；跨主机恢复必须读取水位。
+5. **材料化到临时目录。** 授权后 load 主转录与子路径，原子写入受限目录，复制最少认证配置，移除 refresh token 和会触发安装的设置。
+6. **绑定外部环境。** Artifact 同时记录 Session ID、转录水位、工作树 Commit / 哈希和远端资源版本；恢复后先校验环境漂移。
+7. **清理并对账。** 正常、失败和取消都清理临时目录；启动时扫描遗留目录，Store 后台任务对缺批和重复进行审计。
+
+```text
+append_mirror(session_key, entries):
+    entries = 按稳定UUID去重但保留无UUID条目(entries)
+    await store.append(session_key, entries)
+    更新远端水位(session_key, entries.last.uuid)
+
+resume(request):
+    验证租户对 project_key 和 session_id 的授权
+    如果 远端水位 < 请求要求水位: 返回 incomplete
+    temp = 创建受限临时配置目录()
+    原子写入 temp 的主转录与子路径
+    复制最少认证配置并删除 refresh token
+    返回 {resume_id, temp, cleanup, environment_snapshot}
+```
+
+Store Adapter 的 conformance 只能证明基本追加、加载、隔离和删除语义。生产实现还要测试两个进程并发追加、部分提交后超时、索引晚于对象可见、TTL 与法律保留冲突、加密密钥轮换和租户越权。缺少这些证据时只能标为 partial。
+
+恢复器还应输出明确的 readiness，而不是直接返回可执行 Session。只有授权、远端水位、转录结构、认证材料和环境快照都通过，才进入 CLI；任何缺项都保留为可解释状态，由用户或调度器选择等待、降级或重新开始。
+
+## 贯穿案例
+
+用户在主机 A 让 Agent 修改一个报告，随后进程结束；主机 B 从外部 Store 恢复并继续。为了证明恢复不是「只要拿到 Session ID 就行」，案例同时跟踪转录水位和工作树哈希。
+
+1. **主机 A 运行。** CLI 先写本地条目 u1 到 u42，工具把报告改成哈希 H2；Batcher 只成功镜像到 u40，最后两条因 Store 超时仍待处理。
+2. **阻止不完整恢复。** 应用看到本地水位 u42、远端水位 u40，标记 Session `mirror_incomplete`。主机 B 即使能 load，也不能宣称完整恢复，只能等待补传或让用户选择降级。
+3. **完成对账。** 后台补传 u41、u42，稳定 UUID 防止部分提交造成重复；远端水位变为 u42。应用同时把工作树快照 H2 放到主机 B 的独立 worktree。
+4. **材料化与启动。** SDK 父进程将主转录和子路径写入临时配置，移除 refresh token，把 resume ID 交给本地 CLI；启动后先核对工作树哈希 H2。
+5. **分叉继续。** 用户选择 fork，得到新 Session ID s2；s1 与 s2 对话分开，但若继续共享同一工作树，后续文件仍会互相影响，因此 Artifact 保留 worktree ID。
+
+```json
+{"session":"s1","localTail":"u42","remoteTail":"u40","workspaceHash":"H2","resumeReady":false}
+```
+
+```json
+{"session":"s1","localTail":"u42","remoteTail":"u42","workspaceHash":"H2","resumeReady":true}
+```
+
+```json
+{
+  "restored":{"host":"B","session":"s1","entries":42,"subpaths":1,"workspaceHash":"H2"},
+  "fork":{"session":"s2","conversationIndependent":true,"filesystemIndependent":false},
+  "cleanup":{"tempConfigRemoved":true,"startupSweepRequired":true}
+}
+```
+
+把工作树故意保留在 H1 再恢复，会话可以成功加载，但模型历史声称报告已修改，磁盘却没有对应内容。正确状态是 `environment_mismatch`，要求重新读取文件或恢复快照；不能把它算作 Session Store 故障，也不能直接继续危险操作。
+
+再让主机 A 在 Store append 部分提交后超时。重试会再次携带相同 UUID，Adapter 必须幂等；没有 UUID 的元数据则按契约追加。该实验验证的是适配器一致性，不证明跨区域数据库具备全局线性化。
+
 ## 真实输入与输出
 
 ### 输入

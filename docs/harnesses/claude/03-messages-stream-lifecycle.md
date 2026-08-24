@@ -21,6 +21,113 @@ Python SDK 把 CLI 的 NDJSON 帧解析为 `UserMessage`、`AssistantMessage`、
 
 协议终态是观察点，不是质量判决。
 
+## 核心概念
+
+消息类型回答「收到了什么」，生命周期状态回答「哪个对象结束了什么」。二者必须一起读：Result 是一种消息，也可能触发输入关闭条件；Interrupt 是控制动作，不一定关闭连接；进程退出是 Transport 事实，不等于独立评测已经给出结论。
+
+| 概念 | 所属层 | 表示什么 | 不表示什么 |
+| --- | --- | --- | --- |
+| Assistant stop reason | 模型响应 | 一次生成停止的原因 | 工具、副作用或整个运行结束 |
+| `ResultMessage` | CLI 协议投影 | 一个回合或运行终态报告 | 用户目标已经正确完成 |
+| 在途任务集合 | Query 生命周期 | 后台任务是否仍可能注入后续回合 | 操作系统进程一定仍存活 |
+| `end_input()` | SDK 到 CLI 的方向 | 不再发送新用户帧 | 输出已经排空或连接已销毁 |
+| 消息迭代结束 | SDK 接收表面 | 缓冲排空并关闭或发生异常 | CLI 必然正常退出 |
+| Interrupt | 控制面 | 请求中止当前运行 | Disconnect、回滚或资源释放 |
+| Eval 结果 | 独立评分层 | Artifact 是否满足目标与约束 | 上游 Result subtype 的别名 |
+
+### 完整消息与增量消息
+
+`StreamEvent` 适合实时界面，它携带 API 增量；`AssistantMessage` 则是 SDK 产出的完整消息投影。若消费者把每个增量拼接后又追加完整消息，同一文本会重复统计。正确做法是先选目标表面：实时延迟分析使用增量，最终内容和工具块分析使用完整消息；需要两者时用消息或内容块标识关联，而不是相加。
+
+工具请求通常位于 Assistant 内容块中，但出现 ToolUse 只证明模型提出动作。工具是否执行、是否被拒绝、结果怎样，需要后续工具结果、权限轨迹和副作用证据。按 role 统计也不够，因为 UserMessage 可能承载工具结果、重放或任务注入，并非每条都来自人类。
+
+### 回合终态与运行终态
+
+没有后台任务时，一个 Result 往往同时是当前响应的终态和输入关闭触发点；有后台任务时，第一个 Result 只结束当前回合。Query 追踪任务开始和终止事件，集合清空后的 Result 才唤醒等待输入结束的协程。这是为什么「看到 Result 就 close stdin」在简单夹具里可行，却会破坏子任务场景。
+
+连接级结束更晚。`ClaudeSDKClient` 可以在一个 Result 后继续接收新输入；只有 Disconnect / close 才开始取消内部任务、关闭 Transport 和接收流。独立 Eval 则在选定完整 Artifact 后运行，甚至可以晚于进程退出。
+
+## 为什么这样设计
+
+第一，编码 Agent 不再是单次请求响应。后台 Agent、延迟工具和 Hook 可以跨过一个模型回合继续产生事件；把回合与运行分开，主循环才能等待真正的任务终态，而不关闭仍需回写控制响应的通道。
+
+第二，实时界面与可靠持久化需要不同消息投影。增量事件降低首字延迟，完整消息便于恢复和评分。保留两者而不强行合并，可以让消费者按用途选择，也要求它们显式处理去重与缺失。
+
+第三，中止当前工作与释放整个连接是不同用户意图。Interrupt 允许停止一次失控运行后继续使用同一 Session；Disconnect 用于最终清理。如果一个取消按钮直接杀死连接，应用会丢失终态、缓冲消息和可恢复上下文。
+
+第四，协议成功与产品成功必须隔离。Result 能说明 CLI 如何结束、消耗了多少轮、是否报告错误，却不知道用户要求的文件是否正确。独立 Scorer 消费产物和副作用，避免 SDK 改一个 subtype 就改变评测标签。
+
+这种多维状态看起来比单个完成标志复杂，却把复杂度放在唯一能够解释它的位置。调用方可以只订阅自己需要的投影；恢复器、界面和评测器则共享同一事件事实，不必根据彼此的提示文本猜测运行到底停在何处。
+
+边界清楚以后，失败注入也能逐层命中，而不必靠杀死整个进程制造所有异常。
+
+## 实现思路
+
+教学实现可以把消息归一化器与生命周期状态机分开。归一化器只负责从原始帧得到类型化事件；状态机消费事件并更新回合、任务、输入、连接和评测五个维度。该设计用于帮助读者实现兼容消费者，不声称是 Claude Code 内部结构。
+
+1. **确定目标消息表面。** 为实时 UI、最终 Transcript 和 Eval 分别声明消费哪些类型、怎样关联增量与完整消息、未知类型怎样保留计数。
+2. **维护独立状态维度。** 至少记录连接状态、输入方向、当前回合、在途任务集合、最近 Result 和接收流状态；不要压成一个 `finished`。
+3. **按事件更新状态。** task_started 加入集合，任务终态移除；Result 总是产出给应用，只有集合为空时才满足最终 Result 条件；输出 EOF 与 Result 分别处理。
+4. **分开 Interrupt 与 close。** Interrupt 发送控制请求后继续读取直到终态；close 阻止新输入、取消内部任务、排空或关闭缓冲，再释放 Transport。
+5. **构造 Artifact。** 保存原始类型序列、归一化消息、去重后的最终内容、控制动作、所有 Result、异常与副作用，再交给独立 Scorer。
+
+```text
+状态 = {连接: ready, 输入: open, 回合: running, 在途任务: {}, 最近Result: null}
+
+处理(event):
+    如果 event 是 task_started: 在途任务.add(event.task_id)
+    如果 event 是 task_terminal: 在途任务.remove(event.task_id)
+    如果 event 是 result:
+        产出给应用(event)
+        最近Result = event
+        回合 = terminal
+        如果 在途任务为空: final_result_event.set()
+    如果 event 是 output_eof:
+        接收流标记结束，并报告没有终态的异常情况
+
+结束输入():
+    await final_result_event
+    transport.end_input()
+```
+
+未知顶层类型不应静默等于「无事发生」。兼容消费者可以跳过解析，但要记录类型名、CLI 与 SDK 版本及原始帧哈希；若未知事件可能影响任务集合或权限，运行状态应降级为不完整，而不是继续给出完整性结论。
+
+错误去重也需要相关性。若先收到 `is_error=true` 的 Result，随后进程非零退出，Artifact 保留两份原始事实，但故障分析只建立一个根事件，并说明 ProcessError 是否被更具体的 ResultError 取代。这样统计不会把一个失败算两次。
+
+## 贯穿案例
+
+用户要求「让后台 Agent 检查测试失败并返回结论」。主 Agent 启动子任务，当前回合先返回一个 Result；子任务完成后注入通知，模型生成总结并返回第二个 Result。期间用户点击一次 Interrupt，但不关闭客户端。这个案例能检验所有容易混淆的结束边界。
+
+1. **启动回合。** Assistant 产生任务调用，System `task_started` 把 `task-1` 加入在途集合。此时一次模型响应可以结束，但后台任务仍运行。
+2. **收到中间 Result。** SDK 向应用产出 Result r1；状态机把当前回合标成 terminal，却因任务集合非空而保持输入开启。Eval 也不能开始最终评分。
+3. **处理任务终态。** `task_notification(completed)` 移除 `task-1`，任务结果触发后续注入回合。此时集合为空并不自动等于运行结束，还要等待对应 Result。
+4. **收到最终 Result。** 总结 Assistant 后出现 r2，集合为空，final result 事件触发，输入生产者可以结束；输出仍需排空。
+5. **中止下一轮而不断开。** 用户提交第二个目标后调用 Interrupt。SDK接收终止 Result，连接保持可用；最终 Disconnect 才释放 Query、Transport 与接收流。
+
+```json
+{"event":"result","uuid":"r1","inflightTasks":["task-1"],"stdin":"open","connection":"ready"}
+```
+
+```json
+{"event":"result","uuid":"r2","inflightTasks":[],"stdin":"closing","connection":"ready"}
+```
+
+```json
+{
+  "artifact":{
+    "resultIds":["r1","r2","r3-interrupted"],
+    "inputEndedAfter":"r2",
+    "messageStreamDrained":true,
+    "processExitedAfterDisconnect":true,
+    "eval":"由产物与约束独立计算"
+  }
+}
+```
+
+若实现错误地在 r1 后关闭输入，子任务通知仍可能出现在输出，却无法触发需要回写的后续控制；测试应明确断言 r1 后 stdin 仍开。若 Interrupt 后立即杀进程，应用可能看不到 r3 的 terminal reason；测试应先接收终态，再独立验证 Disconnect 回收资源。
+
+最后把 r2 的 subtype 改成 success，但让目标报告文件缺失。生命周期仍可判定完整，独立 Eval 必须失败。这个反例证明状态机负责「是否收敛」，Scorer 负责「结果是否正确」。
+
 ## 真实输入与输出
 
 ### 输入

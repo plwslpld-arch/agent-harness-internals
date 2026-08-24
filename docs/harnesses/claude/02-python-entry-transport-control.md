@@ -21,6 +21,110 @@ sources: [{"repo":"claude-agent-sdk-python","path":"src/claude_agent_sdk/query.p
 
 一条标准输入，承载两个方向的等待关系。
 
+## 核心概念
+
+理解这条主链，先把「入口」「连接」「协议路由」和「资源所有权」分开。`query()` 与 `ClaudeSDKClient` 是调用方表面，`InternalClient` 负责装配一次运行，Transport 负责字节通道与默认 CLI 进程，Query 负责协议相关性和内部任务。它们层层组合，但没有哪一个对象独自等于完整 Agent Loop。
+
+| 概念 | 负责什么 | 生命周期 | 常见误解 |
+| --- | --- | --- | --- |
+| `query()` | 把一次 Prompt 交给内部客户端并产出消息 | 随迭代器开始与结束 | 它内部实现了完整循环 |
+| `ClaudeSDKClient` | 保存可复用连接并暴露后续查询、中断等操作 | 由调用方 connect / close | 它只是 `query()` 的别名 |
+| `InternalClient` | 选择 Transport、配置 Query、协调清理 | 单次处理或连接装配 | 它拥有默认 CLI 的全部进程细节 |
+| Transport | 读写帧；默认实现还拥有 CLI 子进程与标准流 | connect 到 close | 只是发送 Prompt 的字符串封装 |
+| Query | 配对控制请求、路由内部帧、产出普通消息 | 初始化后到关闭 | 只做 JSON 反序列化 |
+| 控制请求 | 要求另一端完成初始化、权限、Hook、MCP 或中断动作 | 按 request ID 配对 | 和普通 Assistant 消息同一消费方式 |
+
+### 数据面与控制面
+
+普通用户、Assistant、系统和 Result 帧构成应用看到的数据面。initialize、权限回调、Hook、进程内 MCP 和 Interrupt 构成控制面。两类帧共享 Transport，却由 Query 分流：普通消息进入应用可迭代流，控制帧被内部处理或唤醒等待者。
+
+这意味着标准输入不是「用户 Prompt 发完就可关闭」的单向管道。CLI 在模型运行中可能反向要求 SDK 执行权限回调，SDK 必须把控制响应写回同一输入通道。过早结束输入会让输出端仍在等待一个永远无法送达的决定。
+
+### 连接、运行与关闭
+
+构造 Transport 不等于已经查找或启动 CLI；默认实现把这些工作放到 `connect()`。初始化成功也不等于任务完成，它只说明双方协议能力已建立。Result 结束一个响应序列，但客户端连接、后台控制任务与子进程是否结束还取决于所用入口和关闭路径。
+
+资源所有权应从创建点与清理点共同判断。默认 Transport 创建进程、保存标准流并执行 terminate / kill 升级，所以它拥有进程；Query 创建读取任务和在途控制处理任务，所以它负责取消与汇合。入口只是触发这些对象，不因处在调用栈顶部就拥有全部资源。
+
+## 为什么这样设计
+
+第一，SDK 需要同时支持一次性调用和交互式长连接。把调用表面与 Transport 分开，`query()` 可以自动管理一次运行，`ClaudeSDKClient` 可以复用同一连接，自定义 Transport 又能替换进程边界，而不要求上层重新实现消息和控制协议。
+
+第二，控制请求必须与普通输出并发。权限提示可能在 Assistant 工具请求之后出现，Hook 或 MCP 回调又可能耗时；若读取循环等待应用消费完每条消息才处理控制帧，就会形成 CLI 等 SDK、SDK 等应用的死锁。独立读取任务和按 ID 配对让控制面持续前进。
+
+第三，外层取消不能把子进程变成孤儿。异步任务一旦处于取消状态，普通 await 可能立即再次抛出取消；关闭流程因此需要在受控屏蔽区间内等待、终止或杀死默认 CLI。所有权集中在 Transport，才能让正常结束、异常和取消共享同一回收策略。
+
+第四，协议边界需要把基础设施故障与模型结果分开。CLI 不存在、初始化超时、破损 JSON 和回调异常属于通道或控制面；Result 中的任务失败属于运行结果。分层后，重试与评测可以使用不同分类，而不是把任何异常都算成模型质量。
+
+这套分工还限制了替换面的影响范围。更换自定义 Transport 时，协议路由和消息语义可以继续复用；更换一次性入口为长连接客户端时，底层帧格式不必随之改变。边界稳定，测试才能分别覆盖调用方责任、协议相关性和资源回收。
+
+## 实现思路
+
+下面是教学用的双向协议宿主蓝图，目的是复现责任结构，不是复制 Claude Code 内部实现。可以直接核对的是 Python SDK 的入口、Transport 和 Query 行为；状态机名称与 Artifact 字段是课程为实现与测试给出的抽象。
+
+1. **选择入口语义。** 一次性任务创建自动关闭的运行上下文；多轮客户端显式保存 Transport、Query 和连接状态，并拒绝在未连接时发送。
+2. **建立 Transport。** 在 connect 阶段解析 CLI 或自定义通道，构造受控环境、工作目录和三条标准流；任何部分失败都进入统一清理。
+3. **先启动读取循环。** 创建有界普通消息流、控制等待表和在途处理表，启动唯一读取任务，然后发送 initialize 并按 request ID 等待。
+4. **分流每个帧。** 普通消息交给应用；SDK 发起请求的响应唤醒等待 Event；CLI 发起的请求派生受控处理任务；取消帧只取消对应任务。
+5. **维持相关性。** 请求登记、写出、超时清除和迟到响应处理都围绕同一 ID；失败响应转换成对应等待者异常，不污染其他请求。
+6. **按所有权关闭。** 先阻止新请求，再取消并汇合 Query 子任务，结束输入，最后由 Transport 等待或升级终止进程，并清空活动集合。
+
+```text
+连接():
+    transport.connect()
+    query = Query(transport, 普通消息流, 控制处理器)
+    启动 query.read_loop()
+    await query.request("initialize", 超时=初始化超时)
+
+read_loop():
+    对每个 frame in transport.read():
+        如果 frame 是 control_response: 唤醒 pending[request_id]
+        否则如果 frame 是 control_request: 派生 handler[request_id]
+        否则如果 frame 是 control_cancel_request: 取消 handler[request_id]
+        否则: 发送到普通消息流
+
+关闭():
+    禁止新请求()
+    query.cancel_and_join_handlers()
+    transport.end_input()
+    transport.wait_terminate_or_kill()
+```
+
+实现时要给等待表设置上限和超时，避免对端不响应导致内存永久增长；给普通消息流设置背压，避免应用消费过慢耗尽内存；给单帧设置大小和换行边界，避免无穷缓冲。每类限制产生不同错误码，便于判断能否安全重试。
+
+关闭必须幂等。正常 Result、应用提前退出、回调异常和外层取消可能同时触发 finally；第二次 close 不应再次写入已关闭流或错误地终止其他进程。自定义 Transport 的合同只要求它履行自己的 close，不应假定存在 PID、stdin 或 kill。
+
+## 贯穿案例
+
+设想一个长连接客户端：应用连接一次，发送「读取报告并修正标题」，CLI 在执行 Edit 前向 SDK 请求权限，应用允许后得到 Assistant 与 Result，随后用户发送第二条查询，最后在运行中触发取消。这个案例同时覆盖两个方向的控制请求和连接所有权。
+
+1. **连接与初始化。** 客户端创建默认 Transport。connect 解析实际 CLI、启动进程并建立标准流；Query 的读取任务先启动，再写出初始化请求。只有匹配响应回来，状态才从 `connecting` 进入 `ready`。
+2. **发送用户消息。** 第一条用户帧写入数据面。应用开始迭代普通消息，但 initialize 和其他控制帧不会从这个迭代器泄漏出来。
+3. **处理反向权限请求。** CLI 发出 `control_request(request_id=perm-1)`。读取循环派生权限处理器；应用回调返回 Allow，SDK 写回相同 ID 的成功响应，CLI 才继续执行 Edit。
+4. **结束回合但保留连接。** Assistant 与 Result 进入普通消息流。Result 表示本轮协议终结，`ClaudeSDKClient` 仍为 ready，可接收第二条消息；此时关闭 stdin 会破坏复用语义。
+5. **取消并关闭。** 第二轮运行中，客户端发送 Interrupt 控制请求；若调用方随后关闭，Query 汇合在途任务，Transport 在取消屏蔽区回收 CLI。Artifact 记录 Result、Interrupt 响应和最终进程状态。
+
+```json
+{"type":"control_request","request_id":"init-1","request":{"subtype":"initialize"}}
+```
+
+```json
+{"type":"control_request","request_id":"perm-1","request":{"subtype":"can_use_tool","tool_name":"Edit","input":{"file_path":"report.md"}}}
+```
+
+```json
+{
+  "connection":"closed",
+  "rounds":[{"result":"success"},{"result":"interrupted"}],
+  "controlPairs":{"init-1":"success","perm-1":"allow","interrupt-2":"success"},
+  "resourceChecks":{"readerJoined":true,"handlersRemaining":0,"childProcessAlive":false}
+}
+```
+
+若权限回调抛异常，SDK 应向同一 `perm-1` 返回错误响应，而不是让读取循环退出并丢失全部会话；若响应迟到超过超时，等待表已清除，迟到帧只能被记录为不可配对，不能唤醒新请求。两种失败都不同于模型拒绝修改报告。
+
+再把默认 Transport 换成内存 Mock：协议相关性仍应相同，但进程回收断言不再适用。这个变化验证了文章的条件限定——双向 Query 是共同责任，CLI 进程所有权只属于默认子进程分支。
+
 ## 真实输入与输出
 
 ### 输入
