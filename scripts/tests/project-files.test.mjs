@@ -67,3 +67,9 @@ test('公开树不再保留英文入口和旧定位视觉', () => {
   assert.doesNotMatch(content, /README\.en\.md|assets\/(?:harness-internals|harness-coupling|agent-harness-matrix|dsh-codex-subsystems|harness-model-cross)\.svg/u);
   assert.doesNotMatch(content, /两种 Harness|Part B：Eval Harness|Eval Harness：同名的另一层系统/u);
 });
+
+test('发布验证工作流准备全部锁定来源', () => {
+  const workflow = readFileSync(join(root, '.github', 'workflows', 'verify.yml'), 'utf8');
+
+  assert.match(workflow, /npm run bootstrap -- --profile all/u);
+});

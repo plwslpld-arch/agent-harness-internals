@@ -24,6 +24,6 @@ jobs:
         with:
           node-version: '24'
       - name: 准备锁定来源
-        run: npm run bootstrap
+        run: npm run bootstrap -- --profile all
       - name: 运行仓库检查
         run: npm run check
