@@ -21,10 +21,10 @@
 
 ## Task 1：来源、许可与扩展样本门禁
 
-- [ ] 测试先行：`samples` 配置必须恰好包含六个目标来源，缺失或多出均失败。
-- [ ] 锁定五个新增上游的主分支 Commit、许可证文件与文本 SHA-256，登记 Git submodule、Manifest 和 Lock。
-- [ ] 测试先行：新增 `sample` 文章类型与深度契约，状态、来源、中文图和 Claim 不完整时失败。
-- [ ] 提交：`chore(sources): 锁定六个扩展样本来源`。
+- [x] 测试先行：`samples` 配置必须恰好包含六个目标来源，缺失或多出均失败。
+- [x] 锁定五个新增上游的主分支 Commit、许可证文件与文本 SHA-256，登记 Git submodule、Manifest 和 Lock。
+- [x] 测试先行：新增 `sample` 文章类型与深度契约，状态、来源、中文图和 Claim 不完整时失败。
+- [x] 提交：`chore(sources): 锁定六个扩展样本来源`。
 
 ## Task 2：mini-swe-agent
 
@@ -32,10 +32,10 @@
 - [ ] 完成中文机制图和专题文章，不把最小实现解释成默认安全或生产完整性。
 - [ ] 提交：`docs(samples): 发布 mini-swe-agent 独特机制`。
 
-## Task 3：OpenHands
+## Task 3：OpenHands Agent Canvas
 
-- [ ] 核对 Agent Controller、Event Stream、Runtime/Sandbox 与状态恢复，新增至少两条 Claim。
-- [ ] 完成中文事件驱动运行图和专题文章，不把 Runtime 名称解释成部署隔离证明。
+- [ ] 以锁定仓库当前自述为准，核对 Canvas、Agent Server 后端、ACP 适配、自动化与本地/远端部署边界，新增至少两条 Claim；不把当前控制中心源码冒充独立 OpenHands Agent 的内部实现。
+- [ ] 完成中文多后端控制图和专题文章，不把 Docker、VM 或远端 Backend 名称解释成实际部署隔离证明。
 - [ ] 提交：`docs(samples): 发布 OpenHands 独特机制`。
 
 ## Task 4：Cline

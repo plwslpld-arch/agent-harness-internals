@@ -181,11 +181,77 @@ test('基础、比较、角色和实验文章使用各自结构', () => {
     ['docs/comparisons/01-agent-loop.md', 'comparison', '控制变量'],
     ['docs/roles/researcher.md', 'role', '决策问题'],
     ['docs/labs/01-trace.md', 'lab', '实验目标'],
+    ['docs/samples/mini-swe-agent.md', 'sample', '独特机制'],
   ];
   for (const [relativePath, kind, expected] of cases) {
     const failures = contentContractFailures({ relativePath, content: '# 空壳\n', metadata: { status: 'reviewed' } });
     assert.match(failures.join('\n'), new RegExp(expected, 'u'), `${kind} 应检查 ${expected}`);
   }
+});
+
+test('扩展样本必须解释独特机制并绑定中文图与两条 Claim', () => {
+  const content = `# mini-swe-agent 独特机制
+
+## 样本定位
+
+这是用于解释最小循环边界的扩展样本，不升级为一级主线。
+
+## 独特机制
+
+${deepProse}
+
+![最小循环中文机制图](../../assets/diagrams/samples/mini-swe-agent.svg)
+
+Claim: mini-swe-agent.loop.observation-closes-step
+
+Claim: mini-swe-agent.environment.boundary-is-explicit
+
+## 源码入口
+
+入口从锁定版本的真实运行函数和环境接口开始，不从目录名推断行为。
+
+## 运行链
+
+1. 读取固定任务与环境。
+2. 请求下一步行动并执行。
+3. 把观察结果写回轨迹并判断终止。
+
+## 与一级主线的关系
+
+样本只补充最小实现如何暴露边界，不替代六条主线的完整课程。
+
+## 失败与限制
+
+最小实现不等于默认沙箱、生产恢复或独立发布评测。
+
+## 验证方法
+
+以固定输入核对源码入口、轨迹、执行结果和终止条件。
+
+## 自检
+
+### 问题 1
+
+样本是否为一级主线？
+
+**答案：** 不是，只补充独特机制。
+
+### 问题 2
+
+目录存在能否证明能力默认启用？
+
+**答案：** 不能，必须沿真实调用链核对。
+
+### 问题 3
+
+上游测试是否等于生产证明？
+
+**答案：** 不等于，部署环境需要另行验证。
+`;
+  const article = { relativePath: 'docs/samples/mini-swe-agent.md', content, metadata: { status: 'reviewed' } };
+  assert.deepEqual(contentContractFailures(article), []);
+  assert.match(contentContractFailures({ ...article, content: content.replace('![最小循环中文机制图](../../assets/diagrams/samples/mini-swe-agent.svg)', '') }).join('\n'), /中文 SVG/u);
+  assert.match(contentContractFailures({ ...article, content: content.replace('Claim: mini-swe-agent.environment.boundary-is-explicit', '') }).join('\n'), /两条正式 Claim/u);
 });
 
 test('共同基础必须达到深度并引用正式中文图与 Claim', () => {

@@ -46,6 +46,7 @@ test('识别新目录的文章类型', () => {
   assert.equal(articleKind('docs/comparisons/02-agent-loop.md'), 'comparison');
   assert.equal(articleKind('docs/roles/researcher.md'), 'role');
   assert.equal(articleKind('docs/labs/01-trace.md'), 'lab');
+  assert.equal(articleKind('docs/samples/mini-swe-agent.md'), 'sample');
   assert.equal(articleKind('docs/appendix/glossary.md'), 'appendix');
   assert.equal(articleKind('docs/legacy-flat-page.md'), null);
 });

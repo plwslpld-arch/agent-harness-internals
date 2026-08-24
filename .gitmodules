@@ -20,6 +20,31 @@
 	url = https://github.com/SWE-agent/mini-swe-agent.git
 	shallow = true
 	branch = main
+[submodule "sources/checkouts/openhands"]
+	path = sources/checkouts/openhands
+	url = https://github.com/All-Hands-AI/OpenHands.git
+	shallow = true
+	branch = main
+[submodule "sources/checkouts/cline"]
+	path = sources/checkouts/cline
+	url = https://github.com/cline/cline.git
+	shallow = true
+	branch = main
+[submodule "sources/checkouts/goose"]
+	path = sources/checkouts/goose
+	url = https://github.com/block/goose.git
+	shallow = true
+	branch = main
+[submodule "sources/checkouts/aider"]
+	path = sources/checkouts/aider
+	url = https://github.com/Aider-AI/aider.git
+	shallow = true
+	branch = main
+[submodule "sources/checkouts/qwen-code"]
+	path = sources/checkouts/qwen-code
+	url = https://github.com/QwenLM/qwen-code.git
+	shallow = true
+	branch = main
 [submodule "sources/checkouts/gemini-cli"]
 	path = sources/checkouts/gemini-cli
 	url = https://github.com/google-gemini/gemini-cli.git

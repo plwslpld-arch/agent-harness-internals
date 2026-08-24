@@ -43,6 +43,31 @@
       "licenseSha256": "0f796e58f91d1c07bb2c1b1d0f8bf3a83017c3a5dec1bdc6fae733b2cd2e875b"
     },
     {
+      "id": "openhands",
+      "commit": "861e9ef501730e3b194cb0345a1ae2b04cfe68f1",
+      "licenseSha256": "e1d1fa9f3a8d7bef24449d488fcd8f00f8f272cac297bb9bed161eb6175b876a"
+    },
+    {
+      "id": "cline",
+      "commit": "09ee9026393e681a4834d8acbf4d9d5fdfa8664a",
+      "licenseSha256": "f704446a5f1271608805598b557e4288cf8580477ea038c9c3d8b361f693f6b8"
+    },
+    {
+      "id": "goose",
+      "commit": "c5e5929a641ffc0edbccad476e18f726e9024f70",
+      "licenseSha256": "44459b86c2e96fdbfd8a6b5c33d30d4b04b5293fcb2ec96fe4dcc4e0f90b8962"
+    },
+    {
+      "id": "aider",
+      "commit": "5dc9490bb35f9729ef2c95d00a19ccd30c26339c",
+      "licenseSha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "id": "qwen-code",
+      "commit": "4d3f9ff5719157fda5e8b135ed5bc362d925bcf0",
+      "licenseSha256": "55367b61ccd2a016a0159ad886bd66a3ee6cb5e873d0c75c803c897dd245b075"
+    },
+    {
       "id": "lm-evaluation-harness",
       "commit": "4e7e0d47f33bc71070c1d38394bafbb52b117163",
       "licenseSha256": "a806e42547620dffbc2ec0333322c8b3523b4af11e059be14ef81aa5b1ae021f"

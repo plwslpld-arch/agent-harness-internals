@@ -15,6 +15,7 @@ const depthRules = {
   comparison: { characters: 2200, paragraphs: 10 },
   role: { characters: 1600, paragraphs: 8 },
   lab: { characters: 2000, paragraphs: 8 },
+  sample: { characters: 1800, paragraphs: 10 },
   appendix: { characters: 1000, paragraphs: 5 },
 };
 
@@ -208,6 +209,20 @@ function labFailures(content, errors) {
   checkSelfReview(content, errors);
 }
 
+function sampleFailures(content, errors) {
+  for (const heading of ['样本定位', '独特机制', '源码入口', '与一级主线的关系', '失败与限制', '验证方法']) {
+    requireSection(content, heading, errors);
+  }
+  const chain = requireSection(content, '运行链', errors);
+  if (chain !== null && orderedSteps(chain) < 3) errors.push('运行链必须包含至少 3 步有序步骤');
+  if (!/!\[[^\]]*[\u3400-\u9fff][^\]]*\]\((?:\.\.\/)+assets\/diagrams\/samples\/[a-z0-9/_.-]+\.svg\)/u.test(content)) {
+    errors.push('扩展样本必须嵌入带中文替代文本的正式中文 SVG');
+  }
+  const claims = new Set(content.match(/\bClaim:\s*[a-z0-9][a-z0-9-]*(?:\.[a-z0-9][a-z0-9-]*)+/gu) ?? []);
+  if (claims.size < 2) errors.push('扩展样本必须引用至少两条正式 Claim');
+  checkSelfReview(content, errors);
+}
+
 function appendixFailures(content, errors) {
   for (const heading of ['使用范围', '条目', '失败与限制']) requireSection(content, heading, errors);
 }
@@ -238,6 +253,7 @@ export function contentContractFailures(article) {
   else if (kind === 'comparison') comparisonFailures(content, errors);
   else if (kind === 'role') roleFailures(content, errors);
   else if (kind === 'lab') labFailures(content, errors);
+  else if (kind === 'sample') sampleFailures(content, errors);
   else if (kind === 'appendix') appendixFailures(content, errors);
 
   const minimum = depthRules[kind];

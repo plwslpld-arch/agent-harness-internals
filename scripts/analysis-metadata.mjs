@@ -12,6 +12,7 @@ const articleDirectories = [
   ['docs/comparisons/', 'comparison'],
   ['docs/roles/', 'role'],
   ['docs/labs/', 'lab'],
+  ['docs/samples/', 'sample'],
   ['docs/appendix/', 'appendix'],
 ];
 

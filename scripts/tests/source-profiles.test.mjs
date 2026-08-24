@@ -79,3 +79,17 @@ test('核心配置包含 Claude 双 SDK，默认配置不要求评测来源', ()
   ]);
   assert.equal(coreIds.some((id) => evalIds.includes(id)), false);
 });
+
+test('扩展样本配置恰好包含六个目标来源', () => {
+  const actual = readDocument(join(root, 'sources', 'sources.yml'));
+  const sampleIds = selectManifestSources(actual, new Set(['samples'])).map(({ id }) => id);
+
+  assert.deepEqual(sampleIds, [
+    'mini-swe-agent',
+    'openhands',
+    'cline',
+    'goose',
+    'aider',
+    'qwen-code',
+  ]);
+});

@@ -151,6 +151,70 @@
       }
     },
     {
+      "id": "openhands",
+      "name": "OpenHands Agent Canvas",
+      "category": "comparison-agents",
+      "url": "https://github.com/All-Hands-AI/OpenHands.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "profiles": ["samples"],
+      "license": { "spdx": "MIT", "file": "LICENSE" },
+      "redistribution": {
+        "policy": "metadata-and-analysis-only",
+        "notes": "Current OpenHands repository exposes Agent Canvas control-center code; do not infer the separate agent runtime internals."
+      },
+      "analysisScope": {
+        "runtimeSource": "control-center-only",
+        "tests": "available",
+        "productInternals": "partial",
+        "notes": "The locked repository identifies itself as Agent Canvas and orchestrates local, remote and ACP-compatible backends; the separate OpenHands agent implementation is outside this source."
+      }
+    },
+    {
+      "id": "cline",
+      "name": "Cline",
+      "category": "comparison-agents",
+      "url": "https://github.com/cline/cline.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "profiles": ["samples"],
+      "license": { "spdx": "Apache-2.0", "file": "LICENSE" },
+      "redistribution": { "policy": "metadata-and-analysis-only", "notes": "Multi-surface coding-agent sample; checkout locally and preserve Apache attribution." }
+    },
+    {
+      "id": "goose",
+      "name": "goose",
+      "category": "comparison-agents",
+      "url": "https://github.com/block/goose.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "profiles": ["samples"],
+      "license": { "spdx": "Apache-2.0", "file": "LICENSE" },
+      "redistribution": { "policy": "metadata-and-analysis-only", "notes": "Rust agent, recipe and extension sample; checkout locally and preserve Apache attribution." }
+    },
+    {
+      "id": "aider",
+      "name": "Aider",
+      "category": "comparison-agents",
+      "url": "https://github.com/Aider-AI/aider.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "profiles": ["samples"],
+      "license": { "spdx": "Apache-2.0", "file": "LICENSE.txt" },
+      "redistribution": { "policy": "metadata-and-analysis-only", "notes": "Repository-map and edit-format sample; checkout locally and preserve Apache attribution." }
+    },
+    {
+      "id": "qwen-code",
+      "name": "Qwen Code",
+      "category": "comparison-agents",
+      "url": "https://github.com/QwenLM/qwen-code.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "profiles": ["samples"],
+      "license": { "spdx": "Apache-2.0", "file": "LICENSE" },
+      "redistribution": { "policy": "metadata-and-analysis-only", "notes": "Open-source coding-agent sample; checkout locally and preserve Apache attribution." }
+    },
+    {
       "id": "lm-evaluation-harness",
       "name": "Language Model Evaluation Harness",
       "category": "eval-harnesses",
