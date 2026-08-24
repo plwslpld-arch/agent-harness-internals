@@ -1,0 +1,16 @@
+{
+  "id": "claude-typescript-tree-inventory",
+  "date": "2026-08-24",
+  "source": "claude-agent-sdk-typescript",
+  "commit": "48275071e804139579fabada9bb8d90cfe02b062",
+  "method": "locked-git-tree-inventory",
+  "command": "git ls-tree -r --name-only 48275071e804139579fabada9bb8d90cfe02b062",
+  "result": {
+    "fileCount": 33,
+    "topLevelFiles": ["README.md", "CHANGELOG.md", "LICENSE.md"],
+    "exampleRoots": ["examples/session-stores/postgres", "examples/session-stores/redis", "examples/session-stores/s3", "examples/session-stores/shared"],
+    "runtimeSourceDirectories": [],
+    "runtimePackageFiles": []
+  },
+  "interpretation": "该锁定仓库可核对公开说明、变更记录、许可证和 Session Store 示例，但没有 SDK Runtime 主体源码。目录缺失只约束这个 Commit，不证明 npm 分发包、其他私有仓库或未来版本的内容。"
+}

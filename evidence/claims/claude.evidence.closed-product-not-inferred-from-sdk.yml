@@ -1,0 +1,23 @@
+{
+  "id": "claude.evidence.closed-product-not-inferred-from-sdk",
+  "harness": "claude",
+  "dimension": "evidence.closed-product-not-inferred-from-sdk",
+  "statement": "Claude Code 的闭源内部模块、算法和存储布局不能从 Python Agent SDK 实现或 TypeScript Agent SDK 公开材料反推；SDK 证据只约束所属 SDK，官方文档只约束公开产品契约。",
+  "capability": "not-applicable",
+  "version": "python@542fefb3b94be87760b2513fff889b91bb5b6672;typescript@48275071e804139579fabada9bb8d90cfe02b062",
+  "surface": "evidence-boundary",
+  "platform": "public-contract-and-locked-repositories",
+  "mode": "cross-layer-analysis",
+  "evidence_level": "D",
+  "inference": "官方总览区分 Agent SDK、Claude Code CLI、Client SDK 与 Managed Agents；Python query 源码只展示该 SDK 对 InternalClient 的委托。由此可建立产品与 SDK 的责任边界，但无法推出闭源产品内部结构。",
+  "evidence": [
+    {"type":"official-doc","title":"Agent SDK 总览","url":"https://code.claude.com/docs/en/agent-sdk/overview","accessed":"2026-08-24"},
+    {"type":"source","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"src/claude_agent_sdk/query.py","lines":"118-126","excerpt":"client = InternalClient()"}
+  ],
+  "limitations": [
+    "该 Claim 是证据治理规则，不声称 SDK 与 Claude Code 没有任何代码或设计关联。",
+    "未来若 Anthropic 公开实现资料，需要按版本重新评估未知项。",
+    "产品行为实验仍可约束特定版本的观察结果，但不能自动揭示内部算法。"
+  ],
+  "last_verified": "2026-08-24"
+}

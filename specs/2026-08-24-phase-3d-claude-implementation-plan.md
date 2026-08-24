@@ -81,9 +81,9 @@
 - 创建：`evidence/claims/claude.evidence.closed-product-not-inferred-from-sdk.yml`
 - 创建：`evidence/claims/claude.evidence.typescript-runtime-source-unavailable.yml`
 
-- [ ] 分开官方文档事实、Python 实现事实、TypeScript 公开契约、Session Store 示例和未知内部机制。
-- [ ] 解释两仓许可证条款不同，不用任一仓库许可证覆盖另一个仓库或 Claude Code 产品。
-- [ ] 渲染复核，运行门禁并提交：`docs(claude): 发布产品与 SDK 证据边界课程`。
+- [x] 分开官方文档事实、Python 实现事实、TypeScript 公开契约、Session Store 示例和未知内部机制。
+- [x] 解释两仓许可证条款不同，不用任一仓库许可证覆盖另一个仓库或 Claude Code 产品。
+- [x] 渲染复核，运行门禁并提交：`docs(claude): 发布产品与 SDK 证据边界课程`。
 
 ### Task 4：Python 入口、Transport 与控制协议
 

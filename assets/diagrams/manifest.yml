@@ -336,6 +336,14 @@
       "scope": "docs/harnesses/claude/README.md",
       "alt": "Claude Python SDK 从应用输入、会话材料化、Transport 连接、初始化、双向协议、消息产出到清理和独立评测的中文端到端任务流程图",
       "claims": ["claude.task.transport-control-loop"]
+    },
+    {
+      "id": "claude-evidence-product-sdk-boundaries",
+      "path": "assets/diagrams/claude/01-evidence-product-sdk-boundaries.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/claude/01-evidence-product-sdk-boundaries.md",
+      "alt": "Claude 官方产品契约、Python SDK 源码、TypeScript 公开材料、许可证和课程推断逐层约束结论的中文证据边界图",
+      "claims": ["claude.evidence.closed-product-not-inferred-from-sdk", "claude.evidence.typescript-runtime-source-unavailable"]
     }
   ]
 }

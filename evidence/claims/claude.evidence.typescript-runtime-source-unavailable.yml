@@ -1,0 +1,24 @@
+{
+  "id": "claude.evidence.typescript-runtime-source-unavailable",
+  "harness": "claude",
+  "dimension": "evidence.typescript-runtime-source-unavailable",
+  "statement": "Claude Agent SDK TypeScript 锁定仓库在提交 48275071e804139579fabada9bb8d90cfe02b062 中没有 SDK Runtime 主体源码；可核对材料限于 README、CHANGELOG、LICENSE、脚本、工作流和 Session Store 示例。",
+  "capability": "absent",
+  "version": "48275071e804139579fabada9bb8d90cfe02b062",
+  "surface": "locked-git-tree",
+  "platform": "repository-distribution",
+  "mode": "tree-inventory",
+  "evidence_level": "D",
+  "inference": "锁定树清单枚举全部 33 个文件，没有 SDK 主体源码目录或包入口；README 和 CHANGELOG 证明仓库承担公开说明与版本记录。缺失结论只适用于该 Git 树，不外推 npm 包、私有仓库或其他版本。",
+  "evidence": [
+    {"type":"source","source":"claude-agent-sdk-typescript","commit":"48275071e804139579fabada9bb8d90cfe02b062","path":"README.md","lines":"1-13","excerpt":"# Claude Agent SDK"},
+    {"type":"source","source":"claude-agent-sdk-typescript","commit":"48275071e804139579fabada9bb8d90cfe02b062","path":"CHANGELOG.md","lines":"1-8","excerpt":"# Changelog"},
+    {"type":"experiment","id":"claude-typescript-tree-inventory"}
+  ],
+  "limitations": [
+    "不可用不等于不存在；该 Claim 不覆盖 npm 分发包、私有仓库或未来 Commit。",
+    "Session Store 示例是可见源码，但不是 SDK Runtime 主体实现。",
+    "官方 TypeScript API 参考可以证明公开契约，不能补足本地 Runtime 源码锚点。"
+  ],
+  "last_verified": "2026-08-24"
+}
