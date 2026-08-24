@@ -93,9 +93,9 @@
 - 创建：`evidence/claims/claude.python.transport-owns-cli-process.yml`
 - 创建：`evidence/claims/claude.python.control-protocol-is-bidirectional.yml`
 
-- [ ] 覆盖 query、ClaudeSDKClient、InternalClient、SubprocessCLITransport、NDJSON、initialize、Control Request/Response 和关闭清理。
-- [ ] 核对 CLI 发现、捆绑版本、custom cli_path、环境、stderr、缓冲、超时与取消。
-- [ ] 渲染复核，运行门禁并提交：`docs(claude): 发布 Python 传输与控制协议课程`。
+- [x] 覆盖 query、ClaudeSDKClient、InternalClient、SubprocessCLITransport、NDJSON、initialize、Control Request/Response 和关闭清理。
+- [x] 核对 CLI 发现、捆绑版本、custom cli_path、环境、stderr、缓冲、超时与取消。
+- [x] 渲染复核，运行门禁并提交：`docs(claude): 发布 Python 传输与控制协议课程`。
 
 ### Task 5：消息流与生命周期
 

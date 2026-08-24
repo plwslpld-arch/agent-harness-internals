@@ -1,0 +1,22 @@
+{
+  "id": "claude.python.transport-owns-cli-process",
+  "harness": "claude",
+  "dimension": "python.transport-owns-cli-process",
+  "statement": "在锁定 Python Agent SDK 的默认 Transport 路径中，SubprocessCLITransport 查找并启动 Claude Code CLI，持有标准流与活动子进程记录，并在关闭或取消路径中负责等待、终止、强制结束和回收。",
+  "capability": "default",
+  "version": "542fefb3b94be87760b2513fff889b91bb5b6672",
+  "surface": "python-subprocess-transport",
+  "platform": "anyio-subprocess",
+  "mode": "default-transport",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"src/claude_agent_sdk/_internal/transport/subprocess_cli.py","lines":"853-877","excerpt":"self._process = await anyio.open_process("},
+    {"type":"upstream-test","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"tests/test_close_cancellation.py","lines":"101-119","excerpt":"assert process not in _ACTIVE_CHILDREN"}
+  ],
+  "limitations": [
+    "该 Claim 不覆盖调用方提供的自定义 Transport。",
+    "取消回收测试使用临时假 CLI，平台限定不等于所有操作系统进程树已验证。",
+    "子进程回收成功不证明 CLI 内部工具后代、任务目标或 Eval 均成功。"
+  ],
+  "last_verified": "2026-08-24"
+}

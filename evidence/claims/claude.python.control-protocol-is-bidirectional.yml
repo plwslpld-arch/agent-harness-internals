@@ -1,0 +1,22 @@
+{
+  "id": "claude.python.control-protocol-is-bidirectional",
+  "harness": "claude",
+  "dimension": "python.control-protocol-is-bidirectional",
+  "statement": "锁定 Python Agent SDK 的 Query 同时支持 SDK 向 CLI 发起带 request_id 的控制请求并等待响应，以及 CLI 向 SDK 发起权限、Hook 或进程内 MCP 请求并接收控制响应。",
+  "capability": "default",
+  "version": "542fefb3b94be87760b2513fff889b91bb5b6672",
+  "surface": "python-query-control-protocol",
+  "platform": "ndjson-over-transport",
+  "mode": "streaming-control",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"src/claude_agent_sdk/_internal/query.py","lines":"308-338","excerpt":"elif msg_type == \"control_request\":"},
+    {"type":"upstream-test","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"tests/test_query.py","lines":"1051-1065","excerpt":"assert responses[0][\"response\"][\"response\"][\"behavior\"] == \"allow\""}
+  ],
+  "limitations": [
+    "上游测试使用可编程 Mock Transport，不证明真实 CLI 或工具已经执行。",
+    "控制 response success 只证明协议处理成功，不证明授权决定正确。",
+    "具体 subtype 和字段可能随 SDK 与 CLI 版本变化，跨版本比较必须重新锁定。"
+  ],
+  "last_verified": "2026-08-24"
+}

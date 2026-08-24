@@ -344,6 +344,14 @@
       "scope": "docs/harnesses/claude/01-evidence-product-sdk-boundaries.md",
       "alt": "Claude 官方产品契约、Python SDK 源码、TypeScript 公开材料、许可证和课程推断逐层约束结论的中文证据边界图",
       "claims": ["claude.evidence.closed-product-not-inferred-from-sdk", "claude.evidence.typescript-runtime-source-unavailable"]
+    },
+    {
+      "id": "claude-python-entry-transport-control",
+      "path": "assets/diagrams/claude/02-python-entry-transport-control.svg",
+      "type": "sequence",
+      "scope": "docs/harnesses/claude/02-python-entry-transport-control.md",
+      "alt": "Claude Python SDK 从入口、CLI 查找、子进程连接、双向控制、消息路由到取消屏蔽与进程回收的中文协议时序图",
+      "claims": ["claude.python.transport-owns-cli-process", "claude.python.control-protocol-is-bidirectional"]
     }
   ]
 }
