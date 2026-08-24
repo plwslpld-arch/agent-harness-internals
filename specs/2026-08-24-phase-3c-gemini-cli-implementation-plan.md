@@ -84,10 +84,10 @@
 
 ### Task 7：Session、History、Compression、Checkpoint 与 Memory
 
-- [ ] 完成 `05-session-history-compression-memory.md`、中文数据权威图和压缩/恢复 Claim。
-- [ ] 覆盖 ChatRecordingService、AgentChatHistory、客户端历史、恢复、Checkpoint、ChatCompressionService、GEMINI.md Memory 与工具写入。
-- [ ] 分开追加记录、运行时投影、摘要替代、文件快照和持久知识；明确压缩自检仍是有损变换。
-- [ ] 提交：`docs(gemini-cli): 发布会话压缩与记忆课程`。
+- [x] 完成 `05-session-history-compression-memory.md`、中文数据权威图和压缩/恢复 Claim。
+- [x] 覆盖 ChatRecordingService、AgentChatHistory、客户端历史、恢复、Checkpoint、ChatCompressionService、GEMINI.md Memory 与工具写入。
+- [x] 分开追加记录、运行时投影、摘要替代、文件快照和持久知识；明确压缩自检仍是有损变换。
+- [x] 提交：`docs(gemini-cli): 发布会话压缩与记忆课程`。
 
 ### Task 8：Agent、Hook、Skill、MCP 与 Extension
 

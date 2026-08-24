@@ -1,0 +1,25 @@
+{
+  "id": "gemini-cli.compaction.summary-remains-lossy",
+  "harness": "gemini-cli",
+  "dimension": "compaction.summary-remains-lossy",
+  "statement": "锁定 Gemini CLI 在压缩前截断超预算工具响应，按分割点摘要较旧历史，再用第二次模型调用复核；最终活动历史仍由摘要、固定确认消息和截断保留尾部重建，复核为空时会回退首版摘要，因此 COMPRESSED 不是无损证明。",
+  "capability": "default",
+  "version": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+  "surface": "core-chat-compression",
+  "platform": "upstream-vitest-fixture",
+  "mode": "threshold-forced-and-failure-paths",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/context/chatCompressionService.ts","lines":"287-351","excerpt":"const truncatedHistory = await truncateHistoryToBudget("},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/context/chatCompressionService.ts","lines":"361-411","excerpt":"const verificationResponse = await config"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/context/chatCompressionService.ts","lines":"431-480","excerpt":"...historyToKeepTruncated"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/context/chatCompressionService.test.ts","lines":"266-328","excerpt":"should fall back to initial summary if verification response is empty"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/context/chatCompressionService.test.ts","lines":"521-585","excerpt":"Output too large."}
+  ],
+  "limitations": [
+    "模型生成和复核都可能遗漏、改写或虚构事实，没有逐事实无损保证。",
+    "活动保留尾部和工具输出可以被截断，完整输出可能只存在于旁路文件。",
+    "摘要为空、令牌膨胀、未达阈值与此前失败会产生不同状态，不能统一记为压缩成功。"
+  ],
+  "last_verified": "2026-08-24"
+}

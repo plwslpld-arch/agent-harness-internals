@@ -1,0 +1,25 @@
+{
+  "id": "gemini-cli.state.record-history-context-separation",
+  "harness": "gemini-cli",
+  "dimension": "state.record-history-context-separation",
+  "statement": "锁定 Gemini CLI 将 ChatRecordingService 的 JSONL 回放记录、AgentChatHistory 的带稳定标识运行时回合和模型 API 使用的 Content[] 投影分开；显式内存历史优先于恢复记录，恢复又只投影 user 与 gemini 消息，因此会话文件、运行历史与当前上下文不能互相替代。",
+  "capability": "default",
+  "version": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+  "surface": "core-chat-recording-and-history",
+  "platform": "cross-platform-source-and-upstream-tests",
+  "mode": "new-resumed-and-rollback",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/services/chatRecordingService.ts","lines":"559-573","excerpt":"fs.appendFileSync(this.conversationFile, line);"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/core/agentChatHistory.ts","lines":"19-67","excerpt":"The 'Strong Owner' of chat history turns"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/core/geminiChat.ts","lines":"331-358","excerpt":"if (history.length > 0)"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/services/chatRecordingService.ts","lines":"642-646","excerpt":"this.appendRecord({ $set: updates });"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/core/agentChatHistory.test.ts","lines":"38-95","excerpt":"should set and overwrite history turns"}
+  ],
+  "limitations": [
+    "磁盘空间耗尽会禁用记录，而活动会话仍可继续，因此可交互不等于已持久化。",
+    "JSONL 回放会解释 $rewindTo 与 $set.messages，原始物理行不能直接当作当前逻辑消息。",
+    "模型上下文还可能经过压缩、遮蔽与截断，并不包含恢复记录中的所有事件类型。"
+  ],
+  "last_verified": "2026-08-24"
+}

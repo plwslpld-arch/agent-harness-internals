@@ -80,9 +80,15 @@
       "evidence": [
         {"path":"packages/core/src/services/chatRecordingService.ts","type":"source","reason":"会话记录持久化。"},
         {"path":"packages/core/src/core/agentChatHistory.ts","type":"source","reason":"拥有稳定身份的 Turn 历史。"},
+        {"path":"packages/core/src/core/agentChatHistory.test.ts","type":"upstream-test","reason":"历史追加、覆盖、回滚与内容投影测试。"},
+        {"path":"packages/core/src/core/geminiChat.ts","type":"source","reason":"显式历史与恢复记录的优先级和消息投影。"},
         {"path":"packages/core/src/context/chatCompressionService.ts","type":"source","reason":"摘要与保留尾部重建。"},
         {"path":"packages/core/src/context/chatCompressionService.test.ts","type":"upstream-test","reason":"阈值、摘要验证和新历史测试。"},
-        {"path":"packages/core/src/core/logger.ts","type":"source","reason":"Checkpoint 文件与恢复辅助。"}
+        {"path":"packages/core/src/core/logger.ts","type":"source","reason":"Checkpoint 文件与恢复辅助。"},
+        {"path":"packages/core/src/core/logger.test.ts","type":"upstream-test","reason":"Checkpoint 保存、加载与缺失文件测试。"},
+        {"path":"packages/core/src/prompts/snippets.ts","type":"source","reason":"分层长期记忆写入规范与无专用保存工具边界。"},
+        {"path":"packages/core/src/services/memoryService.ts","type":"source","reason":"实验性自动记忆的锁、节流、候选与收件箱生命周期。"},
+        {"path":"packages/core/src/services/memoryService.test.ts","type":"upstream-test","reason":"候选补丁与活跃记忆分离测试。"}
       ],
       "plannedClaims": ["gemini-cli.state.record-history-context-separation", "gemini-cli.compaction.summary-remains-lossy"]
     },

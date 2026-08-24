@@ -288,6 +288,14 @@
       "scope": "docs/harnesses/gemini-cli/04-confirmation-policy-safety-sandbox.md",
       "alt": "Gemini CLI 从审批模式、策略三态、消息确认到平台沙箱，并与模型安全结束原因保持分离的中文边界图",
       "claims": ["gemini-cli.security.confirmation-policy-sandbox-separation", "gemini-cli.security.safety-is-not-tool-authorization"]
+    },
+    {
+      "id": "gemini-cli-session-history-compression-memory",
+      "path": "assets/diagrams/gemini-cli/05-session-history-compression-memory.svg",
+      "type": "data-flow",
+      "scope": "docs/harnesses/gemini-cli/05-session-history-compression-memory.md",
+      "alt": "Gemini CLI 从追加会话记录、运行时历史到模型可见投影、压缩替代、检查点和长期记忆的中文数据权威图",
+      "claims": ["gemini-cli.state.record-history-context-separation", "gemini-cli.compaction.summary-remains-lossy"]
     }
   ]
 }
