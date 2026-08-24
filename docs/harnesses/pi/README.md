@@ -45,17 +45,17 @@ Telemetry 与 Evals 位于观察和验证出口。Telemetry 可以记录类型�
 | 顺序 | 模块 | 状态 | 先回答的问题 |
 | ---: | --- | --- | --- |
 | 00 | [主线入口](README.md) | 已复核 | 包分层、真实任务、默认权限与 Eval 出口怎样连接？ |
-| 01 | 运行时、设计文档与外部边界 | 建设中 | 哪些材料能证明现行行为，哪些只能说明设计或示例？ |
-| 02 | 多 Provider 与流归一化 | 建设中 | Provider 差异怎样变成统一消息、Usage 和 StopReason？ |
-| 03 | Agent Loop、状态与工具 | 建设中 | 队列、工具批次与多种终止信号怎样决定继续？ |
-| 04 | Coding Agent、Prompt 与 Extension | 建设中 | Prompt、资源、Skill、工具与扩展怎样装配？ |
-| 05 | Session、Context、Compaction 与存储 | 建设中 | 持久历史、模型 Context 和摘要谁是权威？ |
-| 06 | Protocol、Server 与 Client | 建设中 | 编码、连接、Session Handle 和任务终态怎样分层？ |
-| 07 | CLI、TUI、权限与容器化 | 建设中 | 终端投影与真实强制隔离分别由谁提供？ |
-| 08 | Telemetry、Evals 与数据契约 | 建设中 | 观察信号、Artifact、Scorer、Reward 和发布门禁怎样分开？ |
+| 01 | [运行时、设计文档与外部边界](01-evidence-runtime-design-boundaries.md) | 已复核 | 哪些材料能证明现行行为，哪些只能说明设计或示例？ |
+| 02 | [多 Provider 与流归一化](02-ai-provider-stream-normalization.md) | 已复核 | Provider 差异怎样变成统一消息、Usage 和 StopReason？ |
+| 03 | [Agent Loop、状态与工具](03-agent-loop-state-tools.md) | 已复核 | 队列、工具批次与多种终止信号怎样决定继续？ |
+| 04 | [Coding Agent、Prompt 与 Extension](04-coding-agent-prompt-extensions.md) | 已复核 | Prompt、资源、Skill、工具与扩展怎样装配？ |
+| 05 | [Session、Context、Compaction 与存储](05-session-context-compaction-storage.md) | 已复核 | 持久历史、模型 Context 和摘要谁是权威？ |
+| 06 | [Protocol、Server 与 Client](06-protocol-server-client.md) | 已复核 | 编码、连接、Session Handle 和任务终态怎样分层？ |
+| 07 | [CLI、TUI、权限与容器化](07-cli-tui-permissions-containerization.md) | 已复核 | 终端投影与真实强制隔离分别由谁提供？ |
+| 08 | [Telemetry、Evals 与数据契约](08-telemetry-evals-data-contracts.md) | 已复核 | 观察信号、Artifact、Scorer、Reward 和发布门禁怎样分开？ |
 <!-- course-navigation:end -->
 
-当前只开放主线入口。后续八篇会先完成正文、Claim、中文图示和复核，再一次性进入正式导航；文件存在或状态字段变化不能提前绕过这条规则。
+九篇课程已经完成正文、Claim、中文图示与首轮复核，并作为一个不可拆分批次进入正式导航。任何一篇因来源漂移降级为 `stale` 时，整条 pi 主线都必须退出正式导航，复核完成后再整体恢复。
 
 状态先于导航。
 

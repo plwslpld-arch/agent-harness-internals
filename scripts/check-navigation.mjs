@@ -177,6 +177,19 @@ function main() {
           '06-mcp-agents-skills.md',
           '07-typescript-contract-parity.md',
           '08-surfaces-errors-eval-design.md',
+      ]
+      : [];
+    const piTargets = relativePath === 'docs/harnesses/pi/README.md'
+      ? [
+          'README.md',
+          '01-evidence-runtime-design-boundaries.md',
+          '02-ai-provider-stream-normalization.md',
+          '03-agent-loop-state-tools.md',
+          '04-coding-agent-prompt-extensions.md',
+          '05-session-context-compaction-storage.md',
+          '06-protocol-server-client.md',
+          '07-cli-tui-permissions-containerization.md',
+          '08-telemetry-evals-data-contracts.md',
         ]
       : [];
     const fileErrors = navigationFailures(content, (target) => {
@@ -192,6 +205,7 @@ function main() {
         ...(codexTargets.length > 0 ? [{ name: 'Codex 主线', targets: codexTargets, required: true }] : []),
         ...(geminiTargets.length > 0 ? [{ name: 'Gemini CLI 主线', targets: geminiTargets, required: true }] : []),
         ...(claudeTargets.length > 0 ? [{ name: 'Claude 主线', targets: claudeTargets, required: true }] : []),
+        ...(piTargets.length > 0 ? [{ name: 'pi 主线', targets: piTargets, required: true }] : []),
       ],
       forbiddenPrefixes: relativePath === 'README.md'
         ? [{ name: '扩展样本', prefix: 'docs/samples/' }]
@@ -205,6 +219,8 @@ function main() {
                 ? [{ name: '扩展样本', prefix: '../../samples/' }]
                 : relativePath === 'docs/harnesses/claude/README.md'
                   ? [{ name: '扩展样本', prefix: '../../samples/' }]
+                  : relativePath === 'docs/harnesses/pi/README.md'
+                    ? [{ name: '扩展样本', prefix: '../../samples/' }]
                   : [],
     });
     for (const error of fileErrors) errors.push(`${relativePath}: ${error}`);

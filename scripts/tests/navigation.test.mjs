@@ -217,6 +217,44 @@ ${targets.map((target) => `[Claude](${target})`).join('\n')}
   ]);
 });
 
+test('pi 主线九篇不能缺失、降级或用零链接绕过', () => {
+  const targets = [
+    'README.md',
+    '01-evidence-runtime-design-boundaries.md',
+    '02-ai-provider-stream-normalization.md',
+    '03-agent-loop-state-tools.md',
+    '04-coding-agent-prompt-extensions.md',
+    '05-session-context-compaction-storage.md',
+    '06-protocol-server-client.md',
+    '07-cli-tui-permissions-containerization.md',
+    '08-telemetry-evals-data-contracts.md',
+  ];
+  const batch = [{ name: 'pi 主线', targets, required: true }];
+  const documents = Object.fromEntries(targets.map((target) => [target, '---\nstatus: reviewed\n---\n']));
+
+  const incomplete = `<!-- course-navigation:start -->
+${targets.slice(0, 8).map((target) => `[pi](${target})`).join('\n')}
+<!-- course-navigation:end -->`;
+  assert.deepEqual(navigationFailures(incomplete, (target) => documents[target], { requiredBatches: batch }), [
+    'pi 主线批量导航不完整：缺少 08-telemetry-evals-data-contracts.md',
+  ]);
+
+  documents['06-protocol-server-client.md'] = '---\nstatus: outline\n---\n';
+  const complete = `<!-- course-navigation:start -->
+${targets.map((target) => `[pi](${target})`).join('\n')}
+<!-- course-navigation:end -->`;
+  assert.deepEqual(navigationFailures(complete, (target) => documents[target], { requiredBatches: batch }), [
+    '06-protocol-server-client.md: 正式导航不能链接 status=outline',
+    'pi 主线批量发布失败：06-protocol-server-client.md status=outline',
+  ]);
+
+  const empty = `<!-- course-navigation:start -->
+<!-- course-navigation:end -->`;
+  assert.deepEqual(navigationFailures(empty, (target) => documents[target], { requiredBatches: batch }), [
+    `pi 主线批量导航不完整：缺少 ${targets.join('、')}`,
+  ]);
+});
+
 test('已配置为必需的主线不能用零链接绕过整批导航', () => {
   const targets = ['README.md', '01-course.md', '02-course.md'];
   const batch = [{ name: 'Codex 主线', targets, required: true }];
