@@ -1,0 +1,43 @@
+{
+  "stage": "phase-5b-samples-learning",
+  "date": "2026-08-24",
+  "commit": "47dbadd65a5da051630ab8c277986d318e470d13",
+  "promises": [
+    {"id":"p-sample-depth","statement":"六篇扩展样本分别讲清独特机制、源码入口、实现接缝、运行链、一级主线关系与适用边界。"},
+    {"id":"p-sample-scope","statement":"样本保持二级机制定位，不扩张成综合主线，也不以项目名、相似目录或界面状态替代锁定证据。"},
+    {"id":"p-adversarial-review","statement":"反查上下文投影、批准恢复、扩展装载、最小循环、控制平面和有损回放是否被越权解释。"}
+  ],
+  "evidence": [
+    {"id":"e-six-samples","promise":"p-sample-depth","type":"file","reference":"docs/samples/","summary":"六篇均新增主题专属实现接缝和适用边界，并保留至少两条 Claim 与中文机制图。"},
+    {"id":"e-contract","promise":"p-sample-depth","type":"test","reference":"scripts/check-content-contract.mjs","summary":"六篇定向内容契约全部通过，运行链、源码入口、自检和深度满足样本契约。"},
+    {"id":"e-scope","promise":"p-sample-scope","type":"file","reference":"docs/samples/openhands-agent-canvas.md","summary":"明确 Canvas 控制平面、Agent Server 与自动化仓库分责，不把客户端仓库写成 Agent 内核。"},
+    {"id":"e-analysis","promise":"p-sample-scope","type":"test","reference":"scripts/verify-analysis.mjs","summary":"八十篇来源绑定、一百三十二处锚点和一百一十九条 Claim 通过。"},
+    {"id":"e-tests-visuals","promise":"p-adversarial-review","type":"test","reference":"scripts/run-tests.mjs","summary":"一百一十三项测试、本地链接和八十一张正式中文 SVG 通过。"}
+  ],
+  "findings": [
+    {"id":"f-aider-handoff","priority":"high","status":"resolved","summary":"Repository Map、Architect 建议、Editor 修改和 Git 提交容易被合并为一次成功。"},
+    {"id":"f-cline-recovery","priority":"high","status":"resolved","summary":"应用批准、OS 隔离、Git Checkpoint 和外部副作用补偿容易互相替代。"},
+    {"id":"f-goose-extension","priority":"high","status":"resolved","summary":"Recipe 声明、扩展装载、工具可见和真实执行容易被写成同一启用状态。"},
+    {"id":"f-mini-loop","priority":"high","status":"resolved","summary":"最小循环的退出信号和 LocalEnvironment 容易被扩大成任务通过与默认安全。"},
+    {"id":"f-canvas-boundary","priority":"high","status":"resolved","summary":"Canvas 客户端路由、后端登记、Agent Server 和自动化派发责任容易错位。"},
+    {"id":"f-qwen-replay","priority":"high","status":"resolved","summary":"有损回放容易冒充完整审计，Serve Bridge 门禁容易冒充全系统策略。"},
+    {"id":"f-style-rhythm","priority":"low","status":"open","summary":"样本篇仍有句长节奏非阻断提醒，留到全仓总编辑处理。"}
+  ],
+  "resolutions": [
+    {"id":"f-aider-handoff","action":"用 Map 哈希、建议消息、确认决定、Editor 边界和 Artifact 分层错误归因。","evidence":["e-six-samples","e-contract"]},
+    {"id":"f-cline-recovery","action":"将策略归约、批准回调、工具处理器、根运行 Checkpoint 与外部计数服务分开。","evidence":["e-six-samples","e-analysis"]},
+    {"id":"f-goose-extension","action":"沿有效 Recipe、ExtensionManager、工具快照、权限和协议调用建立三处接缝。","evidence":["e-six-samples","e-contract"]},
+    {"id":"f-mini-loop","action":"分离完整模型消息、动作观察接缝、退出 Trace 与独立 Scorer。","evidence":["e-six-samples","e-tests-visuals"]},
+    {"id":"f-canvas-boundary","action":"分离 Backend 覆盖、客户端协议、Agent Server Session 和 Automation dispatch。","evidence":["e-scope","e-analysis"]},
+    {"id":"f-qwen-replay","action":"记录压缩前后事件、截断锚点、快照 Cursor，并限定批准守卫只覆盖 Serve Bridge。","evidence":["e-six-samples","e-tests-visuals"]}
+  ],
+  "commands": [
+    {"command":"扩展样本六篇 contentContractFailures 相对路径定向检查","exit_code":0,"summary":"六篇全部通过扩展样本专属教学契约。"},
+    {"command":"node scripts/verify-analysis.mjs && node scripts/verify-anchors.mjs","exit_code":0,"summary":"八十篇来源绑定与一百三十二处源码锚点通过。"},
+    {"command":"node scripts/verify-claims.mjs","exit_code":0,"summary":"一百一十九条 Claim 通过。"},
+    {"command":"node scripts/check-links.mjs && node scripts/check-visuals.mjs","exit_code":0,"summary":"本地链接和八十一张正式中文 SVG 通过。"},
+    {"command":"node scripts/run-tests.mjs","exit_code":0,"summary":"一百一十三项测试通过。"},
+    {"command":"node scripts/check-style.mjs","exit_code":0,"summary":"无阻断文风错误。"}
+  ],
+  "result": "pass"
+}
