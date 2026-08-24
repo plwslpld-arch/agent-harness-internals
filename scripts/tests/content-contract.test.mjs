@@ -191,7 +191,7 @@ function learningHarnessContent() {
   return harnessContent().replace('## 真实输入与输出', `${learningSections}\n## 真实输入与输出`);
 }
 
-const foundationDeepProse = Array.from({ length: 34 }, (_, index) =>
+const foundationDeepProse = Array.from({ length: 48 }, (_, index) =>
   `${paragraph}第 ${index + 1} 段会继续区分直接事实、项目示例和跨实现推断，避免把一个实现的命名扩大成共同标准。`).join('\n\n');
 
 function foundationContent() {
@@ -209,9 +209,24 @@ Claim: foundation.boundaries.four-layers
 
 ${foundationDeepProse}
 
+## 为什么这样设计
+
+分层用于区分模型、Harness、环境和评测的决定权，并让失败能够准确归因。
+
 ## 最小例子
 
 同一个输入只改变工具权限，用来观察 Harness 层带来的差异。
+
+## 最小实现
+
+1. 定义四层输入与输出。
+2. 记录跨层调用标识。
+3. 保存每层失败类型。
+4. 用固定任务验证边界。
+
+\`\`\`text
+模型 -> Harness -> 环境 -> 评测
+\`\`\`
 
 ## 常见误区
 
@@ -220,6 +235,10 @@ ${foundationDeepProse}
 ## 验证方法
 
 固定另外三层，只改变一个变量并记录运行产物。
+
+## 验证练习
+
+故意让环境拒绝已获 Harness 允许的调用，确认记录不会把它标成策略拒绝。
 
 ## 自检
 
@@ -315,6 +334,220 @@ test('基础、比较、角色和实验文章使用各自结构', () => {
   }
 });
 
+test('横向课程不能用旧结构绕过教学目标、实现练习和证据作品要求', () => {
+  const selfReview = `
+## 自检
+
+### 问题 1
+
+这个结论能否外推？
+
+**答案：** 不能，必须保留证据范围。
+
+### 问题 2
+
+为什么要保存原始记录？
+
+**答案：** 为了让失败与结论可以复核。
+
+### 问题 3
+
+完成步骤是否等于目标通过？
+
+**答案：** 不等于，还要检查验收标准。
+`;
+  const cases = [
+    {
+      relativePath: 'docs/foundations/01-boundaries.md',
+      content: `# Agent Harness 的职责与边界
+
+## 读者会得到什么
+
+读完后可以区分模型、Harness、环境和评测的责任边界。
+
+## 核心概念
+
+![四层职责边界图](../../assets/diagrams/foundations/01-boundaries.svg)
+
+Claim: foundation.boundaries.four-layers
+
+${foundationDeepProse}
+
+## 最小例子
+
+同一个输入只改变工具权限，用来观察 Harness 层带来的差异。
+
+## 常见误区
+
+不能把一次结果变化全部归因于模型。
+
+## 验证方法
+
+固定另外三层，只改变一个变量并记录运行产物。
+
+${selfReview}`,
+      required: ['为什么这样设计', '最小实现', '验证练习'],
+    },
+    {
+      relativePath: 'docs/comparisons/01-runtime.md',
+      content: `# 比较
+
+## 比较问题
+
+比较同一任务在六类 Harness 的运行边界。
+
+## 控制变量
+
+固定任务、环境、模型能力和工具表面。
+
+## 对照证据
+
+${deepProse}
+
+${deepProse}
+
+## 差异解释
+
+差异来自责任所有权和运行表面。
+
+## 失败与限制
+
+锁定证据不能证明实时服务可用。
+
+## 验证方法
+
+逐方保存输入、状态和产物。
+
+${selfReview}`,
+      required: ['共同抽象', '迁移练习'],
+    },
+    {
+      relativePath: 'docs/roles/engineering.md',
+      content: `# 工程角色
+
+## 适用角色
+
+负责 Harness 平台的工程人员。
+
+## 决策问题
+
+怎样划分模型、工具和环境责任？
+
+## 工作流
+
+1. 固定任务。
+2. 实现循环。
+3. 验证产物。
+
+${deepProse}
+
+## 风险与边界
+
+工程测试不等于发布评测。
+
+## 验收清单
+
+- 任务状态可追踪。
+
+${selfReview}`,
+      required: ['学习目标', '前置知识', '实践任务', '作品证据'],
+    },
+    {
+      relativePath: 'docs/labs/controlled-task-contract.md',
+      content: `# 控制实验
+
+## 实验目标
+
+验证固定 Trial 的分母不变。
+
+## 前置条件
+
+使用本地 Node 运行时。
+
+## 输入与环境
+
+使用确定性夹具。
+
+## 操作步骤
+
+1. 准备输入。
+2. 执行实验。
+3. 核对结果。
+
+\`\`\`text
+node experiment.mjs
+\`\`\`
+
+${deepProse}
+
+## 预期结果
+
+机器记录可复核。
+
+## 失败与排查
+
+失败时保留原始输出。
+
+## 证据记录
+
+记录环境和 Artifact 哈希。
+
+${selfReview}`,
+      required: ['变量控制', '原始记录', '失败判定'],
+    },
+    {
+      relativePath: 'docs/samples/mini-swe-agent.md',
+      content: `# 扩展样本
+
+## 样本定位
+
+只讲独特机制。
+
+## 独特机制
+
+${deepProse}
+
+![中文机制图](../../assets/diagrams/samples/mini-swe-agent.svg)
+
+Claim: mini-swe-agent.loop.observation-closes-step
+
+Claim: mini-swe-agent.environment.boundary-is-explicit
+
+## 源码入口
+
+从真实运行入口开始。
+
+## 运行链
+
+1. 读取任务。
+2. 执行动作。
+3. 返回观察。
+
+## 与一级主线的关系
+
+样本不升级为一级主线。
+
+## 失败与限制
+
+最小实现不等于生产边界。
+
+## 验证方法
+
+固定输入并保存轨迹。
+
+${selfReview}`,
+      required: ['实现接缝', '适用边界'],
+    },
+  ];
+
+  for (const fixture of cases) {
+    const failures = contentContractFailures({ ...fixture, metadata: { status: 'reviewed' } }).join('\n');
+    for (const heading of fixture.required) {
+      assert.match(failures, new RegExp(heading, 'u'), `${fixture.relativePath} 应要求 ${heading}`);
+    }
+  }
+});
+
 test('扩展样本必须解释独特机制并绑定中文图与两条 Claim', () => {
   const content = `# mini-swe-agent 独特机制
 
@@ -323,6 +556,8 @@ test('扩展样本必须解释独特机制并绑定中文图与两条 Claim', ()
 这是用于解释最小循环边界的扩展样本，不升级为一级主线。
 
 ## 独特机制
+
+${deepProse}
 
 ${deepProse}
 
@@ -336,6 +571,10 @@ Claim: mini-swe-agent.environment.boundary-is-explicit
 
 入口从锁定版本的真实运行函数和环境接口开始，不从目录名推断行为。
 
+## 实现接缝
+
+最小循环通过环境接口接收动作并返回观察，调用标识连接模型请求与执行结果。
+
 ## 运行链
 
 1. 读取固定任务与环境。
@@ -345,6 +584,10 @@ Claim: mini-swe-agent.environment.boundary-is-explicit
 ## 与一级主线的关系
 
 样本只补充最小实现如何暴露边界，不替代六条主线的完整课程。
+
+## 适用边界
+
+适合观察小循环的状态关系，不用于证明复杂产品的权限、恢复和发布能力。
 
 ## 失败与限制
 
@@ -398,7 +641,7 @@ test('共同基础必须达到深度并引用正式中文图与 Claim', () => {
   assert.match(contentContractFailures({
     ...article,
     content: foundationContent().replace(foundationDeepProse, paragraph.repeat(8)),
-  }).join('\n'), /至少 2600/u);
+  }).join('\n'), /至少 4500/u);
 });
 
 test('一级主线入口必须同时具备两张核心图、课程状态表与 Claim', () => {

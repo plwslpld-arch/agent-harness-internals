@@ -11,11 +11,11 @@ import { fail } from './lib.mjs';
 const depthRules = {
   start: { characters: 2200, paragraphs: 10 },
   harness: { characters: 6500, paragraphs: 18 },
-  foundation: { characters: 2600, paragraphs: 10 },
-  comparison: { characters: 2200, paragraphs: 10 },
-  role: { characters: 1600, paragraphs: 8 },
-  lab: { characters: 2000, paragraphs: 8 },
-  sample: { characters: 1800, paragraphs: 10 },
+  foundation: { characters: 4500, paragraphs: 16 },
+  comparison: { characters: 3800, paragraphs: 14 },
+  role: { characters: 3200, paragraphs: 12 },
+  lab: { characters: 3800, paragraphs: 14 },
+  sample: { characters: 3200, paragraphs: 14 },
   appendix: { characters: 1000, paragraphs: 5 },
 };
 
@@ -72,6 +72,10 @@ function orderedSteps(content) {
 
 function fencedBlocks(content) {
   return (content?.match(/```[^\n]*\n[\s\S]*?```/gu) ?? []).length;
+}
+
+function unorderedItems(content) {
+  return (content?.match(/^\s*[-*+]\s+\S.+$/gmu) ?? []).length;
 }
 
 function markdownTableDataRows(content) {
@@ -205,9 +209,12 @@ function harnessEntryFailures(content, errors, relativePath) {
 }
 
 function foundationFailures(content, errors) {
-  for (const heading of ['读者会得到什么', '核心概念', '最小例子', '常见误区', '验证方法']) {
+  for (const heading of ['读者会得到什么', '核心概念', '为什么这样设计', '最小例子', '最小实现', '常见误区', '验证方法', '验证练习']) {
     requireSection(content, heading, errors);
   }
+  const implementation = section(content, '最小实现');
+  if (implementation !== null && orderedSteps(implementation) < 4) errors.push('“最小实现”必须包含至少 4 步实现流程');
+  if (implementation !== null && fencedBlocks(implementation) < 1) errors.push('“最小实现”必须包含接口或伪代码围栏');
   if (!/!\[[^\]]*[\u3400-\u9fff][^\]]*\]\((?:\.\.\/)+assets\/diagrams\/[a-z0-9/_.-]+\.svg\)/u.test(content)) {
     errors.push('共同基础必须嵌入带中文替代文本的正式中文 SVG');
   }
@@ -218,33 +225,37 @@ function foundationFailures(content, errors) {
 }
 
 function comparisonFailures(content, errors) {
-  for (const heading of ['比较问题', '控制变量', '对照证据', '差异解释', '失败与限制', '验证方法']) {
+  for (const heading of ['比较问题', '共同抽象', '控制变量', '对照证据', '差异解释', '失败与限制', '验证方法', '迁移练习']) {
     requireSection(content, heading, errors);
   }
+  const evidence = section(content, '对照证据');
+  if (evidence !== null && markdownTableDataRows(evidence) < 6) errors.push('“对照证据”必须包含六条主线的独立证据行');
   checkSelfReview(content, errors);
 }
 
 function roleFailures(content, errors) {
-  for (const heading of ['适用角色', '决策问题', '风险与边界', '验收清单']) {
+  for (const heading of ['适用角色', '学习目标', '前置知识', '决策问题', '实践任务', '风险与边界', '验收清单', '作品证据']) {
     requireSection(content, heading, errors);
   }
   const workflow = requireSection(content, '工作流', errors);
-  if (workflow !== null && orderedSteps(workflow) < 3) errors.push('工作流必须包含至少 3 步有序步骤');
+  if (workflow !== null && orderedSteps(workflow) < 4) errors.push('工作流必须包含至少 4 步有序步骤');
+  const acceptance = section(content, '验收清单');
+  if (acceptance !== null && unorderedItems(acceptance) < 4) errors.push('“验收清单”必须包含至少 4 条可检查标准');
   checkSelfReview(content, errors);
 }
 
 function labFailures(content, errors) {
-  for (const heading of ['实验目标', '前置条件', '输入与环境', '预期结果', '失败与排查', '证据记录']) {
+  for (const heading of ['实验目标', '前置条件', '输入与环境', '变量控制', '预期结果', '失败与排查', '失败判定', '原始记录', '证据记录']) {
     requireSection(content, heading, errors);
   }
   const steps = requireSection(content, '操作步骤', errors);
-  if (steps !== null && orderedSteps(steps) < 3) errors.push('操作步骤必须包含至少 3 步有序步骤');
-  if (fencedBlocks(content) < 1) errors.push('实验文章必须包含可执行命令或数据围栏');
+  if (steps !== null && orderedSteps(steps) < 4) errors.push('操作步骤必须包含至少 4 步有序步骤');
+  if (fencedBlocks(content) < 2) errors.push('实验文章必须同时包含可执行命令和原始数据围栏');
   checkSelfReview(content, errors);
 }
 
 function sampleFailures(content, errors) {
-  for (const heading of ['样本定位', '独特机制', '源码入口', '与一级主线的关系', '失败与限制', '验证方法']) {
+  for (const heading of ['样本定位', '独特机制', '源码入口', '实现接缝', '与一级主线的关系', '适用边界', '失败与限制', '验证方法']) {
     requireSection(content, heading, errors);
   }
   const chain = requireSection(content, '运行链', errors);
