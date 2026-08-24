@@ -93,10 +93,10 @@
 
 ### Task 9：Subagent、协作模式与多智能体编排
 
-- [ ] 完成 `07-subagents-orchestration.md`、中文线程图与消息时序图和编排 Claim。
-- [ ] 覆盖 spawn、send、follow-up、wait、interrupt、resume、通知、深度、身份和线程图持久关系。
-- [ ] 分开应用任务、根 Thread、子 Thread、活动 Agent 与跨线程通信，不把并发数量当任务成功率。
-- [ ] 提交：`docs(codex): 发布多智能体编排课程`。
+- [x] 完成 `07-subagents-orchestration.md`、中文线程图与消息时序图和编排 Claim。
+- [x] 覆盖 spawn、send、follow-up、wait、interrupt、resume、通知、深度、身份和线程图持久关系。
+- [x] 分开应用任务、根 Thread、子 Thread、活动 Agent 与跨线程通信，不把并发数量当任务成功率。
+- [x] 提交：`docs(codex): 发布多智能体编排课程`。
 
 ### Task 10：产品表面、Trace、Telemetry、Feedback、Eval 与 crate 取舍
 

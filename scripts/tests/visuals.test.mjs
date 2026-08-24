@@ -36,6 +36,10 @@ test('中文可访问元数据和允许的专名通过', () => {
     path: entry.path,
     content: svg('<text>Skill、Plugin、Connector 与 Code Mode 受 Feature 和 Schema 约束</text>'),
   }, entry), []);
+  assert.deepEqual(visualFailures({
+    path: entry.path,
+    content: svg('<text>Thread、Session、Turn 与 Rollout 共同服务一个 Trial</text>'),
+  }, entry), []);
 });
 
 test('缺少中文 title 或 desc 会失败', () => {

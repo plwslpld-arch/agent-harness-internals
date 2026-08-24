@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 980" role="img" aria-labelledby="title desc">
+  <title id="title">Codex 多智能体线程图与控制时序</title>
+  <desc id="desc">根线程树共享控制面，每个子智能体拥有独立线程身份、会话历史和状态，通过消息、等待、中断、恢复与完成通知协作。</desc>
+  <defs><marker id="a" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto"><path d="M0 0l14 7-14 7z" fill="#087F7C"/></marker><marker id="d" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto"><path d="M0 0l14 7-14 7z" fill="#D2673A"/></marker><filter id="s" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#17324D" flood-opacity=".12"/></filter></defs>
+  <rect width="1400" height="980" rx="34" fill="#F6F9FC"/>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <text x="700" y="55" text-anchor="middle" fill="#17324D" font-size="36" font-weight="760">子智能体是独立线程，不是父轮次里的普通工具</text>
+    <text x="700" y="91" text-anchor="middle" fill="#50677D" font-size="19">身份、历史、状态与通信可关联，但不能合并成一个生命周期</text>
+    <rect x="420" y="135" width="560" height="120" rx="22" fill="#17324D" filter="url(#s)"/><text x="700" y="180" text-anchor="middle" fill="#FFFFFF" font-size="25" font-weight="760">根线程树控制面</text><text x="700" y="219" text-anchor="middle" fill="#D3E1EA" font-size="18">注册表　执行容量　线程图　状态订阅　完成通知</text>
+    <g filter="url(#s)">
+      <rect x="65" y="350" width="360" height="180" rx="22" fill="#E9F2FF" stroke="#3569A8" stroke-width="2"/><text x="245" y="394" text-anchor="middle" fill="#285383" font-size="24" font-weight="760">根 Thread</text><text x="100" y="432" fill="#50677D" font-size="18">用户任务与根 Session</text><text x="100" y="466" fill="#50677D" font-size="18">父 Turn 与最终汇总责任</text><text x="100" y="502" fill="#8A3D2F" font-size="17">应用任务不等于线程身份</text>
+      <rect x="520" y="350" width="360" height="180" rx="22" fill="#E7F5F3" stroke="#087F7C" stroke-width="2"/><text x="700" y="394" text-anchor="middle" fill="#086E6B" font-size="24" font-weight="760">子 Thread 甲</text><text x="555" y="432" fill="#50677D" font-size="18">独立 Session、Turn 与 Rollout</text><text x="555" y="466" fill="#50677D" font-size="18">状态：运行、完成、错误、中断</text><text x="555" y="502" fill="#8A3D2F" font-size="17">后续消息可触发新 Turn</text>
+      <rect x="975" y="350" width="360" height="180" rx="22" fill="#F0ECF8" stroke="#76559B" stroke-width="2"/><text x="1155" y="394" text-anchor="middle" fill="#60458C" font-size="24" font-weight="760">子 Thread 乙</text><text x="1010" y="432" fill="#50677D" font-size="18">独立角色、昵称与历史继承</text><text x="1010" y="466" fill="#50677D" font-size="18">可继续派生孙 Thread</text><text x="1010" y="502" fill="#8A3D2F" font-size="17">容量限制不是成功门禁</text>
+    </g>
+    <g fill="none" stroke="#087F7C" stroke-width="4"><path d="M700 255v52H245v31"/><path d="M700 255v83"/><path d="M700 307h455v31"/></g>
+    <rect x="85" y="610" width="1230" height="145" rx="22" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2" filter="url(#s)"/><text x="700" y="651" text-anchor="middle" fill="#955A00" font-size="24" font-weight="760">跨线程控制时序</text><text x="130" y="692" fill="#50677D" font-size="18">创建：预留容量 → 新线程标识 → 历史继承 → 初始输入</text><text x="130" y="726" fill="#50677D" font-size="18">协作：发送消息或后续任务 → 等待状态 → 必要时中断 → 终态通知祖先</text><text x="850" y="692" fill="#8A3D2F" font-size="17">等待只观察，不创造完成</text><text x="850" y="726" fill="#8A3D2F" font-size="17">中断当前任务，不等于删除线程</text>
+    <path d="M245 530v68" fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#a)"/><path d="M700 530v68" fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#a)"/><path d="M1155 530v68" fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#a)"/>
+    <rect x="125" y="820" width="500" height="95" rx="18" fill="#E7F5F3" stroke="#087F7C" stroke-width="2"/><text x="375" y="858" text-anchor="middle" fill="#086E6B" font-size="22" font-weight="760">持久恢复</text><text x="375" y="891" text-anchor="middle" fill="#50677D" font-size="17">重建开放线程图与模型上下文</text>
+    <rect x="775" y="820" width="500" height="95" rx="18" fill="#FFF0E8" stroke="#D2673A" stroke-width="2"/><text x="1025" y="858" text-anchor="middle" fill="#8A3D2F" font-size="22" font-weight="760">独立任务评测</text><text x="1025" y="891" text-anchor="middle" fill="#50677D" font-size="17">固定 Trial，核对最终产物与重复副作用</text>
+    <path d="M375 755v53" fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#a)"/><path d="M1025 755v53" fill="none" stroke="#D2673A" stroke-width="4" marker-end="url(#d)"/>
+    <text x="700" y="955" text-anchor="middle" fill="#17324D" font-size="19" font-weight="760">线程更多 ≠ 任务更好；通知更多 ≠ 证据更强</text>
+  </g>
+</svg>

@@ -224,6 +224,14 @@
       "scope": "docs/harnesses/codex/06-extensions-code-mode.md",
       "alt": "Codex 从 Skill、Hook、Plugin、MCP、Connector 与 Code Mode 到模型可见工具和统一安全执行的中文扩展架构图",
       "claims": ["codex.extensions.capabilities-are-dynamically-assembled", "codex.code-mode.changes-tool-surface"]
+    },
+    {
+      "id": "codex-subagents-orchestration",
+      "path": "assets/diagrams/codex/07-subagents-orchestration.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/codex/07-subagents-orchestration.md",
+      "alt": "Codex 根线程、子线程、活动智能体、跨线程消息、等待、打断、恢复与完成通知的中文编排图",
+      "claims": ["codex.orchestration.subagents-are-thread-scoped"]
     }
   ]
 }

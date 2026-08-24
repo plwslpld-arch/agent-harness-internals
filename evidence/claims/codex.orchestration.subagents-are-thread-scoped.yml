@@ -1,0 +1,22 @@
+{
+  "id": "codex.orchestration.subagents-are-thread-scoped",
+  "harness": "codex",
+  "dimension": "orchestration.subagents-are-thread-scoped",
+  "statement": "锁定 Codex 为每个子智能体创建独立 ThreadId、Session 历史与状态，同时在根线程树内共享 AgentControl、注册表和执行容量；跨线程消息、等待、中断与完成通知保持独立控制语义。",
+  "capability": "optional",
+  "version": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+  "surface": "multi-agent-control",
+  "platform": "upstream-test-supported-platforms",
+  "mode": "multi-agent-version-and-policy-dependent",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/src/agent/control.rs","lines":"101-120","excerpt":"An `AgentControl` instance is intended to be created at most once per root thread/session"},
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/src/agent/control.rs","lines":"211-311","excerpt":"pub(crate) async fn interrupt_agent"},
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/src/agent/control/spawn.rs","lines":"403-448","excerpt":"reserve_spawn_slot"},
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/src/agent_communication.rs","lines":"7-58","excerpt":"sender_thread_id"},
+    {"type":"upstream-test","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/tests/suite/subagent_notifications.rs","lines":"492-516","excerpt":"parent rollout to include subagent notification"},
+    {"type":"upstream-test","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/tests/suite/subagent_notifications.rs","lines":"784-793","excerpt":"assert_ne!(parent_transcript_path, agent_transcript_path);"}
+  ],
+  "limitations": ["子线程创建不证明任务成功。", "多智能体模式和主动委派受配置与策略约束。"],
+  "last_verified": "2026-08-24"
+}
