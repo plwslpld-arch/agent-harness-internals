@@ -1,0 +1,4 @@
+{
+  "id":"pi.tui.differential-rendering-is-presentation","harness":"pi","dimension":"tui.differential-rendering-is-presentation","statement":"锁定 pi TUI 先把组件树与 Overlay 渲染为终端行，再根据上一帧、终端宽高和清屏条件选择全量或差分写入；该逻辑投影 Session 状态，不改变 Agent Transcript 或工具语义。","capability":"default","version":"c1279a65b3ef6b0b19950ed1771d5933241c240f","surface":"pi-tui-main-screen","platform":"terminal","mode":"differential-rendering","evidence_level":"C","evidence":[{"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/tui/src/tui-main-screen.ts","lines":"180-273","excerpt":"let newLines = this.render(width);"}],"limitations":["源码证据证明渲染分层，没有覆盖所有终端兼容性。","Full Redraw 次数不是 Agent Turn 数。","界面正确不证明目标产物正确。"],"last_verified":"2026-08-24"
+}
+

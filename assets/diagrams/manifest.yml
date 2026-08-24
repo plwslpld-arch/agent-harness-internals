@@ -464,6 +464,14 @@
       "scope": "docs/harnesses/pi/06-protocol-server-client.md",
       "alt": "pi 远程控制从客户端会话租约、命令封装、长度帧与二进制编码，经服务端连接和会话运行时，再以响应、事件和快照回流的中文时序图",
       "claims": ["pi.protocol.frame-codec-schema-are-distinct", "pi.protocol.session-lease-is-not-task-success"]
+    },
+    {
+      "id": "pi-cli-tui-permissions-containerization",
+      "path": "assets/diagrams/pi/07-cli-tui-permissions-containerization.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/pi/07-cli-tui-permissions-containerization.md",
+      "alt": "pi 编码智能体会话分别投影到交互终端、单次文本、事件流和远程命令表面，默认宿主权限与多种可选隔离边界分层展示的中文架构图",
+      "claims": ["pi.tui.differential-rendering-is-presentation", "pi.security.examples-are-not-default-boundaries"]
     }
   ]
 }

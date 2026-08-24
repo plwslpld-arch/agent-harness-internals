@@ -104,7 +104,7 @@
 
 ### Task 9：CLI、TUI、权限与容器化
 
-- [ ] 创建 `07-cli-tui-permissions-containerization.md`、对应 SVG 和 Claim，覆盖 CLI 模式、交互 TUI、差分渲染、终端输入、宿主权限和 Gondolin/Docker/OpenShell。
+- [x] 创建 `07-cli-tui-permissions-containerization.md`、对应 SVG 和 Claim，覆盖 CLI 模式、交互 TUI、差分渲染、终端输入、宿主权限和 Gondolin/Docker/OpenShell。
 - [ ] 明确 pi 没有默认内建权限系统；Extension 确认提示不等于强制安全边界。
 - [ ] 渲染复核，运行门禁并提交：`docs(pi): 发布终端表面与隔离边界课程`。
 
