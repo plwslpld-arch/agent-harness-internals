@@ -42,18 +42,18 @@ Session Store 位于应用可见的持久化边界。Python SDK 能把外部 Sto
 <!-- course-navigation:start -->
 | 顺序 | 模块 | 状态 | 先回答的问题 |
 | ---: | --- | --- | --- |
-| 00 | 主线入口 | 已复核 | 应用、双 SDK、CLI、工具、状态与 Eval 怎样形成责任链？ |
-| 01 | 产品与 SDK 证据边界 | 提纲 | 哪些结论来自官方契约、Python 源码或 TypeScript 公开材料？ |
-| 02 | Python 入口、Transport 与控制协议 | 提纲 | query、Client、CLI 子进程与控制帧怎样连接？ |
-| 03 | 消息流与生命周期 | 提纲 | Result、输入结束、取消、关闭和进程退出分别结束哪一层？ |
-| 04 | 工具、权限与 Hook | 提纲 | 工具可用、自动允许、询问、回调、Hook 与执行怎样分层？ |
-| 05 | Session、恢复与 Store | 提纲 | 恢复材料化、Transcript Mirror 和外部 Store 谁是权威？ |
-| 06 | MCP、Agent 与 Skill | 提纲 | 进程内工具、外部 Server 与能力配置怎样装配？ |
-| 07 | TypeScript 契约与双 SDK 对齐 | 提纲 | 无主体源码时怎样诚实比较两个 SDK？ |
-| 08 | 产品表面、错误与独立 Eval | 提纲 | SDK Result、反馈和产物怎样进入独立评分？ |
+| 00 | [主线入口](README.md) | 已复核 | 应用、双 SDK、CLI、工具、状态与 Eval 怎样形成责任链？ |
+| 01 | [产品与 SDK 证据边界](01-evidence-product-sdk-boundaries.md) | 已复核 | 哪些结论来自官方契约、Python 源码或 TypeScript 公开材料？ |
+| 02 | [Python 入口、Transport 与控制协议](02-python-entry-transport-control.md) | 已复核 | query、Client、CLI 子进程与控制帧怎样连接？ |
+| 03 | [消息流与生命周期](03-messages-stream-lifecycle.md) | 已复核 | Result、输入结束、取消、关闭和进程退出分别结束哪一层？ |
+| 04 | [工具、权限与 Hook](04-tools-permissions-hooks.md) | 已复核 | 工具可用、自动允许、询问、回调、Hook 与执行怎样分层？ |
+| 05 | [Session、恢复与 Store](05-sessions-resume-store.md) | 已复核 | 恢复材料化、Transcript Mirror 和外部 Store 谁是权威？ |
+| 06 | [MCP、Agent 与 Skill](06-mcp-agents-skills.md) | 已复核 | 进程内工具、外部 Server 与能力配置怎样装配？ |
+| 07 | [TypeScript 契约与双 SDK 对齐](07-typescript-contract-parity.md) | 已复核 | 无主体源码时怎样诚实比较两个 SDK？ |
+| 08 | [产品表面、错误与独立 Eval](08-surfaces-errors-eval-design.md) | 已复核 | SDK Result、反馈和产物怎样进入独立评分？ |
 <!-- course-navigation:end -->
 
-这张表在阶段末才会原子开放链接。在八篇正文、Claim、中文图和批量门禁全部完成前，文件存在不等于课程可发布；根入口也不会提前把 Claude 标为完成。
+这张表已经在八篇正文、Claim、中文图和批量门禁全部完成后原子开放。以后任何一篇缺失、降级或移除链接，导航门禁都会让整条主线退出发布状态。
 
 状态先于导航。
 
