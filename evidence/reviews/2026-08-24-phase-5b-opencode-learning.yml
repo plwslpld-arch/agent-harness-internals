@@ -1,0 +1,45 @@
+{
+  "stage": "phase-5b-opencode-learning",
+  "date": "2026-08-24",
+  "commit": "c778f65b7dcb8d1cb0e5ca34ebefa85865617773",
+  "promises": [
+    {"id":"p-learning-depth","statement":"OpenCode 入口与八篇正文按内容契约 2.0 讲清项目配置、Provider、Session Loop、工具权限、存储恢复、扩展、协议表面和评测闭环。"},
+    {"id":"p-evidence-boundary","statement":"模型目录、应用权限、客户端状态、分享遥测和上游测试分别限定，不外推为运行时可用、操作系统隔离或发布授权。"},
+    {"id":"p-adversarial-review","statement":"逐篇反查 Summary/Revert 权威性、Plugin/MCP/LSP 信任域、HTTP/ACP 完成语义、自动分享数据出站与 Trial/Attempt 分母。"}
+  ],
+  "evidence": [
+    {"id":"e-nine-articles","promise":"p-learning-depth","type":"file","reference":"docs/harnesses/opencode/","summary":"九篇均具备概念表、设计理由、教学实现、贯穿案例、真实输入输出、源码证据和自检。"},
+    {"id":"e-contract-v2","promise":"p-learning-depth","type":"test","reference":"scripts/check-content-contract.mjs","summary":"使用仓库相对路径逐篇检查 OpenCode 九篇，全部通过内容契约 2.0。"},
+    {"id":"e-permission-boundary","promise":"p-evidence-boundary","type":"file","reference":"docs/harnesses/opencode/03-tools-permission-question-patch.md","summary":"Registry、最终 Schema、Permission、Question、OS 隔离与 Snapshot 分层，并覆盖绕过 ask 的 Plugin 反例。"},
+    {"id":"e-quality-boundary","promise":"p-adversarial-review","type":"file","reference":"docs/harnesses/opencode/08-share-telemetry-eval-boundaries.md","summary":"Share、Telemetry、Test、Scorer、RewardAdapter、Checkpoint 与 Release Holdout 分责。"},
+    {"id":"e-analysis-anchors","promise":"p-evidence-boundary","type":"test","reference":"scripts/verify-analysis.mjs","summary":"八十篇来源绑定和一百三十二处源码锚点抽查通过。"},
+    {"id":"e-claims-tests","promise":"p-adversarial-review","type":"test","reference":"scripts/verify-claims.mjs","summary":"一百一十九条 Claim 无重复，一百一十二项测试通过。"},
+    {"id":"e-links-visuals-style","promise":"p-adversarial-review","type":"test","reference":"scripts/check-visuals.mjs","summary":"一百一十二个 Markdown 本地链接和八十一张正式中文 SVG 通过；文风无阻断错误。"}
+  ],
+  "findings": [
+    {"id":"f-runtime-availability","priority":"high","status":"resolved","summary":"模型目录、Provider Map、Language Runtime 和真实 Stream 容易被写成同一可用状态。"},
+    {"id":"f-permission-sandbox","priority":"high","status":"resolved","summary":"工具可见、Permission Ask/Allow、Question 与操作系统隔离容易被混写。"},
+    {"id":"f-history-revert","priority":"high","status":"resolved","summary":"模型投影与 Summary 容易被当作完整历史，Revert 容易被描述成通用事务回滚。"},
+    {"id":"f-surface-terminal","priority":"high","status":"resolved","summary":"HTTP 200、Session Idle、客户端完成和 ACP Update 容易被提升成任务正确。"},
+    {"id":"f-share-release","priority":"high","status":"resolved","summary":"自动分享、Telemetry Span、上游测试、训练奖励和发布门禁存在证据越权风险。"},
+    {"id":"f-strict-depth-edge","priority":"medium","status":"resolved","summary":"协议篇和表面篇曾分别只差一个和三个有效字符，严格定向门禁揭示后补足。"},
+    {"id":"f-style-rhythm","priority":"low","status":"open","summary":"多篇仍有句长节奏非阻断提醒，留到全仓总编辑统一处理。"}
+  ],
+  "resolutions": [
+    {"id":"f-runtime-availability","action":"用四级状态与配置 Provenance 案例分别验证 Catalog、Provider、Language 和 Stream。","evidence":["e-nine-articles","e-contract-v2","e-analysis-anchors"]},
+    {"id":"f-permission-sandbox","action":"加入最终 Tool Surface、规则命中、参数冻结、执行提交点与 OS 探针，明确应用允许不构成沙箱。","evidence":["e-nine-articles","e-permission-boundary","e-claims-tests"]},
+    {"id":"f-history-revert","action":"新增 Projection/Revert Manifest、半提交与后台进程反例，分别核对 Session、Context、工作树和外部副作用。","evidence":["e-nine-articles","e-contract-v2"]},
+    {"id":"f-surface-terminal","action":"并列记录协议、Replica、Session 与 Eval 终态，并用多 Server 同名路径和 ACP 映射丢失案例验证。","evidence":["e-nine-articles","e-links-visuals-style"]},
+    {"id":"f-share-release","action":"把 Share/Unshare、Telemetry、Trial/Attempt、Scorer、RewardAdapter 和独立 Holdout 分成追加式证据链。","evidence":["e-quality-boundary","e-claims-tests"]},
+    {"id":"f-strict-depth-edge","action":"不采用舍入或豁免，补充可追溯说明后用相对路径重新运行九篇内容契约。","evidence":["e-contract-v2"]}
+  ],
+  "commands": [
+    {"command":"OpenCode 九篇 contentContractFailures 相对路径定向检查","exit_code":0,"summary":"入口与八篇正文全部通过内容契约 2.0。"},
+    {"command":"node scripts/verify-analysis.mjs && node scripts/verify-anchors.mjs","exit_code":0,"summary":"来源绑定与源码锚点有效。"},
+    {"command":"node scripts/verify-claims.mjs && node scripts/run-tests.mjs","exit_code":0,"summary":"一百一十九条 Claim 和一百一十二项测试通过。"},
+    {"command":"node scripts/check-links.mjs && node scripts/check-visuals.mjs","exit_code":0,"summary":"本地链接和正式中文 SVG 门禁通过。"},
+    {"command":"node scripts/check-style.mjs","exit_code":0,"summary":"无阻断文风错误，句长节奏为非阻断提醒。"},
+    {"command":"git diff --check","exit_code":0,"summary":"提交前无空白错误。"}
+  ],
+  "result": "pass"
+}
