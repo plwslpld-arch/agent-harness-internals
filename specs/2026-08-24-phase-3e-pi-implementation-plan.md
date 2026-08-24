@@ -98,7 +98,7 @@
 
 ### Task 8：Protocol、Server 与 Client
 
-- [ ] 创建 `06-protocol-server-client.md`、对应 SVG 和 Claim，覆盖 Length Framing、CBOR/JSON Codec、Schema、Connection、Server、Client、Snapshot、Session Handle 与 Unix Transport。
+- [x] 创建 `06-protocol-server-client.md`、对应 SVG 和 Claim，覆盖 Length Framing、CBOR/JSON Codec、Schema、Connection、Server、Client、Snapshot、Session Handle 与 Unix Transport。
 - [ ] 区分协议可编码、服务可监听、客户端已连接、Session 可恢复与任务成功。
 - [ ] 渲染复核，运行门禁并提交：`docs(pi): 发布协议服务与客户端课程`。
 

@@ -1,0 +1,6 @@
+{
+  "id":"pi.protocol.session-lease-is-not-task-success","harness":"pi","dimension":"protocol.session-lease-is-not-task-success","statement":"锁定 pi Client 用 Shared 与 Exclusive Session Lease 管理本地附着和命令生命周期；Lease Active 或 Prompt Response 成功只证明控制通道状态，不能证明 Agent 目标或最终产物正确。","capability":"default","version":"c1279a65b3ef6b0b19950ed1771d5933241c240f","surface":"pi-client-session-lease","platform":"remote-client","mode":"shared-exclusive-ownership","evidence_level":"B",
+  "evidence":[{"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/client/src/client.ts","lines":"141-205","excerpt":"const token = this.#reserveSessionLease(result.session.id, \"exclusive\");"},{"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/client/src/client.ts","lines":"381-410","excerpt":"if (mode === \"exclusive\" && count > 0)"},{"type":"upstream-test","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/client/test/sessions.test.ts","lines":"40-113","excerpt":"detaches a shared session only after its final lease is released"}],
+  "limitations":["Lease 所有权是 Client 层协调，不替代 Server 的 Runtime 独占策略。","断线与移除会使 Lease 失效，外部副作用状态仍需核对。","Command Response 不包含独立 Eval 判定。"],"last_verified":"2026-08-24"
+}
+

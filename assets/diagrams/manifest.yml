@@ -456,6 +456,14 @@
       "scope": "docs/harnesses/pi/05-session-context-compaction-storage.md",
       "alt": "pi 会话从追加式树与活动叶节点投影到模型上下文，压缩摘要缩短上下文但不删除原始历史，存储后端区分已实现与未实现能力的中文数据流图",
       "claims": ["pi.session.context-is-derived-projection", "pi.session.sqlite-backend-is-unavailable"]
+    },
+    {
+      "id": "pi-protocol-server-client",
+      "path": "assets/diagrams/pi/06-protocol-server-client.svg",
+      "type": "sequence",
+      "scope": "docs/harnesses/pi/06-protocol-server-client.md",
+      "alt": "pi 远程控制从客户端会话租约、命令封装、长度帧与二进制编码，经服务端连接和会话运行时，再以响应、事件和快照回流的中文时序图",
+      "claims": ["pi.protocol.frame-codec-schema-are-distinct", "pi.protocol.session-lease-is-not-task-success"]
     }
   ]
 }
