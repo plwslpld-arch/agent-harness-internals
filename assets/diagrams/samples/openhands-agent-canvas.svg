@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="760" viewBox="0 0 1440 760" role="img" aria-labelledby="title desc">
+  <title id="title">OpenHands 多后端控制平面</title><desc id="desc">控制中心负责交互和后端选择，客户端参数路由到 Agent 服务端；Agent 内核与自动化调度位于其他仓库。</desc>
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#526179"/></marker><style>text{font-family:"Microsoft YaHei","Noto Sans CJK SC",sans-serif;fill:#17233b}.t{font-size:34px;font-weight:700}.s{font-size:16px;fill:#596981}.h{font-size:21px;font-weight:700}.b{font-size:17px}.l{stroke:#526179;stroke-width:3;fill:none;marker-end:url(#a)}.d{stroke:#8b5cf6;stroke-width:3;stroke-dasharray:8 7;fill:none;marker-end:url(#a)}</style></defs>
+  <rect width="1440" height="760" rx="28" fill="#f7f9fc"/><text x="70" y="68" class="t">控制中心选择后端，Agent 服务端决定运行</text><text x="70" y="101" class="s">控制中心、Agent 内核和自动化调度属于不同责任仓库</text>
+  <rect x="70" y="155" width="315" height="175" rx="24" fill="#e8f1ff" stroke="#3b82f6" stroke-width="2"/><text x="108" y="205" class="h">Agent 控制中心</text><text x="108" y="245" class="b">会话界面 · 后端登记</text><text x="108" y="278" class="b">后端选择 · 本地栈编排</text><text x="108" y="307" class="s">当前锁定仓库</text>
+  <rect x="455" y="155" width="390" height="175" rx="24" fill="#fff4df" stroke="#f59e0b" stroke-width="2"/><text x="493" y="205" class="h">客户端有效参数</text><text x="493" y="245" class="b">地址 · 密钥 · 工作目录 · 超时</text><text x="493" y="278" class="b">会话覆盖优先于后端登记</text><text x="493" y="307" class="s">无可用地址时明确失败</text>
+  <rect x="915" y="155" width="455" height="175" rx="24" fill="#edf9f2" stroke="#22a06b" stroke-width="2"/><text x="953" y="205" class="h">Agent 服务端后端</text><text x="953" y="245" class="b">本地 · 容器 · 虚拟机 · 远端 · 云端</text><text x="953" y="278" class="b">会话、工作区、工具与事件</text><text x="953" y="307" class="s">名称不等于部署事实</text>
+  <path d="M385 242H455" class="l"/><path d="M845 242H915" class="l"/>
+  <rect x="70" y="430" width="390" height="150" rx="22" fill="#f0eaff" stroke="#8b5cf6" stroke-width="2"/><text x="108" y="478" class="h">软件 Agent 开发包</text><text x="108" y="518" class="b">Agent、工具、会话与规范接口</text><text x="108" y="548" class="s">需要独立锁定后才能分析内核</text>
+  <rect x="525" y="430" width="390" height="150" rx="22" fill="#fff0f0" stroke="#e25555" stroke-width="2"/><text x="563" y="478" class="h">自动化服务</text><text x="563" y="518" class="b">计划、事件、历史与派发</text><text x="563" y="548" class="s">决定何时运行，不决定 Agent 逻辑</text>
+  <rect x="980" y="430" width="390" height="150" rx="22" fill="#fff" stroke="#526179" stroke-width="2"/><text x="1018" y="478" class="h">独立验证</text><text x="1018" y="518" class="b">探测真实后端与产物</text><text x="1018" y="548" class="s">客户端成功不能替代任务评分</text>
+  <path d="M1140 330V380H265V430" class="d"/><path d="M1140 330V380H720V430" class="d"/><path d="M1140 330V430" class="d"/>
+  <text x="70" y="704" class="s">关键边界：本专题只验证控制平面，不借当前仓库推断未锁定 Agent 内核。</text>
+</svg>
