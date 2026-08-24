@@ -1,0 +1,38 @@
+{
+  "stage": "phase-5b-claude-learning",
+  "date": "2026-08-24",
+  "commit": "03b4d28f2df727ac69b8678a4d6ecfb266d7f96e",
+  "promises": [
+    {"id":"p-learning-depth","statement":"Claude 入口与八篇正文均按内容契约 2.0 讲清核心概念、设计理由、实现思路和贯穿案例，不再以研究摘要冒充课程。"},
+    {"id":"p-evidence-boundary","statement":"新增教学蓝图与 Claude Code 闭源产品事实明确分开，Python 源码、TypeScript 公开契约、SDK Result、Session Mirror 与独立 Eval 不互相越界。"},
+    {"id":"p-adversarial-review","statement":"逐篇反查可见性与执行、Result 与任务成功、Session 与文件状态、配置与真实运行、双 SDK 契约与实现等高风险混淆。"}
+  ],
+  "evidence": [
+    {"id":"e-nine-articles","promise":"p-learning-depth","type":"file","reference":"docs/harnesses/claude/","summary":"九篇均包含概念表、分层理由、教学实现蓝图、四步以上案例及输入输出数据。"},
+    {"id":"e-contract-v2","promise":"p-learning-depth","type":"test","reference":"scripts/check-content-contract.mjs","summary":"Claude 九篇单独执行内容契约 2.0，全部无失败项；旧式摘要反例测试通过。"},
+    {"id":"e-boundary-articles","promise":"p-evidence-boundary","type":"file","reference":"docs/harnesses/claude/01-evidence-product-sdk-boundaries.md","summary":"结论登记器、权限引擎、会话接入和 Eval Harness 均明确标成课程蓝图，不画成 Claude Code 内部类。"},
+    {"id":"e-analysis-anchors","promise":"p-evidence-boundary","type":"test","reference":"scripts/verify-analysis.mjs","summary":"八十篇来源绑定与一百三十二处源码行号抽查通过。"},
+    {"id":"e-adversarial-checks","promise":"p-adversarial-review","type":"command","reference":"scripts/check-style.mjs","summary":"修正对仗过密错误后文风门禁通过；句长节奏保留为非阻断总编辑提醒。"},
+    {"id":"e-links-visuals","promise":"p-adversarial-review","type":"test","reference":"scripts/check-links.mjs","summary":"一百一十二个 Markdown 本地链接通过；八十一张正式 SVG 与 Manifest 通过。"}
+  ],
+  "findings": [
+    {"id":"f-case-rule-mismatch","priority":"high","status":"resolved","summary":"权限案例声称只预批准文档检查，初稿配置却漏掉范围 allow 规则。"},
+    {"id":"f-auto-mode-gap","priority":"high","status":"resolved","summary":"旧权限正文只在限制中提到 auto，未解释分类器、可用性和版本记录边界。"},
+    {"id":"f-blueprint-inference","priority":"high","status":"resolved","summary":"教学状态机与适配器容易被误读为 Claude Code 闭源内部实现。"},
+    {"id":"f-style-rhythm","priority":"low","status":"open","summary":"Claude 多篇仍有句长节奏非阻断提醒，留到全仓总编辑统一润色。"}
+  ],
+  "resolutions": [
+    {"id":"f-case-rule-mismatch","action":"在案例 allowed_tools 中加入精确 Bash(npm run check:docs) 范围规则，并让事件轨迹与规则一致。","evidence":["e-nine-articles","e-contract-v2"]},
+    {"id":"f-auto-mode-gap","action":"在概念表、调用链与模式组合中补入 auto，明确概率分类、Claude Code 版本和运行记录要求。","evidence":["e-nine-articles","e-boundary-articles"]},
+    {"id":"f-blueprint-inference","action":"每个新增实现章节显式标注课程蓝图或宿主建议，保留闭源产品不透明边界和 unknown。","evidence":["e-boundary-articles","e-analysis-anchors"]}
+  ],
+  "commands": [
+    {"command":"node --test scripts/tests/content-contract.test.mjs","exit_code":0,"summary":"十五项内容契约测试通过，旧研究摘要反例被阻断。"},
+    {"command":"Claude 九篇 contentContractFailures 定向检查","exit_code":0,"summary":"入口与八篇正文全部通过内容契约 2.0。"},
+    {"command":"node scripts/verify-analysis.mjs && node scripts/verify-anchors.mjs","exit_code":0,"summary":"来源绑定与源码锚点保持有效。"},
+    {"command":"node scripts/check-links.mjs && node scripts/check-visuals.mjs","exit_code":0,"summary":"本地链接和正式中文 SVG 门禁通过。"},
+    {"command":"node scripts/check-style.mjs","exit_code":0,"summary":"无阻断文风错误，句长节奏仅为非阻断提醒。"},
+    {"command":"git diff --check","exit_code":0,"summary":"提交前无空白错误。"}
+  ],
+  "result": "pass"
+}
