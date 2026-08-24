@@ -166,9 +166,9 @@
 - 创建：`evidence/claims/claude.eval.requires-artifact-scorer.yml`
 - 创建：`evidence/claims/claude.feedback.is-not-training-or-release-reward.yml`
 
-- [ ] 覆盖单次 query、双向 Client、CLI 子进程、消息投影、CLIConnection/Process/JSONDecode 错误、stderr、Result subtype 和取消。
-- [ ] 设计 Dataset、固定 Trial、Target surface、Artifact、Scorer、RewardAdapter、Checkpoint 与隔离 holdout；反馈和 code acceptance 只作原始信号。
-- [ ] 渲染复核，运行门禁并提交：`docs(claude): 发布表面错误与评测设计课程`。
+- [x] 覆盖单次 query、双向 Client、CLI 子进程、消息投影、CLIConnection/Process/JSONDecode 错误、stderr、Result subtype 和取消。
+- [x] 设计 Dataset、固定 Trial、Target surface、Artifact、Scorer、RewardAdapter、Checkpoint 与隔离 holdout；反馈和 code acceptance 只作原始信号。
+- [x] 渲染复核，运行门禁并提交：`docs(claude): 发布表面错误与评测设计课程`。
 
 ### Task 11：原子导航发布
 

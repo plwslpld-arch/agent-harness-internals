@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1000" viewBox="0 0 1400 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Claude 多表面错误证据进入独立评测</title>
+  <desc id="desc">一次性调用、双向客户端和 CLI 自动化分别保留原始输出，经错误分层与证据工件进入固定试验和独立评分；反馈、训练奖励、检查点选择与发布留出集保持隔离。</desc>
+  <defs>
+    <filter id="shadow" x="-12%" y="-12%" width="124%" height="135%"><feDropShadow dx="0" dy="7" stdDeviation="8" flood-color="#17324D" flood-opacity=".13"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#087F7C"/></marker>
+  </defs>
+  <rect width="1400" height="1000" rx="34" fill="#F6F9FC"/>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <text x="700" y="52" text-anchor="middle" font-size="35" font-weight="760" fill="#17324D">协议终态交给独立评分，不能自证任务成功</text>
+    <text x="700" y="86" text-anchor="middle" font-size="18" fill="#50677D">保留表面差异、错误层次、原始证据与训练／发布隔离</text>
+
+    <g filter="url(#shadow)">
+      <rect x="55" y="125" width="390" height="125" rx="21" fill="#E7F5F3" stroke="#087F7C" stroke-width="2.5"/>
+      <rect x="505" y="125" width="390" height="125" rx="21" fill="#E9F2FF" stroke="#3569A8" stroke-width="2.5"/>
+      <rect x="955" y="125" width="390" height="125" rx="21" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2.5"/>
+    </g>
+    <g text-anchor="middle">
+      <text x="250" y="166" font-size="23" font-weight="760" fill="#076663">Python 一次性调用</text>
+      <text x="250" y="201" font-size="17" fill="#17324D">单向迭代／调用内资源</text>
+      <text x="250" y="229" font-size="15" fill="#50677D">可恢复会话，不保留客户端连接</text>
+      <text x="700" y="166" font-size="23" font-weight="760" fill="#285383">Python 双向客户端</text>
+      <text x="700" y="201" font-size="17" fill="#17324D">动态输入／控制／中断／关闭</text>
+      <text x="700" y="229" font-size="15" fill="#50677D">同一异步上下文持有连接</text>
+      <text x="1150" y="166" font-size="23" font-weight="760" fill="#955A00">Claude Code 命令行</text>
+      <text x="1150" y="201" font-size="17" fill="#17324D">标准输出／标准错误／退出码</text>
+      <text x="1150" y="229" font-size="15" fill="#50677D">由自动化调用者解释投影</text>
+    </g>
+
+    <g stroke="#087F7C" stroke-width="4" fill="none" marker-end="url(#arrow)"><path d="M250 250v55h315"/><path d="M700 250v55"/><path d="M1150 250v55H835"/></g>
+    <rect x="440" y="305" width="520" height="82" rx="20" fill="#17324D" filter="url(#shadow)"/>
+    <text x="700" y="338" text-anchor="middle" font-size="22" font-weight="760" fill="#FFFFFF">原始证据总线</text>
+    <text x="700" y="369" text-anchor="middle" font-size="16" fill="#DCE8F2">消息／控制事件／标准错误／异常链／退出状态／文件副作用</text>
+
+    <path d="M700 387v45" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"/>
+    <rect x="90" y="437" width="1220" height="185" rx="24" fill="#FFFFFF" stroke="#A9BDD0" stroke-width="2" filter="url(#shadow)"/>
+    <text x="125" y="477" font-size="23" font-weight="760" fill="#17324D">错误分层：先决定恢复纪律，再决定任务状态</text>
+    <g font-size="17" text-anchor="middle">
+      <rect x="125" y="505" width="205" height="82" rx="16" fill="#E9F2FF"/><text x="227" y="537" font-weight="740" fill="#285383">连接与启动</text><text x="227" y="567" fill="#50677D">缺少 CLI／断连</text>
+      <rect x="360" y="505" width="205" height="82" rx="16" fill="#FFF2D4"/><text x="462" y="537" font-weight="740" fill="#955A00">进程与诊断</text><text x="462" y="567" fill="#50677D">非零退出／标准错误</text>
+      <rect x="595" y="505" width="205" height="82" rx="16" fill="#F0EAF8"/><text x="697" y="537" font-weight="740" fill="#614482">解码与消息</text><text x="697" y="567" fill="#50677D">坏帧／未知结构</text>
+      <rect x="830" y="505" width="205" height="82" rx="16" fill="#FBE9E7"/><text x="932" y="537" font-weight="740" fill="#A23B32">协议与取消</text><text x="932" y="567" fill="#50677D">错误结果／中断</text>
+      <rect x="1065" y="505" width="205" height="82" rx="16" fill="#E8F2E6"/><text x="1167" y="537" font-weight="740" fill="#356B2F">任务与副作用</text><text x="1167" y="567" fill="#50677D">答案／文件／安全</text>
+    </g>
+
+    <path d="M700 622v45" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"/>
+    <rect x="240" y="665" width="920" height="90" rx="20" fill="#17324D" filter="url(#shadow)"/>
+    <text x="700" y="700" text-anchor="middle" font-size="22" font-weight="760" fill="#FFFFFF">固定试验＋证据工件＋独立评分器</text>
+    <text x="700" y="734" text-anchor="middle" font-size="17" fill="#DCE8F2">协议成功、退出 0、代码接受与无权限拒绝都只是评分输入</text>
+
+    <g stroke="#087F7C" stroke-width="4" fill="none" marker-end="url(#arrow)"><path d="M440 755v55H250"/><path d="M700 755v55"/><path d="M960 755v55h190"/></g>
+    <g filter="url(#shadow)">
+      <rect x="55" y="812" width="390" height="125" rx="21" fill="#F0EAF8" stroke="#76559B" stroke-width="2.5"/>
+      <rect x="505" y="812" width="390" height="125" rx="21" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2.5"/>
+      <rect x="955" y="812" width="390" height="125" rx="21" fill="#E7F5F3" stroke="#087F7C" stroke-width="2.5"/>
+    </g>
+    <g text-anchor="middle">
+      <text x="250" y="850" font-size="22" font-weight="760" fill="#614482">原始反馈与人工标注</text>
+      <text x="250" y="882" font-size="16" fill="#17324D">归因／去重／隐私／数据治理</text>
+      <text x="250" y="912" font-size="15" fill="#50677D">尚未具有奖励语义</text>
+      <text x="700" y="850" font-size="22" font-weight="760" fill="#955A00">训练奖励适配＋检查点选择</text>
+      <text x="700" y="882" font-size="16" fill="#17324D">训练数据与开发集分别版本化</text>
+      <text x="700" y="912" font-size="15" fill="#50677D">不能读取发布留出集</text>
+      <text x="1150" y="850" font-size="22" font-weight="760" fill="#076663">隔离发布评测</text>
+      <text x="1150" y="882" font-size="16" fill="#17324D">不可见留出集＋独立评分</text>
+      <text x="1150" y="912" font-size="15" fill="#50677D">单独形成发布门禁</text>
+    </g>
+    <text x="700" y="977" text-anchor="middle" font-size="22" font-weight="760" fill="#17324D">观察信号 ≠ 训练奖励　开发集得分 ≠ 发布证据　运行完成 ≠ 任务通过</text>
+  </g>
+</svg>

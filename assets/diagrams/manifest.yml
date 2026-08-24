@@ -392,6 +392,14 @@
       "scope": "docs/harnesses/claude/07-typescript-contract-parity.md",
       "alt": "Claude Python 与 TypeScript SDK 按入口、消息、权限、扩展、会话和版本逐层对齐，同时保持证据等级和未知实现边界的中文对照图",
       "claims": ["claude.typescript.public-contract-is-not-runtime-source", "claude.sdks.parity-must-be-versioned"]
+    },
+    {
+      "id": "claude-surfaces-errors-eval-design",
+      "path": "assets/diagrams/claude/08-surfaces-errors-eval-design.svg",
+      "type": "flow",
+      "scope": "docs/harnesses/claude/08-surfaces-errors-eval-design.md",
+      "alt": "Claude 的一次性调用、双向客户端和 CLI 自动化表面经过错误分层、证据归一、固定 Trial、独立评分，并与反馈、训练奖励和发布留出集隔离的中文流程图",
+      "claims": ["claude.surfaces.query-client-cli-are-not-equivalent", "claude.eval.requires-artifact-scorer", "claude.feedback.is-not-training-or-release-reward"]
     }
   ]
 }

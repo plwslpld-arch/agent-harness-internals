@@ -1,0 +1,24 @@
+{
+  "id": "claude.eval.requires-artifact-scorer",
+  "harness": "claude",
+  "dimension": "eval.requires-artifact-scorer",
+  "statement": "本仓库对 Claude 采用独立评测契约：固定 Dataset 与 Trial，经明确 Target surface 保存消息、异常、退出状态、文件和副作用 Artifact，再由独立 Scorer 判定；协议 Result 与进程成功不能替代任务评分。",
+  "capability": "not-applicable",
+  "version": "542fefb3b94be87760b2513fff889b91bb5b6672",
+  "surface": "repository-evaluation-adapter",
+  "platform": "all",
+  "mode": "normative-evaluation-design",
+  "evidence_level": "D",
+  "inference": "锁定 ResultMessage 只携带协议终态、耗时、费用、usage、权限拒绝和错误字段；上游测试又证明错误 Result 与后续进程异常可以同时出现。这些运行事实不包含任务答案、目标文件、安全副作用或独立评分语义，因此本仓库要求额外 Artifact 与 Scorer，并明确这不是上游内置能力。",
+  "evidence": [
+    {"type":"source","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"src/claude_agent_sdk/types.py","lines":"1319-1350","excerpt":"class ResultMessage"},
+    {"type":"source","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"src/claude_agent_sdk/_errors.py","lines":"56-89","excerpt":"class ResultError(ProcessError)"},
+    {"type":"upstream-test","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"tests/test_query.py","lines":"1574-1614","excerpt":"assert err.data is received[0]"}
+  ],
+  "limitations": [
+    "Scorer 设计、阈值和 Dataset 版本属于本仓库规范，不是 Claude SDK 功能声明。",
+    "不同 Target surface 必须分别运行和报告，规范化不能删除原始事件。",
+    "基础设施 Attempt 只恢复预先定义的可重试故障，不能重试产品失败以改变 Trial 结果。"
+  ],
+  "last_verified": "2026-08-24"
+}

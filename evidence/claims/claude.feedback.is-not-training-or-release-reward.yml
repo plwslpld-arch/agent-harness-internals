@@ -1,0 +1,23 @@
+{
+  "id": "claude.feedback.is-not-training-or-release-reward",
+  "harness": "claude",
+  "dimension": "feedback.is-not-training-or-release-reward",
+  "statement": "Claude Result、权限拒绝、工具结果、代码接受以及应用另行收集的用户反馈都只是运行或偏好信号；缺少版本化 RewardAdapter、数据治理和隔离发布 Scorer 时，不能把它们称为训练奖励或发布证据。",
+  "capability": "not-applicable",
+  "version": "542fefb3b94be87760b2513fff889b91bb5b6672",
+  "surface": "feedback-and-runtime-signals",
+  "platform": "application-defined",
+  "mode": "normative-training-release-separation",
+  "evidence_level": "D",
+  "inference": "锁定 SDK 的 Result 契约记录费用、usage、权限拒绝、结构化输出与终止原因，异常契约记录进程和协议错误；这些字段没有偏好归因、样本权重、RewardAdapter 版本、训练 Checkpoint 或发布 holdout 语义。应用收集的接受与反馈必须经过显式治理和适配后才可能进入训练，发布仍需隔离评测。",
+  "evidence": [
+    {"type":"source","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"src/claude_agent_sdk/types.py","lines":"1319-1350","excerpt":"permission_denials: list[Any] | None = None"},
+    {"type":"source","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"src/claude_agent_sdk/_errors.py","lines":"56-89","excerpt":"carries the result's payload"}
+  ],
+  "limitations": [
+    "本结论不否认仓库外系统可以实现 RewardAdapter 或反馈训练管道。",
+    "代码接受可能是有价值的偏好特征，但仍有归因、偏差、隐私和重复样本问题。",
+    "训练 Reward、Checkpoint 选择分数与发布 holdout 分数必须分开版本化和报告。"
+  ],
+  "last_verified": "2026-08-24"
+}

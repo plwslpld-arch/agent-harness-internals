@@ -1,0 +1,25 @@
+{
+  "id": "claude.surfaces.query-client-cli-are-not-equivalent",
+  "harness": "claude",
+  "dimension": "surfaces.query-client-cli-are-not-equivalent",
+  "statement": "Claude Python query、ClaudeSDKClient 与 Claude Code CLI 自动化可以驱动相近任务，但分别暴露单次消息迭代、长连接双向控制或进程标准流与退出码；跨表面比较必须保留原始投影和资源生命周期。",
+  "capability": "default",
+  "version": "python@542fefb3b94be87760b2513fff889b91bb5b6672;official-doc@2026-08-24",
+  "surface": "python-query-python-client-cli",
+  "platform": "all",
+  "mode": "surface-projection-analysis",
+  "evidence_level": "D",
+  "inference": "Python 源码明确把 query 定义为一次性或单向流，并把 Client 定义为持有连接的双向交互表面；官方文档把 CLI 作为终端与子进程自动化表面。三者的输入时序、控制能力、输出类型和资源所有权不同，因此只能经显式 Adapter 比较，不能直接比较最终文本。",
+  "evidence": [
+    {"type":"source","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"src/claude_agent_sdk/query.py","lines":"11-28","excerpt":"one-shot or unidirectional streaming interactions"},
+    {"type":"source","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"src/claude_agent_sdk/client.py","lines":"26-38","excerpt":"Client for bidirectional, interactive conversations"},
+    {"type":"source","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"src/claude_agent_sdk/client.py","lines":"236-282","excerpt":"await self._query.interrupt()"},
+    {"type":"official-doc","title":"以子进程方式运行 Claude Code","url":"https://code.claude.com/docs/en/headless","accessed":"2026-08-24"}
+  ],
+  "limitations": [
+    "query 可以通过 options 恢复 Session；单次表面不等于禁止会话恢复。",
+    "结论不声称三种表面使用不同的闭源 Agent Loop 内部实现。",
+    "CLI 输出格式与退出语义仍需绑定实际 CLI 版本和启动参数。"
+  ],
+  "last_verified": "2026-08-24"
+}
