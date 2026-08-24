@@ -1,0 +1,22 @@
+{
+  "id": "codex.extensions.capabilities-are-dynamically-assembled",
+  "harness": "codex",
+  "dimension": "extensions.capabilities-are-dynamically-assembled",
+  "statement": "锁定 Codex 中，Skill、Hook、Plugin、MCP 与 Connector 经过不同的发现、启用、鉴权、策略和模型投影路径，Plugin 存在或启用不能单独证明所有子能力可见或可执行。",
+  "capability": "optional",
+  "version": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+  "surface": "extension-assembly",
+  "platform": "configuration-and-service-dependent",
+  "mode": "feature-auth-policy-dependent",
+  "evidence_level": "D",
+  "inference": "Skills、Hooks、Plugin、MCP 与 Connectors 的 crate 分别公开加载、事件、来源、可见性、策略与缓存接口；上游测试又证明选择式 Skill 注入和鉴权相关 Plugin 工具可见性。把这些模块组合为六检查点能力装配模型属于跨 crate 推断。",
+  "evidence": [
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/skills/src/lib.rs","lines":"17-38","excerpt":"pub use loading::SkillRootLoadRequest;"},
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/hooks/src/lib.rs","lines":"77-89","excerpt":"pub use registry::Hooks;"},
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/codex-mcp/src/lib.rs","lines":"5-30","excerpt":"pub use connection_manager::tool_is_model_visible;"},
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/connectors/src/lib.rs","lines":"29-53","excerpt":"pub use app_tool_policy::AppToolPolicyEvaluator;"},
+    {"type":"upstream-test","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/tests/suite/skills.rs","lines":"76-151","excerpt":"skills.selected_skill_instructions"},
+    {"type":"upstream-test","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/tests/suite/plugins.rs","lines":"1057-1201","excerpt":"plugin MCP tool should remain searchable"}
+  ],
+  "last_verified": "2026-08-24"
+}

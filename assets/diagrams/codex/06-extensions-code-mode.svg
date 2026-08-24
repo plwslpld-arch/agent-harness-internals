@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 980" role="img" aria-labelledby="title desc">
+  <title id="title">Codex 动态扩展与代码模式</title>
+  <desc id="desc">多类扩展从声明、发现、启用、鉴权和策略进入模型工具表，再由直接工具或代码模式调用统一安全执行。</desc>
+  <defs><marker id="a" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto"><path d="M0 0l14 7-14 7z" fill="#087F7C"/></marker><marker id="d" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto"><path d="M0 0l14 7-14 7z" fill="#D2673A"/></marker><filter id="s" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#17324D" flood-opacity=".12"/></filter></defs>
+  <rect width="1400" height="980" rx="34" fill="#F6F9FC"/>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <text x="700" y="55" text-anchor="middle" fill="#17324D" font-size="36" font-weight="760">扩展存在，不等于模型已经获得能力</text>
+    <text x="700" y="91" text-anchor="middle" fill="#50677D" font-size="19">声明、发现、启用、可见、授权与执行必须逐层核对</text>
+    <g filter="url(#s)" text-anchor="middle">
+      <rect x="55" y="140" width="230" height="110" rx="18" fill="#E9F2FF" stroke="#3569A8" stroke-width="2"/><text x="170" y="181" fill="#285383" font-size="22" font-weight="760">Skill</text><text x="170" y="217" fill="#50677D" font-size="17">目录摘要与选择式加载</text>
+      <rect x="320" y="140" width="230" height="110" rx="18" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2"/><text x="435" y="181" fill="#955A00" font-size="22" font-weight="760">Hook</text><text x="435" y="217" fill="#50677D" font-size="17">事件匹配与同步语义</text>
+      <rect x="585" y="140" width="230" height="110" rx="18" fill="#F0ECF8" stroke="#76559B" stroke-width="2"/><text x="700" y="181" fill="#60458C" font-size="22" font-weight="760">Plugin</text><text x="700" y="217" fill="#50677D" font-size="17">能力容器与来源归属</text>
+      <rect x="850" y="140" width="230" height="110" rx="18" fill="#E7F5F3" stroke="#087F7C" stroke-width="2"/><text x="965" y="181" fill="#086E6B" font-size="22" font-weight="760">MCP</text><text x="965" y="217" fill="#50677D" font-size="17">服务连接与工具目录</text>
+      <rect x="1115" y="140" width="230" height="110" rx="18" fill="#FFF0E8" stroke="#D2673A" stroke-width="2"/><text x="1230" y="181" fill="#8A3D2F" font-size="22" font-weight="760">Connector</text><text x="1230" y="217" fill="#50677D" font-size="17">鉴权、策略与远程快照</text>
+    </g>
+    <rect x="80" y="310" width="1240" height="110" rx="22" fill="#17324D"/><text x="700" y="352" text-anchor="middle" fill="#FFFFFF" font-size="25" font-weight="760">动态能力装配器</text><text x="700" y="390" text-anchor="middle" fill="#D3E1EA" font-size="18">路径信任　Feature　配置　Schema　鉴权　策略　缓存新鲜度　来源归属</text>
+    <g fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#a)"><path d="M170 250v48"/><path d="M435 250v48"/><path d="M700 250v48"/><path d="M965 250v48"/><path d="M1230 250v48"/></g>
+    <g filter="url(#s)">
+      <rect x="125" y="480" width="500" height="155" rx="22" fill="#E9F2FF" stroke="#3569A8" stroke-width="2"/><text x="375" y="523" text-anchor="middle" fill="#285383" font-size="24" font-weight="760">直接模型工具表</text><text x="375" y="560" text-anchor="middle" fill="#50677D" font-size="18">已选择指令、搜索工具与直接调用入口</text><text x="375" y="596" text-anchor="middle" fill="#8A3D2F" font-size="17">可见不等于已批准</text>
+      <rect x="775" y="480" width="500" height="155" rx="22" fill="#F0ECF8" stroke="#76559B" stroke-width="2"/><text x="1025" y="523" text-anchor="middle" fill="#60458C" font-size="24" font-weight="760">Code Mode 编排表面</text><text x="1025" y="560" text-anchor="middle" fill="#50677D" font-size="18">代码入口、等待入口与被封装动态工具</text><text x="1025" y="596" text-anchor="middle" fill="#8A3D2F" font-size="17">宿主缺失时受回退策略约束</text>
+    </g>
+    <path d="M700 420v32H375v16" fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#a)"/><path d="M700 420v32h325v16" fill="none" stroke="#76559B" stroke-width="4" marker-end="url(#a)"/>
+    <rect x="170" y="700" width="1060" height="115" rx="22" fill="#E7F5F3" stroke="#087F7C" stroke-width="2" filter="url(#s)"/><text x="700" y="743" text-anchor="middle" fill="#086E6B" font-size="24" font-weight="760">统一工具路由与安全执行</text><text x="700" y="780" text-anchor="middle" fill="#50677D" font-size="18">生命周期 → Hook → 执行策略 → 审批 → 权限描述 → 平台沙箱 → 结果回送</text>
+    <path d="M375 635v53" fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#a)"/><path d="M1025 635v53" fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#a)"/>
+    <rect x="55" y="858" width="1290" height="84" rx="18" fill="#8A3D2F"/><text x="700" y="891" text-anchor="middle" fill="#FFFFFF" font-size="20" font-weight="760">回退边界：普通代码模式可受控回到直接工具；仅代码模式不得扩大工具表</text><text x="700" y="922" text-anchor="middle" fill="#FFE2D7" font-size="18">缓存命中、目录可见和 Hook 完成都不能替代真实鉴权、沙箱与任务评测</text>
+  </g>
+</svg>

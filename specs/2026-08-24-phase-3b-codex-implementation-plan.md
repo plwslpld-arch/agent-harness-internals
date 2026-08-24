@@ -86,10 +86,10 @@
 
 ### Task 8：Skill、Hook、Plugin、MCP、Connector 与 Code Mode
 
-- [ ] 完成 `06-extensions-code-mode.md`、中文扩展架构图和动态能力 Claim。
-- [ ] 覆盖发现、加载、注入、工具目录变化、授权、生命周期与 Code Mode 生成表面。
-- [ ] 解释扩展失败、Schema 限制、动态工具缓存、外部连接和代码运行权限继承。
-- [ ] 提交：`docs(codex): 发布扩展与代码模式课程`。
+- [x] 完成 `06-extensions-code-mode.md`、中文扩展架构图和动态能力 Claim。
+- [x] 覆盖发现、加载、注入、工具目录变化、授权、生命周期与 Code Mode 生成表面。
+- [x] 解释扩展失败、Schema 限制、动态工具缓存、外部连接和代码运行权限继承。
+- [x] 提交：`docs(codex): 发布扩展与代码模式课程`。
 
 ### Task 9：Subagent、协作模式与多智能体编排
 

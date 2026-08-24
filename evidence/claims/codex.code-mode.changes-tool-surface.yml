@@ -1,0 +1,19 @@
+{
+  "id": "codex.code-mode.changes-tool-surface",
+  "harness": "codex",
+  "dimension": "code-mode.changes-tool-surface",
+  "statement": "锁定 Codex 的 Code Mode 将工具投影到代码编排表面；宿主缺失时普通模式可按配置回退到直接工具，而仅代码模式保持不暴露直接 shell 工具并失败关闭。",
+  "capability": "optional",
+  "version": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+  "surface": "code-mode-tool-surface",
+  "platform": "upstream-test-supported-platforms",
+  "mode": "feature-and-fallback-dependent",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/code-mode/src/lib.rs","lines":"4-9","excerpt":"pub use remote_session::ProcessOwnedCodeModeSessionProvider;"},
+    {"type":"upstream-test","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/tests/suite/code_mode.rs","lines":"315-355","excerpt":"missing_process_host_falls_back_to_direct_tools_and_warns_once"},
+    {"type":"upstream-test","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/tests/suite/code_mode.rs","lines":"357-397","excerpt":"code-mode-only must never expose direct shell tools"}
+  ],
+  "limitations": ["未证明所有动态工具都支持代码模式。", "回退会改变模型工具表，实验必须单独分层。"],
+  "last_verified": "2026-08-24"
+}

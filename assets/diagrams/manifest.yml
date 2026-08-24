@@ -216,6 +216,14 @@
       "scope": "docs/harnesses/codex/05-rollout-history-memory.md",
       "alt": "Codex 从追加记录、线程存储到模型上下文、压缩替代、恢复投影与长期记忆的中文数据权威图",
       "claims": ["codex.rollout.store-history-context-separation", "codex.compaction.resume-has-bounded-semantics"]
+    },
+    {
+      "id": "codex-extensions-code-mode",
+      "path": "assets/diagrams/codex/06-extensions-code-mode.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/codex/06-extensions-code-mode.md",
+      "alt": "Codex 从 Skill、Hook、Plugin、MCP、Connector 与 Code Mode 到模型可见工具和统一安全执行的中文扩展架构图",
+      "claims": ["codex.extensions.capabilities-are-dynamically-assembled", "codex.code-mode.changes-tool-surface"]
     }
   ]
 }
