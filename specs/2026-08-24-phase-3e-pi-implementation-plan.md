@@ -86,7 +86,7 @@
 
 ### Task 6：Coding Agent、Prompt 与 Extension
 
-- [ ] 创建 `04-coding-agent-prompt-extensions.md`、对应 SVG 和 Claim，覆盖 SDK 入口、系统 Prompt、资源发现、内建工具、Skill、Prompt Template、Extension 事件与自定义 Provider。
+- [x] 创建 `04-coding-agent-prompt-extensions.md`、对应 SVG 和 Claim，覆盖 SDK 入口、系统 Prompt、资源发现、内建工具、Skill、Prompt Template、Extension 事件与自定义 Provider。
 - [ ] 明确扩展可改写工具和界面表面，但扩展示例存在不等于默认启用或安全隔离。
 - [ ] 渲染复核，运行门禁并提交：`docs(pi): 发布 Coding Agent 与扩展课程`。
 

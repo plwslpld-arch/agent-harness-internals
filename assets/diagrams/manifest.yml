@@ -440,6 +440,14 @@
       "scope": "docs/harnesses/pi/03-agent-loop-state-tools.md",
       "alt": "pi 智能体从状态与消息队列进入双层循环、模型响应和工具批次，再由多种终止信号决定继续或结束的中文状态图",
       "claims": ["pi.agent.loop-interprets-multiple-stop-signals", "pi.agent.length-truncated-tool-is-not-executed"]
+    },
+    {
+      "id": "pi-coding-agent-prompt-extensions",
+      "path": "assets/diagrams/pi/04-coding-agent-prompt-extensions.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/pi/04-coding-agent-prompt-extensions.md",
+      "alt": "pi 编码智能体从资源发现、模型会话设置进入工具与提示词装配，再由扩展运行时动态改变模型可见信息和真实执行表面的中文架构图",
+      "claims": ["pi.coding.prompt-is-resource-assembly", "pi.extensions.can-change-runtime-surfaces"]
     }
   ]
 }

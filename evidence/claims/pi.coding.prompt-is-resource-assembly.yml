@@ -1,0 +1,25 @@
+{
+  "id": "pi.coding.prompt-is-resource-assembly",
+  "harness": "pi",
+  "dimension": "coding.prompt-is-resource-assembly",
+  "statement": "锁定 pi Coding Agent 的 System Prompt 由当前工具摘要与指南、项目上下文文件、Skill、Override、Append Prompt 和工作目录组合生成；自定义工具只有提供 promptSnippet 才进入可见工具文本。",
+  "capability": "default",
+  "version": "c1279a65b3ef6b0b19950ed1771d5933241c240f",
+  "surface": "coding-agent-system-prompt",
+  "platform": "sdk-and-cli",
+  "mode": "resource-assembled-prompt",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/coding-agent/src/core/system-prompt.ts","lines":"27-71","excerpt":"if (customPrompt) {"},
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/coding-agent/src/core/system-prompt.ts","lines":"79-161","excerpt":"const visibleTools = tools.filter((name) => !!toolSnippets?.[name]);"},
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/coding-agent/src/core/resource-loader.ts","lines":"468-540","excerpt":"this.updateSkillsFromPaths(skillPaths, metadataByPath);"},
+    {"type":"upstream-test","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/coding-agent/test/system-prompt.test.ts","lines":"4-113","excerpt":"expect(prompt).not.toContain(\"dynamic_tool\");"}
+  ],
+  "limitations": [
+    "Prompt 内容不能强制模型遵循，也不是工具权限或隔离边界。",
+    "没有 promptSnippet 的工具可能仍能执行，因此 Prompt 文本不是完整能力清单。",
+    "项目资源与 Extension 的可信度需要在装载前另行审查。"
+  ],
+  "last_verified": "2026-08-24"
+}
+

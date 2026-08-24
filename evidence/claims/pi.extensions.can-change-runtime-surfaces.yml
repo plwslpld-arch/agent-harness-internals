@@ -1,0 +1,25 @@
+{
+  "id": "pi.extensions.can-change-runtime-surfaces",
+  "harness": "pi",
+  "dimension": "extensions.can-change-runtime-surfaces",
+  "statement": "锁定 pi Coding Agent Extension 能在加载期与会话运行期注册工具、命令和 Provider，并通过 Context、Tool Call、Tool Result 与 Provider Hook 改变送模内容、执行决策、结果和请求目标。",
+  "capability": "extension",
+  "version": "c1279a65b3ef6b0b19950ed1771d5933241c240f",
+  "surface": "coding-agent-extension-runtime",
+  "platform": "in-process-extension",
+  "mode": "dynamic-registration-and-hooks",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/coding-agent/src/core/extensions/loader.ts","lines":"249-285","excerpt":"registerTool(tool: ToolDefinition): void {"},
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/coding-agent/src/core/extensions/runner.ts","lines":"877-1013","excerpt":"async emitToolCall(event: ToolCallEvent): Promise<ToolCallEventResult | undefined> {"},
+    {"type":"upstream-test","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/coding-agent/test/agent-session-dynamic-tools.test.ts","lines":"99-140","excerpt":"pi.registerTool({"},
+    {"type":"upstream-test","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/coding-agent/test/agent-session-dynamic-provider.test.ts","lines":"95-154","excerpt":"expect(await capturePromptBaseUrl(session)).toBe(\"http://localhost:8080/command\");"}
+  ],
+  "limitations": [
+    "Extension 是进程内代码，能力受宿主权限约束，但并未自动被沙箱隔离。",
+    "动态测试使用本地示例 URL 和替换后的 Stream，没有证明远端 Provider 可用。",
+    "冲突诊断与加载顺序会影响多个 Extension 的组合结果。"
+  ],
+  "last_verified": "2026-08-24"
+}
+

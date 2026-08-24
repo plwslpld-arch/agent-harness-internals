@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 900" role="img" aria-labelledby="title desc">
+  <title id="title">pi 编码智能体提示词与扩展装配</title>
+  <desc id="desc">资源加载器发现项目与用户资源，编码智能体会话组合模型、工具、提示词和扩展运行时；扩展还能在运行期改变工具、上下文、结果和模型服务。</desc>
+  <defs><marker id="a" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto"><path d="M0 0l14 7-14 7z" fill="#087F7C"/></marker><filter id="s"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#17324D" flood-opacity=".13"/></filter></defs>
+  <rect width="1400" height="900" rx="34" fill="#F6F9FC"/>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <text x="700" y="54" text-anchor="middle" font-size="35" font-weight="760" fill="#17324D">模型看到的说明，与真正能执行的表面一起装配</text>
+    <text x="700" y="88" text-anchor="middle" font-size="18" fill="#50677D">提示词快照、工具状态与扩展顺序必须同时留证</text>
+
+    <text x="55" y="140" font-size="22" font-weight="760" fill="#244F81">资源发现</text>
+    <g font-size="17" text-anchor="middle" fill="#17324D">
+      <rect x="55" y="165" width="205" height="78" rx="17" fill="#E9F2FF" stroke="#3569A8" stroke-width="2"/><text x="157" y="197">用户级与项目级</text><text x="157" y="224" fill="#50677D">设置、上下文、信任</text>
+      <rect x="285" y="165" width="205" height="78" rx="17" fill="#E9F2FF" stroke="#3569A8" stroke-width="2"/><text x="387" y="197">技能与提示模板</text><text x="387" y="224" fill="#50677D">来源、范围、诊断</text>
+      <rect x="515" y="165" width="205" height="78" rx="17" fill="#F0EAF8" stroke="#76559B" stroke-width="2"/><text x="617" y="197">扩展与主题</text><text x="617" y="224" fill="#50677D">包、路径、临时输入</text>
+      <rect x="745" y="165" width="260" height="78" rx="17" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2"/><text x="875" y="197">系统提示覆盖与附加</text><text x="875" y="224" fill="#50677D">主体、追加段、工作目录</text>
+      <rect x="1030" y="165" width="315" height="78" rx="17" fill="#FFECE5" stroke="#C96138" stroke-width="2"/><text x="1187" y="197">模型、会话与工具设置</text><text x="1187" y="224" fill="#50677D">恢复、默认值、允许与排除</text>
+    </g>
+
+    <g fill="none" stroke="#087F7C" stroke-width="3.5" marker-end="url(#a)"><path d="M157 250v65"/><path d="M387 250v65"/><path d="M617 250v65"/><path d="M875 250v65"/><path d="M1187 250v65"/></g>
+
+    <rect x="250" y="322" width="900" height="250" rx="28" fill="#E7F5F3" stroke="#087F7C" stroke-width="3" filter="url(#s)"/>
+    <text x="700" y="365" text-anchor="middle" font-size="24" font-weight="760" fill="#076663">编码智能体会话装配器</text>
+    <g font-size="18" text-anchor="middle" fill="#17324D">
+      <rect x="295" y="400" width="230" height="105" rx="18" fill="#fff"/><text x="410" y="435" font-weight="760">模型运行时</text><text x="410" y="466" fill="#50677D">认证、服务、推理等级</text><text x="410" y="491" fill="#50677D">会话恢复与回退</text>
+      <rect x="585" y="400" width="230" height="105" rx="18" fill="#fff"/><text x="700" y="435" font-weight="760">真实工具表面</text><text x="700" y="466" fill="#50677D">内建、自定义、扩展</text><text x="700" y="491" fill="#50677D">允许、排除、激活</text>
+      <rect x="875" y="400" width="230" height="105" rx="18" fill="#fff"/><text x="990" y="435" font-weight="760">模型可见提示</text><text x="990" y="466" fill="#50677D">工具摘要、指南、上下文</text><text x="990" y="491" fill="#50677D">技能清单与工作目录</text>
+    </g>
+    <text x="700" y="545" text-anchor="middle" font-size="17" fill="#076663">三者组成同一次运行快照，不能只看其中一列</text>
+
+    <path d="M700 572v68" stroke="#087F7C" stroke-width="4" marker-end="url(#a)"/>
+    <rect x="250" y="648" width="900" height="96" rx="22" fill="#17324D"/>
+    <text x="700" y="684" text-anchor="middle" font-size="22" font-weight="760" fill="#fff">智能体核心与会话运行</text>
+    <text x="700" y="716" text-anchor="middle" font-size="17" fill="#8EE1D8">送模上下文　→　模型响应　→　工具调用　→　工具结果　→　下一轮</text>
+
+    <rect x="55" y="625" width="155" height="145" rx="20" fill="#F0EAF8" stroke="#76559B" stroke-width="2.5"/>
+    <text x="132" y="658" text-anchor="middle" font-size="18" font-weight="760" fill="#5B3D7D">扩展运行时</text>
+    <text x="132" y="690" text-anchor="middle" font-size="16" fill="#17324D">注册工具与服务</text>
+    <text x="132" y="717" text-anchor="middle" font-size="16" fill="#17324D">阻断工具调用</text>
+    <text x="132" y="744" text-anchor="middle" font-size="16" fill="#17324D">改写上下文与结果</text>
+    <path d="M210 697h32" stroke="#76559B" stroke-width="4" marker-end="url(#a)"/>
+
+    <rect x="55" y="812" width="1290" height="55" rx="17" fill="#FFECE5" stroke="#C96138" stroke-width="2.5"/>
+    <text x="700" y="847" text-anchor="middle" font-size="19" fill="#9A3E24">提示词不是权限边界　　扩展不是只读配置　　加载成功不是任务通过</text>
+  </g>
+</svg>
