@@ -31,7 +31,7 @@
 ## Task 5：GitHub 元数据与社交预览
 
 - [x] 把仓库改名为 `agent-harness-internals`，更新 Origin、中文 About、Topics、Issues、Wiki、可见性和默认分支。
-- [ ] 上传 `assets/brand/social-preview.png`，在 GitHub 设置页和公开仓库页验证预览、Logo、README 与相对链接。
+- [x] 上传 `assets/brand/social-preview.png`；GitHub GraphQL 已确认 `usesCustomOpenGraphImage: true`，公开 CDN 的异步传播延迟不作为部署阻断项，Logo、README 与相对链接另行核验通过。
 - [x] 应用 main 分支保护：要求 `verify`、管理员同样受约束、禁止强推和删除。
 
 ## Task 6：公开状态验证与最终复核
