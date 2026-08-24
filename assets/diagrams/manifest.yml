@@ -512,6 +512,14 @@
       "scope": "docs/harnesses/opencode/02-session-prompt-llm-processor.md",
       "alt": "OpenCode 会话主循环组装上下文后调用模型流，事件处理器持续写入消息部件，并以继续、压缩或停止信号反馈主循环的中文时序图",
       "claims": ["opencode.session.processor-interprets-stream-events", "opencode.session.stop-is-not-task-correctness"]
+    },
+    {
+      "id": "opencode-tools-permission-question-patch",
+      "path": "assets/diagrams/opencode/03-tools-permission-question-patch.svg",
+      "type": "flow",
+      "scope": "docs/harnesses/opencode/03-tools-permission-question-patch.md",
+      "alt": "OpenCode 工具从注册和模型可见性开始，经参数校验、权限规则与用户答复后执行副作用；应用层批准、快照和操作系统隔离边界分开的中文决策图",
+      "claims": ["opencode.tools.registry-is-model-surface", "opencode.permission.ask-is-not-os-sandbox"]
     }
   ]
 }
