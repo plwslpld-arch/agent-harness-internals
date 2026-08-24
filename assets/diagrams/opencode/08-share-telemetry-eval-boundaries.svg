@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="920" viewBox="0 0 1440 920" role="img" aria-labelledby="title desc">
+  <title id="title">OpenCode 分享、遥测与独立评测边界</title>
+  <desc id="desc">会话分享、运行遥测、测试证据、试验产物、外部评分、训练适配、候选选择和独立发布门禁分层的数据流图。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#526179"/></marker>
+    <style>
+      text{font-family:"Microsoft YaHei","Noto Sans CJK SC",sans-serif;fill:#17233b} .title{font-size:34px;font-weight:700}.sub{font-size:18px;fill:#526179}.h{font-size:22px;font-weight:700}.b{font-size:17px}.s{font-size:15px;fill:#526179}.line{stroke:#526179;stroke-width:3;fill:none;marker-end:url(#arrow)}.dash{stroke:#8b5cf6;stroke-width:3;stroke-dasharray:9 8;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1440" height="920" rx="28" fill="#f7f9fc"/>
+  <text x="72" y="68" class="title">OpenCode 分享、遥测与独立评测边界</text>
+  <text x="72" y="101" class="sub">同一批运行证据可以复用，但分享、观测、评分、训练与发布不能互相代替</text>
+
+  <rect x="65" y="145" width="320" height="250" rx="22" fill="#e8f1ff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="92" y="184" class="h">会话运行</text>
+  <text x="92" y="221" class="b">项目与有效配置</text><text x="92" y="250" class="b">模型消息与工具状态</text>
+  <text x="92" y="279" class="b">权限决策与文件差异</text><text x="92" y="308" class="b">测试输出与失败分类</text>
+  <rect x="92" y="331" width="264" height="42" rx="12" fill="#ffffff"/><text x="111" y="358" class="s">权威事实仍在本地历史与产物</text>
+
+  <rect x="450" y="145" width="400" height="250" rx="22" fill="#fff4df" stroke="#f59e0b" stroke-width="2"/>
+  <text x="477" y="184" class="h">策略控制的外部分享副本</text>
+  <rect x="477" y="207" width="105" height="42" rx="12" fill="#ffffff"/><text x="507" y="234" class="b">手动</text>
+  <rect x="597" y="207" width="105" height="42" rx="12" fill="#ffffff"/><text x="627" y="234" class="b">自动</text>
+  <rect x="717" y="207" width="105" height="42" rx="12" fill="#ffffff"/><text x="747" y="234" class="b">禁用</text>
+  <text x="477" y="286" class="b">会话、消息、部件、模型、差异</text>
+  <text x="477" y="317" class="b">创建、增量同步、取消与删除</text>
+  <text x="477" y="356" class="s">数据出站；不是备份，也不是评分</text>
+
+  <rect x="915" y="145" width="460" height="250" rx="22" fill="#edf9f2" stroke="#22a06b" stroke-width="2"/>
+  <text x="942" y="184" class="h">可选运行遥测</text>
+  <text x="942" y="224" class="b">追踪片段与会话标识</text><text x="942" y="255" class="b">函数、用户与模型调用元数据</text>
+  <text x="942" y="286" class="b">采样、导出与后端留存</text>
+  <rect x="942" y="316" width="406" height="57" rx="12" fill="#ffffff"/>
+  <text x="963" y="341" class="s">“操作完成”不等于“任务正确”</text><text x="963" y="362" class="s">字段完整也不等于已有独立评分器</text>
+
+  <path d="M385 250H450" class="line"/><path d="M385 315C600 430 800 430 915 315" class="dash"/>
+  <text x="522" y="426" class="s">关联运行证据</text>
+
+  <rect x="65" y="475" width="230" height="168" rx="20" fill="#f0eaff" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="89" y="514" class="h">不可变试验</text><text x="89" y="553" class="b">固定任务与目标</text>
+  <text x="89" y="584" class="b">尝试只用于恢复</text><text x="89" y="615" class="s">产品失败不能重试成通过</text>
+
+  <rect x="342" y="475" width="238" height="168" rx="20" fill="#e8f1ff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="366" y="514" class="h">可复核产物</text><text x="366" y="553" class="b">源码、配置、协议</text>
+  <text x="366" y="584" class="b">文件、测试、血缘</text><text x="366" y="615" class="s">分享与遥测只是引用证据</text>
+
+  <rect x="627" y="475" width="230" height="168" rx="20" fill="#fff0f0" stroke="#e25555" stroke-width="2"/>
+  <text x="651" y="514" class="h">外部评分器</text><text x="651" y="553" class="b">版本化评分准则</text>
+  <text x="651" y="584" class="b">分数、理由、引用</text><text x="651" y="615" class="s">允许不可判定</text>
+
+  <rect x="904" y="475" width="230" height="168" rx="20" fill="#fff4df" stroke="#f59e0b" stroke-width="2"/>
+  <text x="928" y="514" class="h">训练适配</text><text x="928" y="553" class="b">偏好优化</text>
+  <text x="928" y="584" class="b">组内策略或强化微调</text><text x="928" y="615" class="s">仅在奖励语义完整时</text>
+
+  <rect x="1181" y="475" width="194" height="168" rx="20" fill="#edf9f2" stroke="#22a06b" stroke-width="2"/>
+  <text x="1205" y="514" class="h">候选选择</text><text x="1205" y="553" class="b">开发评测</text>
+  <text x="1205" y="584" class="b">选择检查点</text><text x="1205" y="615" class="s">不直接授权发布</text>
+
+  <path d="M295 559H342" class="line"/><path d="M580 559H627" class="line"/><path d="M857 559H904" class="line"/><path d="M1134 559H1181" class="line"/>
+  <path d="M225 395V475" class="line"/><path d="M1110 395C1060 430 550 430 461 475" class="dash"/>
+
+  <rect x="342" y="720" width="792" height="133" rx="24" fill="#17233b"/>
+  <text x="381" y="764" style="font:700 24px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#ffffff">独立发布留出集</text>
+  <text x="381" y="803" style="font:18px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#dbe7ff">未参与训练与候选选择的数据 · 预注册阈值 · 置信区间 · 安全、成本、延迟与回归门槛</text>
+  <text x="381" y="833" style="font:16px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#9fb4d8">输出发布建议与证据包；最终治理授权仍由项目责任人承担</text>
+  <path d="M1278 643C1278 688 1134 686 1134 748" class="line"/>
+  <text x="72" y="890" class="s">证据边界：源码与上游测试证明锁定实现的性质；独立评测架构是本仓库建议，不冒充 OpenCode 内置能力。</text>
+</svg>

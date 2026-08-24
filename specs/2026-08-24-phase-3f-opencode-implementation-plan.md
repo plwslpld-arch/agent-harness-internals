@@ -87,8 +87,8 @@
 
 ### Task 10：Share、Telemetry 与 Eval 边界
 
-- [ ] 创建课程、数据契约图和 Claim；覆盖 Share、OpenTelemetry、测试证据、Trial/Attempt、Artifact、外部 Scorer、RewardAdapter、Checkpoint 与独立 Holdout。
-- [ ] 提交：`docs(opencode): 发布分享遥测与评测边界课程`。
+- [x] 创建课程、数据契约图和 Claim；覆盖 Share、OpenTelemetry、测试证据、Trial/Attempt、Artifact、外部 Scorer、RewardAdapter、Checkpoint 与独立 Holdout。
+- [x] 提交：`docs(opencode): 发布分享遥测与评测边界课程`。
 
 ### Task 11：原子导航发布
 

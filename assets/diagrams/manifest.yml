@@ -552,6 +552,14 @@
       "scope": "docs/harnesses/opencode/07-tui-desktop-web-acp-surfaces.md",
       "alt": "OpenCode 同一服务核心向单次终端、交互终端、网页应用、桌面应用和编辑器协议投影，各客户端拥有独立视图状态与传输边界的中文表面架构图",
       "claims": ["opencode.surfaces.project-shared-but-state-distinct", "opencode.acp.events-are-projections"]
+    },
+    {
+      "id": "opencode-share-telemetry-eval-boundaries",
+      "path": "assets/diagrams/opencode/08-share-telemetry-eval-boundaries.svg",
+      "type": "data-flow",
+      "scope": "docs/harnesses/opencode/08-share-telemetry-eval-boundaries.md",
+      "alt": "OpenCode 会话按策略产生外部分享副本并记录可选遥测，运行证据进入不可变试验产物，再由外部评分、训练适配、候选选择和独立发布留出集分责处理的中文数据流图",
+      "claims": ["opencode.share.policy-controls-external-copy", "opencode.telemetry-and-tests-are-not-release-eval"]
     }
   ]
 }
