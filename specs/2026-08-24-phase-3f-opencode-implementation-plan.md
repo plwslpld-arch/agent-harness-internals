@@ -72,8 +72,8 @@
 
 ### Task 7：Agent、Skill、Plugin、MCP 与 LSP
 
-- [ ] 创建课程、架构图和 Claim；覆盖 Agent 权限、Task/Subagent、Skill/Command、Plugin Hook、MCP Tool/Resource 与 LSP。
-- [ ] 提交：`docs(opencode): 发布扩展编排课程`。
+- [x] 创建课程、架构图和 Claim；覆盖 Agent 权限、Task/Subagent、Skill/Command、Plugin Hook、MCP Tool/Resource 与 LSP。
+- [x] 提交：`docs(opencode): 发布扩展编排课程`。
 
 ### Task 8：Server、Protocol、SDK 与 Event
 

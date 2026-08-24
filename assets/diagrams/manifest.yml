@@ -528,6 +528,14 @@
       "scope": "docs/harnesses/opencode/04-storage-history-compaction-revert.md",
       "alt": "OpenCode 持久会话历史经过压缩选择、摘要和近期尾部重排形成模型上下文，恢复流程另用快照和补丁处理工作树但不撤销外部副作用的中文数据流图",
       "claims": ["opencode.history.model-messages-are-derived", "opencode.compaction.summary-is-not-lossless-history"]
+    },
+    {
+      "id": "opencode-agents-skills-plugins-mcp-lsp",
+      "path": "assets/diagrams/opencode/05-agents-skills-plugins-mcp-lsp.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/opencode/05-agents-skills-plugins-mcp-lsp.md",
+      "alt": "OpenCode 以项目实例和会话为核心，智能体与子智能体、技能、插件、模型上下文协议和语言服务器协议分别影响提示、权限、工具、远端能力与代码智能的中文扩展架构图",
+      "claims": ["opencode.extensions.change-runtime-surfaces", "opencode.subagent.permission-is-scoped"]
     }
   ]
 }
