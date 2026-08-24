@@ -1,0 +1,43 @@
+{
+  "stage": "phase-5b-foundations-learning",
+  "date": "2026-08-24",
+  "commit": "1a418587614319db4bb9b31ce2d590e406d5f17c",
+  "promises": [
+    {"id":"p-learning-depth","statement":"六篇共同基础分别讲清职责边界、真实 Turn、模型工具输入输出、安全边界、会话状态和评测接入，并给出可实现、可验证的学习闭环。"},
+    {"id":"p-evidence-boundary","statement":"共同抽象仅统一分析问题；具体项目事实、跨实现推断、教学伪代码和平台实验范围保持分离。"},
+    {"id":"p-adversarial-review","statement":"逐篇反查是否把响应结束当任务完成、把批准当隔离、把 Context 当 Session、把恢复 Attempt 当产品重试或把 Feedback 当 Reward。"}
+  ],
+  "evidence": [
+    {"id":"e-six-foundations","promise":"p-learning-depth","type":"file","reference":"docs/foundations/","summary":"六篇均新增主题专属设计理由、四步以上最小实现、接口或伪代码，以及带验收产物的验证练习。"},
+    {"id":"e-contract","promise":"p-learning-depth","type":"test","reference":"scripts/check-content-contract.mjs","summary":"共同基础六篇定向内容契约全部通过，正文达到四千五百字符与十六有效段落门槛。"},
+    {"id":"e-boundary-claims","promise":"p-evidence-boundary","type":"test","reference":"scripts/verify-claims.mjs","summary":"一百一十九条 Claim 通过，基础文章保持 D 级共同抽象和项目限定。"},
+    {"id":"e-anchors-links-visuals","promise":"p-evidence-boundary","type":"test","reference":"scripts/verify-anchors.mjs","summary":"一百三十二处源码锚点、本地链接与八十一张正式中文 SVG 通过。"},
+    {"id":"e-tests-style","promise":"p-adversarial-review","type":"test","reference":"scripts/run-tests.mjs","summary":"一百一十三项测试通过；文风检查无阻断错误，句长节奏仅保留低优先级提醒。"}
+  ],
+  "findings": [
+    {"id":"f-layer-attribution","priority":"high","status":"resolved","summary":"四层框图容易被误读成固定部署拓扑，成功与失败也容易越层归因。"},
+    {"id":"f-turn-terminal","priority":"high","status":"resolved","summary":"流式结束、Provider 停止原因、工具结果、Harness 终态和 Eval 通过容易混写。"},
+    {"id":"f-io-correlation","priority":"high","status":"resolved","summary":"Provider 角色和数组顺序容易取代内部语义与稳定调用关联。"},
+    {"id":"f-permission-sandbox","priority":"high","status":"resolved","summary":"工具可见、策略允许、用户批准、隔离准备和真实副作用容易压成单一安全状态。"},
+    {"id":"f-state-replay","priority":"high","status":"resolved","summary":"Session、Context、Compaction、Memory 与副作用恢复容易被统一表述为记忆或重放。"},
+    {"id":"f-eval-retry","priority":"high","status":"resolved","summary":"基础设施 Attempt、产品重试、反馈、训练奖励和独立发布评测存在分母与血缘混淆风险。"},
+    {"id":"f-style-rhythm","priority":"low","status":"open","summary":"六篇仍有句长节奏非阻断提醒，留到全仓总编辑阶段统一处理。"}
+  ],
+  "resolutions": [
+    {"id":"f-layer-attribution","action":"加入输入、决定、输出与责任所有者的四层事件信封，并用单变量四轮实验区分策略、环境和评分变化。","evidence":["e-six-foundations","e-contract","e-boundary-claims"]},
+    {"id":"f-turn-terminal","action":"用显式状态机、调用 ID 和四类录制失败响应验证继续、取消与稳定终态。","evidence":["e-six-foundations","e-tests-style"]},
+    {"id":"f-io-correlation","action":"分离内部消息、Provider 适配和执行记录，并增加反序完成、增量重复与跨模型恢复练习。","evidence":["e-six-foundations","e-anchors-links-visuals"]},
+    {"id":"f-permission-sandbox","action":"用五道门和批准后参数替换攻击验证策略绑定、隔离失败与执行零副作用。","evidence":["e-six-foundations","e-contract"]},
+    {"id":"f-state-replay","action":"以追加式 Session、派生 Context、摘要来源和提交状态实现崩溃恢复练习，禁止状态未知时自动重放。","evidence":["e-six-foundations","e-boundary-claims"]},
+    {"id":"f-eval-retry","action":"冻结 Trial manifest，用 canonical Attempt、防护提交、Artifact 哈希与独立 Scorer 保持分母和血缘。","evidence":["e-six-foundations","e-tests-style"]}
+  ],
+  "commands": [
+    {"command":"共同基础六篇 contentContractFailures 相对路径定向检查","exit_code":0,"summary":"六篇全部通过共同基础专属教学契约。"},
+    {"command":"node scripts/verify-anchors.mjs && node scripts/verify-claims.mjs","exit_code":0,"summary":"源码锚点与一百一十九条 Claim 通过。"},
+    {"command":"node scripts/check-links.mjs && node scripts/check-visuals.mjs","exit_code":0,"summary":"本地链接与八十一张正式中文 SVG 通过。"},
+    {"command":"node scripts/run-tests.mjs","exit_code":0,"summary":"一百一十三项测试通过。"},
+    {"command":"node scripts/check-style.mjs","exit_code":0,"summary":"无阻断文风错误，句长节奏为非阻断提醒。"},
+    {"command":"git diff --check","exit_code":0,"summary":"提交前无空白错误。"}
+  ],
+  "result": "pass"
+}
