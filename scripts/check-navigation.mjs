@@ -140,6 +140,19 @@ function main() {
           '08-verification-design-limits.md',
         ]
       : [];
+    const codexTargets = relativePath === 'docs/harnesses/codex/README.md'
+      ? [
+          'README.md',
+          '01-config-prompt-context.md',
+          '02-thread-task-turn.md',
+          '03-model-tool-loop.md',
+          '04-exec-policy-sandbox.md',
+          '05-rollout-history-memory.md',
+          '06-extensions-code-mode.md',
+          '07-subagents-orchestration.md',
+          '08-surfaces-trace-eval-design.md',
+        ]
+      : [];
     const fileErrors = navigationFailures(content, (target) => {
       checked += 1;
       const absolute = resolve(dirname(path), target);
@@ -150,6 +163,7 @@ function main() {
       requiredBatches: [
         ...(foundationTargets.length > 0 ? [{ name: '共同基础', targets: foundationTargets }] : []),
         ...(dshTargets.length > 0 ? [{ name: 'DSH 主线', targets: dshTargets }] : []),
+        ...(codexTargets.length > 0 ? [{ name: 'Codex 主线', targets: codexTargets }] : []),
       ],
       forbiddenPrefixes: relativePath === 'README.md'
         ? [{ name: '扩展样本', prefix: 'docs/samples/' }]
@@ -157,6 +171,8 @@ function main() {
           ? [{ name: '扩展样本', prefix: 'samples/' }]
           : relativePath === 'docs/harnesses/deepseek-harness/README.md'
             ? [{ name: '扩展样本', prefix: '../../samples/' }]
+            : relativePath === 'docs/harnesses/codex/README.md'
+              ? [{ name: '扩展样本', prefix: '../../samples/' }]
             : [],
     });
     for (const error of fileErrors) errors.push(`${relativePath}: ${error}`);
