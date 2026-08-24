@@ -75,38 +75,38 @@
 ### Task 4：多 Provider 与流归一化
 
 - [x] 创建 `02-ai-provider-stream-normalization.md`、对应 SVG 和 Claim，覆盖 Models、Provider 注册、消息转换、流事件、Tool Call、Usage、StopReason、Context Overflow 与 Abort。
-- [ ] 明确模型目录或能力声明不证明当前凭据、区域和运行请求必然成功。
-- [ ] 渲染复核，运行门禁并提交：`docs(pi): 发布多 Provider 流归一化课程`。
+- [x] 明确模型目录或能力声明不证明当前凭据、区域和运行请求必然成功。
+- [x] 渲染复核，运行门禁并提交：`docs(pi): 发布多 Provider 流归一化课程`。
 
 ### Task 5：Agent Loop、状态与工具
 
 - [x] 创建 `03-agent-loop-state-tools.md`、对应 SVG 和 Claim，覆盖 Agent 状态、steering/follow-up 队列、外层/内层循环、工具批次、事件和终止。
-- [ ] 核对被 `length` 截断的工具参数、Abort、Error、`shouldStopAfterTurn` 与工具 `terminate`。
-- [ ] 渲染复核，运行门禁并提交：`docs(pi): 发布 Agent Loop 与工具状态课程`。
+- [x] 核对被 `length` 截断的工具参数、Abort、Error、`shouldStopAfterTurn` 与工具 `terminate`。
+- [x] 渲染复核，运行门禁并提交：`docs(pi): 发布 Agent Loop 与工具状态课程`。
 
 ### Task 6：Coding Agent、Prompt 与 Extension
 
 - [x] 创建 `04-coding-agent-prompt-extensions.md`、对应 SVG 和 Claim，覆盖 SDK 入口、系统 Prompt、资源发现、内建工具、Skill、Prompt Template、Extension 事件与自定义 Provider。
-- [ ] 明确扩展可改写工具和界面表面，但扩展示例存在不等于默认启用或安全隔离。
-- [ ] 渲染复核，运行门禁并提交：`docs(pi): 发布 Coding Agent 与扩展课程`。
+- [x] 明确扩展可改写工具和界面表面，但扩展示例存在不等于默认启用或安全隔离。
+- [x] 渲染复核，运行门禁并提交：`docs(pi): 发布 Coding Agent 与扩展课程`。
 
 ### Task 7：Session、Context、Compaction 与存储
 
 - [x] 创建 `05-session-context-compaction-storage.md`、对应 SVG 和 Claim，覆盖 Session/Entry/Branch、Context 投影、Compaction、JSONL、SQLite、Writer Lease 与恢复。
-- [ ] 分开持久历史、模型可见 Context、派生摘要和并发提交；不能把摘要当原始历史。
-- [ ] 渲染复核，运行门禁并提交：`docs(pi): 发布会话上下文与存储课程`。
+- [x] 分开持久历史、模型可见 Context、派生摘要和并发提交；不能把摘要当原始历史。
+- [x] 渲染复核，运行门禁并提交：`docs(pi): 发布会话上下文与存储课程`。
 
 ### Task 8：Protocol、Server 与 Client
 
 - [x] 创建 `06-protocol-server-client.md`、对应 SVG 和 Claim，覆盖 Length Framing、CBOR/JSON Codec、Schema、Connection、Server、Client、Snapshot、Session Handle 与 Unix Transport。
-- [ ] 区分协议可编码、服务可监听、客户端已连接、Session 可恢复与任务成功。
-- [ ] 渲染复核，运行门禁并提交：`docs(pi): 发布协议服务与客户端课程`。
+- [x] 区分协议可编码、服务可监听、客户端已连接、Session 可恢复与任务成功。
+- [x] 渲染复核，运行门禁并提交：`docs(pi): 发布协议服务与客户端课程`。
 
 ### Task 9：CLI、TUI、权限与容器化
 
 - [x] 创建 `07-cli-tui-permissions-containerization.md`、对应 SVG 和 Claim，覆盖 CLI 模式、交互 TUI、差分渲染、终端输入、宿主权限和 Gondolin/Docker/OpenShell。
-- [ ] 明确 pi 没有默认内建权限系统；Extension 确认提示不等于强制安全边界。
-- [ ] 渲染复核，运行门禁并提交：`docs(pi): 发布终端表面与隔离边界课程`。
+- [x] 明确 pi 没有默认内建权限系统；Extension 确认提示不等于强制安全边界。
+- [x] 渲染复核，运行门禁并提交：`docs(pi): 发布终端表面与隔离边界课程`。
 
 ### Task 10：Telemetry、Evals 与数据契约
 
@@ -126,7 +126,7 @@
 - [x] 先增加 pi 九篇缺失、降级和零链接绕过失败测试。
 - [x] 一次性把 pi 九篇改为已复核链接；根入口和总入口只新增第五条主线，OpenCode 与扩展样本保持提纲无链接。
 - [x] 运行导航、链接、内容、Claim、视觉和聚合检查。
-- [ ] 提交：`docs(navigation): 开放 pi 一级主线`。
+- [x] 提交：`docs(navigation): 开放 pi 一级主线`。
 
 ### Task 12：阶段 3E 全量对抗复核
 
@@ -136,12 +136,12 @@
 - 修改：`specs/2026-08-23-agent-harness-internals-program-plan.md`
 - 修改：本计划复选框
 
-- [ ] 从已提交基线运行 Node 24 聚合检查和 `--profile all` 来源验证。
-- [ ] 逐篇审计真实输入输出、调用链、源码锚点、能力条件、失败语义和自检答案。
-- [ ] 打开十张正式图，检查中文、截断、箭头、颜色依赖、包边界和证据绑定。
-- [ ] 主动寻找：设计文档冒充实现、模型目录冒充运行可用、Extension 冒充默认能力、提示确认冒充权限隔离、摘要冒充原始历史、协议成功冒充任务成功、Telemetry 冒充 Scorer、Eval 通过冒充发布授权、Session 分享冒充默认上传。
-- [ ] 修复全部高优先级发现，记录中低风险；创建阶段复核记录并勾选总路线 3E。
-- [ ] 提交：`chore(review): 完成阶段 3E pi 主线复核`。
+- [x] 从已提交基线运行 Node 24 聚合检查和 `--profile all` 来源验证。
+- [x] 逐篇审计真实输入输出、调用链、源码锚点、能力条件、失败语义和自检答案。
+- [x] 打开十张正式图，检查中文、截断、箭头、颜色依赖、包边界和证据绑定。
+- [x] 主动寻找：设计文档冒充实现、模型目录冒充运行可用、Extension 冒充默认能力、提示确认冒充权限隔离、摘要冒充原始历史、协议成功冒充任务成功、Telemetry 冒充 Scorer、Eval 通过冒充发布授权、Session 分享冒充默认上传。
+- [x] 修复全部高优先级发现，记录中低风险；创建阶段复核记录并勾选总路线 3E。
+- [x] 提交：`chore(review): 完成阶段 3E pi 主线复核`。
 
 ## 阶段完成证据
 

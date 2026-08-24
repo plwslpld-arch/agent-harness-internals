@@ -26,7 +26,7 @@
   - 验收：Core/CLI、Policy/Safety/Confirmation、工具、会话和评测形成完整课程。
 - [x] 阶段 3D：Claude 主线。
   - 验收：Claude Code 文档证据与 Python/TypeScript SDK 源码证据严格分层。
-- [ ] 阶段 3E：pi 主线。
+- [x] 阶段 3E：pi 主线。
   - 验收：AI、Agent、Coding Agent、Protocol、Session、Telemetry 和 Evals 全链路完成。
 - [ ] 阶段 3F：OpenCode 主线。
   - 验收：Provider、Session、Permission、Server、Protocol、多客户端和评测全链路完成。

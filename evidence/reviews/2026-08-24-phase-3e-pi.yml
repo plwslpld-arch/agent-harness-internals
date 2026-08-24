@@ -1,0 +1,69 @@
+{
+  "stage": "phase-3e-pi",
+  "date": "2026-08-24",
+  "commit": "5b7a1eec489cd8a1b087bc8b26a0c530e9db05fd",
+  "promises": [
+    {"id":"p-nine-course-line","statement":"pi 主线入口与八篇课程均达到 reviewed，覆盖证据边界、多 Provider、Agent Loop、Coding Agent、Session、Protocol、产品表面、Telemetry 与 Evals。"},
+    {"id":"p-runtime-design-boundary","statement":"现行源码、未来设计文档、扩展示例、外部隔离与 Session 分享项目保持不同证据等级，不把目标设计或示例写成默认能力。"},
+    {"id":"p-composed-runtime","statement":"AI、Agent Core 与 Coding Agent 的组合链，以及 Session、Protocol、Client/Server、TUI、Telemetry 和 Evals 横切层均绑定锁定源码。"},
+    {"id":"p-security-state-boundaries","statement":"宿主权限、项目信任、确认提示、扩展示例和外部强隔离分开；持久 Session、模型 Context、摘要、协议状态与任务成功分开。"},
+    {"id":"p-eval-data-boundary","statement":"Telemetry、Trace、Artifact、Scorer、统计、RewardAdapter、Checkpoint 与独立发布 Holdout 保持职责分离，Session 分享只作显式外发出口。"},
+    {"id":"p-chinese-visuals","statement":"十张 pi 正式图使用中文说明，必要代码、协议与项目标识保留，并经集中渲染目检。"},
+    {"id":"p-atomic-navigation","statement":"pi 九篇在根入口、总入口和主线入口整批开放；缺失、降级或零链接都会失败，OpenCode 与扩展样本没有提前进入正式导航。"},
+    {"id":"p-node24-all-sources","statement":"Node 24 聚合门禁与十二个锁定来源的 all 配置验证全部通过。"}
+  ],
+  "evidence": [
+    {"id":"e-course-files","promise":"p-nine-course-line","type":"file","reference":"docs/harnesses/pi/","summary":"入口与 01 至 08 共九篇均为 reviewed；每篇包含真实输入输出、调用链、源码证据、失败限制、验证方法和四道带答案自检。"},
+    {"id":"e-content-contract","promise":"p-nine-course-line","type":"test","reference":"scripts/check-content-contract.mjs","summary":"pi 一级入口契约和八篇 Harness 深度契约通过，九篇状态与必需章节完整。"},
+    {"id":"e-evidence-map","promise":"p-runtime-design-boundary","type":"file","reference":"evidence/claims/pi/evidence-map.yml","summary":"九篇证据路由、源码与测试、设计和示例边界及九类高风险误读集中登记。"},
+    {"id":"e-boundary-article","promise":"p-runtime-design-boundary","type":"file","reference":"docs/harnesses/pi/01-evidence-runtime-design-boundaries.md","summary":"现行工具循环、未完成新框架、未来设计、扩展示例、部署方案和外部分享分层。"},
+    {"id":"e-architecture","promise":"p-composed-runtime","type":"file","reference":"docs/harnesses/pi/README.md","summary":"入口以可核对调用链解释三层组合和横切包，不从包名直接推断运行责任。"},
+    {"id":"e-runtime-claims","promise":"p-composed-runtime","type":"file","reference":"evidence/claims/pi.architecture.layers-are-composed.yml","summary":"十八条 pi Claim 登记版本、表面、平台、模式、能力状态、证据等级、摘录和限定条件。"},
+    {"id":"e-security-article","promise":"p-security-state-boundaries","type":"file","reference":"docs/harnesses/pi/07-cli-tui-permissions-containerization.md","summary":"四种产品表面、差分渲染、宿主权限、项目信任和四类可选隔离边界分别说明。"},
+    {"id":"e-session-protocol","promise":"p-security-state-boundaries","type":"file","reference":"docs/harnesses/pi/05-session-context-compaction-storage.md","summary":"Session、Context、摘要、存储和 Writer Lease 分开；协议课程再分离帧、编码、连接、租约和任务结果。"},
+    {"id":"e-eval-article","promise":"p-eval-data-boundary","type":"file","reference":"docs/harnesses/pi/08-telemetry-evals-data-contracts.md","summary":"固定 Trial、Target、Telemetry、Artifact、外部 Scorer、统计、训练适配、Checkpoint、独立发布与分享出口形成完整链。"},
+    {"id":"e-eval-claims","promise":"p-eval-data-boundary","type":"file","reference":"evidence/claims/pi.eval.artifact-is-not-release-gate.yml","summary":"源码证明 Eval Harness 运行和留证、Summary 消费已有分数；未把它扩大为外部 Scorer 或发布授权。"},
+    {"id":"e-diagram-sheet","promise":"p-chinese-visuals","type":"render","reference":"evidence/reviews/phase-3e-pi-contact-sheet.png","summary":"十图集中复核未发现裁切、重叠、箭头误向、颜色单点依赖或英文自然语言说明残留。"},
+    {"id":"e-visual-manifest","promise":"p-chinese-visuals","type":"file","reference":"assets/diagrams/manifest.yml","summary":"十张 pi 图具有中文替代文本、合法图类型、文章范围和 Claim 绑定。"},
+    {"id":"e-navigation-test","promise":"p-atomic-navigation","type":"test","reference":"scripts/tests/navigation.test.mjs","summary":"pi 九篇缺失、降级与零链接均失败；扩展样本不得进入正式导航。"},
+    {"id":"e-navigation-files","promise":"p-atomic-navigation","type":"file","reference":"docs/harnesses/pi/README.md","summary":"入口状态表九篇均为已复核链接，根 README 与总入口只增加第五条主线。"},
+    {"id":"e-source-all","promise":"p-node24-all-sources","type":"command","reference":"node scripts/verify-sources.mjs --profile all","summary":"十二个来源定义与十二个 all 配置 Checkout 全部匹配锁定提交。"},
+    {"id":"e-check-all","promise":"p-node24-all-sources","type":"command","reference":"node scripts/check-all.mjs","summary":"十七组聚合检查、九十四项单元测试、八十九条 Claim、六十张正式图与一百二十五次正式导航核对通过。"}
+  ],
+  "findings": [
+    {"id":"f-design-runtime-collapse","priority":"high","status":"resolved","summary":"未来 Harness 设计文档和未完成脚手架容易被写成现行完整运行时。"},
+    {"id":"f-model-catalog-availability","priority":"high","status":"resolved","summary":"模型目录命中或 Provider 声明容易被解释成当前凭据、区域、网络和请求必然可用。"},
+    {"id":"f-extension-default-security","priority":"high","status":"resolved","summary":"Extension 示例、确认提示和项目 Trust 容易被解释成默认内建强隔离。"},
+    {"id":"f-summary-history-collapse","priority":"high","status":"resolved","summary":"模型 Context 与压缩摘要容易被称为原始 Session 历史的无损权威。"},
+    {"id":"f-protocol-task-success","priority":"high","status":"resolved","summary":"帧可编码、连接成功、Session Lease 有效或命令响应成功容易被升级为任务成功。"},
+    {"id":"f-telemetry-scorer-collapse","priority":"high","status":"resolved","summary":"类型化遥测、Eval Artifact 和 Summary 容易被合并解释成评分器、训练奖励或发布门禁。"},
+    {"id":"f-sharing-default-upload","priority":"high","status":"resolved","summary":"外部 Session 分享说明和交互命令容易被写成默认遥测上传。"},
+    {"id":"f-navigation-stale","priority":"high","status":"resolved","summary":"八篇正文完成后，pi 入口与两级总导航仍保留提纲状态和无链接描述。"},
+    {"id":"f-live-provider-unverified","priority":"medium","status":"open","summary":"本阶段没有使用真实凭据、付费模型、外部评分器、跨主机服务或生产沙箱执行全部场景，相关结论保持源码与上游测试级。"},
+    {"id":"f-external-share-governance","priority":"medium","status":"open","summary":"Radius、Gist、Gondolin、Docker 与 OpenShell 的实际部署、保留、可见性和策略不由锁定 pi 源码单独证明。"},
+    {"id":"f-upstream-drift","priority":"medium","status":"open","summary":"pi 仍在演进；课程只以锁定 Commit 为权威，来源漂移后应整批退出导航并复核。"},
+    {"id":"f-style-rhythm","priority":"low","status":"open","summary":"中文文风检查对 pi 多篇给出句长节奏非阻断提醒；最终总编辑阶段统一润色。"}
+  ],
+  "resolutions": [
+    {"id":"f-design-runtime-collapse","action":"证据边界课将现行源码、未实现操作、未来设计、示例和外部项目分层，并用 Claim 绑定抛错测试。","evidence":["e-boundary-article","e-evidence-map"]},
+    {"id":"f-model-catalog-availability","action":"Provider 课程把模型目录、注册、认证、API 路由、流响应和真实可用条件画成连续但不等价的阶段。","evidence":["e-course-files","e-runtime-claims"]},
+    {"id":"f-extension-default-security","action":"扩展和安全课程明确默认宿主权限、Trust 只治理项目资源、Sandbox 示例可回退，强隔离需要外部部署和探针。","evidence":["e-security-article","e-evidence-map"]},
+    {"id":"f-summary-history-collapse","action":"会话课程把追加式树、活动分支、模型 Context、派生摘要和存储后端分别标记。","evidence":["e-session-protocol","e-diagram-sheet"]},
+    {"id":"f-protocol-task-success","action":"协议课程分开帧、编码、Schema、连接、命令响应、Session 租约、Agent 终止和独立评测。","evidence":["e-session-protocol","e-runtime-claims"]},
+    {"id":"f-telemetry-scorer-collapse","action":"数据契约课建立 Dataset、Trial、Target、Trace、Artifact、Scorer、统计、RewardAdapter、Checkpoint 和独立 Holdout 的完整责任链。","evidence":["e-eval-article","e-eval-claims"]},
+    {"id":"f-sharing-default-upload","action":"分享路径限定为用户显式执行命令后导出和外发，并与安装遥测开关及 Eval Artifact 隔离。","evidence":["e-eval-article","e-runtime-claims"]},
+    {"id":"f-navigation-stale","action":"一次性开放 pi 九篇并增加缺篇、降级和零链接失败测试，同时保持 OpenCode 与样本无正式链接。","evidence":["e-navigation-test","e-navigation-files"]}
+  ],
+  "commands": [
+    {"command":"node --version","exit_code":0,"summary":"输出 v24.19.0。"},
+    {"command":"node scripts/verify-sources.mjs --profile all","exit_code":0,"summary":"十二个来源定义与十二个 all 配置 Checkout 通过。"},
+    {"command":"node scripts/check-all.mjs","exit_code":0,"summary":"十七组聚合检查与九十四项单元测试通过；仅有句长节奏非阻断提醒。"},
+    {"command":"渲染并打开 phase-3e-pi-contact-sheet.png","exit_code":0,"summary":"十图未见裁切、重叠、箭头误向、颜色单点依赖或英文自然语言说明残留。"},
+    {"command":"逐篇统计状态、Claim、真实输入输出、调用链、失败限制、验证方法和自检","exit_code":0,"summary":"九篇全部 reviewed；十八条 Claim，每篇均具备必需章节和四道完整答案。"},
+    {"command":"九类高风险误读模式检索","exit_code":0,"summary":"命中均为明确否定、限定条件或自检；未发现设计、目录、示例、摘要、协议、遥测、评测与分享语义升级。"},
+    {"command":"node scripts/check-navigation.mjs","exit_code":0,"summary":"一百二十五次正式导航核对通过，pi 九篇不能缺失、降级或零链接发布。"},
+    {"command":"git diff --check","exit_code":0,"summary":"没有空白错误。"}
+  ],
+  "result": "pass"
+}
+
