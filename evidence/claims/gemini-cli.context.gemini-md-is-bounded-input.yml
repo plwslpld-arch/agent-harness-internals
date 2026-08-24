@@ -1,0 +1,24 @@
+{
+  "id": "gemini-cli.context.gemini-md-is-bounded-input",
+  "harness": "gemini-cli",
+  "dimension": "context.gemini-md-is-bounded-input",
+  "statement": "锁定 Gemini CLI 将项目指令文件按层级与用途拆成系统指令内存和首条用户消息上下文，并由 PromptProvider 结合当前工具和审批模式渲染；文件存在本身不等于内容已加载或拥有执行权限。",
+  "capability": "default",
+  "version": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+  "surface": "core-prompt-context",
+  "platform": "cross-platform-source",
+  "mode": "hierarchical-memory-and-active-tools",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/config/config.ts","lines":"2573-2613","excerpt":"Returns Tier 2 memory (extension + project) for injection into the first"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/prompts/promptProvider.ts","lines":"43-120","excerpt":"export class PromptProvider"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/prompts/promptProvider.test.ts","lines":"154-175","excerpt":"should handle multiple context filenames in user memory section"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/prompts/promptProvider.test.ts","lines":"188-236","excerpt":"should list all active tools from ToolRegistry in plan mode prompt"}
+  ],
+  "limitations": [
+    "该 Claim 证明锁定版本的分层注入和提示渲染，不保证每个项目文件都会被发现或完整保留。",
+    "Prompt 中列出工具不等于工具已获授权，也不等于平台执行后端可用。",
+    "上下文仍受导入、边界标记、信任、截断、压缩和模型窗口限制。"
+  ],
+  "last_verified": "2026-08-24"
+}

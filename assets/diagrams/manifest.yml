@@ -256,6 +256,14 @@
       "scope": "docs/harnesses/gemini-cli/README.md",
       "alt": "Gemini CLI 端到端任务从用户输入、首次模型流、工具请求、调度结算、结果回送到最终智能体会话结束的中文流程图",
       "claims": ["gemini-cli.task.tool-result-loop"]
+    },
+    {
+      "id": "gemini-cli-config-prompt-context",
+      "path": "assets/diagrams/gemini-cli/01-config-prompt-context.svg",
+      "type": "data-flow",
+      "scope": "docs/harnesses/gemini-cli/01-config-prompt-context.md",
+      "alt": "Gemini CLI 从分层设置、信任过滤、项目指令与当前工具到模型可见请求的中文上下文装配图",
+      "claims": ["gemini-cli.config.layered-effective-settings", "gemini-cli.context.gemini-md-is-bounded-input"]
     }
   ]
 }

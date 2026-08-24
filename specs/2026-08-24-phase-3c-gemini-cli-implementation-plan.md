@@ -56,10 +56,10 @@
 
 ### Task 3：Settings、GEMINI.md、Prompt 与 Context
 
-- [ ] 完成 `01-config-prompt-context.md`、中文上下文装配图和配置优先级/上下文 Claim。
-- [ ] 覆盖系统、用户、工作区与命令行设置，环境隔离、Folder Trust、GEMINI.md 发现、PromptProvider、工具 Schema 和上下文资源。
-- [ ] 验证缺失、冲突、超大文件、信任变化和动态设置；不把 Settings 文件存在写成有效运行配置。
-- [ ] 提交：`docs(gemini-cli): 发布配置提示与上下文课程`。
+- [x] 完成 `01-config-prompt-context.md`、中文上下文装配图和配置优先级/上下文 Claim。
+- [x] 覆盖系统、用户、工作区与命令行设置，环境隔离、Folder Trust、GEMINI.md 发现、PromptProvider、工具 Schema 和上下文资源。
+- [x] 验证缺失、冲突、超大文件、信任变化和动态设置；不把 Settings 文件存在写成有效运行配置。
+- [x] 提交：`docs(gemini-cli): 发布配置提示与上下文课程`。
 
 ### Task 4：Agent Session、Turn、Routing 与 Scheduler
 

@@ -1,0 +1,23 @@
+{
+  "id": "gemini-cli.config.layered-effective-settings",
+  "harness": "gemini-cli",
+  "dimension": "config.layered-effective-settings",
+  "statement": "锁定 Gemini CLI 将 Schema 默认值、系统默认、用户、受信工作区和系统覆盖按字段合并策略形成有效设置；未受信工作区的设置不会进入普通 merged 配置。",
+  "capability": "default",
+  "version": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+  "surface": "cli-settings",
+  "platform": "cross-platform-source",
+  "mode": "trusted-and-untrusted-workspace",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/cli/src/config/settings.ts","lines":"253-279","excerpt":"const safeWorkspace = isTrusted ? workspace : ({} as Settings);"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/cli/src/config/settings.ts","lines":"313-389","excerpt":"this.workspace = isTrusted ? workspace : this.createEmptyWorkspace(workspace);"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/cli/src/config/settings.test.ts","lines":"263-341","excerpt":"system taking precedence over workspace, and workspace over user"}
+  ],
+  "limitations": [
+    "不同字段可使用替换、连接或其他合并策略，不能把所有设置简化成最后文件覆盖前文件。",
+    "命令行参数、远程管理设置和运行时更新还可能在文件合并后改变有效行为。",
+    "测试使用模拟文件系统，不证明本机策略文件和目录权限配置正确。"
+  ],
+  "last_verified": "2026-08-24"
+}
