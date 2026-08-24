@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 980" role="img" aria-labelledby="title desc">
+  <title id="title">Codex 执行安全边界</title>
+  <desc id="desc">命令依次经过解析、执行策略、审批、权限描述、平台沙箱变换、网络代理和进程创建，并明确各层成功不等于任务通过。</desc>
+  <defs><marker id="a" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto"><path d="M0 0l14 7-14 7z" fill="#087F7C"/></marker><filter id="s" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#17324D" flood-opacity=".12"/></filter></defs>
+  <rect width="1400" height="980" rx="34" fill="#F6F9FC"/>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <text x="700" y="55" text-anchor="middle" fill="#17324D" font-size="36" font-weight="760">一次副作用要穿过四道不同的安全边界</text>
+    <text x="700" y="91" text-anchor="middle" fill="#50677D" font-size="19">策略决定、人工授权、权限描述与平台强制执行不能互相替代</text>
+    <g filter="url(#s)" text-anchor="middle">
+      <rect x="45" y="145" width="230" height="112" rx="18" fill="#E9F2FF" stroke="#3569A8" stroke-width="2"/><text x="160" y="185" fill="#285383" font-size="21" font-weight="760">一　命令解析</text><text x="160" y="220" fill="#50677D" font-size="17">程序、参数、目录</text><text x="160" y="244" fill="#50677D" font-size="17">权限请求与理由</text>
+      <rect x="315" y="145" width="230" height="112" rx="18" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2"/><text x="430" y="185" fill="#955A00" font-size="21" font-weight="760">二　执行策略</text><text x="430" y="220" fill="#50677D" font-size="17">允许　询问　禁止</text><text x="430" y="244" fill="#8A3D2F" font-size="17">只回答是否拦截</text>
+      <rect x="585" y="145" width="230" height="112" rx="18" fill="#FFF0E8" stroke="#D2673A" stroke-width="2"/><text x="700" y="185" fill="#8A3D2F" font-size="21" font-weight="760">三　审批控制</text><text x="700" y="220" fill="#50677D" font-size="17">批准　拒绝　不可询问</text><text x="700" y="244" fill="#8A3D2F" font-size="17">授权尝试，不是隔离</text>
+      <rect x="855" y="145" width="230" height="112" rx="18" fill="#F0ECF8" stroke="#76559B" stroke-width="2"/><text x="970" y="185" fill="#60458C" font-size="21" font-weight="760">四　有效权限</text><text x="970" y="220" fill="#50677D" font-size="17">文件与网络目标约束</text><text x="970" y="244" fill="#8A3D2F" font-size="17">描述不等于已兑现</text>
+      <rect x="1125" y="145" width="230" height="112" rx="18" fill="#E7F5F3" stroke="#087F7C" stroke-width="2"/><text x="1240" y="185" fill="#086E6B" font-size="21" font-weight="760">五　平台变换</text><text x="1240" y="220" fill="#50677D" font-size="17">包装命令与环境</text><text x="1240" y="244" fill="#8A3D2F" font-size="17">失败应显式返回</text>
+    </g>
+    <g fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#a)"><path d="M275 201h28"/><path d="M545 201h28"/><path d="M815 201h28"/><path d="M1085 201h28"/></g>
+    <rect x="55" y="300" width="1290" height="70" rx="18" fill="#8A3D2F"/><text x="700" y="343" text-anchor="middle" fill="#FFFFFF" font-size="24" font-weight="760">策略允许 ≠ 已批准 ≠ 沙箱已兑现 ≠ 任务通过</text>
+    <text x="700" y="420" text-anchor="middle" fill="#17324D" font-size="27" font-weight="760">平台强制执行分叉</text>
+    <g text-anchor="middle" filter="url(#s)">
+      <rect x="80" y="455" width="275" height="130" rx="18" fill="#FFFFFF" stroke="#3569A8" stroke-width="2"/><text x="218" y="496" fill="#285383" font-size="21" font-weight="760">苹果系统约束后端</text><text x="218" y="532" fill="#50677D" font-size="17">生成约束配置并包装</text><text x="218" y="560" fill="#8A3D2F" font-size="17">准备失败即返回错误</text>
+      <rect x="405" y="455" width="275" height="130" rx="18" fill="#FFFFFF" stroke="#087F7C" stroke-width="2"/><text x="543" y="496" fill="#086E6B" font-size="21" font-weight="760">Linux 系统调用后端</text><text x="543" y="532" fill="#50677D" font-size="17">沙箱程序与权限参数</text><text x="543" y="560" fill="#8A3D2F" font-size="17">程序缺失即返回错误</text>
+      <rect x="730" y="455" width="275" height="130" rx="18" fill="#FFFFFF" stroke="#76559B" stroke-width="2"/><text x="868" y="496" fill="#60458C" font-size="21" font-weight="760">Windows 受限令牌后端</text><text x="868" y="532" fill="#50677D" font-size="17">按启用级别准备令牌</text><text x="868" y="560" fill="#8A3D2F" font-size="17">不能拒读时拒绝裸跑</text>
+      <rect x="1055" y="455" width="275" height="130" rx="18" fill="#FFF0E8" stroke="#D2673A" stroke-width="2"/><text x="1193" y="496" fill="#8A3D2F" font-size="21" font-weight="760">无具体沙箱后端</text><text x="1193" y="532" fill="#50677D" font-size="17">配置、平台或需求所致</text><text x="1193" y="560" fill="#8A3D2F" font-size="17">必须记录选择原因</text>
+    </g>
+    <g fill="none" stroke="#087F7C" stroke-width="4"><path d="M1240 257v120H218v66"/><path d="M543 377v66"/><path d="M868 377v66"/><path d="M1193 377v66"/></g>
+    <g filter="url(#s)"><rect x="165" y="660" width="460" height="122" rx="20" fill="#E7F5F3" stroke="#087F7C" stroke-width="2"/><text x="395" y="705" text-anchor="middle" fill="#086E6B" font-size="23" font-weight="760">网络与环境准备</text><text x="395" y="741" text-anchor="middle" fill="#50677D" font-size="18">代理、证书、环境标识与网络约束</text><text x="395" y="768" text-anchor="middle" fill="#8A3D2F" font-size="17">准备失败不得伪装成进程失败</text>
+    <rect x="775" y="660" width="460" height="122" rx="20" fill="#E9F2FF" stroke="#3569A8" stroke-width="2"/><text x="1005" y="705" text-anchor="middle" fill="#285383" font-size="23" font-weight="760">真实进程与可观察副作用</text><text x="1005" y="741" text-anchor="middle" fill="#50677D" font-size="18">退出状态、输出、文件与网络变化</text><text x="1005" y="768" text-anchor="middle" fill="#8A3D2F" font-size="17">退出零仍需独立结果检查</text></g>
+    <path d="M700 585v58H395v5" fill="none" stroke="#087F7C" stroke-width="4"/><path d="M625 721h138" fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#a)"/>
+    <rect x="55" y="845" width="1290" height="94" rx="18" fill="#17324D"/><text x="84" y="880" fill="#FFFFFF" font-size="20" font-weight="760">证据边界：</text><text x="215" y="880" fill="#D3E1EA" font-size="18">源码覆盖三类平台后端与无后端分支；上游测试只锁定特定 Windows 失效关闭场景</text><text x="215" y="916" fill="#7FE0D5" font-size="18">本仓库未执行三平台行为验证，不能把结构分支写成跨平台等价保证</text>
+  </g>
+</svg>

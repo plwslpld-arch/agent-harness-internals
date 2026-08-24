@@ -72,10 +72,10 @@
 
 ### Task 6：Exec Policy、审批、升级与多平台 Sandbox
 
-- [ ] 完成 `04-exec-policy-sandbox.md`、中文安全边界图和平台限定 Claim。
-- [ ] 覆盖命令解析、Exec Policy、审批、升级、Linux、macOS、Windows、网络代理与进程边界。
-- [ ] 记录 fail-closed、降级和未验证平台，不把 policy 允许写成实际隔离。
-- [ ] 提交：`docs(codex): 发布执行策略与沙箱课程`。
+- [x] 完成 `04-exec-policy-sandbox.md`、中文安全边界图和平台限定 Claim。
+- [x] 覆盖命令解析、Exec Policy、审批、升级、Linux、macOS、Windows、网络代理与进程边界。
+- [x] 记录 fail-closed、降级和未验证平台，不把 policy 允许写成实际隔离。
+- [x] 提交：`docs(codex): 发布执行策略与沙箱课程`。
 
 ### Task 7：Rollout、History、Thread Store、恢复、Compaction 与 Memory
 

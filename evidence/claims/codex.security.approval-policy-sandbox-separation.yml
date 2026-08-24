@@ -1,0 +1,19 @@
+{
+  "id": "codex.security.approval-policy-sandbox-separation",
+  "harness": "codex",
+  "dimension": "security.approval-policy-sandbox-separation",
+  "statement": "锁定 Codex 将命令策略决定、用户审批、有效权限描述与平台沙箱变换作为不同阶段；策略允许或审批通过都不单独证明操作系统隔离已经兑现。",
+  "capability": "default",
+  "version": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+  "surface": "core-exec-runtime",
+  "platform": "cross-platform-structure",
+  "mode": "approval-policy-dependent",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/execpolicy/src/decision.rs","lines":"7-15","excerpt":"pub enum Decision {"},
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/sandboxing/src/manager.rs","lines":"331-359","excerpt":"effective_permission_profile(permissions, additional_permissions.as_ref())"},
+    {"type":"upstream-test","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/tests/suite/exec_policy.rs","lines":"107-170","excerpt":"expected git status to request approval before turn completion"},
+    {"type":"upstream-test","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/tests/suite/approvals.rs","lines":"1077-1124","excerpt":"you cannot ask for escalated permissions"}
+  ],
+  "last_verified": "2026-08-24"
+}

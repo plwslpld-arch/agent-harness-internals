@@ -200,6 +200,14 @@
       "scope": "docs/harnesses/codex/03-model-tool-loop.md",
       "alt": "Codex 模型响应流、工具路由、并行执行、有序结果提交、重试与终止的中文时序图",
       "claims": ["codex.loop.tool-results-before-continuation"]
+    },
+    {
+      "id": "codex-exec-policy-sandbox",
+      "path": "assets/diagrams/codex/04-exec-policy-sandbox.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/codex/04-exec-policy-sandbox.md",
+      "alt": "Codex 从命令解析、执行策略、审批与权限描述到多平台沙箱、网络代理和进程结果的中文安全边界图",
+      "claims": ["codex.security.approval-policy-sandbox-separation", "codex.security.platform-enforcement-differs"]
     }
   ]
 }

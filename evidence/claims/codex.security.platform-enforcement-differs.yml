@@ -1,0 +1,20 @@
+{
+  "id": "codex.security.platform-enforcement-differs",
+  "harness": "codex",
+  "dimension": "security.platform-enforcement-differs",
+  "statement": "锁定 Codex 为 macOS、Linux 与 Windows 选择不同沙箱后端，也存在无具体后端分支；特定 Windows 受限令牌无法强制拒绝读取时，上游测试要求拒绝无沙箱运行，但这不能外推为三平台等价验证。",
+  "capability": "default",
+  "version": "c9b19deb09c1841ce7acc33ddb96276030936a29",
+  "surface": "sandbox-transform",
+  "platform": "macos-linux-windows-source-windows-upstream-test",
+  "mode": "backend-and-feature-dependent",
+  "evidence_level": "D",
+  "inference": "源码明确选择不同平台后端并保留无后端分支，Windows 上游测试锁定一个无法强制拒绝读取时的失效关闭行为；据此可判断强制执行依赖平台后端，但不能推断三种平台能力等价或均已由本仓库行为验证。",
+  "evidence": [
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/sandboxing/src/manager.rs","lines":"37-75","excerpt":"MacosSeatbelt, LinuxSeccomp, WindowsRestrictedToken"},
+    {"type":"source","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/sandboxing/src/manager.rs","lines":"365-459","excerpt":"match sandbox"},
+    {"type":"upstream-test","source":"codex","commit":"c9b19deb09c1841ce7acc33ddb96276030936a29","path":"codex-rs/core/tests/suite/windows_sandbox.rs","lines":"130-210","excerpt":"refusing to run unsandboxed"}
+  ],
+  "limitations": ["本仓库未在三种平台执行该上游测试。", "Windows 夹具只覆盖非提升受限令牌的拒绝读取边界。"],
+  "last_verified": "2026-08-24"
+}
