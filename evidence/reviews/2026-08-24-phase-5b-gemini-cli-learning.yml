@@ -1,7 +1,7 @@
 {
   "stage": "phase-5b-gemini-cli-learning",
   "date": "2026-08-24",
-  "commit": "35fdf5a102a2109bbe9d9a2e9719142a577681df",
+  "commit": "1a713008650a235ab5de3878bc54953ec62c6b6c",
   "promises": [
     {"id":"p-learning-depth","statement":"Gemini CLI 入口与八篇正文均按内容契约 2.0 讲清 Core/CLI 配置、Turn、Scheduler、工具、安全、状态、扩展、表面和评测的完整教学链。"},
     {"id":"p-evidence-boundary","statement":"锁定 TypeScript 源码、上游 Mock 测试、课程蓝图与独立 Eval 设计分别标注，不把模拟控制流外推为真实模型、工具副作用或生产隔离。"},

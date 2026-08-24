@@ -1,7 +1,7 @@
 {
   "stage": "phase-5b-pi-learning",
   "date": "2026-08-24",
-  "commit": "d3d7615a0fa353e0313fa78c48f9d051b79bfbdf",
+  "commit": "26e7f301b63d9dc5d5a9b592b039d9bea7780bae",
   "promises": [
     {"id":"p-learning-depth","statement":"pi 入口与八篇正文按内容契约 2.0 讲清 AI、Agent Core、Coding Agent、Session、Protocol、产品表面、隔离和评测的完整学习链。"},
     {"id":"p-evidence-boundary","statement":"现行 Runtime、AgentHarness v2 未来规格、Extension 示例、部署文档与外部分享分别标注，不用弱材料替默认能力背书。"},

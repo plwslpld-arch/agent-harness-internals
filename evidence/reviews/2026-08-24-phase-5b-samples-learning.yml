@@ -1,7 +1,7 @@
 {
   "stage": "phase-5b-samples-learning",
   "date": "2026-08-24",
-  "commit": "47dbadd65a5da051630ab8c277986d318e470d13",
+  "commit": "f5fb9dd4f9d5d3added84a2df598823ad8a2264f",
   "promises": [
     {"id":"p-sample-depth","statement":"六篇扩展样本分别讲清独特机制、源码入口、实现接缝、运行链、一级主线关系与适用边界。"},
     {"id":"p-sample-scope","statement":"样本保持二级机制定位，不扩张成综合主线，也不以项目名、相似目录或界面状态替代锁定证据。"},

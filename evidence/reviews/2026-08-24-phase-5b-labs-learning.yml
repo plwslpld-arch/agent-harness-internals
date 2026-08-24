@@ -1,7 +1,7 @@
 {
   "stage": "phase-5b-labs-learning",
   "date": "2026-08-24",
-  "commit": "08b48951fecf06805169a399370eba3fb233fa5b",
+  "commit": "7407e4a00fcb3a3aa4d295ac9bdbc8cf12d1b988",
   "promises": [
     {"id":"p-lab-reproducible","statement":"两个控制实验提供环境、变量、操作、预期、失败判定、原始记录和可复现机器证据。"},
     {"id":"p-lab-boundary","statement":"实验仅证明本地确定性评测契约，不外推为真实 Harness 质量、训练收益或生产发布证据。"},

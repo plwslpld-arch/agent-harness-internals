@@ -1,7 +1,7 @@
 {
   "stage": "phase-5b-claude-learning",
   "date": "2026-08-24",
-  "commit": "03b4d28f2df727ac69b8678a4d6ecfb266d7f96e",
+  "commit": "be85ff2a5b05c66c48eba7523dd5b15c4a392b07",
   "promises": [
     {"id":"p-learning-depth","statement":"Claude 入口与八篇正文均按内容契约 2.0 讲清核心概念、设计理由、实现思路和贯穿案例，不再以研究摘要冒充课程。"},
     {"id":"p-evidence-boundary","statement":"新增教学蓝图与 Claude Code 闭源产品事实明确分开，Python 源码、TypeScript 公开契约、SDK Result、Session Mirror 与独立 Eval 不互相越界。"},

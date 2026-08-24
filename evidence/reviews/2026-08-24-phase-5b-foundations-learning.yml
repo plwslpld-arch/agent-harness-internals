@@ -1,7 +1,7 @@
 {
   "stage": "phase-5b-foundations-learning",
   "date": "2026-08-24",
-  "commit": "1a418587614319db4bb9b31ce2d590e406d5f17c",
+  "commit": "325022735ab933e54d81425e2aaa54e21273630d",
   "promises": [
     {"id":"p-learning-depth","statement":"六篇共同基础分别讲清职责边界、真实 Turn、模型工具输入输出、安全边界、会话状态和评测接入，并给出可实现、可验证的学习闭环。"},
     {"id":"p-evidence-boundary","statement":"共同抽象仅统一分析问题；具体项目事实、跨实现推断、教学伪代码和平台实验范围保持分离。"},

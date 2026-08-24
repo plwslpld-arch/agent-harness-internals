@@ -1,7 +1,7 @@
 {
   "stage": "phase-5b-roles-learning",
   "date": "2026-08-24",
-  "commit": "2499f46b8821d72d4e0358cc1f29c72216607098",
+  "commit": "2edc0fda839575a786ea562de76e25146b9fb33b",
   "promises": [
     {"id":"p-role-curriculum","statement":"工程、运维安全、产品和质量评测四条路径具备学习目标、前置知识、工作流、实践任务、验收与作品证据。"},
     {"id":"p-role-evidence","statement":"角色作品以可复现实验和边界声明证明，不把课程通过、第三方验收或本地夹具扩大成生产能力。"},
