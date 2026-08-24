@@ -1,7 +1,7 @@
 {
   "stage": "phase-5b-comparisons-learning",
   "date": "2026-08-24",
-  "commit": "d60d09d3c328a15953f23266c483cab66470c60b",
+  "commit": "9cc1b4f9ef7f98a6f1b73e134c6aa055a411bd8d",
   "promises": [
     {"id":"p-learning-depth","statement":"五篇横向比较先定义可迁移共同抽象，再给六条主线独立证据、差异条件与迁移练习。"},
     {"id":"p-no-ranking","statement":"比较不生成总分、排名或赢家，闭源未知、平台限定与部署条件不被换算成能力高低。"},

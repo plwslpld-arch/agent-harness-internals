@@ -1,7 +1,7 @@
 {
   "stage": "phase-5b-dsh-learning",
   "date": "2026-08-24",
-  "commit": "3c01478bd115c400587e2c7aff03784dace4777d",
+  "commit": "17170adc43262f74fba3d7e1cf68051cfae0d185",
   "promises": [
     {"id":"p-learning-depth","statement":"DSH 入口与八篇正文均按内容契约 2.0 讲清核心概念、设计理由、实现思路和贯穿案例，形成从组合启动到独立评测的连续教学链。"},
     {"id":"p-evidence-boundary","statement":"上游源码事实、录制夹具、跨模块架构推断、教学实现蓝图和独立 Eval 结论分别标注，不用内部完成状态替代任务评分。"},

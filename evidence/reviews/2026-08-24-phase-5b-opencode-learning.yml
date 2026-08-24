@@ -1,7 +1,7 @@
 {
   "stage": "phase-5b-opencode-learning",
   "date": "2026-08-24",
-  "commit": "c778f65b7dcb8d1cb0e5ca34ebefa85865617773",
+  "commit": "82611e9249bde8afc5636b45681df4ee8ced0934",
   "promises": [
     {"id":"p-learning-depth","statement":"OpenCode 入口与八篇正文按内容契约 2.0 讲清项目配置、Provider、Session Loop、工具权限、存储恢复、扩展、协议表面和评测闭环。"},
     {"id":"p-evidence-boundary","statement":"模型目录、应用权限、客户端状态、分享遥测和上游测试分别限定，不外推为运行时可用、操作系统隔离或发布授权。"},

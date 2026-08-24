@@ -1,7 +1,7 @@
 {
   "stage": "phase-5b-full-learning-audit",
   "date": "2026-08-24",
-  "commit": "4bc25d1527d7af8f45c1d9e313ed7af38af54e59",
+  "commit": "e0884851eeac9e3dbee10e33ddc5dd0ce98245a4",
   "promises": [
     {"id":"p-learning-depth","statement":"七十八篇正式课程均达到各自教学契约，使新手能够解释对象、追踪调用链、实现最小原型、识别失败并设计验证。"},
     {"id":"p-evidence-boundary","statement":"产品名被遮蔽时仍保留可迁移方法，恢复产品名后每项实现结论仍绑定来源、源码锚点或公开契约。"},

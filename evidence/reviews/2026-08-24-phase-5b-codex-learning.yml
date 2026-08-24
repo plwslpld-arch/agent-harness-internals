@@ -1,7 +1,7 @@
 {
   "stage": "phase-5b-codex-learning",
   "date": "2026-08-24",
-  "commit": "e68410d0843ad57168021669b896da0cdba4da84",
+  "commit": "33937b3d706d6984ed1d33da735e306c763df138",
   "promises": [
     {"id":"p-learning-depth","statement":"Codex 入口与八篇正文均按内容契约 2.0 讲清核心概念、设计理由、实现思路和贯穿案例，形成配置、线程、循环、安全、持久化、扩展、编排和评测的连续教学链。"},
     {"id":"p-evidence-boundary","statement":"锁定 Rust 源码、上游测试、跨 crate 推断、课程蓝图和独立 Eval 结论分别标注，不把教学类型或故障策略冒充 Codex 内部实现。"},
