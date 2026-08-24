@@ -9,6 +9,7 @@ export const checkCommands = [
   { label: '文章元数据与来源', args: ['scripts/verify-analysis.mjs'] },
   { label: '关键结论注册表', args: ['scripts/verify-claims.mjs'] },
   { label: '跨主线比较矩阵', args: ['scripts/verify-comparison-matrices.mjs'] },
+  { label: '本地评测实验', args: ['scripts/verify-eval-labs.mjs'] },
   { label: '正式导航状态', args: ['scripts/check-navigation.mjs'] },
   { label: '内容质量契约', args: ['scripts/check-content-contract.mjs'] },
   { label: '品牌与仓库元数据', args: ['scripts/check-brand.mjs'] },

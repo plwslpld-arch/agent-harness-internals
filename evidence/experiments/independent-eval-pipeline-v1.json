@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "independent-eval-pipeline-v1",
+  "executed_at": "2026-08-24T04:55:53.449Z",
+  "command": "node scripts/run-eval-labs.mjs --output evidence/experiments",
+  "environment": {
+    "node": "v24.19.0",
+    "platform": "win32",
+    "paid_model_called": false,
+    "network_required": false
+  },
+  "input": {
+    "scorer_id": "exact-result-scorer",
+    "scorer_version": "1.0.0",
+    "artifacts": [
+      "artifact-pass",
+      "artifact-unknown"
+    ]
+  },
+  "result": {
+    "scores": [
+      {
+        "scorer_id": "exact-result-scorer",
+        "scorer_version": "1.0.0",
+        "status": "scored",
+        "score": 1,
+        "reason": "产物包含精确通过标记",
+        "evidence": [
+          "artifact-pass"
+        ]
+      },
+      {
+        "scorer_id": "exact-result-scorer",
+        "scorer_version": "1.0.0",
+        "status": "indeterminate",
+        "score": null,
+        "reason": "产物不包含可判定标记",
+        "evidence": [
+          "artifact-unknown"
+        ]
+      }
+    ],
+    "reward_adapters": [
+      {
+        "capability": "partial",
+        "reward": null,
+        "missing": [
+          "range",
+          "missing_value",
+          "aggregation",
+          "clipping",
+          "version"
+        ]
+      },
+      {
+        "capability": "available",
+        "reward": 1,
+        "adapter_version": "1.0.0"
+      }
+    ],
+    "score_statuses": [
+      "scored",
+      "indeterminate"
+    ],
+    "reward_capabilities": [
+      "partial",
+      "available"
+    ]
+  },
+  "failures": [
+    {
+      "artifact_id": "artifact-unknown",
+      "type": "indeterminate",
+      "handling": "不伪造零分"
+    },
+    {
+      "adapter_case": "missing-semantics",
+      "type": "partial",
+      "handling": "不生成训练 Reward"
+    }
+  ],
+  "scope": "本地确定性规则评分；未证明任何真实模型、训练管线或发布系统效果"
+}
