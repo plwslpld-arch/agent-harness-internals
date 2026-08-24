@@ -17,6 +17,102 @@ sources: [{"repo":"codex","path":"codex-rs/history/src/lib.rs","commit":"c9b19de
 
 本篇建立数据权威地图：ThreadId 是持久线程句柄；RolloutItem 保存可恢复记录；模型 Context 是由记录与当前配置投影出的有界视图；CompactedItem 保存摘要及可选替代历史；长期 Memory 则由后台管线从多个线程提炼成独立文件。摘要不是原始记录，记忆也不是会话真相。
 
+## 核心概念
+
+这一主题的关键不是「存没存」，而是每种数据为谁服务、能否重建、是否有损以及谁有权修改。Rollout 偏向追加证据，Thread Store 提供稳定身份和后端接口，运行时 History 服务当前采样，Compaction 改变模型视图，Memory 跨线程提炼候选知识。它们可以互相引用，却不能共享一个含糊的 history 名称。
+
+| 对象 | 权威范围 | 是否有损 | 主要消费者 |
+|---|---|---|---|
+| ThreadId | 持久线程身份 | 否 | 产品表面、Thread Store |
+| RolloutLine / Item | 已追加的会话记录 | 原则上追加 | 恢复、审计、投影器 |
+| Thread Store | 身份到后端的解析与操作 | 取决于后端 | 应用与恢复流程 |
+| 运行时 History | 当前 Session 的响应项 | 可正规化 | Agent Loop |
+| 模型 Context | 单次采样可见输入 | 是 | Provider 请求 |
+| CompactedItem | 压缩摘要和替代历史元数据 | 摘要有损 | 恢复与后续投影 |
+| Fork lineage | 新线程与来源关系 | 不复制所有外部状态 | 分支工作流、审计 |
+| Memory 工件 | 跨线程提炼的候选知识 | 高度有损 | 未来任务上下文 |
+
+追加记录表示新事实形成新条目，不通过改写过去伪造历史。RolloutItem 可以包含 SessionMeta、ResponseItem、TurnContext、WorldState 和 EventMsg；并非每项都要发送给模型。RolloutLine 的序号和时间帮助检测尾部与顺序，但是否具备事务耐久性仍取决于 writer 和后端。
+
+恢复是从提交记录重建活动状态。它应区分 New、Resumed、Forked 与 Cleared：Resumed 延续原身份，Forked 建立新 ThreadId 并保存来源，Cleared 表示上下文有意清空。界面回放、模型 History 和恢复事件由同一记录投影，却可能选择不同条目。
+
+压缩建立新的模型可见替代历史，不宣称旧事实消失。摘要保留任务目标、重要约束、工具结论和未解决事项，旧助手细节可以退出窗口；CompactedItem 记录摘要与窗口边界，以便恢复者知道何时、用什么替代。连续压缩会累积信息损失。
+
+长期 Memory 的作用域跨 Thread，因此风险也不同。扫描器选择哪些线程、模型怎样提炼、扩展输入是否过期、冲突事实如何合并，都会改变最终文件。Memory 只能作为下次推理的候选片段，高风险权限、发布结论和用户明确事实仍需回到权威来源。
+
+工具副作用不完全属于任何一个会话文件。记录可证明曾请求和已提交结果，外部文件或服务可能在崩溃点处于 unknown。恢复器不能通过重放旧工具来「重建历史」，而应使用提交点、幂等键或外部探测判断真实状态。
+
+## 为什么这样设计
+
+第一，ThreadId 与存储后端分离，使本地 Rollout、状态数据库或远程存储可以替换，而应用仍使用稳定句柄。路径移动和后端迁移不会要求产品表面暴露文件位置，也能减少把实现细节当身份的错误。
+
+第二，追加 Rollout 与模型 Context 分离，兼顾可审计性和有限窗口。历史证据可以持续增长，模型只接收正规化的相关子集；更换模型或压缩策略时，可以从同一记录重建新投影，而无需修改已经发生的事件。
+
+第三，把压缩作为独立 Turn 与持久条目，让摘要生成本身可观察、可失败和可恢复。若在内存里悄悄替换数组，无法知道哪些事实被摘要、模型为何忘记，也无法在摘要请求失败时安全回退。
+
+第四，Fork 使用新 Thread 身份保护因果分支。两个分支可以共享历史前缀，却会产生不同后续副作用和评分；保留 lineage 便于比较，避免把分支成功重复计算为原 Trial 的恢复结果。
+
+第五，Memory 独立于 Thread 记录，防止模型提炼结果反向篡改会话事实。派生知识可以更新、过期和删除，原始 Rollout 保留发生过什么；冲突时由调用方核对来源，而不是让最后一次提炼覆盖历史。
+
+第六，恢复不默认重放副作用，是因为通用 Harness 无法保证所有工具幂等。保守的 unknown 状态可能需要人工处理，却比重复发布、重复写入或重复发送消息更诚实。任务可用性与副作用安全在这里存在明确取舍。
+
+## 实现思路
+
+教学原型建立三份存储：追加型事件日志、Thread 元数据索引和派生工件目录。它用于演示权威边界，不代表 Codex 锁定实现采用完全相同的文件布局。
+
+1. **追加权威记录。** 每个 RolloutLine 包含 seq、时间、ThreadId、TurnId、类型和负载哈希；writer 只追加，发现尾行损坏时停止并报告。
+2. **维护 Thread 索引。** 索引保存 ThreadId、后端定位、归档状态和 lineage，不复制全部对话；索引可重建时记录重建水位。
+3. **重建运行时 History。** 恢复器读取已提交条目，验证顺序与工具调用配对，生成产品回放事件和 Agent History；不执行旧工具。
+4. **派生模型 Context。** 根据当前模型模态、窗口和项目配置正规化响应项，输出 kept / transformed / dropped 报告。
+5. **执行压缩。** 在独立 Turn 请求摘要，验证关键约束和未结算工具关系，写 CompactedItem 后再原子切换替代历史。
+6. **处理 Fork。** 新建 ThreadId，记录 parent 与 fork 水位，只共享可复制历史；外部工作区状态另行快照或声明共享。
+7. **提炼 Memory。** 后台扫描有界来源，保留来源引用、生成版本、冲突和删除信号；最终文件不写回原 Rollout。
+8. **接入 Eval。** Trial 保存 canonical Thread、Rollout 水位、外部产物和 Scorer 版本；Fork 与恢复由实验契约明确计数。
+
+```text
+rollout.append(event, expected_next_seq)
+history = recover_committed_items(rollout)
+context, report = normalize(history, model, budget)
+如果需要压缩:
+    summary = summarize(context, required_facts)
+    rollout.append(Compacted(summary, source_window))
+    context = build_replacement_history(summary, retained_items)
+memory = derive_with_sources(selected_threads)  // 只生成派生工件
+```
+
+压缩验证不只检查令牌下降。先从结构化状态抽取不可丢失事实，如当前目标、允许路径、未完成步骤和工具结果身份；摘要生成后逐项核对。无法证明保留时，保持旧历史或将压缩标为失败，不能写入一个看似流畅但缺少安全约束的摘要。
+
+恢复测试使用故障注入覆盖写入前、写入中、fsync 后、索引更新前后和压缩切换点。每个检查点记录可见水位，恢复后禁止重复已提交工具副作用。存储后端不同，原子性假设也必须分别验证，不能从本地文件推断远程实现。
+
+Memory 项至少包含正文、支持来源、生成提交、更新时间、冲突状态和过期策略。只有一个已删除来源支持的项应被清理；多来源冲突则保留不确定标记。面向模型展示时可以压缩这些元数据，审计文件仍完整保留。
+
+## 贯穿案例
+
+用户要求修改解析器并运行测试。第一轮读取文件、写入补丁并启动测试；测试完成后进行手动压缩，随后进程重启并恢复，最后从该线程 fork 一个替代实现。案例同时检查日志、模型 Context、外部文件和 Eval 身份。
+
+1. **记录第一轮。** Rollout 追加用户消息、工具调用、工具结果、助手消息和 TurnComplete；外部工作区保存补丁哈希与测试日志。
+2. **执行压缩。** 摘要必须保留目标文件、已改内容、测试失败和「禁止修改快照」约束；CompactedItem 记录来源窗口，旧条目仍在 Rollout。
+3. **重启恢复。** 新 Session 用同一 ThreadId 读取提交水位，重建历史和界面事件；不重新运行已提交的补丁或测试工具。
+4. **继续新轮次。** 模型请求包含替代历史与新用户输入，不含被压缩的旧助手细节；正规化报告说明每项去向。
+5. **创建 Fork。** 替代方案获得新 ThreadId 与 parent lineage，共享历史前缀，但工作区共享或快照策略被显式记录。
+6. **独立评分。** 原 Thread 与 Fork 是两个 Target 变体还是同一 Trial 的探索，由实验契约预先决定；不能完成后择优改分母。
+
+```json
+{"threadId":"th-main","rolloutSeq":42,"compactedFrom":[1,35],"replacementContext":"summary-v1","workspaceHash":"a1"}
+```
+
+```json
+{"threadId":"th-fork","parent":"th-main","forkSeq":42,"trialPolicy":"预先声明的变体","workspaceMode":"共享或快照"}
+```
+
+崩溃变体发生在文件补丁已经写入、tool result 尚未追加。恢复器看到 started 而没有 terminal，先比较工作区哈希或调用幂等键；无法确认就标为 unknown，不自动再次应用补丁。原始 Trial 保留这次不确定结果，基础设施恢复只增加 Attempt 记录。
+
+压缩反例故意删除「禁止修改快照」。关键事实核对失败，系统不切换 replacement history，并保留失败摘要作为诊断工件。摘要文本读起来通顺不构成成功；验证器关心的是所需事实集合和工具关系完整性。
+
+Memory 变体在后台提炼出「该项目始终禁止修改快照」，但它只由本次临时用户指令支持。下次另一个项目不能无条件继承；Memory 项必须带项目作用域和来源，用户撤销或来源过期后清理。这个反例说明跨线程便利性会放大错误事实的影响范围。
+
+派生便利不能覆盖来源边界。
+
 ## 真实输入与输出
 
 ### 输入

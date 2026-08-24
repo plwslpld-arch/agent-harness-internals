@@ -19,6 +19,109 @@ sources: [{"repo":"codex","path":"codex-rs/core/src/agent/control.rs","commit":"
 
 身份必须稳定。关系必须可追。来源不能丢失。终态也要留痕。
 
+## 核心概念
+
+子智能体编排的基本单元是线程图，而非一组匿名并发 Future。每个节点拥有 ThreadId、独立 Session 与 Rollout，边保存父线程、父 Turn、角色和历史继承。根线程树共享控制面与容量，但子节点的上下文、工具结果和终态仍各自归属。
+
+| 概念 | 负责的问题 | 是否创建新 Turn / Thread | 主要证据 |
+|---|---|---|---|
+| spawn | 怎样创建有身份的子智能体 | 新 Thread，首个 Turn | 父子边、预留容量、子 Rollout |
+| inheritance | 子模型初始看见哪些父历史 | 不创建身份 | 实际 Context 摘要、截断规则 |
+| send message | 怎样向现有子线程通信 | 可只追加消息 | sender、receiver、kind |
+| follow-up | 怎样让现有子线程继续工作 | 同 Thread 新 Turn | parent Turn、提交结果 |
+| wait | 怎样等待目标状态变化 | 否 | 订阅目标、观察到的状态 |
+| list | 怎样枚举根树活动节点 | 否 | AgentPath、status |
+| interrupt | 怎样停止目标当前执行 | 不删除 Thread | Op、aborted 事件、资源状态 |
+| notification | 子终态如何传给祖先 | 不创建子结果 | 终态、来源 Thread、注入次数 |
+
+spawn 的成功点是子线程创建并接受初始任务，不是子任务完成。创建前要预留线程槽和执行容量，计算唯一 AgentPath，并固定角色、协作模式与历史继承。任何一步失败都应释放预留，避免幽灵节点占满根树。
+
+历史继承控制子 Agent 的初始知识。无历史适合独立、低泄漏任务，完整历史提供最多上下文，最近若干 Turn 在成本和约束保留之间折中。无论选哪种，父子 lineage 都应持久保存；上下文截断不能把图关系一起删掉。
+
+通信分「投递信息」和「触发工作」。普通消息可以追加到现有子线程，follow-up 则在目标空闲时启动新 Turn，并关联当前父 Turn。若目标仍忙，系统需要明确排队、steer 或拒绝语义，不能凭一段文本猜测是否已执行。
+
+wait 是控制面订阅，不是持续把状态文本塞给模型。完成、失败、中断和关闭都是可观察终态；超时只表示等待者暂时没看到变化。通知则在子终态后进入父线程的后续模型上下文，即使父没有调用 wait，也不应重复生成多个任务结果。
+
+多智能体 Eval 还要区分 Trial、子任务和恢复 Attempt。一个 Trial 可以创建多个子 Thread，它们共同服务同一产品结果；子节点数量不是分母。子基础设施故障可在预先规则内恢复，子答案错误不能通过不断 spawn 新节点挑出成功答案。
+
+线程图还要满足结构不变量：每个非根节点只有一个创建父边，AgentPath 在根树内唯一，父 Turn 必须真实存在，终态节点不会重新占用活动容量。跨线程消息可以形成多对多通信，却不改变创建 lineage；否则一条 follow-up 会让子节点的父身份随发送者漂移。
+
+递归委派需要深度与总量两种预算。只限制单层并发无法阻止每个子节点继续创建后代；只限制深度又可能在同层生成过多节点。拒绝超限 spawn 应形成结构化结果并释放预留，不让模型通过异常路径绕过控制面。
+
+父端消费结果也是独立事件。子通知到达只说明结果可用，父 Agent 可能忽略、误读或在摘要中丢失证据；最终报告应引用 consumed child result ID。Scorer 既检查子产物，也检查父端是否正确整合，而不是看到通知就认为协作成功。
+
+## 为什么这样设计
+
+第一，独立 Thread 让子智能体拥有自己的上下文预算、工具轨迹和恢复点。若子任务只是父 Turn 内的匿名 Future，大量中间消息会挤占父 Context，失败也难以单独重试或审计。
+
+第二，根树共享 AgentControl 和容量限制，防止递归委派无限扩张。每个根 Session 的资源和节点可统一枚举、等待与中断，同时不同根树不会意外共享活动 Agent 池。
+
+第三，通信保存两端身份与 kind，支持异步协作和因果追踪。父线程可以继续其他工作，子完成后再通过通知汇入；审计者能区分 spawn 初始任务、普通消息与新 Turn follow-up。
+
+第四，wait、list 和 interrupt 分开，避免观察动作改变目标状态。wait 不制造完成，list 不启动子线程，interrupt 不删除历史；明确命令语义使 UI 和自动化客户端不必用副作用模拟查询。
+
+第五，终态通知由控制面注入祖先，使父线程不必一直阻塞等待。通知携带来源和终态，下一次采样可以整合；重复等待者不会把一次完成复制成多个结果。
+
+第六，历史继承显式配置，将成本、隐私和任务质量变成可记录条件。完整继承不自动更好，截断也不自动更安全；Eval 可以按继承模式分层，而不是把上下文差异归因给模型。
+
+## 实现思路
+
+教学编排器使用不可变线程图与事件驱动状态机。它用于解释机制，不声称 Codex 内部采用同名 GraphStore。
+
+1. **编译 spawn 规范。** 固定父 Thread / Turn、角色、任务、模型、工具、历史继承、最大深度与预算，生成请求幂等键。
+2. **预留资源。** 在创建前原子取得线程槽和执行容量；失败立即返回，不生成半节点。
+3. **创建子节点。** 分配 ThreadId 和 AgentPath，复制或投影允许的父历史，保存 lineage 后启动首个 Turn。
+4. **路由通信。** 每条消息携带 sender、receiver、kind、parentTurn 和 submission ID；follow-up 仅在状态允许时触发新 Turn。
+5. **订阅状态。** wait 针对一组 ThreadId 订阅版本化状态，超时返回快照；list 从根树读取，不扫描所有全局线程。
+6. **处理控制。** interrupt 发送给目标当前 Task，保留 Thread 与 Rollout；关闭和删除使用独立操作。
+7. **传播终态。** 子节点结算后只生成一次带 event ID 的通知，祖先按去重键写入 Context，释放执行容量。
+8. **恢复开放节点。** 从持久图读取未终态后代，验证容量和历史水位后重新驻留；已完成节点不重新执行。
+
+```text
+spec = compile_spawn(parent_thread, parent_turn, task, inheritance, budgets)
+reservation = root_control.reserve(spec)
+child = create_thread(spec.thread_id, lineage, inherited_context)
+run(child.first_turn)
+on child.status_changed:
+    publish_once(notification(child.id, child.status, child.result_ref))
+    如果 child.terminal: release(reservation)
+```
+
+线程图至少保存 node id、parent id、parent turn、AgentPath、role、inheritance hash、status version 和 result reference。消息日志保存 submission ID 以便去重；通知 event ID 防止恢复时重复注入。父摘要只能引用子结果，不能覆盖子 Rollout 的原始终态。
+
+共享工作区要单独治理。独立 Thread 不等于独立文件系统，两个子 Agent 可能修改同一文件；编排器应分配只读任务、隔离检出或明确合并所有者。文件冲突属于产物协调，不由线程身份自动解决。
+
+质量控制采用结构化交接 Schema，例如风险项、证据引用、状态与缺口。父 Agent 检查 Schema 和来源，再决定是否消费；子自报「完成」只是字段。独立 Scorer 最终检查合并产物，并将超预算、重复副作用与缺失结果纳入 Trial。
+
+## 贯穿案例
+
+根任务要求审查三个模块并生成风险报告。根线程创建两个只读 reviewer，第二个完成后接收 follow-up 审查第三模块；根线程并行整理报告框架，不阻塞等待。
+
+1. **编译节点。** reviewer-a 继承最近两轮，reviewer-b 不继承历史，只接收结构化任务；两者各有 ThreadId、parent Turn 和最大四轮预算。
+2. **预留并启动。** 根控制面取得两个槽，保存 AgentPath；a、b 分别启动独立 Session，工具权限只读。
+3. **异步完成。** b 先返回结构化结果，状态变为 completed；父未调用 wait，仍在下一次采样收到一次完成通知。
+4. **发送 follow-up。** 父向同一 b 线程提交第三模块任务，触发新 Turn 并关联新的父 Turn；ThreadId 保持不变。
+5. **处理中断。** a 超出范围读取秘密，安全链拒绝；父随后 interrupt 当前 Task，a Thread 与拒绝轨迹仍保留。
+6. **汇总评分。** 父报告引用 a 的 partial 与 b 的两个结果，独立 Scorer 检查风险证据和模块覆盖，不按 spawn 数计分。
+
+```json
+{"root":"th-root","children":[{"id":"th-a","path":"1","status":"interrupted"},{"id":"th-b","path":"2","status":"completed","turns":2}]}
+```
+
+```json
+{"notification":{"source":"th-b","eventId":"done-b-1","status":"completed"},"parentWaited":false,"deduplicated":true}
+```
+
+并发冲突变体允许两个 reviewer 写同一报告。线程图全部正确，文件仍发生覆盖；解决方案是只读子任务加父端单写，或隔离工作区后显式合并。这个失败证明编排身份无法替代资源隔离。
+
+恢复变体在 b 首轮完成通知写入前重启。恢复器读取子终态和通知 event ID，若父 Rollout 未消费则补写一次，若已消费则不重复；它不会重新执行 b。等待者的超时或进程重启都不能把一次子任务完成变成多个成功样本。
+
+质量反例让 a、b 都自报完成，但 b 的第三模块结果缺少源码证据。父报告可以正常生成，Trial 仍判 fail。多智能体提高了覆盖能力，却没有把内部状态提升为发布结论。
+
+再让 a 尝试创建超过深度限制的孙节点。控制面在分配 ThreadId 前拒绝，并把原因回送 a；父端只看到结构化汇总时，验证器仍应读取最深层调用证据。根回复「深度限制已触发」本身不够，因为子 Agent 可能吞掉真实错误。
+
+成本报告分别统计模型 token、工具时间、峰值活动节点和总 Thread 数。它们用于比较编排代价，不直接进入正确性分数；若发布门禁包含预算，阈值与失败语义必须在 Trial 前冻结。
+
 ## 真实输入与输出
 
 ### 输入

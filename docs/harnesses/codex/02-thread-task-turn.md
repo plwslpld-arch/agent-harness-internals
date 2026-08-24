@@ -17,6 +17,96 @@ Codex 源码同时出现 Thread、Session、Task、Turn、Op、Event 和界面�
 
 身份先于状态。
 
+## 核心概念
+
+理解 Codex 生命周期要先问「谁拥有谁」，再问「现在是什么状态」。Thread 提供持久身份，活动 CodexThread 提供操作句柄，Session 持有共享服务，SessionTask 驱动一种工作流，ActiveTurn 持有当前执行控制，TurnState 保存轮次内可变等待项。相似名称来自不同层，不代表一一对应。
+
+| 对象 | 身份跨度 | 所有者 / 内容 | 典型终态 |
+|---|---|---|---|
+| Thread | 跨进程可引用 | 历史与持久会话标识 | 归档或删除 |
+| CodexThread | 当前活动实例 | Session 与通信通道 | 关闭或移交 |
+| Session | 活动线程运行期 | 服务、输入队列、ActiveTurn | flush / shutdown |
+| SessionTask | 一次工作流执行 | Regular、Review、Compact 等 | 完成、取消、失败 |
+| TurnContext | 一次逻辑轮次 | 模型、权限、环境、输出约束 | 随 Turn 结算 |
+| ActiveTurn | 当前执行控制 | RunningTask、TurnState | 清空、挂起或恢复 |
+| TurnState | 轮次内可变状态 | 审批、用户输入、动态工具、计数 | 随轮次释放 |
+| Op / Event | 协议交互 | 提交请求与观测结果 | 已接受或类型化拒绝 |
+
+Thread 与 Session 的区别类似「持久记录」和「当前打开的运行实例」。Thread 可以出现在历史列表中而没有活动 Task；Session 则绑定当前进程内服务和输入队列。恢复 Thread 时可以创建新的活动句柄，却必须延续原有身份和历史，而非创建一个看似相同的新会话。
+
+Task 与 Turn 也不同。Task 是驱动 Session 的后台工作流实现，Regular、Review 或 Compact 可以拥有不同执行逻辑；Turn 是用户和协议可观察的一次逻辑工作边界。一个 Turn 能包含多次模型采样和工具 follow-up，一个 Task 也可能因挂起而由另一工作者接管。
+
+steer 表示将新输入送入正在运行且身份匹配的 Turn。它不等同于启动新 Turn，也不是无条件消息排队。接受时可以更新活动轮的输入和设置；拒绝时应同时拒绝附带配置，避免调用方收到 NoActiveTurn，Session 却已被部分修改。
+
+中断与挂起体现两种不同意图。中断宣告当前执行终止并产生 aborted 语义；挂起为所有权移交暂时停止当前工作者，不写完成或中断终态，随后恢复继续使用原 turn_id。恢复不是重放所有用户输入，而是从持久边界继续未结算工作。
+
+协议提交标识与 TurnId 也不能混用。submission ID 关联一次客户端 Op 与其响应，重发同一操作时可用于去重；TurnId 关联整个逻辑轮次，期间可以接受多个操作并产生多次模型采样。若用 TurnId 当提交幂等键，合法 steer 会被误判为重复；若用 submission ID 统计轮次，又会重复计数。
+
+要把多工作者恢复做成可证明的系统，还需要所有权或隔离令牌语义。挂起记录至少包含原 Turn、历史水位和前一 writer 已关闭的证据；新工作者取得有效租约后才能追加。旧工作者迟到的写入应被拒绝，否则两个进程会同时宣告同一 Turn 终态。这里描述的是教学化恢复要求，不声称锁定 Codex 源码使用这些同名机制。
+
+## 为什么这样设计
+
+第一，持久 Thread 与活动 Session 分离，使应用可以列出、归档和恢复历史，而不必让每个会话常驻进程。进程崩溃或产品表面关闭不会自动抹去 Thread 身份，新的工作者也能重新建立运行服务。
+
+第二，Session 同时只允许一个 ActiveTurn，简化会话历史、审批和工具结果的线性归属。若同一 Session 并行写入两个轮次，用户 steer、工具结果和 TurnComplete 会出现难以排序的竞态；需要并行时应创建子线程或明确的编排身份。
+
+第三，将工作流抽象为 SessionTask，让常规执行、Review 与 Compact 复用取消、事件和清理机制，又不强迫它们共享同一模型循环。TaskKind 可用于可观测与策略，不能反向推断所有 Task 都会产出相同消息。
+
+第四，类型化提交结果把竞态显式返回给调用方。UI 在点击 steer 与请求到达之间，活动 Turn 可能已经结束；`NotSubmitted { NoActiveTurn }` 比静默创建新轮次更安全，也防止设置落入错误身份。
+
+第五，挂起不写终态，是为了保持未完成工作的可恢复性。若移交前发出 TurnAborted，恢复者会把它当成已结算历史；若发 TurnComplete，评测和界面都会产生假成功。缺失终态在这里是有意协议，但必须由挂起记录和 writer flush 解释。
+
+## 实现思路
+
+教学状态机以 Thread 为聚合根，同时把持久事件和进程内执行控制分开。它用于学习所有权，不冒充 Codex 内部类型的完整复制。
+
+1. **解析 Thread。** 根据 ThreadId 加载持久历史，创建活动 Session 和通信通道；记录新建、恢复或 fork 来源。
+2. **串行提交 Op。** 每次提交携带 submission ID、目标 Thread / Turn 与可选设置，处理器返回明确的 accepted 或 rejection 枚举。
+3. **启动 Turn。** 仅在 `active_turn == none` 时生成 TurnId、TurnContext 和取消令牌，选择 SessionTask 并写 TurnStarted。
+4. **路由追加输入。** 活动轮存在且身份、Schema 兼容时 steer；否则整次拒绝，不写历史、不应用设置。
+5. **结算 Task。** 正常完成写 TurnComplete，中断写 TurnAborted；失败记录责任层并清理 ActiveTurn。
+6. **执行挂起与恢复。** 挂起停止工作者、flush writer 并保存 continuation，不写终态；恢复验证 lease 或所有权后继续原 TurnId。
+7. **投影产品状态。** 界面和 App Server 只读核心事件，将语义损失记在适配层，不能回写核心状态。
+
+```text
+提交(op):
+    session = resolve(op.thread_id)
+    如果 op.kind == start 且 session.active_turn 为空:
+        return start_new_turn(op)
+    如果 op.kind == steer 且 matches(session.active_turn, op.turn_id, op.schema):
+        return steer_active_turn(op)
+    return NotSubmitted(reason)  // 不应用附带设置
+```
+
+状态存储需要两个提交点：持久事件追加成功和进程内状态切换成功。实现应规定顺序并支持幂等恢复，避免已经写 TurnStarted 却没有 ActiveTurn，或 ActiveTurn 清空却漏写终态。挂起是例外路径，它写 continuation 证据而非终态。
+
+观察模型请求时，为每次采样附上 ThreadId、TurnId 和 sample index。工具 follow-up 递增 sample index 但保留 TurnId；新用户工作生成新 TurnId。Eval Adapter 再将 TrialId 单独绑定，禁止按网络请求数量自动生成 Trial。
+
+## 贯穿案例
+
+用户启动一次「运行测试并修复失败」的 Turn。第一次模型采样提出命令，工具执行期间用户补充「只修改解析器，不要改快照」，随后产品表面收到挂起请求，把执行移交给另一工作者继续。
+
+1. **创建身份。** Thread `th-7` 已存在，Session 在空闲状态创建 Turn `tr-9` 和 Regular Task，写入 TurnStarted。
+2. **工具 follow-up。** 第一次采样调用测试工具，结果回到同一 `tr-9` 的第二次模型请求；sample index 改变，TurnId 不变。
+3. **接受 steer。** 活动 Turn 与目标标识匹配，追加限制文本并更新允许的轮次设置；返回 `Steered { tr-9 }`。
+4. **拒绝竞态输入。** 工具结果结算后，又一个旧客户端向 `tr-old` steer；处理器返回 WrongTurn，附带的完全访问设置不生效。
+5. **挂起移交。** 当前工作者保存历史水位和 continuation，flush 后关闭 writer，不写 TurnComplete 或 TurnAborted。
+6. **恢复完成。** 新工作者验证 Thread 与 Turn 身份，从同一 `tr-9` 继续，产物通过后才写 TurnComplete；独立 Scorer 另行判断任务。
+
+```json
+{"threadId":"th-7","turnId":"tr-9","taskKind":"regular","sample":2,"state":"active"}
+```
+
+```json
+{"operation":"steer","targetTurn":"tr-old","result":"not_submitted","reason":"wrong_turn","settingsApplied":false}
+```
+
+若挂起路径错误写了 aborted，恢复者会面对一个已经终止却要求继续的轮次；若恢复时生成 `tr-10`，同一逻辑工作被拆成两个 Turn；若拒绝 steer 仍应用权限，安全配置被一个失败操作污染。三个断言分别保护终态、身份和原子提交。
+
+案例最终同时保存 Thread 历史、Task 生命周期、每次采样与产品表面响应。TurnComplete 只表示核心工作流结算，报告中的测试结果和工作区差异仍由 Trial Scorer 检查。这样可以解释「运行完成但任务失败」，也能区分产品失败与工作者移交。
+
+最后模拟旧工作者在恢复后迟到提交工具结果。教学原型中的 writer 隔离令牌已失效，因此该事件不能进入 Thread；新工作者根据已持久化水位决定继续等待、查询副作用或标记 unknown。这个测试防止挂起只停了内存 Task，却没有真正隔离持久写入。
+
 ## 真实输入与输出
 
 ### 输入
