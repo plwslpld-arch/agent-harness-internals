@@ -560,6 +560,14 @@
       "scope": "docs/harnesses/opencode/08-share-telemetry-eval-boundaries.md",
       "alt": "OpenCode 会话按策略产生外部分享副本并记录可选遥测，运行证据进入不可变试验产物，再由外部评分、训练适配、候选选择和独立发布留出集分责处理的中文数据流图",
       "claims": ["opencode.share.policy-controls-external-copy", "opencode.telemetry-and-tests-are-not-release-eval"]
+    },
+    {
+      "id": "comparison-runtime-config-model-input",
+      "path": "assets/diagrams/comparisons/01-runtime-config-model-input.svg",
+      "type": "data-flow",
+      "scope": "docs/comparisons/01-runtime-config-model-input.md",
+      "alt": "六类 Agent Harness 从产品入口、项目实例与分层配置形成有效模型输入，并在模型目录、认证和真实请求之间保留运行条件的中文数据流图",
+      "claims": ["deepseek-harness.boot.profile-preset-composition", "codex.config.layered-and-thread-scoped", "gemini-cli.config.layered-effective-settings", "claude.architecture.product-sdk-boundaries", "pi.architecture.layers-are-composed", "opencode.config.layers-build-instance"]
     }
   ]
 }
