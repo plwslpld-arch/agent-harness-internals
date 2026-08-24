@@ -23,6 +23,106 @@ pi 的 `packages/evals` 很重要，但不改变本仓库定位。它让 Agent H
 
 先把组合关系画清楚，再进入每一层。
 
+## 核心概念
+
+pi 的主干可以按三层理解：AI 层把不同 Provider 变成共同消息流，Agent Core 解释消息、工具与队列，Coding Agent 宿主装配项目资源、Session、编码工具和 Extension。三层之间通过明确对象连接，却保留各自终态。模型流结束不代表工具循环结束，工具循环结束也不代表编码任务通过。
+
+Session、Protocol、TUI 和 Telemetry 是横切表面，不是另一套 Agent Core。Session 保存并投影历史，Protocol 把会话操作暴露给远程 Client，TUI 把事件渲染为终端，Telemetry 记录运行事实。它们可以改变可达方式、持久性和可观测性，却不自动改变任务评分标准。
+
+Eval 是 Agent Harness 的验证出口。pi 提供 Eval Harness、Artifact 和 Summary 能力，外部 Scorer 仍要按固定 Dataset 与 Rubric 判断结果；训练 RewardAdapter、Checkpoint 选择和独立发布 Holdout继续各负其责。仓库的主线因此以 Agent Harness 为中心，同时把 Eval 作为不可缺少的横切闭环。
+
+| 层或表面 | 核心责任 | 主要输入输出 | 不能代替 |
+| --- | --- | --- | --- |
+| pi-ai | Provider、认证、流事件与统一消息 | Context → AssistantMessage | Agent 工具决策 |
+| Agent Core | 状态、双层 Loop、队列和工具批次 | AgentMessage ↔ ToolResult | 编码产品装配 |
+| Coding Agent | Prompt、资源、Session、工具和 Extension | 项目目标 → 编码会话 | 操作系统隔离 |
+| Session / Compaction | 持久树与模型 Context 投影 | Entry Tree → Context | 无损审计摘要 |
+| Protocol / Client / Server | 远程命令、事件、Snapshot 和 Lease | Byte Stream ↔ Session 操作 | 产品成功判断 |
+| CLI / TUI | 输入方式与表现投影 | 人或脚本 ↔ Session Event | Agent Core 语义 |
+| Telemetry | Span、Event、Usage 和错误观测 | 运行 → Trace | Scorer |
+| Eval / Scorer / Gate | Artifact、评分、统计和发布决策 | Trial → Verdict | 默认运行时能力 |
+
+## 为什么这样设计
+
+分层让错误可以定位。认证失败属于 AI 运行时，截断工具调用属于 Agent Loop，项目资源冲突属于 Coding Agent 装配，摘要丢事实属于 Session 投影，协议错帧属于 Transport，最终测试失败属于产品 Eval。若把全部现象都称为「Agent 失败」，恢复策略和证据都会失去针对性。
+
+小 Core 配合可扩展宿主，允许 pi 在不硬编码产品策略的前提下支持动态工具、Provider、终端表面和部署方案。代价是更多责任落到 Extension 来源、Prompt 装配和宿主权限。课程会同时呈现组合能力与安全边界，不把灵活性包装成默认最小权限。
+
+把 Session 与 Context、Telemetry 与 Scorer、Response 与任务终态分开，是为了阻止证据越权。每层只为自己的契约背书：可以证明流收敛、消息追加、命令接受或 Artifact 写入，但不能跨层宣布用户目标正确。独立 Gate 最后读取目标产物，才形成发布判断。
+
+这种组织也便于跨 Harness 比较。读者可用共同抽象对照 DSH、Codex、Claude、Gemini CLI、OpenCode 和 pi，同时保留 pi 特有的包分层、Extension 机制和远程 Session 协议。比较的是责任与证据，不是名称数量。
+
+## 实现思路
+
+学习这条主线时，以一条任务 Trace 为轴，逐层建立责任账本。下面的结构是课程分析模型，不是 pi 上游内部数据类型；它要求每层记录输入、输出、终态和证据来源，从而暴露层间断点。
+
+责任账本还要保留版本：模型目录、Extension、Prompt、Session 投影器、协议和 Scorer 任一变化，都可能让同一输入得到不同结果。将版本摘要绑定到 Layer Trace，可以区分控制逻辑回归、环境漂移和评分规则变化。
+
+```ts
+interface LayerTrace {
+  layer: "ai" | "agent" | "coding" | "session" | "surface" | "telemetry" | "eval";
+  inputDigest: string;
+  outputDigest: string;
+  terminal: string;
+  evidence: string[];
+  unknowns: string[];
+}
+```
+
+1. 固定 pi Commit，先区分现行源码、测试、未来规格、示例和外部链接。任何设计目标都不直接进入运行时能力表。
+2. 从 `createAgentSession()` 追装配：有效模型、资源、Prompt、Active Tools、Extension 和 Session Backend 同批保存为 Snapshot。
+3. 从 Agent Core 追控制流：模型事件、StopReason、steering/follow-up、Tool Call、Tool Result 与终止原因按 ID 关联。
+4. 从 Session 追持久事实与 Context Projection，记录活动 Leaf、Compaction、参与送模的 Entry 和原始 Artifact。
+5. 从 CLI/TUI 或 Protocol 追输入输出投影，确认表面变化没有被误写成 Core 变化；远程 Response 与后续 Event 分开。
+6. 记录默认宿主权限及实际隔离方案，使用能力探针证明文件、进程、网络、挂载和凭据边界。
+7. Eval 固定 Trial、Attempt、Dataset 和 Scorer，保存补丁与测试；Telemetry 只提供诊断，不填评分。
+8. 若进入训练，显式连接 `Scorer → RewardAdapter → 优化算法 → Checkpoint`；发布使用独立 Holdout 和独立 Gate。
+
+每完成一层都做反向提问：「这一层成功后，下一层仍可能怎样失败？」答案写入 `unknowns` 或失败矩阵。这样读者不会在看到 `done`、`agent_end`、Response 或零退出码时提前结束分析。
+
+## 贯穿案例
+
+以「修复解析器失败测试且不得修改公共 API」为贯穿任务。用户从 CLI 提交目标，Coding Agent 装配只读、编辑和测试工具；模型先读文件，再编辑代码并运行测试。Session 在过程中压缩旧消息，Telemetry 保存事件，Eval 最后检查测试和 API Diff。
+
+案例使用临时仓库与 Faux Provider 演示控制语义，真实模型能力和线上服务可用性保持未验证。若切换真实 Provider，必须新增凭据来源、区域、响应模型和原始停止原因记录，不能复用合成夹具的结论。
+
+初始任务契约如下：
+
+```json
+{
+  "caseId":"parser-fix-01",
+  "goal":"修复解析器失败测试",
+  "constraints":["不得修改公共 API"],
+  "targetTests":["parser.test"],
+  "releasePolicy":"测试通过且公共 API Diff 为空"
+}
+```
+
+1. AI 层从目录解析模型、Provider 和认证，把远端流归一为 AssistantMessage。`done` 只证明本次流结束；首次 `toolUse` 交给 Agent Core。
+2. Agent Core 执行 Read 与 Edit。若 Tool Call 被 `length` 截断，拒绝副作用并回送错误结果；正常 Tool Result 进入下一次模型采样。
+3. Coding Agent 的 Prompt、Active Tools 与 Extension Revision 同批留证。Extension 若改写 Provider 或 Tool Result，Trace 保存前后摘要。
+4. Session 追加原始 Entry。Compaction Summary 若漏掉「不得修改公共 API」，原 Entry 仍保留，Eval 不以 Summary 作为唯一事实源。
+5. CLI 显示完成或 Protocol 返回 Prompt Response，都只代表表面与命令边界；隔离探针另行证明工具未越出工作区。
+6. Telemetry Span 记录模型、Usage、工具和错误。Agent `agent_end` 后，Eval 读取补丁、测试结果和公共 API Diff。
+7. 即使测试通过，只要 API Diff 非空，Scorer 仍给出失败。若 Artifact 缺失则 unscored，不从正常退出猜测通过。
+8. 候选 Checkpoint 即使在选择集提升，也必须再过独立 Holdout，才能由 Release Gate 决定是否发布。
+
+最终证据应把各层终态并列，而非压成一个 success：
+
+```json
+{
+  "ai":{"terminal":"done","stopReason":"stop"},
+  "agent":{"terminal":"idle","toolCalls":3},
+  "session":{"persisted":true,"compacted":true},
+  "surface":{"mode":"cli","rendered":true},
+  "telemetry":{"status":"ok"},
+  "eval":{"tests":"passed","publicApiDiff":"non-empty","score":0},
+  "release":{"decision":"rejected"}
+}
+```
+
+案例中前五层都可能正常，任务仍因约束违反而失败。这不是矛盾，而是分层契约在发挥作用。后续八篇会分别展开每层的源码、测试、失败模式和复现方法，读者最终能从任一异常返回准确责任边界。
+
 ## 系统全景
 
 ![pi 从多 Provider AI、Agent Core 和 Coding Agent 组合到会话协议、终端表面、遥测评测与外部隔离的中文系统架构图](../../../assets/diagrams/pi/system-architecture.svg)

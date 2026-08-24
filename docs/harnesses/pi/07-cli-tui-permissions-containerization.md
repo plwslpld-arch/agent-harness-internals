@@ -21,6 +21,105 @@ TUI 将 Session Event 转换成 Component Tree，再 Render 为终端行。Main 
 
 仓库给出四类可选边界：Sandbox Extension、Gondolin 微型虚拟机、Plain Docker 和 OpenShell。它们的覆盖面不同。Sandbox Example 主要替换 Bash 与 `!` Command，而且未初始化、禁用或平台不支持时回退 Local Bash；容器化整个进程才覆盖内建 Tool 与 Extension Tool，但挂载目录和注入密钥仍会暴露相应资源。
 
+## 核心概念
+
+产品表面决定用户怎样输入目标、怎样观察事件，不决定 Agent Core 拥有哪些控制逻辑。Interactive TUI、Print Text、Print JSON 和 RPC 都可以创建 Coding Agent Session，但输入协议、输出投影和生命周期不同。比较模式时应固定 Session 配置和模型夹具，再检查同一消息与 Tool Result 如何被投影，不能用屏幕刷新次数代替 Agent Turn。
+
+Project Trust、交互确认与操作系统隔离也属于不同层。Trust 决定项目级 Extension、Skill 或设置是否装载；确认对话允许人在某次动作前作决策；隔离边界则由进程权限、容器、虚拟机或策略网关强制限制文件、进程、网络和凭据。前两者能降低风险，却无法约束已经获准或绕过交互表面的进程能力。
+
+隔离方案必须用能力矩阵描述。Sandbox Extension 主要接管 Bash 路径，并存在本地回退；Gondolin、Docker 和 OpenShell 对文件系统、网络、挂载、密钥与 Extension 的覆盖方式不同。所谓「在沙箱里运行」只有在实际启动拓扑、策略、拒绝探针和失败模式都留证后才有意义。
+
+| 概念 | 负责什么 | 不负责什么 | 验证信号 |
+| --- | --- | --- | --- |
+| Interactive TUI | 编辑、组件、Overlay 与事件呈现 | Agent 决策与工具权限 | 组件状态和渲染快照 |
+| Print Text | 单次运行的最终文本投影 | 完整中间事件 | 最终 stdout 与退出状态 |
+| Print JSON | 单次运行的 Session Event 流 | 双向远程控制 | 逐行事件 Schema |
+| RPC | stdin/stdout Command、Response、Event | 网络级授权与任务评分 | 请求关联和会话状态 |
+| Project Trust | 是否加载项目资源 | 限制已启用工具的 OS 权限 | 装载清单与诊断 |
+| Confirmation Hook | 人工允许、拒绝或改写动作 | 强制隔离和无人模式覆盖 | 决策记录与调用关联 |
+| Sandbox / Container | 强制副作用可达范围 | 自动保证配置最小权限 | 允许与拒绝探针 |
+| TUI Differential Render | 减少终端重绘 | 改变 Transcript 或 Turn | 行差异与全量重绘计数 |
+
+## 为什么这样设计
+
+多表面复用同一 Session，可以让交互用户、脚本和外部控制器共享模型、工具与持久化语义。TUI 适合持续观察与人工 steering，Print 适合流水线，JSON 适合消费事件，RPC 适合双向控制。表面分离避免 Core 为终端布局或 stdin 细节承担责任，也让自动化可以绕过图形交互而不重写 Agent。
+
+TUI 的差分渲染是性能与体验选择。组件树先生成完整行，再比较 Previous Lines；Overlay、宽度变化或特殊终端状态可能触发全量重绘。终端写入与 Session Event 不是一一对应，因此调试时既要看 UI 快照，也要看底层事件，才能区分「Agent 没输出」和「输出未正确呈现」。
+
+默认继承宿主权限使本地工具简单、兼容且可组合，也把安全责任明确交给部署者。pi 不假装一个 Prompt 或 Trust 对话能限制操作系统；需要强制边界时，用户可以选择适合威胁模型的外部方案。这个取舍允许轻量本地使用，但公开课程必须醒目标出默认能力范围。
+
+提供多种隔离方案而非单一「安全模式」，是因为威胁模型不同。只想限制 Shell 的用户可能接受 Extension；要求全部工具与扩展隔离的场景需要容器或虚拟机；需要集中网络策略的场景可能使用网关。选择方案时应依据覆盖矩阵和 Fail-open/Fail-closed 行为，而非方案名称。
+
+## 实现思路
+
+教学实现先把 Mode Resolution 与 Session Creation 分开，再为每种表面实现 Adapter。所有 Adapter 消费同一 Session Event，但只输出各自协议允许的投影。安全配置作为独立 Deployment Snapshot 绑定运行，避免界面选项被误当成隔离状态。
+
+Adapter 还要声明输入所有权和关闭语义。Interactive 模式拥有终端 Raw Mode 与编辑器状态，Print 模式通常在一次 Run 后退出，RPC 则可能跨多个 Prompt 持续存活。收到 Ctrl-C、stdin EOF 或 Agent Abort 时，各模式应明确是取消当前 Run、关闭 Session 还是终止进程，避免同一信号在不同表面产生不可解释的副作用。
+
+```ts
+type AppMode = "interactive" | "print-text" | "print-json" | "rpc";
+
+function resolveMode(args: Args, io: IOState): AppMode {
+  if (args.rpc) return "rpc";
+  if (args.json) return "print-json";
+  if (args.print || !io.stdinTTY || !io.stdoutTTY) return "print-text";
+  return "interactive";
+}
+```
+
+1. 解析参数与 TTY 状态，明确 RPC 和 JSON 优先级；管道导致的模式变化写入启动诊断，避免脚本意外进入交互等待。
+2. 用同一工厂创建 Model Runtime、Resource Loader、Session 和 Agent Core。模式 Adapter 不得私自增加高权限工具。
+3. Interactive Adapter 将事件映射为组件树，Render 完整行后再做差分；宽度、Overlay 与 Unicode 场景保存可视快照。
+4. Print Text 只在终态写最终文本，Print JSON 逐行输出事件；两者都要定义 stderr、退出码和中断行为，不能让日志破坏 stdout 协议。
+5. RPC 逐行解析 Command，分别输出 Response 与 Event，并实施请求预算和 EOF 清理。JSON 外观相似也不得复用 Print Event Decoder。
+6. 建立 Deployment Snapshot，记录宿主用户、工作目录、挂载、网络、环境变量类别、隔离方案、策略版本与失败回退。
+7. 对每项能力运行允许/拒绝探针：工作区内外读写、子进程、外网、环境变量、Socket 和密钥文件。预期拒绝却成功时立即失败。
+8. 将表面测试、隔离探针和产品 Eval 分开出结论。UI 正确、边界正确、任务正确必须分别通过。
+
+强隔离模式要明确 Fail Closed。Sandbox 初始化失败若回退 Local Bash，适合优先可用性的交互场景，却不满足强制策略；部署包装器应检测状态并阻止 Session 启动，或选择覆盖整个进程的隔离方案。
+
+能力探针应同时包含正向与反向用例。只验证「工作区文件可读」无法说明外部目录被阻止，只验证「网络失败」也可能只是测试地址不可达。为每个能力准备可控目标：工作区哨兵应成功，外部哨兵应被策略拒绝；本地允许端点和明确禁止端点分别测试网络规则。拒绝原因还要来自预期隔离层，普通 ENOENT 或 DNS 故障不能冒充策略生效。
+
+部署记录需要保存实际入口，镜像名称远远不够。容器内用户、工作目录、只读根文件系统、Bind Mount 读写属性、网络命名空间、环境变量注入和宿主 Socket 都会改变边界。Extension 运行在容器内时继承容器能力；若挂载了宿主高权限 Socket，容器外观仍可能无法提供预期隔离。
+
+## 贯穿案例
+
+假设同一「读取两个文件并生成摘要」任务分别经 Interactive、Print JSON 和 RPC 运行，模型与只读工具都使用确定性夹具。部署要求只能读取临时工作区，禁止访问外部目录和网络。目标是同时验证表面等价性与隔离边界，而不是比较终端输出长短。
+
+每种模式使用全新 Session，避免前一次运行的 Compaction、缓存或 follow-up 影响结果；三次运行共享同一 Case ID，但具有不同 Trial ID。比较时采用规范化消息和 Tool Result，而不是字节级比较 TUI 控制序列、JSON 行和 RPC Envelope，因为这些投影按设计就不同。
+
+实验输入如下：
+
+```json
+{
+  "task":"读取工作区内两个文件并生成摘要",
+  "modes":["interactive","print-json","rpc"],
+  "policy":{"workspaceRead":true,"outsideRead":false,"network":false},
+  "provider":"faux"
+}
+```
+
+1. 三种模式都创建同一配置的 Session，保存 Active Tools、Prompt 哈希和模型夹具 ID。Interactive 通过编辑器提交，Print JSON 从参数或管道提交，RPC 发送 Prompt Command。
+2. 将底层 Session Event 按 ID 对齐。TUI 可能多次差分重绘，Print JSON 输出多行事件，RPC 先有 Response 再有 Event；模型消息与 Tool Result 应保持一致。
+3. 只读工具访问工作区文件应成功，访问外部哨兵文件应拒绝，网络探针应失败。拒绝由实际隔离层产生，不能只让模型在 Prompt 中承诺不访问。
+4. 若使用 Sandbox Extension 并模拟初始化失败，观察到 Local Bash 回退后，强隔离运行立即判失败；不能因为任务摘要正确而放行。
+5. 最终 Eval 对三种模式的摘要内容做相同断言，TUI 另做视觉快照，隔离另做能力矩阵。三份结论独立保存。
+
+结果记录示例：
+
+```json
+{
+  "sessionSemantics":{"messagesEqual":true,"toolResultsEqual":true},
+  "presentation":{"interactive":"passed","printJson":"passed","rpc":"passed"},
+  "isolation":{"workspaceRead":"allowed","outsideRead":"denied","network":"denied","fallback":"none"},
+  "productEval":"passed"
+}
+```
+
+实验还要核对取消路径。Interactive 中断、Print 进程信号和 RPC Abort Command 都应让当前 Run 收敛，并检查已开始工具的真实状态。若文件写入已提交，界面显示「已取消」不能把副作用视为回滚；Trace 要记录开始、提交和检查结果。
+
+如果 TUI Unicode 行错位而 Session Event 正确，应判表现层失败；如果 Sandbox 回退导致外部文件可读，应判隔离失败；如果三种表面都正常但摘要内容错误，应判产品失败。这个拆分让「看起来完成」「协议完成」「边界生效」和「目标正确」不再相互遮盖。
+
 ## 真实输入与输出
 
 ### 输入
@@ -130,4 +229,3 @@ Print JSON 与 RPC 有什么不同？
 怎样验证容器化而不是只证明容器启动？
 
 **答案：** 对文件、网络、进程、凭据和挂载逐项做允许与拒绝探针，并保存实际策略与结果。
-
