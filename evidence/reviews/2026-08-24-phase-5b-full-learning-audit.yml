@@ -1,0 +1,41 @@
+{
+  "stage": "phase-5b-full-learning-audit",
+  "date": "2026-08-24",
+  "commit": "4bc25d1527d7af8f45c1d9e313ed7af38af54e59",
+  "promises": [
+    {"id":"p-learning-depth","statement":"七十八篇正式课程均达到各自教学契约，使新手能够解释对象、追踪调用链、实现最小原型、识别失败并设计验证。"},
+    {"id":"p-evidence-boundary","statement":"产品名被遮蔽时仍保留可迁移方法，恢复产品名后每项实现结论仍绑定来源、源码锚点或公开契约。"},
+    {"id":"p-public-entry","statement":"README、总入口、主线导航、中文图示与文章状态对最终课程范围作一致且不过度的承诺。"},
+    {"id":"p-local-release-gates","statement":"使用 Node 24 完成全部本地门禁、全部锁定来源和实验记录验证，不依赖 NVM。"}
+  ],
+  "evidence": [
+    {"id":"e-content-contract","promise":"p-learning-depth","type":"test","reference":"scripts/check-content-contract.mjs","summary":"内容契约检查七十八篇正式课程，六类文章分别满足概念、设计、实现、失败和验证要求。"},
+    {"id":"e-claims-anchors","promise":"p-evidence-boundary","type":"test","reference":"scripts/verify-claims.mjs","summary":"一百一十九条 Claim、八十篇来源绑定与一百三十二处源码锚点通过。"},
+    {"id":"e-stage-reviews","promise":"p-evidence-boundary","type":"file","reference":"evidence/reviews/","summary":"六条主线与基础、比较、角色、实验、样本均有独立阶段复核，反查产品特有结论和共同抽象边界。"},
+    {"id":"e-navigation-visuals","promise":"p-public-entry","type":"test","reference":"scripts/check-all.mjs","summary":"一百八十九个正式导航链接、八十一张正式中文 SVG、品牌和仓库身份契约通过。"},
+    {"id":"e-readme-status","promise":"p-public-entry","type":"file","reference":"README.md","summary":"入口明确 Agent Harness 单主线、Eval 横切能力、六条核心主线、扩展样本和最终验收状态。"},
+    {"id":"e-all-gates","promise":"p-local-release-gates","type":"command","reference":"scripts/check-all.mjs","summary":"Node v24.19.0 下十七组聚合检查与一百一十三项测试全部通过。"},
+    {"id":"e-all-sources","promise":"p-local-release-gates","type":"command","reference":"scripts/verify-sources.mjs","summary":"all 配置中的十七个锁定 Checkout 全部通过定义、Commit 与工作树核验。"}
+  ],
+  "findings": [
+    {"id":"f-summary-depth","priority":"high","status":"resolved","summary":"旧式研究摘要可能满足来源和结构，却不足以支持从零学习和动手实现。"},
+    {"id":"f-product-erasure","priority":"high","status":"resolved","summary":"共同抽象可能抹平六个产品的实现差异，产品名称也可能反过来替代直接证据。"},
+    {"id":"f-entry-drift","priority":"high","status":"resolved","summary":"README 仍曾显示扩展样本等待复核，与已完成内容状态不一致。"},
+    {"id":"f-diagram-decoration","priority":"medium","status":"resolved","summary":"图示数量可能被误当教学深度，或在不需要可视化的位置形成装饰性堆叠。"},
+    {"id":"f-style-rhythm","priority":"low","status":"open","summary":"七十八篇文档存在句长节奏偏整齐的非阻断提醒，后续总编辑可继续改善，但不改变事实、来源或教学结构。"}
+  ],
+  "resolutions": [
+    {"id":"f-summary-depth","action":"以内容契约 2.0 分别约束六条主线、基础、比较、角色、实验和样本，并逐批重写与复核。","evidence":["e-content-contract","e-stage-reviews"]},
+    {"id":"f-product-erasure","action":"比较课程先定义共同抽象，再逐格保留六方证据；各主线继续绑定锁定来源、Claim 与锚点。","evidence":["e-claims-anchors","e-stage-reviews"]},
+    {"id":"f-entry-drift","action":"更新 README 最终验收状态，并重新运行导航、品牌、内容与链接门禁。","evidence":["e-readme-status","e-navigation-visuals"]},
+    {"id":"f-diagram-decoration","action":"只在多组件关系、状态变化和分支决策处保留架构图、流程图、时序图或状态图，由正文解释且通过中文视觉清单校验。","evidence":["e-navigation-visuals","e-content-contract"]}
+  ],
+  "commands": [
+    {"command":"node scripts/check-all.mjs","exit_code":0,"summary":"Node v24.19.0 下全部十七组聚合检查通过，一百一十三项测试零失败。"},
+    {"command":"node scripts/verify-sources.mjs --profile all","exit_code":0,"summary":"十七个来源定义和十七个 all 配置 Checkout 全部通过。"},
+    {"command":"node scripts/check-content-contract.mjs","exit_code":0,"summary":"七十八篇正式课程通过新版分类型内容契约，无草稿提示。"},
+    {"command":"node scripts/check-visuals.mjs && node scripts/check-navigation.mjs","exit_code":0,"summary":"八十一张正式中文 SVG 与一百八十九个正式导航文章链接通过。"},
+    {"command":"node scripts/verify-reviews.mjs","exit_code":0,"summary":"提交前二十三份分阶段复核通过且无高优先级伪通过。"}
+  ],
+  "result": "pass"
+}
