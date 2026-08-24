@@ -1,0 +1,66 @@
+{
+  "stage": "phase-3c-gemini-cli",
+  "date": "2026-08-24",
+  "commit": "94a73eeaccfd2d48b9d767238717249ffa6c07cf",
+  "promises": [
+    {"id": "p-nine-course-line", "statement": "Gemini CLI 主线入口与八篇课程均达到 reviewed，沿真实 Agent Session 覆盖配置上下文、轮次调度、工具闭环、安全分层、状态恢复、扩展编排、产品表面与独立评测接入。"},
+    {"id": "p-locked-evidence", "statement": "关键架构、配置、生命周期、工具、安全、状态、扩展、协议和遥测结论绑定锁定源码、上游测试与明确证据等级。"},
+    {"id": "p-boundary-separation", "statement": "文件设置与有效配置、Finished 与任务成功、Confirmation 与 Sandbox、Safety 与工具授权、History 与 Memory 保持不同责任边界。"},
+    {"id": "p-eval-boundary", "statement": "Telemetry、工具接受率、FinishReason、训练 RewardAdapter、Checkpoint 选择与独立发布 Eval 保持语义分离。"},
+    {"id": "p-surface-boundary", "statement": "交互终端、非交互 text/json/stream-json、IDE 与 A2A 的保留、合并、重命名、取消和终态不互相等同。"},
+    {"id": "p-chinese-visuals", "statement": "十张 Gemini CLI 正式图全部使用中文说明，保留的拉丁字符仅为项目、协议、代码或产品标识，并经集中渲染目检。"},
+    {"id": "p-atomic-navigation", "statement": "Gemini CLI 九篇在总入口和主线入口整批进入正式导航，缺失、降级或零链接都会失败，Claude、pi、OpenCode 与扩展样本没有提前开放。"},
+    {"id": "p-node24-all-sources", "statement": "Node 24 聚合门禁与十二个锁定来源的 all 配置验证全部通过。"}
+  ],
+  "evidence": [
+    {"id": "e-course-files", "promise": "p-nine-course-line", "type": "file", "reference": "docs/harnesses/gemini-cli/", "summary": "入口与 01 至 08 共九篇状态均为 reviewed，每篇具备真实输入输出、调用链、失败限制、验证方法和四道带答案自检。"},
+    {"id": "e-content-contract", "promise": "p-nine-course-line", "type": "test", "reference": "scripts/check-content-contract.mjs", "summary": "一级主线入口契约和八篇 Harness 文章深度契约通过。"},
+    {"id": "e-claims", "promise": "p-locked-evidence", "type": "file", "reference": "evidence/claims/gemini-cli.*.yml", "summary": "十八条 Gemini CLI 公开 Claim 登记提交、表面、平台、模式、证据等级、摘录、限制和必要推断。"},
+    {"id": "e-evidence-map", "promise": "p-locked-evidence", "type": "file", "reference": "evidence/claims/gemini-cli/evidence-map.yml", "summary": "九篇课程逐项登记源码、上游测试、计划 Claim 与八类高风险误读。"},
+    {"id": "e-config-turn-security", "promise": "p-boundary-separation", "type": "file", "reference": "docs/harnesses/gemini-cli/04-confirmation-policy-safety-sandbox.md", "summary": "配置、轮次和安全课程分别建立有效配置、Session 终止、确认策略、模型安全与平台沙箱的状态边界。"},
+    {"id": "e-state-article", "promise": "p-boundary-separation", "type": "file", "reference": "docs/harnesses/gemini-cli/05-session-history-compression-memory.md", "summary": "分别解释追加会话记录、运行时历史、模型投影、压缩摘要、检查点和长期记忆的消费者与权威范围。"},
+    {"id": "e-eval-article", "promise": "p-eval-boundary", "type": "file", "reference": "docs/harnesses/gemini-cli/08-telemetry-errors-eval-design.md", "summary": "把工具决定、错误分类、可选遥测、固定 Trial、Artifact、Scorer、RewardAdapter 和隔离 holdout 分层。"},
+    {"id": "e-surface-article", "promise": "p-surface-boundary", "type": "file", "reference": "docs/harnesses/gemini-cli/07-surfaces-output-protocol.md", "summary": "建立核心 AgentEvent 到交互、三种非交互输出、IDE 和 A2A 的差异矩阵，并明确成功、取消与退出码不能互证。"},
+    {"id": "e-diagram-sheet", "promise": "p-chinese-visuals", "type": "render", "reference": "evidence/reviews/phase-3c-gemini-cli-contact-sheet.png", "summary": "十图集中复核未发现文字截断、节点重叠、箭头误向、仅靠颜色传意或英文自然语言说明残留；必要专名与协议标识予以保留。"},
+    {"id": "e-visual-manifest", "promise": "p-chinese-visuals", "type": "file", "reference": "assets/diagrams/manifest.yml", "summary": "十张 Gemini CLI 图具有中文替代文本、合法图类型、文章范围和 Claim 绑定。"},
+    {"id": "e-navigation-test", "promise": "p-atomic-navigation", "type": "test", "reference": "scripts/tests/navigation.test.mjs", "summary": "Gemini CLI 九篇缺失、降级与零链接均失败；扩展样本不得进入正式导航。"},
+    {"id": "e-navigation-files", "promise": "p-atomic-navigation", "type": "file", "reference": "docs/harnesses/gemini-cli/README.md", "summary": "入口状态表九篇均为已复核可点击链接，根入口和总入口只增加第三条已完成主线。"},
+    {"id": "e-source-all", "promise": "p-node24-all-sources", "type": "command", "reference": "node scripts/verify-sources.mjs --profile all", "summary": "十二个来源定义与十二个 all 配置 Checkout 全部匹配锁定提交。"},
+    {"id": "e-check-all", "promise": "p-node24-all-sources", "type": "command", "reference": "node scripts/check-all.mjs", "summary": "十七组聚合检查、九十项单元测试、五十二条 Claim、四十张正式图、八十五次正式导航核对与七十三篇 Markdown 链接检查通过。"}
+  ],
+  "findings": [
+    {"id": "f-settings-effective-config", "priority": "high", "status": "resolved", "summary": "Settings 文件存在容易被误写成已经生效的运行配置，忽略层级、信任、环境变量与运行时装配。"},
+    {"id": "f-finished-task-success", "priority": "high", "status": "resolved", "summary": "单次模型 Finished 或 Agent Session completed 容易被升级成用户任务成功和 Eval 通过。"},
+    {"id": "f-confirmation-sandbox-collapse", "priority": "high", "status": "resolved", "summary": "Confirmation、Policy、Safety Checker、模型 Safety 与平台 Sandbox 容易被合并成一个安全开关。"},
+    {"id": "f-state-authority-collapse", "priority": "high", "status": "resolved", "summary": "会话记录、运行时历史、模型上下文、压缩摘要、检查点和 Memory 容易被误写成同一份真相。"},
+    {"id": "f-extension-presence-default-capability", "priority": "high", "status": "resolved", "summary": "Extension、Hook、Skill、MCP 或 Agent 目录存在容易被误读为当前会话默认可见、已授权且已执行。"},
+    {"id": "f-telemetry-eval-collapse", "priority": "high", "status": "resolved", "summary": "工具接受率、FinishReason、Telemetry success 或无错误事件容易被用作训练奖励或发布门禁。"},
+    {"id": "f-surface-status-equivalence", "priority": "high", "status": "resolved", "summary": "交互 UI、text、json、stream-json、IDE 与 A2A 共享核心容易被误写成成功、取消和终止语义完全等价。"},
+    {"id": "f-navigation-stale", "priority": "high", "status": "resolved", "summary": "八篇正文已完成时，Gemini CLI 入口与两级总导航仍保留提纲和未开放描述。"},
+    {"id": "f-live-surfaces-unverified", "priority": "medium", "status": "open", "summary": "本阶段没有现场调用线上模型、真实 IDE 扩展、远程 A2A、GCP/OTLP 或三平台 Sandbox，相关结论保持源码或上游测试级。"},
+    {"id": "f-upstream-drift", "priority": "medium", "status": "open", "summary": "Gemini CLI 上游继续演进，课程只以锁定提交为权威；来源漂移后必须让受影响文章退出正式状态并重新复核。"},
+    {"id": "f-remote-not-deployed", "priority": "medium", "status": "open", "summary": "GitHub 仓库改名、About、Topics、社交预览、保护规则和 Contributors 留到最终部署阶段统一应用。"},
+    {"id": "f-style-rhythm", "priority": "low", "status": "open", "summary": "中文文风检查对 Gemini CLI 多篇给出句长节奏非阻断提醒；不影响内容、证据或导航门禁，后续总编辑阶段再统一润色。"}
+  ],
+  "resolutions": [
+    {"id": "f-settings-effective-config", "action": "配置课逐层记录设置来源、优先级、工作区信任、环境隔离、Config 有效值和模型可见投影，声明文件存在不是生效证明。", "evidence": ["e-course-files", "e-claims"]},
+    {"id": "f-finished-task-success", "action": "轮次与调度课分别定义模型流结束、工具批次状态、Agent Session 终态、产品表面输出和独立评分。", "evidence": ["e-course-files", "e-claims"]},
+    {"id": "f-confirmation-sandbox-collapse", "action": "安全课建立五层边界并记录各层输入、决定、失败和系统兑现，明确确认允许不等于平台隔离。", "evidence": ["e-config-turn-security", "e-claims"]},
+    {"id": "f-state-authority-collapse", "action": "状态课建立数据权威图，将记录、运行历史、模型投影、摘要、检查点和记忆分别说明。", "evidence": ["e-state-article", "e-claims"]},
+    {"id": "f-extension-presence-default-capability", "action": "扩展课要求核对发现、管理员与用户启用、目录信任、解析、连接、注册、模型可见、授权和真实执行器。", "evidence": ["e-course-files", "e-claims"]},
+    {"id": "f-telemetry-eval-collapse", "action": "评测课把可选观测、错误分类、固定 Trial、独立 Scorer、训练 RewardAdapter、Checkpoint 选择和隔离发布 holdout 分开。", "evidence": ["e-eval-article", "e-claims"]},
+    {"id": "f-surface-status-equivalence", "action": "表面课逐项登记核心事件在六类表面中的保留、合并、重命名和丢失，禁止跨表面状态互证。", "evidence": ["e-surface-article", "e-claims"]},
+    {"id": "f-navigation-stale", "action": "一次性开放 Gemini CLI 九篇并新增缺篇、降级和零链接失败测试，同时更新根入口和总入口的三条已完成主线状态。", "evidence": ["e-navigation-test", "e-navigation-files"]}
+  ],
+  "commands": [
+    {"command": "node --version", "exit_code": 0, "summary": "输出 v24.19.0。"},
+    {"command": "node scripts/check-all.mjs", "exit_code": 0, "summary": "十七组聚合检查和九十项单元测试通过；仅有句长节奏非阻断提醒。"},
+    {"command": "node scripts/verify-sources.mjs --profile all", "exit_code": 0, "summary": "十二个来源定义与十二个 all 配置 Checkout 通过。"},
+    {"command": "渲染并打开 phase-3c-gemini-cli-contact-sheet.png", "exit_code": 0, "summary": "十图未见截断、重叠、箭头误向、颜色单点依赖或英文自然语言说明残留。"},
+    {"command": "逐篇统计 status、Claim、源码锚点、失败与限制、验证方法和自检", "exit_code": 0, "summary": "九篇全部 reviewed；每篇均有 Claim、源码锚点、三类必需章节和四道完整答案。"},
+    {"command": "node scripts/check-navigation.mjs", "exit_code": 0, "summary": "八十五次正式导航核对通过，Gemini CLI 九篇不能缺失、降级或零链接发布。"},
+    {"command": "node scripts/check-links.mjs", "exit_code": 0, "summary": "七十三篇 Markdown 的本地链接通过。"},
+    {"command": "git diff --check", "exit_code": 0, "summary": "没有空白错误。"}
+  ],
+  "result": "pass"
+}

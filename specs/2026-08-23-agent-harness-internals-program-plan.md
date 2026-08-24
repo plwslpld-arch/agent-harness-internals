@@ -22,7 +22,7 @@
   - 验收：现有长文逐篇重审，完整任务链、评测接口、图示和实验通过。
 - [x] 阶段 3B：Codex 主线。
   - 验收：Rust 核心、工具、沙箱、会话、协议和评测接口形成完整课程。
-- [ ] 阶段 3C：Gemini CLI 主线。
+- [x] 阶段 3C：Gemini CLI 主线。
   - 验收：Core/CLI、Policy/Safety/Confirmation、工具、会话和评测形成完整课程。
 - [ ] 阶段 3D：Claude 主线。
   - 验收：Claude Code 文档证据与 Python/TypeScript SDK 源码证据严格分层。

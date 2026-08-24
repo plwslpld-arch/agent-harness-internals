@@ -115,16 +115,16 @@
 - [x] 先增加 Gemini CLI 九篇必需批次和零链接绕过失败测试；验证缺一、降级或不链接时均失败。
 - [x] README、总入口和 Gemini CLI 入口整批改为 `reviewed` 可点击链接，只开放前三条主线，不提前开放 Claude、pi、OpenCode。
 - [x] 修复受影响链接，不创建旧路径兼容页；运行链接、导航、内容、Claim、视觉和聚合检查。
-- [ ] 提交：`docs(navigation): 开放 Gemini CLI 一级主线`。
+- [x] 提交：`docs(navigation): 开放 Gemini CLI 一级主线`。
 
 ### Task 12：阶段 3C 全量对抗复核
 
-- [ ] 从已提交基线运行 Node 24 聚合检查和全部来源验证。
-- [ ] 逐篇审计真实输入输出、调用链、源码锚点、默认条件、失败语义和自检答案。
-- [ ] 打开全部 Gemini CLI 正式图，检查中文、截断、箭头、颜色依赖和证据绑定。
-- [ ] 主动寻找：Settings 文件冒充有效配置、Finished 冒充任务成功、Confirmation 折叠成 Sandbox、Safety 与 Policy 混同、History/Compression/Memory 混同、Telemetry 或工具接受率等同 Eval、各表面 cancelled/success 互证。
-- [ ] 修复全部高严重度发现，记录中低风险后续项；新建阶段复核记录并勾选总路线阶段 3C。
-- [ ] 提交：`chore(review): 完成阶段 3C Gemini CLI 主线复核`。
+- [x] 从已提交基线运行 Node 24 聚合检查和全部来源验证。
+- [x] 逐篇审计真实输入输出、调用链、源码锚点、默认条件、失败语义和自检答案。
+- [x] 打开全部 Gemini CLI 正式图，检查中文、截断、箭头、颜色依赖和证据绑定。
+- [x] 主动寻找：Settings 文件冒充有效配置、Finished 冒充任务成功、Confirmation 折叠成 Sandbox、Safety 与 Policy 混同、History/Compression/Memory 混同、Telemetry 或工具接受率等同 Eval、各表面 cancelled/success 互证。
+- [x] 修复全部高严重度发现，记录中低风险后续项；新建阶段复核记录并勾选总路线阶段 3C。
+- [x] 提交：`chore(review): 完成阶段 3C Gemini CLI 主线复核`。
 
 ## 阶段完成证据
 
