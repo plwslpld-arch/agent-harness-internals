@@ -40,6 +40,10 @@ test('中文可访问元数据和允许的专名通过', () => {
     path: entry.path,
     content: svg('<text>Thread、Session、Turn 与 Rollout 共同服务一个 Trial</text>'),
   }, entry), []);
+  assert.deepEqual(visualFailures({
+    path: entry.path,
+    content: svg('<text>App Server、MCP Server、Cloud、OTel 与 Feedback 为 Artifact、Scorer 和 RewardAdapter 提供证据</text>'),
+  }, entry), []);
 });
 
 test('缺少中文 title 或 desc 会失败', () => {

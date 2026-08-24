@@ -232,6 +232,14 @@
       "scope": "docs/harnesses/codex/07-subagents-orchestration.md",
       "alt": "Codex 根线程、子线程、活动智能体、跨线程消息、等待、打断、恢复与完成通知的中文编排图",
       "claims": ["codex.orchestration.subagents-are-thread-scoped"]
+    },
+    {
+      "id": "codex-surfaces-trace-eval-design",
+      "path": "assets/diagrams/codex/08-surfaces-trace-eval-design.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/codex/08-surfaces-trace-eval-design.md",
+      "alt": "Codex 多产品表面共享核心，并将 Rollout Trace、OTel、Feedback 与独立 Eval 分层输出的中文证据流图",
+      "claims": ["codex.surfaces.protocol-projections-not-identical", "codex.feedback-trace.is-not-release-eval", "codex.architecture.multi-crate-boundaries-have-tradeoffs"]
     }
   ]
 }

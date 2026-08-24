@@ -100,10 +100,10 @@
 
 ### Task 10：产品表面、Trace、Telemetry、Feedback、Eval 与 crate 取舍
 
-- [ ] 完成 `08-surfaces-trace-eval-design.md`、中文多表面与证据流图和表面/反馈 Claim。
-- [ ] 覆盖 CLI、TUI、App Server、Cloud、SDK、协议映射、Rollout Trace、OTel 和 Feedback。
-- [ ] 说明多 crate 边界的收益与成本，并给出固定 Trial、Artifact、Scorer 与独立发布门禁接法。
-- [ ] 提交：`docs(codex): 发布产品表面与评测设计课程`。
+- [x] 完成 `08-surfaces-trace-eval-design.md`、中文多表面与证据流图和表面/反馈 Claim。
+- [x] 覆盖 CLI、TUI、App Server、Cloud、SDK、协议映射、Rollout Trace、OTel 和 Feedback。
+- [x] 说明多 crate 边界的收益与成本，并给出固定 Trial、Artifact、Scorer 与独立发布门禁接法。
+- [x] 提交：`docs(codex): 发布产品表面与评测设计课程`。
 
 ### Task 11：正式导航与批量发布门禁
 
