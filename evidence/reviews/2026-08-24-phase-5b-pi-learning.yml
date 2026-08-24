@@ -1,0 +1,43 @@
+{
+  "stage": "phase-5b-pi-learning",
+  "date": "2026-08-24",
+  "commit": "d3d7615a0fa353e0313fa78c48f9d051b79bfbdf",
+  "promises": [
+    {"id":"p-learning-depth","statement":"pi 入口与八篇正文按内容契约 2.0 讲清 AI、Agent Core、Coding Agent、Session、Protocol、产品表面、隔离和评测的完整学习链。"},
+    {"id":"p-evidence-boundary","statement":"现行 Runtime、AgentHarness v2 未来规格、Extension 示例、部署文档与外部分享分别标注，不用弱材料替默认能力背书。"},
+    {"id":"p-adversarial-review","statement":"逐篇反查模型目录与运行时可用性、Prompt 与工具表面、Summary 与原始 Entry、Trust 与强制隔离、Response/Telemetry 与产品成功等混淆。"}
+  ],
+  "evidence": [
+    {"id":"e-nine-articles","promise":"p-learning-depth","type":"file","reference":"docs/harnesses/pi/","summary":"九篇均包含概念表、设计理由、教学实现、贯穿案例、真实输入输出、源码证据和自检答案。"},
+    {"id":"e-contract-v2","promise":"p-learning-depth","type":"test","reference":"scripts/check-content-contract.mjs","summary":"使用仓库相对路径定向检查 pi 九篇，全部通过内容契约 2.0。"},
+    {"id":"e-boundary-article","promise":"p-evidence-boundary","type":"file","reference":"docs/harnesses/pi/01-evidence-runtime-design-boundaries.md","summary":"Source、Test、Design Doc、Example、Deployment Doc 与 External Link 分列，并用复合断言案例逐项降级。"},
+    {"id":"e-session-security-eval","promise":"p-adversarial-review","type":"file","reference":"docs/harnesses/pi/05-session-context-compaction-storage.md","summary":"Session Tree、Context Projection、Compaction Summary 和 Writer Claim 明确分层，安全与质量结论不越权。"},
+    {"id":"e-analysis-anchors","promise":"p-evidence-boundary","type":"test","reference":"scripts/verify-analysis.mjs","summary":"八十篇来源绑定与一百三十二处源码行号抽查通过。"},
+    {"id":"e-claims-tests","promise":"p-adversarial-review","type":"test","reference":"scripts/verify-claims.mjs","summary":"一百一十九条关键结论无重复，一百一十二项仓库测试全部通过。"},
+    {"id":"e-links-visuals-style","promise":"p-adversarial-review","type":"test","reference":"scripts/check-visuals.mjs","summary":"一百一十二个 Markdown 本地链接和八十一张正式中文 SVG 通过；文风门禁无阻断错误。"}
+  ],
+  "findings": [
+    {"id":"f-material-conflation","priority":"high","status":"resolved","summary":"AgentHarness v2 规格、Sandbox 示例和外部分享链接容易被组合成现行默认能力。"},
+    {"id":"f-state-authority","priority":"high","status":"resolved","summary":"Context 与 Compaction Summary 容易被当作完整 Session 历史，Writer Claim 也可能被误写成跨进程事务保证。"},
+    {"id":"f-surface-security","priority":"high","status":"resolved","summary":"Project Trust、确认 Hook、TUI 状态和容器名称容易被误写为已生效的操作系统隔离。"},
+    {"id":"f-quality-terminal","priority":"high","status":"resolved","summary":"Provider done、agent_end、Protocol Response、Telemetry ok 和 Eval Artifact 写入容易被串成任务成功。"},
+    {"id":"f-targeted-check-path","priority":"medium","status":"resolved","summary":"首次定向内容检查传入绝对路径，文章类型识别未命中并产生假通过；全仓检查揭示第七篇仍不足。"},
+    {"id":"f-style-rhythm","priority":"low","status":"open","summary":"pi 多篇仍有句长节奏非阻断提醒，留到全仓总编辑统一润色。"}
+  ],
+  "resolutions": [
+    {"id":"f-material-conflation","action":"新增材料类型表、可达性流程和复合断言拆分案例，显式区分 runtime、planned、optional 与 external。","evidence":["e-nine-articles","e-boundary-article","e-contract-v2"]},
+    {"id":"f-state-authority","action":"新增 Session Tree、Branch Path、Context Projection、Summary、Writer Claim 与 JSONL Backend 的独立责任和保真反例。","evidence":["e-nine-articles","e-session-security-eval","e-analysis-anchors"]},
+    {"id":"f-surface-security","action":"新增表面协议与能力矩阵，要求正反探针、Fail Closed 和实际挂载网络凭据证据。","evidence":["e-nine-articles","e-contract-v2","e-links-visuals-style"]},
+    {"id":"f-quality-terminal","action":"在主线和评测篇并列保存 AI、Agent、Session、Protocol、Telemetry、Scorer 与 Release Gate 终态。","evidence":["e-nine-articles","e-claims-tests"]},
+    {"id":"f-targeted-check-path","action":"改用仓库相对路径逐篇调用内容契约，并以全仓内容检查确认剩余阻断仅来自尚待重写的 OpenCode。","evidence":["e-contract-v2","e-claims-tests"]}
+  ],
+  "commands": [
+    {"command":"pi 九篇 contentContractFailures 相对路径定向检查","exit_code":0,"summary":"入口与八篇正文全部通过内容契约 2.0。"},
+    {"command":"node scripts/verify-analysis.mjs && node scripts/verify-anchors.mjs","exit_code":0,"summary":"来源绑定与源码锚点保持有效。"},
+    {"command":"node scripts/verify-claims.mjs && node scripts/run-tests.mjs","exit_code":0,"summary":"一百一十九条 Claim 校验和一百一十二项测试通过。"},
+    {"command":"node scripts/check-links.mjs && node scripts/check-visuals.mjs","exit_code":0,"summary":"本地链接和正式中文 SVG 门禁通过。"},
+    {"command":"node scripts/check-style.mjs","exit_code":0,"summary":"弯引号和高频对仗已修复，无阻断文风错误；句长节奏仅为非阻断提醒。"},
+    {"command":"git diff --check","exit_code":0,"summary":"提交前无空白错误。"}
+  ],
+  "result": "pass"
+}
