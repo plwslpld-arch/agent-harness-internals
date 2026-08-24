@@ -101,6 +101,42 @@ export function navigationFailures(content, resolveDocument, options = {}) {
   return errors;
 }
 
+export function navigationBatchPolicy(relativePath) {
+  const prefix = relativePath === 'README.md' ? 'docs/' : relativePath === 'docs/00-start-here.md' ? '' : null;
+  if (prefix === null) return [];
+  return [
+    {
+      name: '横向比较',
+      required: true,
+      targets: [
+        `${prefix}comparisons/01-runtime-config-model-input.md`,
+        `${prefix}comparisons/02-loop-tools-execution.md`,
+        `${prefix}comparisons/03-permissions-state-recovery.md`,
+        `${prefix}comparisons/04-orchestration-protocol-surfaces.md`,
+        `${prefix}comparisons/05-observability-eval-deployment.md`,
+      ],
+    },
+    {
+      name: '角色路径',
+      required: true,
+      targets: [
+        `${prefix}roles/engineering.md`,
+        `${prefix}roles/product.md`,
+        `${prefix}roles/quality-and-evaluation.md`,
+        `${prefix}roles/operations-and-security.md`,
+      ],
+    },
+    {
+      name: '本地实验',
+      required: true,
+      targets: [
+        `${prefix}labs/controlled-task-contract.md`,
+        `${prefix}labs/independent-eval-pipeline.md`,
+      ],
+    },
+  ];
+}
+
 function main() {
   const files = listProjectFiles().filter((path) => path.endsWith('.md'));
   const errors = [];
@@ -220,6 +256,7 @@ function main() {
         ...(claudeTargets.length > 0 ? [{ name: 'Claude 主线', targets: claudeTargets, required: true }] : []),
         ...(piTargets.length > 0 ? [{ name: 'pi 主线', targets: piTargets, required: true }] : []),
         ...(opencodeTargets.length > 0 ? [{ name: 'OpenCode 主线', targets: opencodeTargets, required: true }] : []),
+        ...navigationBatchPolicy(relativePath),
       ],
       forbiddenPrefixes: relativePath === 'README.md'
         ? [{ name: '扩展样本', prefix: 'docs/samples/' }]

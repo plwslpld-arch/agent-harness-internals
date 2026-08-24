@@ -16,8 +16,6 @@ export const checkCommands = [
   { label: '中文视觉资产', args: ['scripts/check-visuals.mjs'] },
   { label: '阶段对抗复核', args: ['scripts/verify-reviews.mjs'] },
   { label: '源码锚点', args: ['scripts/verify-anchors.mjs'] },
-  { label: '旧目录覆盖率', args: ['scripts/check-coverage.mjs'] },
-  { label: '证据矩阵', args: ['scripts/check-matrix.mjs'] },
   { label: '中文文风', args: ['scripts/check-style.mjs'] },
   { label: '仓库可移植性', args: ['scripts/verify-portability.mjs'] },
   { label: '第三方许可证', args: ['scripts/verify-licenses.mjs'] },

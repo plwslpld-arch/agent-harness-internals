@@ -70,6 +70,26 @@ Claude 主线采用双边界：Claude Code 的公开行为只引用官方文档�
 第五条项目主线：[pi Agent Harness 主线](harnesses/pi/README.md)
 
 第六条项目主线：[OpenCode Agent Harness 主线](harnesses/opencode/README.md)
+
+横向比较：
+
+1. [运行时、配置与模型输入](comparisons/01-runtime-config-model-input.md)
+2. [循环、工具与真实执行](comparisons/02-loop-tools-execution.md)
+3. [权限、状态与恢复](comparisons/03-permissions-state-recovery.md)
+4. [编排、协议与产品表面](comparisons/04-orchestration-protocol-surfaces.md)
+5. [可观测性、独立评测与部署维护](comparisons/05-observability-eval-deployment.md)
+
+角色路径：
+
+- [工程负责人](roles/engineering.md)
+- [产品负责人](roles/product.md)
+- [质量与评测负责人](roles/quality-and-evaluation.md)
+- [运维与安全负责人](roles/operations-and-security.md)
+
+可复现实验：
+
+- [固定 Trial、Attempt 与 Artifact 血缘](labs/controlled-task-contract.md)
+- [独立 Scorer 与 RewardAdapter 能力契约](labs/independent-eval-pipeline.md)
 <!-- course-navigation:end -->
 
 如果你准备实现或改造 Harness，选一条与你技术栈最接近的主线从头读完，不要只抽取功能表。完整跟踪真实输入、状态变化、工具结果、失败路径与终止条件后，再去横向比较其他实现；这能减少把表面 API 当成系统语义的风险。
@@ -92,7 +112,7 @@ Claude 主线采用双边界：Claude Code 的公开行为只引用官方文档�
 
 `stale` 用来保护读者免受过期证据误导，它不评价文章的永久质量。当上游 Commit、文档或实验环境发生漂移，页面就应退出正式导航，直到重新绑定来源并复核受影响结论。状态表可以继续显示它，以便读者知道缺口，却不能把它当成仍然有效的课程。
 
-当前正式导航包含这个总入口、六篇共同基础，以及 DSH、Codex、Gemini CLI、Claude、pi、OpenCode 各九篇课程。六条主线均以整批方式发布；文件存在、篇幅很长或单项测试通过，都不能绕过状态和完整性规则。
+当前正式导航包含这个总入口、六篇共同基础、六条各九篇的项目课程、五篇横向比较、四条角色路径和两项可复现实验。各批次都以原子方式发布；文件存在、篇幅很长或单项测试通过，都不能绕过状态和完整性规则。
 
 ## 证据方法
 

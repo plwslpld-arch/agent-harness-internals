@@ -10,7 +10,7 @@
 
 **Agent Harness 是唯一主线；Eval 是横切验证能力。** 仓库不会再建设一套与 Agent Harness 并列的 Eval Harness 百科。Inspect AI、SWE-bench、Terminal-Bench 和 LM Evaluation Harness 只在需要回答「任务怎样定义、轨迹怎样收集、结果怎样评分、失败能否重试」时作为外部参照出现。缺少证据，就保留未知。
 
-> 当前状态：仓库正在覆盖式重建。治理、证据门禁、正式品牌和共同基础 6/6 已完成阶段复核；DSH、Codex、Gemini CLI、Claude、pi 与 OpenCode 六条主线均以 9/9 达到 `reviewed`。扩展样本与横向比较仍按证据门禁逐批开放。
+> 当前状态：仓库正在覆盖式重建。治理、证据门禁、正式品牌、共同基础和六条一级主线已完成阶段复核；五篇横向比较、四条角色路径和两项本地实验已经达到 `reviewed` 或 `verified`。扩展样本仍按独立证据门禁逐批开放。
 
 ## 这里研究的不是「模型排行榜」
 
@@ -100,6 +100,26 @@ Eval 不与六条主线争夺主导航，而是在每条主线中重复回答同
 第五条项目主线：[pi Agent Harness 主线](docs/harnesses/pi/README.md)
 
 第六条项目主线：[OpenCode Agent Harness 主线](docs/harnesses/opencode/README.md)
+
+横向比较：
+
+1. [运行时、配置与模型输入](docs/comparisons/01-runtime-config-model-input.md)
+2. [循环、工具与真实执行](docs/comparisons/02-loop-tools-execution.md)
+3. [权限、状态与恢复](docs/comparisons/03-permissions-state-recovery.md)
+4. [编排、协议与产品表面](docs/comparisons/04-orchestration-protocol-surfaces.md)
+5. [可观测性、独立评测与部署维护](docs/comparisons/05-observability-eval-deployment.md)
+
+角色路径：
+
+- [工程负责人](docs/roles/engineering.md)
+- [产品负责人](docs/roles/product.md)
+- [质量与评测负责人](docs/roles/quality-and-evaluation.md)
+- [运维与安全负责人](docs/roles/operations-and-security.md)
+
+可复现实验：
+
+- [固定 Trial、Attempt 与 Artifact 血缘](docs/labs/controlled-task-contract.md)
+- [独立 Scorer 与 RewardAdapter 能力契约](docs/labs/independent-eval-pipeline.md)
 <!-- course-navigation:end -->
 
 | 你的目标 | 建议路径 | 需要的背景 |
@@ -184,4 +204,4 @@ npm run check
 - 原创代码按 [MIT](LICENSE-CODE) 授权，原创文档按 [CC BY 4.0](LICENSE-DOCS) 授权；第三方许可证边界见 [THIRD_PARTY.md](THIRD_PARTY.md) 和 [NOTICE.md](NOTICE.md)。
 - 贡献前请阅读 [贡献指南](CONTRIBUTING.md)；维护与证据规则见 [仓库治理](AGENTS.md)。
 
-仓库会逐阶段发布共同基础、六条主线、横向比较、角色路径、控制实验和扩展样本。每个阶段都必须先完成反向审查，再进入下一阶段；文件数量、测试数量或第三方评分都不能单独作为「已经完成」的证据。
+仓库已经发布共同基础、六条主线、横向比较、角色路径和控制实验；扩展样本继续按证据开放。每个阶段都必须先完成反向审查，再进入下一阶段；文件数量、测试数量或第三方评分都不能单独作为「已经完成」的证据。

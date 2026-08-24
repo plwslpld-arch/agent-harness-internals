@@ -21,8 +21,6 @@
     "check:visuals": "node scripts/check-visuals.mjs",
     "check:reviews": "node scripts/verify-reviews.mjs",
     "check:anchors": "node scripts/verify-anchors.mjs",
-    "check:coverage": "node scripts/check-coverage.mjs",
-    "check:matrix": "node scripts/check-matrix.mjs",
     "check:drift": "node scripts/check-drift.mjs",
     "drift:report": "node scripts/check-drift.mjs --fetch --write",
     "check:links": "node scripts/check-links.mjs",

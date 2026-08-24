@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { navigationFailures } from '../check-navigation.mjs';
+import * as navigation from '../check-navigation.mjs';
 
 const documents = {
   'reviewed.md': '---\nstatus: reviewed\n---\n',
@@ -317,4 +318,54 @@ test('扩展样本不得进入正式导航', () => {
   assert.deepEqual(navigationFailures(content, (target) => documents[target], {
     forbiddenPrefixes: [{ name: '扩展样本', prefix: 'samples/' }],
   }), ['samples/mini-swe-agent.md: 扩展样本不得进入正式导航']);
+});
+
+test('总入口要求五篇比较、四条角色路径和两项实验原子发布', () => {
+  assert.equal(typeof navigation.navigationBatchPolicy, 'function');
+  const batches = navigation.navigationBatchPolicy('docs/00-start-here.md');
+  assert.deepEqual(batches, [
+    { name: '横向比较', required: true, targets: [
+      'comparisons/01-runtime-config-model-input.md',
+      'comparisons/02-loop-tools-execution.md',
+      'comparisons/03-permissions-state-recovery.md',
+      'comparisons/04-orchestration-protocol-surfaces.md',
+      'comparisons/05-observability-eval-deployment.md',
+    ] },
+    { name: '角色路径', required: true, targets: [
+      'roles/engineering.md',
+      'roles/product.md',
+      'roles/quality-and-evaluation.md',
+      'roles/operations-and-security.md',
+    ] },
+    { name: '本地实验', required: true, targets: [
+      'labs/controlled-task-contract.md',
+      'labs/independent-eval-pipeline.md',
+    ] },
+  ]);
+});
+
+test('新导航缺篇、降级或零链接时都失败', () => {
+  assert.equal(typeof navigation.navigationBatchPolicy, 'function');
+  const batches = navigation.navigationBatchPolicy('docs/00-start-here.md');
+  const targets = batches.flatMap((batch) => batch.targets);
+  const published = Object.fromEntries(targets.map((target) => [target, '---\nstatus: reviewed\n---\n']));
+  const links = (items) => `<!-- course-navigation:start -->\n${items.map((target) => `[入口](${target})`).join('\n')}\n<!-- course-navigation:end -->`;
+
+  assert.deepEqual(navigationFailures(links(targets.slice(0, 4)), (target) => published[target], { requiredBatches: batches }), [
+    '横向比较批量导航不完整：缺少 comparisons/05-observability-eval-deployment.md',
+    `角色路径批量导航不完整：缺少 ${batches[1].targets.join('、')}`,
+    `本地实验批量导航不完整：缺少 ${batches[2].targets.join('、')}`,
+  ]);
+
+  published['roles/product.md'] = '---\nstatus: draft\n---\n';
+  assert.deepEqual(navigationFailures(links(targets), (target) => published[target], { requiredBatches: batches }), [
+    'roles/product.md: 正式导航不能链接 status=draft',
+    '角色路径批量发布失败：roles/product.md status=draft',
+  ]);
+
+  assert.deepEqual(navigationFailures(links([]), (target) => published[target], { requiredBatches: batches }), [
+    `横向比较批量导航不完整：缺少 ${batches[0].targets.join('、')}`,
+    `角色路径批量导航不完整：缺少 ${batches[1].targets.join('、')}`,
+    `本地实验批量导航不完整：缺少 ${batches[2].targets.join('、')}`,
+  ]);
 });
