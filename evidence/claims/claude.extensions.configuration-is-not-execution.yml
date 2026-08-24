@@ -1,0 +1,24 @@
+{
+  "id": "claude.extensions.configuration-is-not-execution",
+  "harness": "claude",
+  "dimension": "extensions.configuration-is-not-execution",
+  "statement": "AgentDefinition、skills 与 MCP 配置进入启动或 initialize 只证明能力装配输入；它们不能单独证明 Claude Code 内部注册方式、模型选择、权限批准、子智能体完成或工具执行成功。",
+  "capability": "optional",
+  "version": "python@542fefb3b94be87760b2513fff889b91bb5b6672;official-doc@2026-08-24",
+  "surface": "extension-assembly",
+  "platform": "python-sdk-and-public-product-contract",
+  "mode": "initialize-and-runtime-observation",
+  "evidence_level": "D",
+  "inference": "Python 源码显示 agents 和显式 skills 只被序列化到 initialize；官方文档另行描述 Agent、Skill 与 MCP 的运行触发。由此可确认配置阶段与运行阶段是不同观察点，但不能从 SDK 字典反推 Claude Code 闭源内部注册算法。",
+  "evidence": [
+    {"type":"source","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"src/claude_agent_sdk/_internal/query.py","lines":"261-275","excerpt":"request[\"agents\"] = self._agents"},
+    {"type":"official-doc","title":"SDK 中的子智能体","url":"https://code.claude.com/docs/en/agent-sdk/subagents","accessed":"2026-08-24"},
+    {"type":"official-doc","title":"SDK 中的 Skill","url":"https://code.claude.com/docs/en/agent-sdk/skills","accessed":"2026-08-24"}
+  ],
+  "limitations": [
+    "initialize 成功不说明某个 Agent、Skill 或 MCP Tool 已进入模型本轮可见上下文。",
+    "配置与运行的边界是跨来源推断，不公开 Claude Code 内部组件图。",
+    "运行事件仍不能单独证明任务正确，必须检查目标产物与副作用。"
+  ],
+  "last_verified": "2026-08-24"
+}

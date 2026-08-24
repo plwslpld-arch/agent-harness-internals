@@ -376,6 +376,14 @@
       "scope": "docs/harnesses/claude/05-sessions-resume-store.md",
       "alt": "Claude 会话在本地转录、批量镜像、外部 Session Store、跨主机恢复材料化、分叉与独立评测之间流转的中文数据权威图",
       "claims": ["claude.sessions.resume-materializes-external-state", "claude.sessions.mirror-is-not-runtime-history"]
+    },
+    {
+      "id": "claude-mcp-agents-skills",
+      "path": "assets/diagrams/claude/06-mcp-agents-skills.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/claude/06-mcp-agents-skills.md",
+      "alt": "Claude 扩展能力从配置发现和初始化分流到进程内 MCP、外部 MCP、子智能体与 Skill，并经过权限、执行证据和独立评测的中文架构图",
+      "claims": ["claude.mcp.sdk-tools-run-in-process", "claude.extensions.configuration-is-not-execution"]
     }
   ]
 }

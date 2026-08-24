@@ -1,0 +1,22 @@
+{
+  "id": "claude.mcp.sdk-tools-run-in-process",
+  "harness": "claude",
+  "dimension": "mcp.sdk-tools-run-in-process",
+  "statement": "Python Claude Agent SDK 的 create_sdk_mcp_server 在应用进程内运行 MCP Server 和 Tool Handler，并通过内存 MCP Transport 与 SdkMcpBridge 处理 CLI 转发的 JSON-RPC；它不是独立 stdio 进程。",
+  "capability": "optional",
+  "version": "542fefb3b94be87760b2513fff889b91bb5b6672",
+  "surface": "python-sdk-mcp-server",
+  "platform": "in-process-python-application",
+  "mode": "memory-transport-json-rpc",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"src/claude_agent_sdk/__init__.py","lines":"491-516","excerpt":"Create an in-process MCP server that runs within your Python application."},
+    {"type":"upstream-test","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"tests/test_sdk_mcp_integration.py","lines":"916-925","excerpt":"assert failure[\"isError\"] is True"}
+  ],
+  "limitations": [
+    "上游测试直接驱动 MCP Client，不证明真实 Claude 模型选择或权限批准 Tool。",
+    "进程内 Handler 与应用共享权限和故障域，内存 Transport 不是安全隔离。",
+    "Server 主动 sampling、elicitation 等方向当前未完整转发，部分取消语义依赖 MCP 主版本。"
+  ],
+  "last_verified": "2026-08-24"
+}

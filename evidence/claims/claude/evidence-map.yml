@@ -14,7 +14,11 @@
         "https://code.claude.com/docs/en/hooks",
         "https://code.claude.com/docs/en/tools-reference",
         "https://code.claude.com/docs/en/agent-sdk/sessions",
-        "https://code.claude.com/docs/en/agent-sdk/session-storage"
+        "https://code.claude.com/docs/en/agent-sdk/session-storage",
+        "https://code.claude.com/docs/en/agent-sdk/custom-tools",
+        "https://code.claude.com/docs/en/agent-sdk/mcp",
+        "https://code.claude.com/docs/en/agent-sdk/subagents",
+        "https://code.claude.com/docs/en/agent-sdk/skills"
       ],
       "boundary": "只证明公开产品与 SDK 契约；不提供 Claude Code 内部类、调度器、存储布局或实现源码。"
     },
@@ -124,7 +128,10 @@
         {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/_internal/sdk_mcp_bridge.py","type":"source","reason":"进程内 MCP 请求桥。"},
         {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/types.py","type":"source","reason":"MCP、AgentDefinition 与 Setting Sources。"},
         {"source":"claude-agent-sdk-python","path":"tests/test_sdk_mcp_integration.py","type":"upstream-test","reason":"工具调用结果和错误。"},
-        {"source":"claude-code-official-docs","url":"https://code.claude.com/docs/en/tools-reference","type":"official-doc","reason":"工具名、Skill 与 MCP 公开契约。"}
+        {"source":"claude-code-official-docs","url":"https://code.claude.com/docs/en/agent-sdk/custom-tools","type":"official-doc","reason":"进程内自定义工具公开契约。"},
+        {"source":"claude-code-official-docs","url":"https://code.claude.com/docs/en/agent-sdk/mcp","type":"official-doc","reason":"MCP Transport、命名与权限公开契约。"},
+        {"source":"claude-code-official-docs","url":"https://code.claude.com/docs/en/agent-sdk/subagents","type":"official-doc","reason":"子智能体定义与调用契约。"},
+        {"source":"claude-code-official-docs","url":"https://code.claude.com/docs/en/agent-sdk/skills","type":"official-doc","reason":"Skill 发现与启用契约。"}
       ],
       "plannedClaims": ["claude.mcp.sdk-tools-run-in-process", "claude.extensions.configuration-is-not-execution"]
     },

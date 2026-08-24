@@ -141,9 +141,9 @@
 - 创建：`evidence/claims/claude.mcp.sdk-tools-run-in-process.yml`
 - 创建：`evidence/claims/claude.extensions.configuration-is-not-execution.yml`
 
-- [ ] 覆盖进程内 SDK MCP Bridge、外部 stdio/SSE/HTTP Server、工具命名、AgentDefinition、skills、memory、maxTurns 和权限模式。
-- [ ] 明确 Agent、Skill 和 MCP 配置只证明初始化输入，不能证明 Claude Code 内部注册算法或真实执行成功。
-- [ ] 渲染复核，运行门禁并提交：`docs(claude): 发布 MCP 与智能体装配课程`。
+- [x] 覆盖进程内 SDK MCP Bridge、外部 stdio/SSE/HTTP Server、工具命名、AgentDefinition、skills、memory、maxTurns 和权限模式。
+- [x] 明确 Agent、Skill 和 MCP 配置只证明初始化输入，不能证明 Claude Code 内部注册算法或真实执行成功。
+- [x] 渲染复核，运行门禁并提交：`docs(claude): 发布 MCP 与智能体装配课程`。
 
 ### Task 9：TypeScript 公开契约与双 SDK 对齐
 
