@@ -1,0 +1,25 @@
+{
+  "id": "pi.security.examples-are-not-default-boundaries",
+  "harness": "pi",
+  "dimension": "security.examples-are-not-default-boundaries",
+  "statement": "锁定 pi 默认没有限制文件系统、进程、网络或凭据的内建权限系统；sandbox Extension 需要显式安装和启用，并且未初始化、禁用或不支持平台时会回退本地 Bash，所以示例存在不等于默认强制隔离。",
+  "capability": "extension",
+  "version": "c1279a65b3ef6b0b19950ed1771d5933241c240f",
+  "surface": "coding-agent-sandbox-example",
+  "platform": "macos-linux-example",
+  "mode": "explicit-extension",
+  "evidence_level": "C",
+  "evidence": [
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"README.md","lines":"38-46","excerpt":"Pi does not include a built-in permission system"},
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/coding-agent/examples/extensions/sandbox/index.ts","lines":"32-41","excerpt":"pi -e ./sandbox"},
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/coding-agent/examples/extensions/sandbox/index.ts","lines":"211-225","excerpt":"return localBash.execute(id, params, signal, onUpdate);"},
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/coding-agent/examples/extensions/sandbox/index.ts","lines":"234-255","excerpt":"Sandbox not supported on"}
+  ],
+  "limitations": [
+    "示例在支持平台且初始化成功时可以提供操作系统级 Bash 隔离；本 Claim 只否定默认启用。",
+    "示例主要包装 Bash 和 user_bash，不自动证明所有 Extension、自定义工具或进程内代码受相同约束。",
+    "Docker、OpenShell 与 Gondolin 是不同外部边界，需要分别记录挂载、网络、凭据和平台条件。"
+  ],
+  "last_verified": "2026-08-24"
+}
+

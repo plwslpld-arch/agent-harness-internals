@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 820" role="img" aria-labelledby="title desc">
+  <title id="title">pi 运行时、设计文档与外部材料的证据边界</title>
+  <desc id="desc">现行工具循环和新框架脚手架由源码与测试核对，未来规格、扩展示例、部署方案和外部分享只能支持各自限定的结论。</desc>
+  <defs><marker id="a" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto"><path d="M0 0l14 7-14 7z" fill="#087F7C"/></marker><filter id="s"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#17324D" flood-opacity=".13"/></filter></defs>
+  <rect width="1400" height="820" rx="34" fill="#F6F9FC"/>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <text x="700" y="54" text-anchor="middle" font-size="35" font-weight="760" fill="#17324D">先判断材料是什么，再判断它能证明什么</text>
+    <text x="700" y="88" text-anchor="middle" font-size="18" fill="#50677D">同一锁定树同时包含现行行为、未完成脚手架、未来规格、示例和外部链接</text>
+
+    <rect x="55" y="128" width="610" height="244" rx="24" fill="#E7F5F3" stroke="#087F7C" stroke-width="3" filter="url(#s)"/>
+    <text x="88" y="169" font-size="23" font-weight="760" fill="#076663">可直接核对的现行行为</text>
+    <rect x="92" y="198" width="536" height="64" rx="15" fill="#fff"/><text x="360" y="226" text-anchor="middle" font-size="20" font-weight="720" fill="#17324D">现行智能体工具循环</text><text x="360" y="250" text-anchor="middle" font-size="17" fill="#50677D">源码与行为测试支持工具结果回送</text>
+    <rect x="92" y="282" width="536" height="64" rx="15" fill="#fff"/><text x="360" y="310" text-anchor="middle" font-size="20" font-weight="720" fill="#17324D">新框架脚手架</text><text x="360" y="334" text-anchor="middle" font-size="17" fill="#9A3E24">大量操作显式返回“尚未实现”</text>
+
+    <rect x="735" y="128" width="610" height="244" rx="24" fill="#FFF2D4" stroke="#C57A0B" stroke-width="3" filter="url(#s)"/>
+    <text x="768" y="169" font-size="23" font-weight="760" fill="#955A00">不能冒充现行运行时的材料</text>
+    <rect x="772" y="198" width="536" height="64" rx="15" fill="#fff"/><text x="1040" y="226" text-anchor="middle" font-size="20" font-weight="720" fill="#17324D">未来实施规格</text><text x="1040" y="250" text-anchor="middle" font-size="17" fill="#50677D">后续切片、目标不变量与迁移方案</text>
+    <rect x="772" y="282" width="536" height="64" rx="15" fill="#fff"/><text x="1040" y="310" text-anchor="middle" font-size="20" font-weight="720" fill="#17324D">示例与外部项目</text><text x="1040" y="334" text-anchor="middle" font-size="17" fill="#50677D">需要安装、启用、部署或用户主动操作</text>
+
+    <path d="M665 250h62" stroke="#087F7C" stroke-width="4" marker-end="url(#a)"/>
+    <text x="696" y="232" text-anchor="middle" font-size="16" fill="#076663">不得外推</text>
+
+    <rect x="55" y="425" width="1290" height="248" rx="25" fill="#E9F2FF" stroke="#3569A8" stroke-width="2.5" filter="url(#s)"/>
+    <text x="88" y="466" font-size="23" font-weight="760" fill="#285383">材料进入正文前的七步检查</text>
+    <g font-size="17" text-anchor="middle" fill="#17324D">
+      <rect x="85" y="505" width="150" height="72" rx="15" fill="#fff"/><text x="160" y="534">一　锁定版本</text><text x="160" y="558" fill="#50677D">提交版本一致</text>
+      <rect x="260" y="505" width="150" height="72" rx="15" fill="#fff"/><text x="335" y="534">二　材料分类</text><text x="335" y="558" fill="#50677D">源码／测试／文档</text>
+      <rect x="435" y="505" width="150" height="72" rx="15" fill="#fff"/><text x="510" y="534">三　真实调用者</text><text x="510" y="558" fill="#50677D">不是只看导出</text>
+      <rect x="610" y="505" width="150" height="72" rx="15" fill="#fff"/><text x="685" y="534">四　条件分支</text><text x="685" y="558" fill="#50677D">启用、平台、回退</text>
+      <rect x="785" y="505" width="150" height="72" rx="15" fill="#fff"/><text x="860" y="534">五　失败语义</text><text x="860" y="558" fill="#50677D">未知不等于缺失</text>
+      <rect x="960" y="505" width="150" height="72" rx="15" fill="#fff"/><text x="1035" y="534">六　外部边界</text><text x="1035" y="558" fill="#50677D">部署与主动上传</text>
+      <rect x="1135" y="505" width="150" height="72" rx="15" fill="#fff"/><text x="1210" y="534">七　登记结论</text><text x="1210" y="558" fill="#50677D">能力状态与等级</text>
+    </g>
+    <g stroke="#087F7C" stroke-width="3" marker-end="url(#a)"><path d="M235 541h18"/><path d="M410 541h18"/><path d="M585 541h18"/><path d="M760 541h18"/><path d="M935 541h18"/><path d="M1110 541h18"/></g>
+
+    <rect x="85" y="604" width="590" height="44" rx="12" fill="#17324D"/><text x="380" y="632" text-anchor="middle" font-size="17" fill="#fff">示例可表达能力，不证明默认启用或完整覆盖</text>
+    <rect x="725" y="604" width="590" height="44" rx="12" fill="#17324D"/><text x="1020" y="632" text-anchor="middle" font-size="17" fill="#fff">设计规格可说明目标，不证明锁定运行时已兑现</text>
+
+    <rect x="55" y="720" width="1290" height="56" rx="16" fill="#FFECE5" stroke="#C96138" stroke-width="2.5"/>
+    <text x="700" y="754" text-anchor="middle" font-size="19" fill="#9A3E24">结论边界：默认宿主权限仍成立；容器、沙箱和 Session 分享都需要额外动作与独立证据</text>
+  </g>
+</svg>

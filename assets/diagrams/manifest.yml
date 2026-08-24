@@ -416,6 +416,14 @@
       "scope": "docs/harnesses/pi/README.md",
       "alt": "pi 端到端任务从用户目标、编码智能体装配、模型工具调用、执行结果回送到最终事件和独立评测的中文流程图",
       "claims": ["pi.task.coding-agent-composes-core"]
+    },
+    {
+      "id": "pi-evidence-runtime-design-boundaries",
+      "path": "assets/diagrams/pi/01-evidence-runtime-design-boundaries.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/pi/01-evidence-runtime-design-boundaries.md",
+      "alt": "pi 现行工具循环、新框架脚手架、未来实施规格、扩展示例、部署方案与外部分享之间的中文证据边界图",
+      "claims": ["pi.evidence.design-doc-is-not-runtime", "pi.security.examples-are-not-default-boundaries"]
     }
   ]
 }

@@ -1,0 +1,24 @@
+{
+  "id": "pi.evidence.design-doc-is-not-runtime",
+  "harness": "pi",
+  "dimension": "evidence.design-doc-is-not-runtime",
+  "statement": "锁定 pi 的 packages/agent/docs/harness.md 是面向未来切片的实施规格；当前 packages/agent/src/harness/agent-harness.ts 仍含显式未实现操作，上游测试要求这些操作抛出 HarnessNotImplemented，因此不能把设计文档中的完整状态机写成现行 Runtime。",
+  "capability": "not-applicable",
+  "version": "c1279a65b3ef6b0b19950ed1771d5933241c240f",
+  "surface": "agent-harness-v2-scaffold",
+  "platform": "source-and-upstream-test",
+  "mode": "evidence-boundary",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/agent/src/harness/agent-harness.ts","lines":"74-81","excerpt":"is not implemented yet"},
+    {"type":"upstream-test","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/agent/test/harness/agent-harness-scaffold.test.ts","lines":"145-188","excerpt":"rejects every unfinished public operation explicitly"},
+    {"type":"official-doc","url":"https://github.com/earendil-works/pi/blob/c1279a65b3ef6b0b19950ed1771d5933241c240f/packages/agent/docs/harness.md","accessed":"2026-08-24","title":"AgentHarness 实施规格","excerpt":"packages/agent/src/harness/** and all of its tests are deletable outright in slice 1"}
+  ],
+  "limitations": [
+    "该结论针对锁定 Commit；后续切片可能实现设计中的能力。",
+    "Scaffold 中部分配置 Getter/Setter 可工作，不能反向写成整个 AgentHarness 都不存在。",
+    "旧 agent-loop.ts 的现行行为仍由源码与测试支持，不受未来规格未完成的结论否定。"
+  ],
+  "last_verified": "2026-08-24"
+}
+

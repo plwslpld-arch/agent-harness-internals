@@ -68,9 +68,9 @@
 
 ### Task 3：运行时、设计文档与外部边界
 
-- [ ] 创建 `01-evidence-runtime-design-boundaries.md`、对应 SVG 和 Claim：设计文档不等于现行运行时、示例与外部项目不等于默认能力。
-- [ ] 分开已发布包源码、`packages/agent/docs/harness.md`、Extension 示例、容器化方案和外部 Session 分享。
-- [ ] 渲染复核，运行门禁并提交：`docs(pi): 发布运行时与设计证据边界课程`。
+- [x] 创建 `01-evidence-runtime-design-boundaries.md`、对应 SVG 和 Claim：设计文档不等于现行运行时、示例与外部项目不等于默认能力。
+- [x] 分开已发布包源码、`packages/agent/docs/harness.md`、Extension 示例、容器化方案和外部 Session 分享。
+- [x] 渲染复核，运行门禁并提交：`docs(pi): 发布运行时与设计证据边界课程`。
 
 ### Task 4：多 Provider 与流归一化
 
