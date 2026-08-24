@@ -1,0 +1,38 @@
+{
+  "stage": "phase-5b-codex-learning",
+  "date": "2026-08-24",
+  "commit": "e68410d0843ad57168021669b896da0cdba4da84",
+  "promises": [
+    {"id":"p-learning-depth","statement":"Codex 入口与八篇正文均按内容契约 2.0 讲清核心概念、设计理由、实现思路和贯穿案例，形成配置、线程、循环、安全、持久化、扩展、编排和评测的连续教学链。"},
+    {"id":"p-evidence-boundary","statement":"锁定 Rust 源码、上游测试、跨 crate 推断、课程蓝图和独立 Eval 结论分别标注，不把教学类型或故障策略冒充 Codex 内部实现。"},
+    {"id":"p-adversarial-review","statement":"逐篇反查配置来源与模型可见请求、Thread Task Turn 身份、工具结算与任务通过、审批与平台强制、记录与派生记忆、动态能力与授权等混淆。"}
+  ],
+  "evidence": [
+    {"id":"e-nine-articles","promise":"p-learning-depth","type":"file","reference":"docs/harnesses/codex/","summary":"九篇均包含概念表、设计分层、教学实现步骤、贯穿案例、输入输出和边界反例。"},
+    {"id":"e-contract-v2","promise":"p-learning-depth","type":"test","reference":"scripts/check-content-contract.mjs","summary":"Codex 九篇定向执行内容契约 2.0，全部无失败项。"},
+    {"id":"e-blueprint-boundary","promise":"p-evidence-boundary","type":"file","reference":"docs/harnesses/codex/08-surfaces-trace-eval-design.md","summary":"RunEnvelope 和通道故障策略显式标为课程蓝图，不外推为全部 Codex 表面配置。"},
+    {"id":"e-analysis-anchors","promise":"p-evidence-boundary","type":"test","reference":"scripts/verify-analysis.mjs","summary":"八十篇来源绑定与一百三十二处源码行号抽查通过。"},
+    {"id":"e-claims-tests","promise":"p-adversarial-review","type":"test","reference":"scripts/verify-claims.mjs","summary":"一百一十九条关键结论无重复；一百一十二项仓库测试全部通过。"},
+    {"id":"e-links-visuals-style","promise":"p-adversarial-review","type":"test","reference":"scripts/check-visuals.mjs","summary":"一百一十二个 Markdown 本地链接和八十一张正式中文 SVG 通过；文风门禁无阻断错误。"}
+  ],
+  "findings": [
+    {"id":"f-identity-conflation","priority":"high","status":"resolved","summary":"Thread、Session、Task、Turn、采样请求和 Eval Trial 容易在旧式摘要中被合称一次任务。"},
+    {"id":"f-blueprint-inference","priority":"high","status":"resolved","summary":"CapabilityLedger、GraphStore、ExecutionDecisionTrace 等教学类型容易被误读为锁定 Rust 内部类型。"},
+    {"id":"f-fault-policy-overreach","priority":"high","status":"resolved","summary":"表面篇初稿把教学实验中的证据通道故障策略写得过于像全部 Codex 配置的统一行为。"},
+    {"id":"f-style-rhythm","priority":"low","status":"open","summary":"Codex 多篇仍有句长节奏非阻断提醒，留到全仓总编辑统一润色。"}
+  ],
+  "resolutions": [
+    {"id":"f-identity-conflation","action":"新增身份概念表与贯穿案例，分别记录 ThreadId、TurnId、submission ID、sample index、call_id、TrialId 和 AttemptId。","evidence":["e-nine-articles","e-contract-v2"]},
+    {"id":"f-blueprint-inference","action":"每个新增参考状态机或账本显式标为教学原型、课程蓝图或设计要求，并继续用锁定源码段落承载产品事实。","evidence":["e-blueprint-boundary","e-analysis-anchors"]},
+    {"id":"f-fault-policy-overreach","action":"将 Rollout、Trace、OTel 与 Feedback 故障组合明确限定为教学实验策略，不声称全部表面和配置同样处置。","evidence":["e-blueprint-boundary","e-claims-tests"]}
+  ],
+  "commands": [
+    {"command":"Codex 九篇 contentContractFailures 定向检查","exit_code":0,"summary":"入口与八篇正文全部通过内容契约 2.0。"},
+    {"command":"node scripts/verify-analysis.mjs && node scripts/verify-anchors.mjs","exit_code":0,"summary":"来源绑定与源码锚点保持有效。"},
+    {"command":"node scripts/verify-claims.mjs && node scripts/run-tests.mjs","exit_code":0,"summary":"一百一十九条 Claim 校验和一百一十二项测试通过。"},
+    {"command":"node scripts/check-links.mjs && node scripts/check-visuals.mjs","exit_code":0,"summary":"本地链接和正式中文 SVG 门禁通过。"},
+    {"command":"node scripts/check-style.mjs","exit_code":0,"summary":"无阻断文风错误，句长节奏仅为非阻断提醒。"},
+    {"command":"git diff --check","exit_code":0,"summary":"提交前无空白错误。"}
+  ],
+  "result": "pass"
+}
