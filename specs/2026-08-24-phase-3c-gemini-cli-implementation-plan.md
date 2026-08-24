@@ -48,11 +48,11 @@
 
 ### Task 2：发布主线入口、系统架构和真实任务
 
-- [ ] 先扩展内容契约测试，要求 Gemini CLI 一级入口包含两张正式中文核心图、课程状态表和 Claim；验证测试先失败。
-- [ ] 新建 `README.md`、系统架构图、端到端任务图与入口 Claim，从 `legacy-agent-session.test.ts`、`turn.test.ts` 和 `scheduler.test.ts` 提取真实模型流、工具请求、结果回送与 Finished 边界。
-- [ ] 用上游真实字段给出输入输出，明确 Mock、平台、网络和模型不确定性边界；渲染并打开两图。
-- [ ] 运行内容、Claim、视觉、链接和聚合门禁。
-- [ ] 提交：`docs(gemini-cli): 发布主线入口与真实任务全景`。
+- [x] 扩展内容契约测试，要求 Gemini CLI 一级入口包含两张正式中文核心图、课程状态表和 Claim。
+- [x] 新建 `README.md`、系统架构图、端到端任务图与入口 Claim，从 `legacy-agent-session.test.ts`、`turn.test.ts` 和 `scheduler.test.ts` 提取真实模型流、工具请求、结果回送与 Finished 边界。
+- [x] 用上游真实字段给出输入输出，明确 Mock、平台、网络和模型不确定性边界；渲染并打开两图。
+- [x] 运行内容、Claim、视觉、链接和聚合门禁。
+- [x] 提交：`docs(gemini-cli): 发布主线入口与真实任务全景`。
 
 ### Task 3：Settings、GEMINI.md、Prompt 与 Context
 

@@ -1,0 +1,25 @@
+{
+  "id": "gemini-cli.architecture.session-turn-scheduler",
+  "harness": "gemini-cli",
+  "dimension": "architecture.session-turn-scheduler",
+  "statement": "在锁定 Gemini CLI 中，CLI 与其他表面把输入交给共享 Core；Agent Session 驱动模型采样，Turn 把响应流转换成事件，Scheduler 独立管理工具调用状态，配置、策略、确认、沙箱、记录与扩展作为相邻责任面参与运行。",
+  "capability": "default",
+  "version": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+  "surface": "core-agent-session",
+  "platform": "source-structure",
+  "mode": "architecture-projection",
+  "evidence_level": "D",
+  "inference": "Agent Session、Turn、Scheduler 和 Config 的源码分别直接证明各自责任；课程再把产品入口、安全、状态和评测出口综合成一张跨模块架构图。该投影用于追踪调用和证据边界，不表示所有表面默认启用同一功能集合，也不表示上游声明了唯一的总体分层。",
+  "evidence": [
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/agent/legacy-agent-session.ts","lines":"183-323","excerpt":"const completedToolCalls = await this._scheduler.schedule("},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/core/turn.ts","lines":"254-410","excerpt":"export class Turn"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/scheduler/scheduler.ts","lines":"99-170","excerpt":"export class Scheduler"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/config/config.ts","lines":"753-820","excerpt":"export class Config implements McpContext, AgentLoopContext"}
+  ],
+  "limitations": [
+    "该分层是本课程综合多个模块形成的架构投影，不是上游发布的统一架构规范。",
+    "类型和目录存在不证明对应功能在一次具体运行中已启用。",
+    "该 Claim 不证明线上 Gemini 服务、所有产品表面或所有平台均已运行验证。"
+  ],
+  "last_verified": "2026-08-24"
+}

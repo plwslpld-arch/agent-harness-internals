@@ -247,3 +247,29 @@ Claim: deepseek-harness.architecture.layered-runtime
     content: entry.content.replace('Claim: deepseek-harness.architecture.layered-runtime', ''),
   }).join('\n'), /Claim/u);
 });
+
+test('Gemini CLI 一级入口沿用同一核心图与 Claim 发布契约', () => {
+  const entry = {
+    relativePath: 'docs/harnesses/gemini-cli/README.md',
+    metadata: { status: 'reviewed' },
+    content: `${harnessContent()}
+## 课程状态与顺序
+
+| 序号 | 课程 | 状态 |
+| --- | --- | --- |
+| 00 | 总览 | 已复核 |
+
+![Gemini CLI 中文系统架构图](../../../assets/diagrams/gemini-cli/system-architecture.svg)
+
+![Gemini CLI 中文端到端任务流程图](../../../assets/diagrams/gemini-cli/end-to-end-task.svg)
+
+Claim: gemini-cli.architecture.session-turn-scheduler
+`,
+  };
+
+  assert.deepEqual(contentContractFailures(entry), []);
+  assert.match(contentContractFailures({
+    ...entry,
+    content: entry.content.replace('gemini-cli/end-to-end-task.svg', 'gemini-cli/task.svg'),
+  }).join('\n'), /端到端任务流程图/u);
+});

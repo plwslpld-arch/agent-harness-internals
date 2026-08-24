@@ -1,0 +1,24 @@
+{
+  "id": "gemini-cli.task.tool-result-loop",
+  "harness": "gemini-cli",
+  "dimension": "task.tool-result-loop",
+  "statement": "在锁定 Gemini CLI 的 Agent Session 中，模型流产生工具请求后，Scheduler 结算工具调用，Harness 把 responseParts 作为下一次模型输入；只有没有待处理工具请求时，模型 Finished 才能结束 Agent Session。",
+  "capability": "default",
+  "version": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+  "surface": "legacy-agent-session",
+  "platform": "upstream-vitest-fixture",
+  "mode": "mock-model-and-scheduler",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/agent/legacy-agent-session.ts","lines":"183-252","excerpt":"if (toolCallRequests.length === 0)"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/agent/legacy-agent-session.ts","lines":"254-323","excerpt":"currentParts = toolResponseParts;"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/agent/legacy-agent-session.test.ts","lines":"381-445","excerpt":"expect(sendMock).toHaveBeenCalledTimes(2);"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/agent/legacy-agent-session.test.ts","lines":"1214-1259","excerpt":"does NOT emit agent_end when tool calls are pending"}
+  ],
+  "limitations": [
+    "上游测试 Mock 了模型流和 Scheduler，没有连接线上模型，也没有执行真实文件读取。",
+    "测试证明 Agent Session 的闭环控制与事件翻译，不证明工具业务结果正确。",
+    "文件名中的 legacy 描述上游模块命名；不据此推断所有新旧产品表面拥有相同协议。"
+  ],
+  "last_verified": "2026-08-24"
+}

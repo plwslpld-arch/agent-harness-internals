@@ -240,6 +240,22 @@
       "scope": "docs/harnesses/codex/08-surfaces-trace-eval-design.md",
       "alt": "Codex 多产品表面共享核心，并将 Rollout Trace、OTel、Feedback 与独立 Eval 分层输出的中文证据流图",
       "claims": ["codex.surfaces.protocol-projections-not-identical", "codex.feedback-trace.is-not-release-eval", "codex.architecture.multi-crate-boundaries-have-tradeoffs"]
+    },
+    {
+      "id": "gemini-cli-system-architecture",
+      "path": "assets/diagrams/gemini-cli/system-architecture.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/gemini-cli/README.md",
+      "alt": "Gemini CLI 从产品表面、配置与上下文，经智能体会话、轮次和工具调度器到安全执行、状态与评测出口的中文系统架构图",
+      "claims": ["gemini-cli.architecture.session-turn-scheduler"]
+    },
+    {
+      "id": "gemini-cli-end-to-end-task",
+      "path": "assets/diagrams/gemini-cli/end-to-end-task.svg",
+      "type": "flow",
+      "scope": "docs/harnesses/gemini-cli/README.md",
+      "alt": "Gemini CLI 端到端任务从用户输入、首次模型流、工具请求、调度结算、结果回送到最终智能体会话结束的中文流程图",
+      "claims": ["gemini-cli.task.tool-result-loop"]
     }
   ]
 }
