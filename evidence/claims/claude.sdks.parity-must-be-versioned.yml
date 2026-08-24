@@ -1,0 +1,26 @@
+{
+  "id": "claude.sdks.parity-must-be-versioned",
+  "harness": "claude",
+  "dimension": "sdks.parity-must-be-versioned",
+  "statement": "Claude Agent SDK 的 Python 与 TypeScript 对齐结论必须绑定各自包版本、Commit、官方文档访问日期、CLI 与平台；同名入口或 CHANGELOG 中的匹配描述不能证明两个运行时实现永久同构。",
+  "capability": "not-applicable",
+  "version": "python@0.2.143+542fefb3b94be87760b2513fff889b91bb5b6672;typescript@0.3.241+48275071e804139579fabada9bb8d90cfe02b062;official-doc@2026-08-24",
+  "surface": "cross-sdk-contract-matrix",
+  "platform": "python-and-typescript",
+  "mode": "versioned-parity-analysis",
+  "evidence_level": "D",
+  "inference": "Python pyproject 与 TypeScript CHANGELOG 显示两侧使用独立版本序列；TypeScript CHANGELOG 对 skills 使用的是特定发布时的 matching 描述，官方双侧参考又列出不同对象模型和独有能力。由此可推断对齐只能是带版本的契约矩阵，不能从命名相似外推共享实现。",
+  "evidence": [
+    {"type":"source","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"pyproject.toml","lines":"1-9","excerpt":"version = \"0.2.143\""},
+    {"type":"source","source":"claude-agent-sdk-typescript","commit":"48275071e804139579fabada9bb8d90cfe02b062","path":"CHANGELOG.md","lines":"3-8","excerpt":"## 0.3.241"},
+    {"type":"source","source":"claude-agent-sdk-typescript","commit":"48275071e804139579fabada9bb8d90cfe02b062","path":"CHANGELOG.md","lines":"584-586","excerpt":"matching the Python SDK"},
+    {"type":"official-doc","title":"TypeScript Agent SDK 参考","url":"https://code.claude.com/docs/en/agent-sdk/typescript","accessed":"2026-08-24"},
+    {"type":"official-doc","title":"Python Agent SDK 参考","url":"https://code.claude.com/docs/en/agent-sdk/python","accessed":"2026-08-24"}
+  ],
+  "limitations": [
+    "公开契约相同仍不证明默认 CLI 二进制、平台行为、错误映射或资源回收一致。",
+    "官方文档可能先于或晚于锁定 Git 提交，运行实验必须记录实际包与 CLI 版本。",
+    "矩阵状态只适用于列出的维度；不能由局部等价推导整体等价。"
+  ],
+  "last_verified": "2026-08-24"
+}

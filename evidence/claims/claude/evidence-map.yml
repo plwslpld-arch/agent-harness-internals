@@ -143,7 +143,7 @@
         {"source":"claude-agent-sdk-typescript","path":"README.md","type":"public-contract","reason":"包安装、query 示例和文档入口。"},
         {"source":"claude-agent-sdk-typescript","path":"CHANGELOG.md","type":"release-record","reason":"版本化公开变更。"},
         {"source":"claude-agent-sdk-typescript","path":"examples/session-stores/shared/conformance.ts","type":"example-test","reason":"Session Store 示例契约。"},
-        {"source":"claude-code-official-docs","url":"https://platform.claude.com/docs/en/agent-sdk/typescript","type":"official-doc","reason":"TypeScript 公开 API。"},
+        {"source":"claude-code-official-docs","url":"https://code.claude.com/docs/en/agent-sdk/typescript","type":"official-doc","reason":"TypeScript 公开 API。"},
         {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/types.py","type":"source","reason":"Python 对照基线。"}
       ],
       "plannedClaims": ["claude.typescript.public-contract-is-not-runtime-source", "claude.sdks.parity-must-be-versioned"]

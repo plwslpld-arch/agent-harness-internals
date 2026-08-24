@@ -153,9 +153,9 @@
 - 创建：`evidence/claims/claude.typescript.public-contract-is-not-runtime-source.yml`
 - 创建：`evidence/claims/claude.sdks.parity-must-be-versioned.yml`
 
-- [ ] 从官方 API、README、CHANGELOG 和 Session Store 示例提取 TypeScript 公开契约；禁止写不存在的本地源码行号。
-- [ ] 建立 Python/TypeScript 对齐表：query/client、消息、权限、Hook、MCP、Session Store、版本与未知项；相似命名不作为实现同构证明。
-- [ ] 渲染复核，运行门禁并提交：`docs(claude): 发布 TypeScript 契约与双 SDK 对齐课程`。
+- [x] 从官方 API、README、CHANGELOG 和 Session Store 示例提取 TypeScript 公开契约；禁止写不存在的本地源码行号。
+- [x] 建立 Python/TypeScript 对齐表：query/client、消息、权限、Hook、MCP、Session Store、版本与未知项；相似命名不作为实现同构证明。
+- [x] 渲染复核，运行门禁并提交：`docs(claude): 发布 TypeScript 契约与双 SDK 对齐课程`。
 
 ### Task 10：产品表面、错误与独立 Eval
 

@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1000" viewBox="0 0 1400 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Claude Python 与 TypeScript SDK 版本化契约对齐</title>
+  <desc id="desc">Python 侧用源码、测试与官方文档，TypeScript 侧用公开接口、变更记录与示例，按入口、消息、权限、扩展、会话和版本逐层判定等价、部分、单侧或未知。</desc>
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="7" stdDeviation="8" flood-color="#17324D" flood-opacity=".12"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#087F7C"/></marker>
+  </defs>
+  <rect width="1400" height="1000" rx="34" fill="#F6F9FC"/>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <text x="700" y="54" text-anchor="middle" font-size="35" font-weight="760" fill="#17324D">相似接口可对照，内部实现不可臆测</text>
+    <text x="700" y="88" text-anchor="middle" font-size="18" fill="#50677D">每个结论绑定 SDK 版本、提交、表面与证据等级</text>
+
+    <rect x="55" y="125" width="620" height="145" rx="22" fill="#E7F5F3" stroke="#087F7C" stroke-width="2.5" filter="url(#shadow)"/>
+    <text x="90" y="165" font-size="24" font-weight="760" fill="#076663">Python SDK 0.2.143</text>
+    <text x="90" y="202" font-size="18" fill="#17324D">锁定源码＋上游测试＋官方文档</text>
+    <text x="90" y="235" font-size="16" fill="#50677D">可核对 SDK 进程内实现；不可外推闭源产品</text>
+
+    <rect x="725" y="125" width="620" height="145" rx="22" fill="#E9F2FF" stroke="#3569A8" stroke-width="2.5" filter="url(#shadow)"/>
+    <text x="760" y="165" font-size="24" font-weight="760" fill="#285383">TypeScript SDK 0.3.241</text>
+    <text x="760" y="202" font-size="18" fill="#17324D">公开接口＋变更记录＋示例</text>
+    <text x="760" y="235" font-size="16" fill="#50677D">主体源码不可见；实现细节保持未知</text>
+
+    <path d="M675 197h42" stroke="#087F7C" stroke-width="4" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+
+    <rect x="55" y="315" width="1290" height="470" rx="24" fill="#FFFFFF" stroke="#A9BDD0" stroke-width="2" filter="url(#shadow)"/>
+    <rect x="55" y="315" width="1290" height="58" rx="24" fill="#17324D"/>
+    <rect x="55" y="349" width="1290" height="24" fill="#17324D"/>
+    <g font-size="18" font-weight="740" fill="#FFFFFF" text-anchor="middle">
+      <text x="160" y="351">维度</text><text x="455" y="351">Python 公开表面</text><text x="870" y="351">TypeScript 公开表面</text><text x="1210" y="351">版本化判定</text>
+    </g>
+    <g stroke="#D8E2EC" stroke-width="1.5"><path d="M270 315v470"/><path d="M650 315v470"/><path d="M1085 315v470"/><path d="M55 455h1290"/><path d="M55 537h1290"/><path d="M55 619h1290"/><path d="M55 701h1290"/></g>
+    <g font-size="17" fill="#17324D">
+      <text x="85" y="410" font-weight="740">入口与控制</text>
+      <text x="300" y="401">单次 query＋长连接客户端</text><text x="300" y="429" fill="#50677D">源码可核对生命周期</text>
+      <text x="680" y="401">query 返回扩展异步生成器</text><text x="680" y="429" fill="#50677D">控制方法来自官方接口</text>
+      <text x="1115" y="415" fill="#955A00" font-weight="740">部分等价</text>
+
+      <text x="85" y="498" font-weight="740">消息与终态</text>
+      <text x="300" y="490">消息联合＋结果消息</text><text x="300" y="518" fill="#50677D">解析路径与测试可查</text>
+      <text x="680" y="490">公开消息联合＋结果消息</text><text x="680" y="518" fill="#50677D">成员来自公开类型参考</text>
+      <text x="1115" y="504" fill="#955A00" font-weight="740">部分等价</text>
+
+      <text x="85" y="580" font-weight="740">权限与钩子</text>
+      <text x="300" y="572">回调、模式、核心钩子</text><text x="300" y="600" fill="#50677D">控制路由可查源码</text>
+      <text x="680" y="572">相近回调＋额外钩子事件</text><text x="680" y="600" fill="#50677D">部分能力仅一侧公开</text>
+      <text x="1115" y="586" fill="#76559B" font-weight="740">部分／单侧</text>
+
+      <text x="85" y="662" font-weight="740">MCP 与会话</text>
+      <text x="300" y="654">进程内桥＋镜像与恢复源码</text><text x="300" y="682" fill="#50677D">具备实现与测试证据</text>
+      <text x="680" y="654">公开签名＋存储一致性示例</text><text x="680" y="682" fill="#50677D">运行时桥接保持未知</text>
+      <text x="1115" y="668" fill="#955A00" font-weight="740">契约部分等价</text>
+
+      <text x="85" y="744" font-weight="740">版本与平台</text>
+      <text x="300" y="736">独立包版本＋实际 CLI</text><text x="300" y="764" fill="#50677D">操作系统与配置需入档</text>
+      <text x="680" y="736">独立包版本＋平台二进制</text><text x="680" y="764" fill="#50677D">文档可能先于锁定版本</text>
+      <text x="1115" y="750" fill="#C0392B" font-weight="740">实现未知</text>
+    </g>
+
+    <rect x="125" y="835" width="1150" height="105" rx="22" fill="#17324D"/>
+    <text x="700" y="872" text-anchor="middle" font-size="22" font-weight="760" fill="#FFFFFF">发布前证据链</text>
+    <text x="700" y="906" text-anchor="middle" font-size="18" fill="#DCE8F2">锁定版本 → 静态契约 → 分侧夹具 → 原始事件 → 中立投影 → 差分审计 → 独立评测</text>
+    <text x="700" y="974" text-anchor="middle" font-size="22" font-weight="760" fill="#17324D">同名 ≠ 同构　接口相近 ≠ 行为相同　契约通过 ≠ 任务正确</text>
+  </g>
+</svg>

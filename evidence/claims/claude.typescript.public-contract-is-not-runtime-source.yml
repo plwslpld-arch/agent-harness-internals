@@ -1,0 +1,25 @@
+{
+  "id": "claude.typescript.public-contract-is-not-runtime-source",
+  "harness": "claude",
+  "dimension": "typescript.public-contract-is-not-runtime-source",
+  "statement": "锁定 TypeScript 仓库的 README、CHANGELOG、官方 API 参考和 Session Store 示例可以证明公开契约与示例行为，但不能作为 SDK 主体运行时源码或 Claude Code 闭源内部实现的替代证据。",
+  "capability": "not-applicable",
+  "version": "typescript@48275071e804139579fabada9bb8d90cfe02b062;official-doc@2026-08-24",
+  "surface": "typescript-public-contract",
+  "platform": "repository-and-official-documentation",
+  "mode": "evidence-boundary-review",
+  "evidence_level": "D",
+  "inference": "锁定树清单只枚举 33 个公开分发文件，README 路由到官方文档，示例 conformance 又明确使用 SDK 类型的结构副本并保持零运行时依赖；因此这些材料适合核对公开接口和 adapter 契约，不足以定位 SDK 主体内部调用链。结论只限定该公开树和访问日期。",
+  "evidence": [
+    {"type":"source","source":"claude-agent-sdk-typescript","commit":"48275071e804139579fabada9bb8d90cfe02b062","path":"README.md","lines":"1-18","excerpt":"npm install @anthropic-ai/claude-agent-sdk"},
+    {"type":"source","source":"claude-agent-sdk-typescript","commit":"48275071e804139579fabada9bb8d90cfe02b062","path":"examples/session-stores/shared/conformance.ts","lines":"20-39","excerpt":"Structural copies of the SDK's SessionStore types"},
+    {"type":"experiment","id":"claude-typescript-tree-inventory"},
+    {"type":"official-doc","title":"TypeScript Agent SDK 参考","url":"https://code.claude.com/docs/en/agent-sdk/typescript","accessed":"2026-08-24"}
+  ],
+  "limitations": [
+    "不覆盖 npm 分发包的文件内容、私有仓库或未来公开提交。",
+    "官方类型和 CHANGELOG 是公开契约与发布记录，不是内部队列、传输和清理实现。",
+    "Session Store 示例可作为 adapter 夹具，不能证明 SDK Runtime 或真实后端生产行为。"
+  ],
+  "last_verified": "2026-08-24"
+}

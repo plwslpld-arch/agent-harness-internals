@@ -384,6 +384,14 @@
       "scope": "docs/harnesses/claude/06-mcp-agents-skills.md",
       "alt": "Claude 扩展能力从配置发现和初始化分流到进程内 MCP、外部 MCP、子智能体与 Skill，并经过权限、执行证据和独立评测的中文架构图",
       "claims": ["claude.mcp.sdk-tools-run-in-process", "claude.extensions.configuration-is-not-execution"]
+    },
+    {
+      "id": "claude-typescript-contract-parity",
+      "path": "assets/diagrams/claude/07-typescript-contract-parity.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/claude/07-typescript-contract-parity.md",
+      "alt": "Claude Python 与 TypeScript SDK 按入口、消息、权限、扩展、会话和版本逐层对齐，同时保持证据等级和未知实现边界的中文对照图",
+      "claims": ["claude.typescript.public-contract-is-not-runtime-source", "claude.sdks.parity-must-be-versioned"]
     }
   ]
 }
