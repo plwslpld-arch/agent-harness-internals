@@ -10,7 +10,7 @@
 
 **Agent Harness 是唯一主线；Eval 是横切验证能力。** 仓库不会再建设一套与 Agent Harness 并列的 Eval Harness 百科。Inspect AI、SWE-bench、Terminal-Bench 和 LM Evaluation Harness 只在需要回答「任务怎样定义、轨迹怎样收集、结果怎样评分、失败能否重试」时作为外部参照出现。缺少证据，就保留未知。
 
-> 当前状态：仓库正在覆盖式重建。治理、证据门禁、正式品牌和共同基础 6/6 已完成阶段复核；DSH、Codex、Gemini CLI、Claude 与 pi 均以 9/9 达到 `reviewed`，OpenCode 仍处于 `outline`。未完成内容不会以链接冒充成品。
+> 当前状态：仓库正在覆盖式重建。治理、证据门禁、正式品牌和共同基础 6/6 已完成阶段复核；DSH、Codex、Gemini CLI、Claude、pi 与 OpenCode 六条主线均以 9/9 达到 `reviewed`。扩展样本与横向比较仍按证据门禁逐批开放。
 
 ## 这里研究的不是「模型排行榜」
 
@@ -50,7 +50,7 @@
 | Gemini CLI | Core/CLI 源码、Policy、Safety、Confirmation 与测试 | 工具调度、策略确认、会话和扩展怎样形成完整执行链 | `reviewed` |
 | Claude | 官方公开文档、Python SDK、TypeScript SDK 与示例 | Claude Code 的公开契约与 Agent SDK 的可见实现边界分别在哪里 | `reviewed` |
 | pi | AI、Agent、Coding Agent、Protocol、Session、Telemetry 与 Evals 源码 | 极简核心怎样向编码 Agent 和协议表面逐层扩展 | `reviewed` |
-| OpenCode | Provider、Session、Permission、Server、Protocol 与多客户端源码 | 服务化会话、权限决策和多前端怎样共享同一 Harness 核心 | `outline` |
+| OpenCode | Provider、Session、Permission、Server、Protocol 与多客户端源码 | 服务化会话、权限决策和多前端怎样共享同一 Harness 核心 | `reviewed` |
 
 `Claude` 主线需要特别说明证据边界：Claude Code 本体不是公开源码，仓库不会从 SDK 反推闭源内部实现。Python 与 TypeScript SDK 分别锁定版本和许可证；确定性实现结论只落在公开源码真正覆盖的范围内，其他内容只能引用官方文档或标成推断与未知。
 
@@ -77,7 +77,7 @@ Eval 不与六条主线争夺主导航，而是在每条主线中重复回答同
 
 ## 阅读路径
 
-正式课程导航只会出现 `reviewed` 和 `verified` 页面。六篇共同基础以及 DSH、Codex、Gemini CLI、Claude、pi 各九篇已经整批完成复核并开放；OpenCode 继续显示状态，但达到发布门槛前不提供课程链接。
+正式课程导航只会出现 `reviewed` 和 `verified` 页面。六篇共同基础以及 DSH、Codex、Gemini CLI、Claude、pi、OpenCode 各九篇已经整批完成复核并开放。
 
 <!-- course-navigation:start -->
 [从总入口开始：先建立概念、状态与证据口径](docs/00-start-here.md)
@@ -98,6 +98,8 @@ Eval 不与六条主线争夺主导航，而是在每条主线中重复回答同
 第四条项目主线：[Claude Agent Harness 主线](docs/harnesses/claude/README.md)
 
 第五条项目主线：[pi Agent Harness 主线](docs/harnesses/pi/README.md)
+
+第六条项目主线：[OpenCode Agent Harness 主线](docs/harnesses/opencode/README.md)
 <!-- course-navigation:end -->
 
 | 你的目标 | 建议路径 | 需要的背景 |

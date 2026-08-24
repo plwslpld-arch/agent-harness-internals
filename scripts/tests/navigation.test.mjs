@@ -255,6 +255,44 @@ ${targets.map((target) => `[pi](${target})`).join('\n')}
   ]);
 });
 
+test('OpenCode 主线九篇不能缺失、降级或用零链接绕过', () => {
+  const targets = [
+    'README.md',
+    '01-runtime-project-config-provider.md',
+    '02-session-prompt-llm-processor.md',
+    '03-tools-permission-question-patch.md',
+    '04-storage-history-compaction-revert.md',
+    '05-agents-skills-plugins-mcp-lsp.md',
+    '06-server-protocol-sdk-events.md',
+    '07-tui-desktop-web-acp-surfaces.md',
+    '08-share-telemetry-eval-boundaries.md',
+  ];
+  const batch = [{ name: 'OpenCode 主线', targets, required: true }];
+  const documents = Object.fromEntries(targets.map((target) => [target, '---\nstatus: reviewed\n---\n']));
+
+  const incomplete = `<!-- course-navigation:start -->
+${targets.slice(0, 8).map((target) => `[OpenCode](${target})`).join('\n')}
+<!-- course-navigation:end -->`;
+  assert.deepEqual(navigationFailures(incomplete, (target) => documents[target], { requiredBatches: batch }), [
+    'OpenCode 主线批量导航不完整：缺少 08-share-telemetry-eval-boundaries.md',
+  ]);
+
+  documents['04-storage-history-compaction-revert.md'] = '---\nstatus: draft\n---\n';
+  const complete = `<!-- course-navigation:start -->
+${targets.map((target) => `[OpenCode](${target})`).join('\n')}
+<!-- course-navigation:end -->`;
+  assert.deepEqual(navigationFailures(complete, (target) => documents[target], { requiredBatches: batch }), [
+    '04-storage-history-compaction-revert.md: 正式导航不能链接 status=draft',
+    'OpenCode 主线批量发布失败：04-storage-history-compaction-revert.md status=draft',
+  ]);
+
+  const empty = `<!-- course-navigation:start -->
+<!-- course-navigation:end -->`;
+  assert.deepEqual(navigationFailures(empty, (target) => documents[target], { requiredBatches: batch }), [
+    `OpenCode 主线批量导航不完整：缺少 ${targets.join('、')}`,
+  ]);
+});
+
 test('已配置为必需的主线不能用零链接绕过整批导航', () => {
   const targets = ['README.md', '01-course.md', '02-course.md'];
   const batch = [{ name: 'Codex 主线', targets, required: true }];

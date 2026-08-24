@@ -192,6 +192,19 @@ function main() {
           '08-telemetry-evals-data-contracts.md',
         ]
       : [];
+    const opencodeTargets = relativePath === 'docs/harnesses/opencode/README.md'
+      ? [
+          'README.md',
+          '01-runtime-project-config-provider.md',
+          '02-session-prompt-llm-processor.md',
+          '03-tools-permission-question-patch.md',
+          '04-storage-history-compaction-revert.md',
+          '05-agents-skills-plugins-mcp-lsp.md',
+          '06-server-protocol-sdk-events.md',
+          '07-tui-desktop-web-acp-surfaces.md',
+          '08-share-telemetry-eval-boundaries.md',
+        ]
+      : [];
     const fileErrors = navigationFailures(content, (target) => {
       checked += 1;
       const absolute = resolve(dirname(path), target);
@@ -206,6 +219,7 @@ function main() {
         ...(geminiTargets.length > 0 ? [{ name: 'Gemini CLI 主线', targets: geminiTargets, required: true }] : []),
         ...(claudeTargets.length > 0 ? [{ name: 'Claude 主线', targets: claudeTargets, required: true }] : []),
         ...(piTargets.length > 0 ? [{ name: 'pi 主线', targets: piTargets, required: true }] : []),
+        ...(opencodeTargets.length > 0 ? [{ name: 'OpenCode 主线', targets: opencodeTargets, required: true }] : []),
       ],
       forbiddenPrefixes: relativePath === 'README.md'
         ? [{ name: '扩展样本', prefix: 'docs/samples/' }]
@@ -221,7 +235,9 @@ function main() {
                   ? [{ name: '扩展样本', prefix: '../../samples/' }]
                   : relativePath === 'docs/harnesses/pi/README.md'
                     ? [{ name: '扩展样本', prefix: '../../samples/' }]
-                  : [],
+                    : relativePath === 'docs/harnesses/opencode/README.md'
+                      ? [{ name: '扩展样本', prefix: '../../samples/' }]
+                      : [],
     });
     for (const error of fileErrors) errors.push(`${relativePath}: ${error}`);
   }

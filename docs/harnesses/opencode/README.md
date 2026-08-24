@@ -37,17 +37,17 @@ Storage、Snapshot、Compaction 和 Event Bridge 属于横切层。数据库保�
 | 顺序 | 模块 | 状态 | 先回答的问题 |
 | ---: | --- | --- | --- |
 | 00 | [主线入口](README.md) | 已复核 | 服务核心、任务链、多表面、权限和评测出口怎样连接？ |
-| 01 | 入口、项目、配置与 Provider | 建设中 | 当前工作目录、配置来源、认证和模型可用性怎样确定？ |
-| 02 | Session Prompt、LLM 与 Processor | 建设中 | 流事件、工具状态和多种终止信号怎样驱动循环？ |
-| 03 | 工具、权限、询问与补丁 | 建设中 | 注册、模型可见、询问、批准、执行和 OS 隔离怎样分层？ |
-| 04 | 存储、历史、压缩与恢复 | 建设中 | 数据库历史、模型 Context、摘要、快照和回退谁是权威？ |
-| 05 | Agent、Skill、Plugin、MCP 与 LSP | 建设中 | 子任务和扩展怎样改变模型可见与真实执行表面？ |
-| 06 | Server、Protocol、SDK 与 Event | 建设中 | Schema、Handler、HTTP、事件流和客户端状态怎样连接？ |
-| 07 | TUI、Desktop、Web 与 ACP 表面 | 建设中 | 多个客户端共享什么，又分别维护什么？ |
-| 08 | Share、Telemetry 与 Eval 边界 | 建设中 | 外部副本、观测、测试、评分、训练和发布怎样分开？ |
+| 01 | [入口、项目、配置与 Provider](01-runtime-project-config-provider.md) | 已复核 | 当前工作目录、配置来源、认证和模型可用性怎样确定？ |
+| 02 | [Session Prompt、LLM 与 Processor](02-session-prompt-llm-processor.md) | 已复核 | 流事件、工具状态和多种终止信号怎样驱动循环？ |
+| 03 | [工具、权限、询问与补丁](03-tools-permission-question-patch.md) | 已复核 | 注册、模型可见、询问、批准、执行和 OS 隔离怎样分层？ |
+| 04 | [存储、历史、压缩与恢复](04-storage-history-compaction-revert.md) | 已复核 | 数据库历史、模型 Context、摘要、快照和回退谁是权威？ |
+| 05 | [Agent、Skill、Plugin、MCP 与 LSP](05-agents-skills-plugins-mcp-lsp.md) | 已复核 | 子任务和扩展怎样改变模型可见与真实执行表面？ |
+| 06 | [Server、Protocol、SDK 与 Event](06-server-protocol-sdk-events.md) | 已复核 | Schema、Handler、HTTP、事件流和客户端状态怎样连接？ |
+| 07 | [TUI、Desktop、Web 与 ACP 表面](07-tui-desktop-web-acp-surfaces.md) | 已复核 | 多个客户端共享什么，又分别维护什么？ |
+| 08 | [Share、Telemetry 与 Eval 边界](08-share-telemetry-eval-boundaries.md) | 已复核 | 外部副本、观测、测试、评分、训练和发布怎样分开？ |
 <!-- course-navigation:end -->
 
-当前只开放主线入口。八篇正文、Claim 和中文图会先分别完成核对，再作为一个批次进入正式导航；文件存在、包名听起来完整或某项测试通过都不能提前发布。
+九篇课程已作为一个批次完成来源核对、内容门禁、中文图示与对抗复核，并进入正式导航。后续若锁定来源漂移，受影响页面必须先退出导航并重新审核。
 
 ## 真实输入与输出
 
