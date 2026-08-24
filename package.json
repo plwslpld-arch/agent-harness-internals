@@ -27,6 +27,7 @@
     "check:portability": "node scripts/verify-portability.mjs",
     "check:licenses": "node scripts/verify-licenses.mjs",
     "check:secrets": "node scripts/scan-secrets.mjs",
+    "history:audit": "node scripts/rewrite-history-metadata.mjs --ref main",
     "test": "node scripts/run-tests.mjs",
     "check": "node scripts/check-all.mjs",
     "check:style": "node scripts/check-style.mjs",
