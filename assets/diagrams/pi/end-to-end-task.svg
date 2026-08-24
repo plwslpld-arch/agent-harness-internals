@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 860" role="img" aria-labelledby="title desc">
+  <title id="title">pi 端到端工具任务流程</title>
+  <desc id="desc">用户目标经过编码智能体装配、智能体核心两次模型采样和一次工具执行，最终产生控制流事件并进入独立评测。</desc>
+  <defs>
+    <marker id="a" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto"><path d="M0 0l14 7-14 7z" fill="#087F7C"/></marker>
+    <filter id="s"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#17324D" flood-opacity=".13"/></filter>
+  </defs>
+  <rect width="1400" height="860" rx="34" fill="#F6F9FC"/>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <text x="700" y="54" text-anchor="middle" font-size="36" font-weight="760" fill="#17324D">一次真实工具闭环：结果必须回到模型，评分必须保持独立</text>
+    <text x="700" y="88" text-anchor="middle" font-size="18" fill="#50677D">上游夹具使用模拟模型流和进程内回显工具；真实的是智能体核心控制逻辑</text>
+
+    <rect x="65" y="124" width="1270" height="104" rx="22" fill="#E9F2FF" stroke="#3569A8" stroke-width="2.5" filter="url(#s)"/>
+    <text x="95" y="162" font-size="22" font-weight="760" fill="#285383">固定输入</text>
+    <text x="235" y="162" font-size="21" fill="#17324D">用户消息：回显某个值　首次模型请求：调用回显工具</text>
+    <text x="95" y="199" font-size="17" fill="#50677D">调用标识 tool-1；夹具不连接线上模型服务，不触碰文件系统或命令进程</text>
+
+    <g font-size="17" text-anchor="middle">
+      <rect x="55" y="286" width="180" height="92" rx="18" fill="#E9F2FF" stroke="#3569A8" stroke-width="2"/>
+      <text x="145" y="319" font-weight="760" fill="#17324D">一　装配</text><text x="145" y="346" fill="#50677D">模型、资源、工具</text><text x="145" y="369" fill="#50677D">与 Session</text>
+
+      <rect x="270" y="286" width="180" height="92" rx="18" fill="#E7F5F3" stroke="#087F7C" stroke-width="2"/>
+      <text x="360" y="319" font-weight="760" fill="#17324D">二　首次采样</text><text x="360" y="346" fill="#50677D">产生 tool-1</text><text x="360" y="369" fill="#50677D">停止原因为工具调用</text>
+
+      <rect x="485" y="286" width="180" height="92" rx="18" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2"/>
+      <text x="575" y="319" font-weight="760" fill="#17324D">三　工具执行</text><text x="575" y="346" fill="#50677D">回显输入值</text><text x="575" y="369" fill="#50677D">产生工具结果</text>
+
+      <rect x="700" y="286" width="180" height="92" rx="18" fill="#E7F5F3" stroke="#087F7C" stroke-width="2"/>
+      <text x="790" y="319" font-weight="760" fill="#17324D">四　结果回送</text><text x="790" y="346" fill="#50677D">追加到 Context</text><text x="790" y="369" fill="#50677D">再次请求模型</text>
+
+      <rect x="915" y="286" width="180" height="92" rx="18" fill="#F0EAF8" stroke="#76559B" stroke-width="2"/>
+      <text x="1005" y="319" font-weight="760" fill="#17324D">五　二次采样</text><text x="1005" y="346" fill="#50677D">返回完成文本</text><text x="1005" y="369" fill="#50677D">停止原因为正常结束</text>
+
+      <rect x="1130" y="286" width="215" height="92" rx="18" fill="#FFECE5" stroke="#C96138" stroke-width="2"/>
+      <text x="1237" y="319" font-weight="760" fill="#17324D">六　控制流结束</text><text x="1237" y="346" fill="#50677D">事件与 Session 提交</text><text x="1237" y="369" fill="#50677D">不等于评测通过</text>
+    </g>
+    <g fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#a)">
+      <path d="M235 332h27"/><path d="M450 332h27"/><path d="M665 332h27"/><path d="M880 332h27"/><path d="M1095 332h27"/>
+    </g>
+
+    <rect x="115" y="445" width="1170" height="116" rx="22" fill="#17324D" filter="url(#s)"/>
+    <text x="150" y="482" font-size="21" font-weight="760" fill="#fff">关键数据链</text>
+    <text x="150" y="516" font-size="18" fill="#DCE8F2">同一 tool-1 连接模型请求、工具开始、工具结束、工具结果与第二次模型输入</text>
+    <text x="150" y="546" font-size="18" fill="#8EE1D8">事件用于观察；Context 用于继续推理；Session 用于持久化；三者不能互相冒充</text>
+
+    <rect x="115" y="612" width="535" height="118" rx="22" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2.5"/>
+    <text x="145" y="652" font-size="21" font-weight="760" fill="#955A00">截断分支</text>
+    <text x="145" y="685" font-size="18" fill="#17324D">若输出因长度截断，拒绝执行可能截断的参数</text>
+    <text x="145" y="714" font-size="17" fill="#50677D">错误工具结果回到模型，允许重新发出完整调用</text>
+
+    <rect x="750" y="612" width="535" height="118" rx="22" fill="#FFECE5" stroke="#C96138" stroke-width="2.5"/>
+    <text x="780" y="652" font-size="21" font-weight="760" fill="#9A3E24">独立评测分支</text>
+    <text x="780" y="685" font-size="18" fill="#17324D">固定 Trial 保存输入、配置、轨迹、产物和副作用</text>
+    <text x="780" y="714" font-size="17" fill="#50677D">独立评分器判定目标；训练奖励、检查点与发布门禁分离</text>
+
+    <rect x="65" y="782" width="1270" height="44" rx="13" fill="#17324D"/>
+    <text x="700" y="810" text-anchor="middle" font-size="18" fill="#fff">统计边界：两次模型采样与一次工具执行属于同一 Agent 运行；是否对应一个 Trial 由任务契约固定</text>
+  </g>
+</svg>

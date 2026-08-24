@@ -1,0 +1,26 @@
+{
+  "id": "pi.architecture.layers-are-composed",
+  "harness": "pi",
+  "dimension": "architecture.layers-are-composed",
+  "statement": "在锁定 pi 中，pi-ai 提供多 Provider 模型与流抽象，pi-agent-core 提供有状态工具循环，pi-coding-agent 再装配模型运行时、资源、会话和编码工具；Session、Protocol、Client/Server、TUI、Telemetry 与 Evals 是相邻且可独立核对的包或责任面。",
+  "capability": "default",
+  "version": "c1279a65b3ef6b0b19950ed1771d5933241c240f",
+  "surface": "monorepo-package-composition",
+  "platform": "source-structure",
+  "mode": "architecture-projection",
+  "evidence_level": "D",
+  "inference": "根 README 与 Workspace 构建顺序直接证明包的存在和依赖顺序，Coding Agent SDK 直接证明它导入 Agent Core、AI 兼容层、资源、Session 与工具。课程把这些事实综合成责任图；该投影不表示所有包在每次 CLI 运行中都启用，也不把未来 Harness 设计文档写成当前实现。",
+  "evidence": [
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"README.md","lines":"15-34","excerpt":"This is the home of the Pi agent harness project including our self extensible coding agent."},
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"package.json","lines":"5-29","excerpt":"\"eval\": \"npm run eval --workspace=@earendil-works/pi-evals --\""},
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/coding-agent/src/core/sdk.ts","lines":"1-31","excerpt":"import { Agent, type AgentMessage, setDefaultStreamFn, type ThinkingLevel } from \"@earendil-works/pi-agent-core\";"},
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/coding-agent/src/core/sdk.ts","lines":"171-185","excerpt":"export async function createAgentSession(options: CreateAgentSessionOptions = {}): Promise<CreateAgentSessionResult> {"}
+  ],
+  "limitations": [
+    "该分层是课程综合源码形成的架构投影，不是上游声明的唯一总体架构。",
+    "包、导出或示例存在不证明一次具体运行已经启用对应能力。",
+    "该 Claim 不证明真实 Provider、外部 Server、容器、Telemetry Exporter 或 Eval 已经运行。"
+  ],
+  "last_verified": "2026-08-24"
+}
+

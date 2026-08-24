@@ -1,0 +1,25 @@
+{
+  "id": "pi.task.coding-agent-composes-core",
+  "harness": "pi",
+  "dimension": "task.coding-agent-composes-core",
+  "statement": "在锁定 pi 的 Agent Core 中，一次工具任务由模型首次返回 toolCall、Harness 执行工具并追加 toolResult、模型再次采样后返回最终文本；错误、Abort、工具 terminate、shouldStopAfterTurn、steering 与 follow-up 还能改变是否继续。",
+  "capability": "default",
+  "version": "c1279a65b3ef6b0b19950ed1771d5933241c240f",
+  "surface": "agent-core-loop",
+  "platform": "upstream-vitest-fixture",
+  "mode": "mock-stream-and-in-process-tool",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/agent/src/agent-loop.ts","lines":"169-224","excerpt":"while (hasMoreToolCalls || pendingMessages.length > 0) {"},
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/agent/src/agent-loop.ts","lines":"247-274","excerpt":"const followUpMessages = (await config.getFollowUpMessages?.()) || [];"},
+    {"type":"upstream-test","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/agent/test/agent-loop.test.ts","lines":"274-369","excerpt":"expect(executed).toEqual([\"hello\"]);"},
+    {"type":"upstream-test","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/agent/test/agent-loop.test.ts","lines":"371-441","excerpt":"expect(executed).toEqual([]);"}
+  ],
+  "limitations": [
+    "上游测试使用 Mock Assistant Stream 和进程内 echo 工具，没有连接真实 Provider，也没有执行文件或命令。",
+    "最终 stop 只证明 Agent Loop 收敛，不证明用户目标正确或副作用合规。",
+    "Coding Agent 还会装配资源、Session、Extension 和产品表面；该 Claim 聚焦 Agent Core 的工具闭环。"
+  ],
+  "last_verified": "2026-08-24"
+}
+

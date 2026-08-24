@@ -61,10 +61,10 @@
 - 创建：`evidence/claims/pi.task.coding-agent-composes-core.yml`
 - 修改：`assets/diagrams/manifest.yml`
 
-- [ ] 用 `ai -> agent -> coding-agent` 和 Session/Protocol/TUI/Telemetry/Evals 横切层解释真实调用链。
-- [ ] 系统图和任务图明确默认宿主权限、外部隔离、数据落点与 Eval 出口。
-- [ ] 渲染两图，检查中文、箭头、截断、模块边界和窄屏可读性。
-- [ ] 运行内容、Claim、视觉、链接和聚合检查并提交：`docs(pi): 发布分层源码主线入口`。
+- [x] 用 `ai -> agent -> coding-agent` 和 Session/Protocol/TUI/Telemetry/Evals 横切层解释真实调用链。
+- [x] 系统图和任务图明确默认宿主权限、外部隔离、数据落点与 Eval 出口。
+- [x] 渲染两图，检查中文、箭头、截断、模块边界和窄屏可读性。
+- [x] 运行内容、Claim、视觉、链接和聚合检查并提交：`docs(pi): 发布分层源码主线入口`。
 
 ### Task 3：运行时、设计文档与外部边界
 

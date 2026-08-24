@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 920" role="img" aria-labelledby="title desc">
+  <title id="title">pi 智能体运行框架系统架构</title>
+  <desc id="desc">多模型服务适配、智能体核心和编码智能体逐层组合，会话、协议、终端、遥测评测与外部隔离形成相邻责任面。</desc>
+  <defs>
+    <marker id="a" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto"><path d="M0 0l14 7-14 7z" fill="#087F7C"/></marker>
+    <filter id="s"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#17324D" flood-opacity=".13"/></filter>
+  </defs>
+  <rect width="1400" height="920" rx="34" fill="#F6F9FC"/>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <text x="700" y="54" text-anchor="middle" font-size="36" font-weight="760" fill="#17324D">pi：小核心通过组合扩展成完整编码智能体</text>
+    <text x="700" y="88" text-anchor="middle" font-size="18" fill="#50677D">包存在不等于默认启用；设计文档、扩展示例与外部项目另行核对</text>
+
+    <rect x="55" y="120" width="1290" height="112" rx="23" fill="#E9F2FF" stroke="#3569A8" stroke-width="2.5" filter="url(#s)"/>
+    <text x="84" y="157" font-size="23" font-weight="760" fill="#285383">一　输入与产品表面</text>
+    <g font-size="18" text-anchor="middle" fill="#17324D">
+      <rect x="100" y="176" width="250" height="40" rx="12" fill="#fff"/><text x="225" y="202">命令行与交互终端</text>
+      <rect x="405" y="176" width="250" height="40" rx="12" fill="#fff"/><text x="530" y="202">程序化 SDK</text>
+      <rect x="710" y="176" width="250" height="40" rx="12" fill="#fff"/><text x="835" y="202">远程客户端与服务端</text>
+      <rect x="1015" y="176" width="250" height="40" rx="12" fill="#fff"/><text x="1140" y="202">固定 Eval 任务</text>
+    </g>
+    <path d="M700 232v48" stroke="#087F7C" stroke-width="4" marker-end="url(#a)"/>
+
+    <rect x="55" y="288" width="875" height="430" rx="26" fill="#E7F5F3" stroke="#087F7C" stroke-width="3" filter="url(#s)"/>
+    <text x="84" y="329" font-size="24" font-weight="760" fill="#076663">二　默认本地组合路径</text>
+    <g font-size="18" text-anchor="middle">
+      <rect x="95" y="365" width="795" height="82" rx="17" fill="#fff" stroke="#58AFA9" stroke-width="2"/>
+      <text x="492" y="397" font-size="21" font-weight="760" fill="#17324D">编码智能体</text>
+      <text x="492" y="426" fill="#50677D">模型运行时、系统提示、资源、会话、编码工具与 Extension</text>
+
+      <rect x="95" y="490" width="360" height="98" rx="17" fill="#fff" stroke="#58AFA9" stroke-width="2"/>
+      <text x="275" y="524" font-size="21" font-weight="760" fill="#17324D">智能体核心</text>
+      <text x="275" y="552" fill="#50677D">状态、队列、事件与工具循环</text>
+      <text x="275" y="575" fill="#50677D">继续、终止、中止与 Hook</text>
+
+      <rect x="530" y="490" width="360" height="98" rx="17" fill="#fff" stroke="#58AFA9" stroke-width="2"/>
+      <text x="710" y="524" font-size="21" font-weight="760" fill="#17324D">多模型服务适配</text>
+      <text x="710" y="552" fill="#50677D">模型、消息、流事件与用量</text>
+      <text x="710" y="575" fill="#50677D">工具调用、停止原因与错误</text>
+    </g>
+    <path d="M492 447v35" stroke="#087F7C" stroke-width="4" marker-end="url(#a)"/>
+    <path d="M455 539h67" stroke="#087F7C" stroke-width="4" marker-end="url(#a)"/>
+    <path d="M710 588v52H275v-44" fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#a)"/>
+    <text x="492" y="676" text-anchor="middle" font-size="18" fill="#076663">工具结果回到下一次模型请求；最终事件只表示控制流收敛</text>
+
+    <rect x="970" y="288" width="375" height="430" rx="26" fill="#F0EAF8" stroke="#76559B" stroke-width="3" filter="url(#s)"/>
+    <text x="1000" y="329" font-size="23" font-weight="760" fill="#614482">三　相邻责任面</text>
+    <g font-size="17" text-anchor="middle" fill="#17324D">
+      <rect x="1005" y="365" width="305" height="55" rx="14" fill="#fff"/><text x="1157" y="398">Session、Context 与压缩</text>
+      <rect x="1005" y="438" width="305" height="55" rx="14" fill="#fff"/><text x="1157" y="471">JSONL / SQLite 存储</text>
+      <rect x="1005" y="511" width="305" height="55" rx="14" fill="#fff"/><text x="1157" y="544">协议、服务端与客户端</text>
+      <rect x="1005" y="584" width="305" height="55" rx="14" fill="#fff"/><text x="1157" y="617">TUI 投影与差分渲染</text>
+      <rect x="1005" y="657" width="305" height="43" rx="13" fill="#fff"/><text x="1157" y="685">遥测与评测</text>
+    </g>
+
+    <rect x="55" y="758" width="625" height="96" rx="22" fill="#FFECE5" stroke="#C96138" stroke-width="2.5"/>
+    <text x="85" y="796" font-size="21" font-weight="760" fill="#9A3E24">默认安全边界</text>
+    <text x="85" y="828" font-size="18" fill="#17324D">工具继承宿主进程权限；没有内建强制权限系统</text>
+
+    <rect x="720" y="758" width="625" height="96" rx="22" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2.5"/>
+    <text x="750" y="796" font-size="21" font-weight="760" fill="#955A00">可选外部边界</text>
+    <text x="750" y="828" font-size="18" fill="#17324D">微型虚拟机、Docker 或策略沙箱必须实际启用并记录</text>
+
+    <rect x="55" y="874" width="1290" height="28" rx="10" fill="#17324D"/>
+    <text x="700" y="894" text-anchor="middle" font-size="16" fill="#fff">证据边界：连接、事件、遥测和评测进程成功，都不能单独证明用户任务正确或允许发布</text>
+  </g>
+</svg>
