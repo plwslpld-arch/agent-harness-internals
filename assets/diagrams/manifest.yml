@@ -544,6 +544,14 @@
       "scope": "docs/harnesses/opencode/06-server-protocol-sdk-events.md",
       "alt": "OpenCode 协议包定义分组与数据形状，服务包注入定位授权和处理器，开发包发出请求并订阅事件流，最终任务结论仍交给独立评测的中文时序图",
       "claims": ["opencode.protocol.groups-separate-contract-from-handler", "opencode.server.response-is-not-task-success"]
+    },
+    {
+      "id": "opencode-tui-desktop-web-acp-surfaces",
+      "path": "assets/diagrams/opencode/07-tui-desktop-web-acp-surfaces.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/opencode/07-tui-desktop-web-acp-surfaces.md",
+      "alt": "OpenCode 同一服务核心向单次终端、交互终端、网页应用、桌面应用和编辑器协议投影，各客户端拥有独立视图状态与传输边界的中文表面架构图",
+      "claims": ["opencode.surfaces.project-shared-but-state-distinct", "opencode.acp.events-are-projections"]
     }
   ]
 }

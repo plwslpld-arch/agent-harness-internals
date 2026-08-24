@@ -82,8 +82,8 @@
 
 ### Task 9：TUI、Desktop、Web 与 ACP 表面
 
-- [ ] 创建课程、表面图和 Claim；区分共享核心、各客户端状态投影、进程/网络边界和任务结果。
-- [ ] 提交：`docs(opencode): 发布多客户端表面课程`。
+- [x] 创建课程、表面图和 Claim；区分共享核心、各客户端状态投影、进程/网络边界和任务结果。
+- [x] 提交：`docs(opencode): 发布多客户端表面课程`。
 
 ### Task 10：Share、Telemetry 与 Eval 边界
 
