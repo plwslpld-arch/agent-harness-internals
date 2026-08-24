@@ -77,8 +77,8 @@
 
 ### Task 8：Server、Protocol、SDK 与 Event
 
-- [ ] 创建课程、时序图和 Claim；覆盖 Protocol Group、Middleware、Server Handler、SSE、SDK 与错误分层。
-- [ ] 提交：`docs(opencode): 发布服务协议与事件课程`。
+- [x] 创建课程、时序图和 Claim；覆盖 Protocol Group、Middleware、Server Handler、SSE、SDK 与错误分层。
+- [x] 提交：`docs(opencode): 发布服务协议与事件课程`。
 
 ### Task 9：TUI、Desktop、Web 与 ACP 表面
 

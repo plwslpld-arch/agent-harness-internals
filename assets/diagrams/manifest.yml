@@ -536,6 +536,14 @@
       "scope": "docs/harnesses/opencode/05-agents-skills-plugins-mcp-lsp.md",
       "alt": "OpenCode 以项目实例和会话为核心，智能体与子智能体、技能、插件、模型上下文协议和语言服务器协议分别影响提示、权限、工具、远端能力与代码智能的中文扩展架构图",
       "claims": ["opencode.extensions.change-runtime-surfaces", "opencode.subagent.permission-is-scoped"]
+    },
+    {
+      "id": "opencode-server-protocol-sdk-events",
+      "path": "assets/diagrams/opencode/06-server-protocol-sdk-events.svg",
+      "type": "sequence",
+      "scope": "docs/harnesses/opencode/06-server-protocol-sdk-events.md",
+      "alt": "OpenCode 协议包定义分组与数据形状，服务包注入定位授权和处理器，开发包发出请求并订阅事件流，最终任务结论仍交给独立评测的中文时序图",
+      "claims": ["opencode.protocol.groups-separate-contract-from-handler", "opencode.server.response-is-not-task-success"]
     }
   ]
 }
