@@ -1,0 +1,26 @@
+{
+  "id": "gemini-cli.orchestration.agents-have-separate-lifecycle",
+  "harness": "gemini-cli",
+  "dimension": "orchestration.agents-have-separate-lifecycle",
+  "statement": "锁定 Gemini CLI 的统一 AgentTool 会分流到本地或远程 Invocation；本地子智能体使用派生 MessageBus、隔离 Registry、专用 complete_task 和轮数/超时终止，远程子智能体则维护实例级 contextId/taskId 与 A2A 流事件，因此子智能体状态不能由父 Turn 或另一类执行器代替。",
+  "capability": "optional",
+  "version": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+  "surface": "core-agent-tool-local-and-remote-protocols",
+  "platform": "source-and-upstream-vitest-fixtures",
+  "mode": "local-and-a2a-remote-subagents",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/agents/agent-tool.ts","lines":"156-206","excerpt":"if (this.definition.kind === 'remote')"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/agents/local-executor.ts","lines":"164-205","excerpt":"We do not allow agents to call other agents."},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/agents/local-executor.ts","lines":"1245-1259","excerpt":"data?.['taskCompleted'] === true"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/agents/remote-subagent-protocol.ts","lines":"58-105","excerpt":"return { contextId: this.contextId, taskId: this.taskId };"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/agents/remote-subagent-protocol.test.ts","lines":"116-180","excerpt":"emits agent_start then agent_end(completed) on success"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/agents/remote-subagent-protocol.test.ts","lines":"292-390","excerpt":"separate session instances have independent state"}
+  ],
+  "limitations": [
+    "远程测试使用合成 A2A 流，不证明真实 AgentCard、认证服务和长任务在生产网络上可靠。",
+    "本地 completed、远程 agent_end completed 和父工具 success 是不同投影，都不能替代目标工件评分。",
+    "隔离 Registry 限制能力集合，但共享进程、工作区与外部副作用仍要由 Policy、Sandbox 和 Eval 独立验证。"
+  ],
+  "last_verified": "2026-08-24"
+}

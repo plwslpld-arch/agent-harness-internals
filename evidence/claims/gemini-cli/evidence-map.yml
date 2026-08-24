@@ -98,11 +98,22 @@
       "question": "Agent 与扩展入口怎样改变运行时能力和编排？",
       "evidence": [
         {"path":"packages/core/src/agents/registry.ts","type":"source","reason":"Agent 定义注册表。"},
+        {"path":"packages/core/src/agents/registry.test.ts","type":"upstream-test","reason":"Agent 启用、同名冲突、远程加载和动态策略测试。"},
         {"path":"packages/core/src/agents/agent-scheduler.ts","type":"source","reason":"Agent 执行调度。"},
+        {"path":"packages/core/src/agents/agent-tool.ts","type":"source","reason":"统一 AgentTool 的定义查找、输入映射与本地/远程分流。"},
+        {"path":"packages/core/src/agents/local-executor.ts","type":"source","reason":"本地子智能体隔离 Registry、工具集合与终止协议。"},
         {"path":"packages/core/src/agents/remote-subagent-protocol.ts","type":"source","reason":"远程子代理协议。"},
+        {"path":"packages/core/src/agents/remote-subagent-protocol.test.ts","type":"upstream-test","reason":"远程流事件、错误、取消和 Session 状态隔离测试。"},
         {"path":"packages/core/src/hooks/hookSystem.ts","type":"source","reason":"Hook 计划和执行入口。"},
+        {"path":"packages/core/src/hooks/hookRegistry.ts","type":"source","reason":"Hook 来源、信任、禁用与事件注册。"},
+        {"path":"packages/core/src/hooks/hookPlanner.test.ts","type":"upstream-test","reason":"Hook 匹配、去重和顺序/并行计划测试。"},
         {"path":"packages/core/src/skills/skillManager.ts","type":"source","reason":"Skill 发现与启用。"},
-        {"path":"packages/core/src/tools/mcp-client-manager.ts","type":"source","reason":"MCP 服务发现和生命周期。"}
+        {"path":"packages/core/src/skills/skillManager.test.ts","type":"upstream-test","reason":"Skill 作用域、优先级、禁用和冲突测试。"},
+        {"path":"packages/core/src/tools/activate-skill.ts","type":"source","reason":"Skill 正文激活、确认和资源目录扩展。"},
+        {"path":"packages/core/src/tools/mcp-client-manager.ts","type":"source","reason":"MCP 服务发现和生命周期。"},
+        {"path":"packages/core/src/tools/mcp-client-manager.test.ts","type":"upstream-test","reason":"MCP 阻断、启用、发现状态和热重载测试。"},
+        {"path":"packages/core/src/utils/extensionLoader.ts","type":"source","reason":"活动扩展启停与运行时能力刷新。"},
+        {"path":"packages/cli/src/config/extension-manager.ts","type":"source","reason":"扩展安装、解析、作用域启用与子能力装配。"}
       ],
       "plannedClaims": ["gemini-cli.extensions.capabilities-are-dynamically-assembled", "gemini-cli.orchestration.agents-have-separate-lifecycle"]
     },

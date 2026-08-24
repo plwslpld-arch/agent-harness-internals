@@ -1,0 +1,27 @@
+{
+  "id": "gemini-cli.extensions.capabilities-are-dynamically-assembled",
+  "harness": "gemini-cli",
+  "dimension": "extensions.capabilities-are-dynamically-assembled",
+  "statement": "锁定 Gemini CLI 只有在扩展当前活动、项目作用域受信、子能力成功解析且各自通过管理员与用户门禁后，才把 MCP、Hook、Skill、Agent、上下文和策略动态装配进运行时；扩展安装或目录存在不等于能力已注册、模型可见或获准执行。",
+  "capability": "optional",
+  "version": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+  "surface": "cli-extension-manager-and-core-runtime-registries",
+  "platform": "cross-platform-source-and-upstream-tests",
+  "mode": "active-extension-trusted-workspace-and-feature-gates",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/utils/extensionLoader.ts","lines":"45-131","excerpt":"await this.config.getAgentRegistry().reload();"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/hooks/hookRegistry.ts","lines":"172-198","excerpt":"Project hooks disabled because the folder is not trusted."},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/skills/skillManager.ts","lines":"36-96","excerpt":"Precedence: Extensions (lowest) -> User -> Workspace (highest)."},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/tools/mcp-client-manager.ts","lines":"437-508","excerpt":"if (!this.cliConfig.isTrustedFolder())"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/agents/registry.ts","lines":"171-276","excerpt":"if (extension.isActive && extension.agents)"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/skills/skillManager.test.ts","lines":"103-174","excerpt":"should respect precedence: Workspace > User > Extension"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/tools/mcp-client-manager.test.ts","lines":"196-279","excerpt":"should not start blocked servers"}
+  ],
+  "limitations": [
+    "源码和上游测试证明装配门禁与 Registry 变化，不证明任意第三方扩展或 MCP Server 的供应链安全。",
+    "安装时同意只覆盖当时显示的内容，动态服务发现、链接目录变化和后续更新仍需重新核对。",
+    "能力注册和模型可见仍不等于单次调用通过 Policy、确认并正确执行。"
+  ],
+  "last_verified": "2026-08-24"
+}

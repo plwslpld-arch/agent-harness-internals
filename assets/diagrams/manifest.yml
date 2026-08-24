@@ -296,6 +296,14 @@
       "scope": "docs/harnesses/gemini-cli/05-session-history-compression-memory.md",
       "alt": "Gemini CLI 从追加会话记录、运行时历史到模型可见投影、压缩替代、检查点和长期记忆的中文数据权威图",
       "claims": ["gemini-cli.state.record-history-context-separation", "gemini-cli.compaction.summary-remains-lossy"]
+    },
+    {
+      "id": "gemini-cli-agents-hooks-skills-mcp",
+      "path": "assets/diagrams/gemini-cli/06-agents-hooks-skills-mcp.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/gemini-cli/06-agents-hooks-skills-mcp.md",
+      "alt": "Gemini CLI 扩展能力经过启用、信任、发现、注册和授权，并分流到本地与远程子智能体生命周期的中文架构图",
+      "claims": ["gemini-cli.extensions.capabilities-are-dynamically-assembled", "gemini-cli.orchestration.agents-have-separate-lifecycle"]
     }
   ]
 }

@@ -91,10 +91,10 @@
 
 ### Task 8：Agent、Hook、Skill、MCP 与 Extension
 
-- [ ] 完成 `06-agents-hooks-skills-mcp.md`、中文扩展与编排图和动态能力 Claim。
-- [ ] 覆盖 AgentRegistry/AgentScheduler、远程子代理协议、Hook 计划与执行、Skill 发现/启用、MCP Client Manager 和 Extension 合并。
-- [ ] 核对信任、优先级、加载失败、凭据、生命周期、工具表变化和子任务状态；目录存在不得冒充可用能力。
-- [ ] 提交：`docs(gemini-cli): 发布智能体编排与扩展课程`。
+- [x] 完成 `06-agents-hooks-skills-mcp.md`、中文扩展与编排图和动态能力 Claim。
+- [x] 覆盖 AgentRegistry/AgentScheduler、远程子代理协议、Hook 计划与执行、Skill 发现/启用、MCP Client Manager 和 Extension 合并。
+- [x] 核对信任、优先级、加载失败、凭据、生命周期、工具表变化和子任务状态；目录存在不得冒充可用能力。
+- [x] 提交：`docs(gemini-cli): 发布智能体编排与扩展课程`。
 
 ### Task 9：交互 CLI、Headless、IDE、A2A 与输出协议
 
