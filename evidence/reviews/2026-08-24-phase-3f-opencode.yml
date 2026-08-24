@@ -1,0 +1,70 @@
+{
+  "stage":"phase-3f-opencode","date":"2026-08-24","commit":"a447b4d912ebf0df871134f139c514da80acec68",
+  "promises":[
+    {"id":"p-nine-course-line","statement":"OpenCode 主线入口与八篇课程均达到 reviewed，覆盖运行入口、配置与 Provider、Session Loop、工具权限、历史恢复、扩展、服务协议、多客户端以及分享遥测与评测边界。"},
+    {"id":"p-source-call-path","statement":"课程以锁定调用入口、服务组合、处理器和上游测试为证据，不从包名、目录名或协议名称反推默认运行行为。"},
+    {"id":"p-runtime-security-boundary","statement":"模型目录与真实可用性、应用权限与操作系统隔离、快照恢复与外部副作用分别说明。"},
+    {"id":"p-state-protocol-boundary","statement":"持久历史、模型投影、压缩摘要、工作树恢复、协议响应、事件流和任务结论保持不同责任。"},
+    {"id":"p-eval-boundary","statement":"Share、OpenTelemetry 与上游测试只作为运行证据；Trial、Attempt、Artifact、外部 Scorer、RewardAdapter、Checkpoint 和独立发布 Holdout 分责。"},
+    {"id":"p-chinese-visuals","statement":"十张 OpenCode 正式图使用中文自然语言，必要项目与协议专名保留，并经集中渲染目检。"},
+    {"id":"p-atomic-navigation","statement":"OpenCode 九篇在根入口、总入口和主线入口整批开放；缺失、降级或零链接均会失败，扩展样本没有提前进入正式导航。"},
+    {"id":"p-node24-all-sources","statement":"Node 24 聚合门禁和十二个锁定来源的 all 配置验证全部通过。"}
+  ],
+  "evidence":[
+    {"id":"e-course-files","promise":"p-nine-course-line","type":"file","reference":"docs/harnesses/opencode/","summary":"入口与 01 至 08 共九篇均为 reviewed；每篇具备真实输入输出、调用链、源码证据、失败限制、验证方法和完整自检。"},
+    {"id":"e-content-contract","promise":"p-nine-course-line","type":"test","reference":"scripts/check-content-contract.mjs","summary":"OpenCode 一级入口契约与八篇深度契约通过，九篇状态和必需章节完整。"},
+    {"id":"e-evidence-map","promise":"p-source-call-path","type":"file","reference":"evidence/claims/opencode/evidence-map.yml","summary":"九篇证据路由、锁定源码与测试及八类高风险误读集中登记。"},
+    {"id":"e-entry-article","promise":"p-source-call-path","type":"file","reference":"docs/harnesses/opencode/README.md","summary":"入口沿 Project、Config、Provider、Session Prompt、LLM、Processor、Permission、Storage 和多客户端真实责任链解释。"},
+    {"id":"e-security-article","promise":"p-runtime-security-boundary","type":"file","reference":"docs/harnesses/opencode/03-tools-permission-question-patch.md","summary":"工具目录、模型表面、参数校验、应用规则、用户答复、真实副作用和外部强隔离逐层分开。"},
+    {"id":"e-security-claims","promise":"p-runtime-security-boundary","type":"file","reference":"evidence/claims/opencode.permission.ask-is-not-os-sandbox.yml","summary":"Claim 以锁定源码与上游测试限定 Ask、Allow 和操作系统沙箱的证据边界。"},
+    {"id":"e-state-article","promise":"p-state-protocol-boundary","type":"file","reference":"docs/harnesses/opencode/04-storage-history-compaction-revert.md","summary":"数据库历史、模型投影、摘要、近期尾部、快照和外部副作用分别核对。"},
+    {"id":"e-protocol-article","promise":"p-state-protocol-boundary","type":"file","reference":"docs/harnesses/opencode/06-server-protocol-sdk-events.md","summary":"Schema、Handler、HTTP、事件流、客户端开发包、会话状态与任务结论分层。"},
+    {"id":"e-eval-article","promise":"p-eval-boundary","type":"file","reference":"docs/harnesses/opencode/08-share-telemetry-eval-boundaries.md","summary":"分享策略、外部副本、可选遥测和测试证据接入不可变 Trial、Artifact、外部评分、训练适配与独立发布链。"},
+    {"id":"e-eval-claims","promise":"p-eval-boundary","type":"file","reference":"evidence/claims/opencode.telemetry-and-tests-are-not-release-eval.yml","summary":"D 级 Claim 明确独立评测架构是本仓库规范建议，不冒充上游内置评分或发布能力。"},
+    {"id":"e-diagram-sheet","promise":"p-chinese-visuals","type":"render","reference":"evidence/reviews/phase-3f-opencode-contact-sheet.png","summary":"十图集中复核未发现裁切、重叠、箭头误向、颜色单点依赖或英文自然语言说明残留。"},
+    {"id":"e-visual-manifest","promise":"p-chinese-visuals","type":"file","reference":"assets/diagrams/manifest.yml","summary":"十张 OpenCode 图均具中文替代文本、合法图类型、文章范围和 Claim 绑定。"},
+    {"id":"e-navigation-test","promise":"p-atomic-navigation","type":"test","reference":"scripts/tests/navigation.test.mjs","summary":"OpenCode 九篇缺失、降级与零链接均失败；扩展样本不得进入正式导航。"},
+    {"id":"e-navigation-files","promise":"p-atomic-navigation","type":"file","reference":"docs/harnesses/opencode/README.md","summary":"主线入口九篇均为已复核链接，根 README 与总入口同步开放第六条主线。"},
+    {"id":"e-source-all","promise":"p-node24-all-sources","type":"command","reference":"node scripts/verify-sources.mjs --profile all","summary":"十二个来源定义与十二个 all 配置 Checkout 全部匹配锁定提交。"},
+    {"id":"e-check-all","promise":"p-node24-all-sources","type":"command","reference":"node scripts/check-all.mjs","summary":"十七组聚合检查、九十六项单元测试、一百零七条 Claim、七十张正式图与一百四十五次正式导航核对通过。"}
+  ],
+  "findings":[
+    {"id":"f-package-call-collapse","priority":"high","status":"resolved","summary":"多包名称与 Layer 依赖容易被写成每次任务都会经过的固定调用路径。"},
+    {"id":"f-catalog-runtime-availability","priority":"high","status":"resolved","summary":"模型目录命中或 Provider 加载容易被解释成认证、区域、网络和真实流请求必然可用。"},
+    {"id":"f-permission-sandbox-collapse","priority":"high","status":"resolved","summary":"Permission Ask、Allow、外部目录检查和文件快照容易被解释成操作系统强隔离。"},
+    {"id":"f-history-summary-recovery-collapse","priority":"high","status":"resolved","summary":"数据库历史、模型投影、摘要、裁剪、快照恢复和外部副作用容易被称为同一份可逆状态。"},
+    {"id":"f-protocol-task-success","priority":"high","status":"resolved","summary":"Schema 通过、HTTP 成功、事件流结束、客户端显示完成或会话空闲容易被升级为任务正确。"},
+    {"id":"f-surface-core-collapse","priority":"high","status":"resolved","summary":"终端、网页、桌面和编辑器协议的局部状态容易被当成共享服务核心事实。"},
+    {"id":"f-share-policy-misstatement","priority":"high","status":"resolved","summary":"初始证据清单把分享写成只能显式触发，遗漏自动与禁用策略。"},
+    {"id":"f-share-telemetry-eval-collapse","priority":"high","status":"resolved","summary":"外部分享副本、遥测 Span 和上游测试容易被合并解释成独立评分器或发布门禁。"},
+    {"id":"f-navigation-stale","priority":"high","status":"resolved","summary":"八篇正文完成后，OpenCode 入口与两级总导航仍保留建设中或提纲状态。"},
+    {"id":"f-live-provider-unverified","priority":"medium","status":"open","summary":"本阶段没有使用真实付费 Provider、外部分享服务和跨客户端生产部署执行全部场景，相关结论保持源码与上游测试级。"},
+    {"id":"f-share-retention-governance","priority":"medium","status":"open","summary":"外部分享服务的缓存、下载副本、审计保留和删除证明不由客户端删除调用单独保证。"},
+    {"id":"f-upstream-drift","priority":"medium","status":"open","summary":"OpenCode 持续演进；课程只以锁定 Commit 为权威，来源漂移后应整批退出导航复核。"},
+    {"id":"f-style-rhythm","priority":"low","status":"open","summary":"中文文风检查对 OpenCode 多篇给出句长节奏非阻断提醒；最终总编辑阶段统一润色。"}
+  ],
+  "resolutions":[
+    {"id":"f-package-call-collapse","action":"入口与扩展课程从实际入口、Service、Layer、Handler 和调用者展开，并明确依赖可获得不等于分支必调用。","evidence":["e-entry-article","e-evidence-map"]},
+    {"id":"f-catalog-runtime-availability","action":"Provider 课程把目录、筛选、认证、运行对象与真实 Stream 列为连续但不等价的阶段。","evidence":["e-course-files","e-evidence-map"]},
+    {"id":"f-permission-sandbox-collapse","action":"工具权限课程分开模型可见、规则决策、用户答复、真实执行、快照与外部强隔离。","evidence":["e-security-article","e-security-claims"]},
+    {"id":"f-history-summary-recovery-collapse","action":"历史课程将持久记录、模型投影、有损摘要、近期尾部、工作树快照和不可逆外部副作用分别标记。","evidence":["e-state-article","e-diagram-sheet"]},
+    {"id":"f-protocol-task-success","action":"服务协议课程在图和正文中分开协议契约、处理器、传输、事件、会话生命周期与独立任务结论。","evidence":["e-protocol-article","e-evidence-map"]},
+    {"id":"f-surface-core-collapse","action":"多表面课程把共享 Project/Session 服务状态与各客户端的路由、缓存、窗口、模式和协议投影分开。","evidence":["e-course-files","e-diagram-sheet"]},
+    {"id":"f-share-policy-misstatement","action":"将 Claim 改为策略控制的外部副本，并以 Session Share 源码核对手动、自动、禁用与运行标志四条条件。","evidence":["e-eval-article","e-eval-claims"]},
+    {"id":"f-share-telemetry-eval-collapse","action":"数据边界课把 Share、OpenTelemetry、Test、Trial、Artifact、Scorer、RewardAdapter、Checkpoint 与独立 Holdout 画成分责链。","evidence":["e-eval-article","e-eval-claims","e-diagram-sheet"]},
+    {"id":"f-navigation-stale","action":"一次性开放 OpenCode 九篇，并增加缺篇、降级和零链接失败测试，同时保持扩展样本无正式链接。","evidence":["e-navigation-test","e-navigation-files"]}
+  ],
+  "commands":[
+    {"command":"node --version","exit_code":0,"summary":"输出 v24.19.0。"},
+    {"command":"node scripts/verify-sources.mjs --profile all","exit_code":0,"summary":"十二个来源定义与十二个 all 配置 Checkout 通过。"},
+    {"command":"node scripts/check-all.mjs","exit_code":0,"summary":"十七组聚合检查与九十六项单元测试通过；仅有句长节奏非阻断提醒。"},
+    {"command":"node scripts/verify-reviews.mjs","exit_code":0,"summary":"既有九份阶段复核记录合法，高优先级发现无伪通过。"},
+    {"command":"node scripts/scan-secrets.mjs","exit_code":0,"summary":"敏感信息扫描通过。"},
+    {"command":"渲染并打开 phase-3f-opencode-contact-sheet.png","exit_code":0,"summary":"十图未见裁切、重叠、箭头误向、颜色单点依赖或英文自然语言说明残留。"},
+    {"command":"逐篇统计状态、Claim、真实输入输出、调用链、失败限制、验证方法和自检","exit_code":0,"summary":"九篇全部 reviewed；十八条 Claim 引用，每篇均具备必需章节。"},
+    {"command":"八类高风险误读模式检索","exit_code":0,"summary":"命中均为明确否定、限定条件、自检或待解决条目；未发现语义升级。"},
+    {"command":"node scripts/check-navigation.mjs","exit_code":0,"summary":"一百四十五次正式导航核对通过，OpenCode 九篇不能缺失、降级或零链接发布。"},
+    {"command":"git diff --check","exit_code":0,"summary":"没有空白错误。"}
+  ],
+  "result":"pass"
+}

@@ -28,7 +28,7 @@
   - 验收：Claude Code 文档证据与 Python/TypeScript SDK 源码证据严格分层。
 - [x] 阶段 3E：pi 主线。
   - 验收：AI、Agent、Coding Agent、Protocol、Session、Telemetry 和 Evals 全链路完成。
-- [ ] 阶段 3F：OpenCode 主线。
+- [x] 阶段 3F：OpenCode 主线。
   - 验收：Provider、Session、Permission、Server、Protocol、多客户端和评测全链路完成。
 - [ ] 阶段 4：横向比较、角色路径、评测集成和控制实验。
   - 验收：比较结论来自六方独立证据，不产生总分，角色建议可追溯。
