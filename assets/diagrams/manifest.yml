@@ -504,6 +504,14 @@
       "scope": "docs/harnesses/opencode/01-runtime-project-config-provider.md",
       "alt": "OpenCode 从命令入口、项目实例、分层配置、模型目录、服务筛选和认证到运行模型对象的中文数据流图",
       "claims": ["opencode.config.layers-build-instance", "opencode.provider.catalog-is-not-runtime-availability"]
+    },
+    {
+      "id": "opencode-session-prompt-llm-processor",
+      "path": "assets/diagrams/opencode/02-session-prompt-llm-processor.svg",
+      "type": "sequence",
+      "scope": "docs/harnesses/opencode/02-session-prompt-llm-processor.md",
+      "alt": "OpenCode 会话主循环组装上下文后调用模型流，事件处理器持续写入消息部件，并以继续、压缩或停止信号反馈主循环的中文时序图",
+      "claims": ["opencode.session.processor-interprets-stream-events", "opencode.session.stop-is-not-task-correctness"]
     }
   ]
 }
