@@ -14,6 +14,18 @@ sources: [{"repo":"pi","path":"packages/telemetry/src/index.ts","commit":"c1279a
 
 它也适合准备把评测结果接入 DPO、GRPO 或 RFT 的团队。训练奖励、Checkpoint 选择与独立 Release Eval 应共享血缘，却保持数据、评分器和责任隔离；完整责任链见 [可观测性、独立评测与部署维护](../comparisons/05-observability-eval-deployment.md)。
 
+## 学习目标
+
+完成后，你应能编写 Dataset、Run 和 Scorer Contract，冻结 Trial 分母并把 Attempt 限定为基础设施恢复；能从 Score 反查规范 Attempt、Trace 和 Artifact；能判断一条 Feedback 是否具备进入 RewardAdapter 的完整语义，并把训练奖励、Checkpoint 选择与独立 Release Eval 分开。
+
+你还应能识别评测投机与证据越权。上游测试、Telemetry、模型自评、平均分上涨和第三方通过分别支持有限结论，不能自动证明生产可用或发布授权。最终能力由可重复实验、失败分类、统计报告和数据用途血缘证明。
+
+## 前置知识
+
+需要理解基本测试设计、版本控制、样本与指标、均值和区间，以及结构化数据处理；不要求先训练大模型。建议先完成 Trace、Feedback 与评测接入共同基础，并理解 Trial 与 Attempt、Artifact 与 Trace、Feedback 与 Reward 的区别。
+
+准备一个确定性 Target、四个以上合成任务、可注入故障的本地环境和两个独立 Scorer。所有任务在运行前冻结，答案与发布 Holdout 的访问受控；练习过程保留数据版本、运行清单、原始评分和人工复核，不只保存最终图表。
+
 ## 决策问题
 
 第一项决策是统计单位。Dataset 条目与 Target 版本共同形成 Trial，Trial 的分母在运行前冻结；Attempt 只记录恢复。基础设施故障可以重试，产品失败必须保留，不能用成功的后续尝试覆盖。
@@ -29,6 +41,18 @@ sources: [{"repo":"pi","path":"packages/telemetry/src/index.ts","commit":"c1279a
 3. 写 Scorer Contract：输入 Artifact、输出 Schema、分数语义、失败原因、版本、测试夹具与人工校准。对模型评分器固定提示和模型，并保存原始判断与分歧。
 4. 建立 RewardAdapter 能力声明。只有 Score 的方向、范围、缺失值、聚合与裁剪全部明确时才输出可训练 Reward；否则标记 partial 或 unavailable。
 5. 在候选冻结后运行独立 Holdout，报告样本量、区间、失败簇、回归、成本和豁免。发布结论引用 Trial 与 Artifact，不引用单张汇总截图。
+
+## 实践任务
+
+构建一个四 Trial 的最小评测管线。任务覆盖文本答案、文件修改、禁止副作用和恢复场景；运行前冻结 Dataset、Target、Harness、模型、环境、预算与 Scorer。注入一次容器启动失败、一次产品错误和一次远端状态未知，验证只有基础设施失败追加 Attempt，产品错误立即提交，不可判定仍保留在分母。
+
+为每个规范 Attempt 保存 Trace 与带哈希 Artifact，再使用规则 Scorer 和一个录制的模型裁判独立评分。制造一个评分分歧和一个 Artifact 篡改，系统应保存两方理由、阻止哈希不符的评分并进入人工复核。报告同时展示产品结果、运行健康、区间和失败簇，不用总平均遮蔽严重副作用。
+
+最后定义 RewardAdapter 能力契约：完整分数输出训练信号，缺少方向或范围时返回 partial，缺少血缘时返回 unavailable。用训练集生成候选，用验证集选点，冻结候选后再运行发布 Holdout；故意把一条 Holdout 暴露给开发流程，污染门禁必须阻止发布结论。
+
+增加一次并发恢复实验。两个 Attempt 同时完成时，canonical 提交由预登记租约和防护令牌决定，不能按分数、完成时间或人工偏好择优；非规范 Attempt 保留在运行健康报告。随后重新运行同一 Scorer 版本，结果应可复现；替换版本时生成新的 Score 血缘，原执行与旧分数仍不可变。
+
+报告阶段做切片和不确定性检查。按场景、风险、工具类型与失败原因分层，列出分母、缺失和不可判定；对小样本给出区间或明确不稳定，不能用总体平均宣称每个切片改善。预先定义严重失败门槛，即使平均分上升，只要破坏性副作用超过门槛也阻止发布。
 
 ## 风险与边界
 
@@ -48,6 +72,14 @@ sources: [{"repo":"pi","path":"packages/telemetry/src/index.ts","commit":"c1279a
 - RewardAdapter 对完整、部分和不可用语义有明确能力契约。
 - 训练、候选选择与发布 Holdout 分区并保留访问审计。
 - 报告展示区间和失败簇，不用单一平均分或排行榜替代判断。
+
+## 作品证据
+
+作品集至少包含 Dataset/Run/Scorer 三份契约、Trial manifest、Attempt 与 canonical 提交记录、Trace/Artifact 血缘、双 Scorer 输出、人工分歧裁决、RewardAdapter 能力声明、数据用途账本和发布报告。每个结果都能回到版本化输入，产品失败不能被重试覆盖。
+
+报告要明确样本量、区间、严重失败、污染检查、阈值和豁免责任，并单列未证明事项。合成四 Trial 可以证明管线不变量和恢复语义，不能证明真实任务分布代表性、生产合规或候选已获发布授权；扩大结论前必须增加独立数据与部署证据。
+
+再提供一份可审计的发布判定表，把每个门槛映射到具体切片、Score、Artifact 与签署责任。任何豁免都注明期限、补偿控制和复测计划；门槛未达到或证据缺失时结果保持阻断，不能用总体平均、演示成功或管理偏好替代预登记规则。
 
 ## 自检
 
