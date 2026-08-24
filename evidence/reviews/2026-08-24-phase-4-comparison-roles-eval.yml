@@ -1,0 +1,65 @@
+{
+  "stage":"phase-4-comparison-roles-eval","date":"2026-08-24","commit":"2894a08433e2acd5c4f499294c0dbeac29cb6f2f",
+  "promises":[
+    {"id":"p-five-comparisons","statement":"五篇横向比较以同一控制问题对照 DSH、Codex、Gemini CLI、Claude、pi 与 OpenCode，不计算总分、排名或赢家。"},
+    {"id":"p-evidence-boundaries","statement":"每个比较单元绑定既有 Claim、能力状态、证据等级和限定条件；目录、配置、测试、遥测、协议成功与任务正确保持不同语义。"},
+    {"id":"p-four-role-paths","statement":"工程、产品、质量评测、运维安全四条路径把已复核机制转换成决策问题、至少三步工作流、风险边界和验收清单。"},
+    {"id":"p-two-local-labs","statement":"两项无需付费模型的本地实验实际验证 Trial 分母、Attempt 恢复、产品失败保留、Artifact 血缘、独立 Scorer 和 RewardAdapter 能力契约。"},
+    {"id":"p-chinese-comparison-visuals","statement":"五张横向比较图使用中文自然语言，经集中渲染目检，并与文章、Manifest 和 Claim 保持一致。"},
+    {"id":"p-atomic-navigation","statement":"五篇比较、四条角色路径和两项实验在根入口与总入口原子开放；缺篇、降级和零链接均失败，旧 A 系列与旧角色短页退出公开树。"},
+    {"id":"p-node24-all-sources","statement":"Node 24 聚合门禁、十二个锁定来源、链接、敏感信息、实验与阶段复核检查全部通过。"}
+  ],
+  "evidence":[
+    {"id":"e-comparison-files","promise":"p-five-comparisons","type":"file","reference":"docs/comparisons/","summary":"五篇比较分别覆盖运行输入、循环执行、权限恢复、编排协议和可观测评测部署，均为 reviewed。"},
+    {"id":"e-comparison-matrices","promise":"p-five-comparisons","type":"file","reference":"evidence/matrices/","summary":"五份机器矩阵包含三十个六方单元，拒绝总分、排名、赢家与无条件结论。"},
+    {"id":"e-matrix-gate","promise":"p-evidence-boundaries","type":"test","reference":"scripts/verify-comparison-matrices.mjs","summary":"矩阵强制六条主线、同属 Claim、能力状态、证据等级和限定条件一致。"},
+    {"id":"e-comparison-boundaries","promise":"p-evidence-boundaries","type":"file","reference":"docs/comparisons/05-observability-eval-deployment.md","summary":"Trace、Telemetry、Feedback、Artifact、Score、Reward、候选选择与发布 Holdout 分责。"},
+    {"id":"e-role-files","promise":"p-four-role-paths","type":"file","reference":"docs/roles/","summary":"四篇角色文章均具适用角色、决策问题、有序工作流、风险边界、验收清单和完整自检。"},
+    {"id":"e-role-contract","promise":"p-four-role-paths","type":"test","reference":"scripts/check-content-contract.mjs","summary":"角色文章达到一千六百非空白字符、八个有效段落和至少三步工作流。"},
+    {"id":"e-lab-records","promise":"p-two-local-labs","type":"file","reference":"evidence/experiments/","summary":"两份实际运行记录保存输入、命令、Node 环境、结果、注入失败和未调用付费模型的范围。"},
+    {"id":"e-lab-tests","promise":"p-two-local-labs","type":"test","reference":"scripts/tests/eval-lab.test.mjs","summary":"八项测试覆盖固定分母、恢复、产品失败、血缘、评分、能力契约、机器写出和记录门禁。"},
+    {"id":"e-lab-gate","promise":"p-two-local-labs","type":"command","reference":"node scripts/verify-eval-labs.mjs","summary":"两份记录、两个 Trial 与 Scorer 1.0.0 通过独立读取核验。"},
+    {"id":"e-diagram-sheet","promise":"p-chinese-comparison-visuals","type":"render","reference":"evidence/reviews/phase-4-comparison-contact-sheet.png","summary":"五图集中复核未发现裁切、重叠、箭头误向、颜色单点依赖或英文自然语言说明残留。"},
+    {"id":"e-visual-manifest","promise":"p-chinese-comparison-visuals","type":"file","reference":"assets/diagrams/manifest.yml","summary":"五张比较图具中文替代文本、合法图类型、文章范围与六方 Claim 绑定。"},
+    {"id":"e-navigation-test","promise":"p-atomic-navigation","type":"test","reference":"scripts/tests/navigation.test.mjs","summary":"新导航批次的缺篇、降级与零链接均失败；扩展样本继续禁止进入正式导航。"},
+    {"id":"e-navigation-files","promise":"p-atomic-navigation","type":"file","reference":"docs/00-start-here.md","summary":"根 README 与总入口同步开放五篇比较、四条角色路径和两项实验；旧短页已删除。"},
+    {"id":"e-source-all","promise":"p-node24-all-sources","type":"command","reference":"node scripts/verify-sources.mjs --profile all","summary":"十二个来源定义与十二个 all 配置 Checkout 全部匹配锁定提交。"},
+    {"id":"e-check-all","promise":"p-node24-all-sources","type":"command","reference":"node scripts/check-all.mjs","summary":"十七组聚合检查、一百零四项单元测试、一百零七条 Claim、七十五张正式图和一百八十九次正式导航核对通过。"}
+  ],
+  "findings":[
+    {"id":"f-name-equals-capability","priority":"high","status":"resolved","summary":"同名目录、类型或扩展容易被解释成六方具有相同默认运行能力。"},
+    {"id":"f-catalog-equals-availability","priority":"high","status":"resolved","summary":"模型目录或配置解析成功容易被解释成认证、网络、区域和真实请求可用。"},
+    {"id":"f-test-equals-production","priority":"high","status":"resolved","summary":"上游测试与合成夹具容易被外推成真实部署可靠性和生产发布证明。"},
+    {"id":"f-telemetry-equals-eval","priority":"high","status":"resolved","summary":"Trace、Telemetry、Feedback 和分享副本容易被合并成独立 Scorer 或发布门禁。"},
+    {"id":"f-attempt-washes-failure","priority":"high","status":"resolved","summary":"单次结果与重复尝试容易改变 Trial 分母，并把产品失败重试成通过。"},
+    {"id":"f-reward-equals-release","priority":"high","status":"resolved","summary":"训练 Reward 或候选选择分数容易被直接升级为独立发布结论。"},
+    {"id":"f-client-equals-task-success","priority":"high","status":"resolved","summary":"协议响应、事件结束、客户端显示完成或会话空闲容易被解释成任务正确。"},
+    {"id":"f-legacy-navigation","priority":"high","status":"resolved","summary":"新比较、角色与实验完成后，旧 A 系列和旧角色短页仍可能继续构成第二套入口。"},
+    {"id":"f-live-model-unverified","priority":"medium","status":"open","summary":"两项实验只使用确定性本地夹具，没有调用真实付费模型或生产工具；相关结论保持契约级。"},
+    {"id":"f-upstream-drift","priority":"medium","status":"open","summary":"六条主线持续演进；比较只以锁定 Commit 为权威，来源漂移后应退出导航复核。"},
+    {"id":"f-style-rhythm","priority":"low","status":"open","summary":"中文文风检查对部分文章给出句长节奏非阻断提醒；最终总编辑阶段统一处理。"}
+  ],
+  "resolutions":[
+    {"id":"f-name-equals-capability","action":"五篇比较固定控制变量，矩阵逐方登记能力状态、证据等级和使用条件，不从名称推导运行行为。","evidence":["e-comparison-files","e-comparison-matrices"]},
+    {"id":"f-catalog-equals-availability","action":"运行输入比较把配置解析、目录、认证、模型可用与真实请求列为连续但不等价的阶段。","evidence":["e-comparison-files","e-matrix-gate"]},
+    {"id":"f-test-equals-production","action":"正文和实验范围明确上游测试与本地夹具只证明锁定契约，不证明生产部署。","evidence":["e-comparison-boundaries","e-lab-records"]},
+    {"id":"f-telemetry-equals-eval","action":"可观测比较和责任链图将运行证据、冻结 Trial、独立评分、训练适配、候选选择与发布留出集分开。","evidence":["e-comparison-boundaries","e-diagram-sheet"]},
+    {"id":"f-attempt-washes-failure","action":"控制实验固定两个 Trial，基础设施错误允许恢复，产品失败只保留一个规范 Attempt，门禁拒绝追加重试。","evidence":["e-lab-tests","e-lab-records","e-lab-gate"]},
+    {"id":"f-reward-equals-release","action":"RewardAdapter 仅在语义完整时生成训练信号；训练、候选选择和独立发布 Holdout 分别冻结。","evidence":["e-lab-tests","e-comparison-boundaries"]},
+    {"id":"f-client-equals-task-success","action":"循环和协议比较将客户端状态、协议完成、会话生命周期、最终 Artifact 与独立任务验收分层。","evidence":["e-comparison-files","e-diagram-sheet"]},
+    {"id":"f-legacy-navigation","action":"根入口与总入口原子开放新批次，删除旧 A 系列、旧角色短页和专属旧门禁。","evidence":["e-navigation-test","e-navigation-files"]}
+  ],
+  "commands":[
+    {"command":"node --version","exit_code":0,"summary":"输出 v24.19.0。"},
+    {"command":"node scripts/verify-sources.mjs --profile all","exit_code":0,"summary":"十二个来源定义与十二个 all 配置 Checkout 通过。"},
+    {"command":"node scripts/check-all.mjs","exit_code":0,"summary":"十七组聚合检查与一百零四项单元测试通过；只有句长节奏非阻断提醒。"},
+    {"command":"node scripts/verify-eval-labs.mjs","exit_code":0,"summary":"两份实验记录、两个 Trial 与 Scorer 1.0.0 通过。"},
+    {"command":"node scripts/check-navigation.mjs","exit_code":0,"summary":"一百八十九次正式导航核对通过，新批次不能缺失、降级或零链接发布。"},
+    {"command":"node scripts/verify-reviews.mjs","exit_code":0,"summary":"既有十份阶段复核记录合法，高优先级发现无伪通过。"},
+    {"command":"node scripts/scan-secrets.mjs","exit_code":0,"summary":"敏感信息扫描通过。"},
+    {"command":"渲染并打开 phase-4-comparison-contact-sheet.png","exit_code":0,"summary":"五图未见裁切、重叠、箭头误向、颜色单点依赖或英文自然语言说明残留。"},
+    {"command":"八类高风险误读模式检索","exit_code":0,"summary":"命中均为明确否定、限定条件、自检或待解决边界；未发现语义升级。"},
+    {"command":"git diff --check","exit_code":0,"summary":"没有空白错误。"}
+  ],
+  "result":"pass"
+}

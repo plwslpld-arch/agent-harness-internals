@@ -30,7 +30,7 @@
   - 验收：AI、Agent、Coding Agent、Protocol、Session、Telemetry 和 Evals 全链路完成。
 - [x] 阶段 3F：OpenCode 主线。
   - 验收：Provider、Session、Permission、Server、Protocol、多客户端和评测全链路完成。
-- [ ] 阶段 4：横向比较、角色路径、评测集成和控制实验。
+- [x] 阶段 4：横向比较、角色路径、评测集成和控制实验。
   - 验收：比较结论来自六方独立证据，不产生总分，角色建议可追溯。
 - [ ] 阶段 5：mini-swe-agent、OpenHands、Cline、goose、Aider、Qwen Code 扩展样本。
   - 验收：每个样本只讲独特机制，来源锁定和状态承诺准确。
