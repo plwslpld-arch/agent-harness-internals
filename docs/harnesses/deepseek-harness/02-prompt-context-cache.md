@@ -17,11 +17,20 @@ sources: [{"repo":"deepseek-harness","path":"packages/core/system-prompt/src/ind
 
 先看字节顺序，再谈缓存。
 
-## 核心机制
+## 核心概念
 
 ![DSH 稳定提示前缀、运行时上下文尾部、请求头变化与服务端前缀缓存的中文数据流图](../../../assets/diagrams/deepseek-harness/02-prompt-context-cache.svg)
 
 Claim: deepseek-harness.context.stable-prefix-runtime-tail
+
+| 概念 | 请求位置 | 变化频率 | 观测意义 |
+| --- | --- | --- | --- |
+| Prompt section | System 前缀 | 通常较低 | 长期身份与指令 |
+| Runtime context | 历史尾部插件消息 | 可逐步变化 | 当前目录、权限等动态事实 |
+| Tool schema | System 后的工具表面 | 能力变化时 | 模型可见动作与参数 |
+| Request header | Session 审计事件 | 前缀身份变化时 | config、system、tools 的版本边界 |
+| KV Cache | Provider 计算层 | 由服务策略决定 | 相同前缀计算是否被复用 |
+| `cacheReadTokens` | Usage 投影 | 每次响应 | 已观察到的缓存读取量 |
 
 System Prompt 不是一段手写大字符串。`SystemPrompt.assemble()` 沿 scope 链收集变量、section、context 和工具 schema；近端 scope 可以遮蔽同名全局贡献，section 与 context 分别按数值 order 排序，工具走可重复的 canonical order。`renderPrompt()` 再把非空 section 用两个换行连接，得到模型请求的 system 字符串。
 
@@ -46,6 +55,76 @@ DeepSeek adapter 的序列化顺序是 system message 在前，再追加会话 m
 命中仍需外部观测。
 
 仓库包含一个需要 `DEEPSEEK_API_KEY` 的真实 API 端到端测试。它构造长 system、一次工具调用和后续 turn，要求第一次请求之后每次 usage 的 `cacheReadTokens > 0`。由于测试使用 `describe.skipIf(!process.env.DEEPSEEK_API_KEY)`，无凭据的普通门禁只证明测试结构存在，不证明今天已现场命中。本文不会把未运行的带密钥测试升级成 A 级实验。
+
+## 为什么这样设计
+
+第一，稳定指令与动态事实有不同生命周期。persona、规则和工具描述适合作为稳定前缀；cwd、权限模式和临时状态放在尾部，既能让模型看到最新值，也避免每步从前部打断可复用字节。
+
+第二，运行时快照进入 Session 事件，离线重放才能解释某一步为何拥有不同环境。若动态值只保存在进程变量里，最终答案可能可见，形成答案的权限与目录却无法复核。
+
+第三，Request header 记录前缀身份变化，却不冒充 Provider 缓存。Harness 可以证明自己发送了什么，Provider usage 才能证明服务端报告了多少读取；责任分开后，缓存故障不会被错误归到 Prompt 组合。
+
+第四，工具排序与 Schema 也纳入稳定面。只固定 System 文本，却让工具注册顺序随机变化，仍会破坏完整请求前缀。统一 canonical order 同时服务重放、差分和缓存可观察性。
+
+第五，缓存指标与质量指标分开，使优化不会掩盖行为退化。团队可以提高稳定前缀复用并降低成本，同时让固定 Trial 继续检查陈旧指令、错误工具选择和最终产物；任一指标改善都不能替另一项签字。
+
+这些边界最终让输入稳定性、服务端复用和任务正确性能够被分别验证、分别回归。
+
+## 实现思路
+
+教学实现把 Prompt 装配器、运行时快照投影器、Header 版本器和 Usage 采集器分开。DSH 源码直接证明这些接缝；缓存命中实验仍由外部 Provider 决定。
+
+1. **注册分面贡献。** section、context、variable 与 tools 按 scope 和 name 管理，定义稳定 order，并保留来源插件。
+2. **每步重新装配。** 先求值变量，再分别排序 section 与 context，工具使用 canonical order；Waterfall 变换输出可审计。
+3. **投影动态快照。** 只在语义变化、清空或压缩丢失保留快照时追加插件消息，不重复写入相同状态。
+4. **计算 Header 身份。** 对 config、System 字节和有序 Tool Schema 建立哈希；变化时追加 request/header 与差异字段。
+5. **序列化请求。** System 在前，Session 派生消息在后；记录真正发送给 Adapter 的顺序和长度。
+6. **收集 Usage。** 原样保存 Provider 的 cache read 字段、模型和时间；缺失记为 unavailable，不填零冒充观测。
+
+```text
+assembly = systemPrompt.assemble(scope)
+system = renderSections(assembly.sections)
+snapshot = renderRuntimeContext(assembly.contexts)
+session.append_if_changed(snapshot)
+header = canonical(config, system, orderTools(assembly.tools))
+session.append_header_if_changed(header, diff)
+response = provider.request(system, session.deriveMessages(), header.tools)
+session.record_usage(response.cacheReadTokens ?? unavailable)
+```
+
+实现应输出字节断点诊断：若 Header 改变，指出是 config、System 哪个 section，还是哪个 Tool Schema 字段。只输出「缓存未命中」无法指导修复，也可能把 Provider 淘汰误判为 Harness 问题。
+
+快照比较不能只做对象引用相等。应对规范化文本或结构计算语义哈希，明确空值、顺序和清除标记；Compaction 后若当前快照已不在派生上下文，投影器需要重新发出，而不是因进程变量未变就继续省略。
+
+Usage 采集还要绑定 Provider、模型、区域和请求 ID。同样的 Header 在不同租户或时间窗口可能没有共享缓存，聚合报表必须按这些条件分桶，并把缺失字段与真实零值分开。
+
+## 贯穿案例
+
+一个编码 Session 连续执行三步：先在只读模式检查仓库，再切换为可写模式修改文件，最后运行测试。persona 与工具集合保持不变，权限状态通过 runtime context 更新。
+
+1. **第一步装配。** System 哈希 S1、Tools 哈希 T1，尾部写入 `mode=read-only`；首次 Header H1 进入 Session，Provider 没有缓存读取。
+2. **第二步状态不变。** 再次检查时不追加相同快照，H1 不变；请求是前一请求的延长，Provider 报告 cacheReadTokens，但该值只约束本次调用。
+3. **第三步权限变化。** runtime context 追加 `mode=write`，System 与 Tools 仍为 S1/T1，Header 不新增；模型能看到新权限，稳定前部保持一致。
+4. **破坏实验。** 把 Tool description 改一个字，T1 变为 T2，生成 Header H2；即使权限没变，前缀身份已变化。
+5. **质量评分。** 独立 Eval 检查文件与测试，不因缓存读取较高而提高正确性分数。
+
+```json
+{"step":1,"system":"S1","tools":"T1","header":"H1","runtime":"read-only","cacheReadTokens":0}
+```
+
+```json
+{"step":3,"system":"S1","tools":"T1","header":"H1","runtime":"write","cacheReadTokens":2048}
+```
+
+```json
+{"step":4,"system":"S1","tools":"T2","header":"H2","headerDiff":"tool.description","cacheObservation":"重新测量"}
+```
+
+若 Provider 不返回 Usage，前三步仍能证明 DSH 的输入布局，却不能声称命中。若 cacheReadTokens 大于零但最终测试失败，缓存实验通过、任务 Eval 失败；两个结论分别报告。
+
+再把权限状态误放进 System section。第三步会从 S1 变为 S2 并产生 Header H2，字节断点定位到该 section；将它移回 runtime context 后恢复稳定前部。这个对照直接展示分面设计的价值。
+
+最后清空权限 Context，投影器必须追加明确失效消息。若只是停止写入，模型历史仍可能保留旧的可写状态；案例应把「清除」视为一次语义变化，并检查 Session 事件可重放。
 
 ## 真实输入与输出
 

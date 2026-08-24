@@ -17,11 +17,99 @@ sources: [{"repo":"deepseek-harness","path":"packages/subagent/README.md","commi
 
 先按跨度选能力。
 
+## 核心概念
+
 ![DSH 从当前会话指导、持久目标、子代理与工作流到技能、协议、扩展和代码模式的中文编排架构图](../../../assets/diagrams/deepseek-harness/06-orchestration-extensions.svg)
 
 Claim: deepseek-harness.orchestration.extensions-share-core-loop
 
 图中每一层都可以改变模型下一步看到的输入或可调用能力，但它们没有获得绕过工具安全和 Session 记录的特权。动态扩展的风险最高，因为它可能改变工具表与服务组合；因此它应是显式启用能力，不应从「仓库有这个包」推断成默认产品表面可用。
+
+| 机制 | 改变什么 | 是否创建新 Agent | 权威结果 |
+| --- | --- | --- | --- |
+| Plan | 当前 Session 的行为指导 | 否 | 模式事件，不是安全强制 |
+| Todo | 当前工作清单快照 | 否 | todo/write，不是验收 |
+| Goal | 跨 Turn 目标与 revision | 否 | 生命周期状态，不是 Scorer |
+| Subagent | 子 Session 与独立 Agent Loop | 是 | 子树终态与父端消费 |
+| Workflow / Ralph | 多子 Agent 的调度与迭代 | 是 | 每个子运行与聚合 Artifact |
+| Skill / MCP | 指令或外部工具能力 | 否 | 加载/调用事件与副作用 |
+| Code Mode | 一次调用内批量编排 Registry 工具 | 否 | 每次内部工具结果 |
+| Extension | 活运行时服务与工具表 | 可能 | 插件生命周期与有效配置 |
+
+机制选择取决于控制跨度。只需改变当前回答方式用 Plan，跟踪短期步骤用 Todo，跨 Turn 目标用 Goal，需要独立上下文才创建 Subagent；需要批量并发时 Workflow 调度多个子 Agent，Ralph 则用 fresh Agent 与共享工作区迭代。
+
+配置、启动和完成仍是三种状态。AgentDefinition 或 Skill 包存在只说明候选能力；模型选择、工具批准、子任务开始和产物通过要分别观察。根 Session 的汇总文本不能替代子树证据。
+
+## 为什么这样设计
+
+第一，共享核心 Agent Loop 避免每种编排机制重新实现模型、工具、Session 和权限。Workflow 的 agent()、Ralph 的每轮 Worker、Subagent 都最终进入同一接缝，安全与可观测性可以复用。
+
+第二，不同状态跨度需要不同原语。把 Todo、Goal 和 Eval 合成一个「完成」字段，会让模型自己勾选任务就获得发布权；分开后，工作管理、长期意图和独立验收各自负责。
+
+第三，子 Agent 通过独立 Session 隔离上下文，却可共享工作区完成协作。这个设计降低父上下文负担，同时把文件冲突、递归深度和父子结果归属显式交给编排层。
+
+第四，Code Mode 与 Extension 分开限制风险。前者批量调用现有 Registry 工具，后者改变运行时服务和工具表；动态代码安装需要更高权限、来源验证、回滚和请求 Header 漂移检查。
+
+第五，Hook 只观察或扩展事件，不成为权威调度器。监听器失败不会改写运行结算，避免日志、遥测或通知插件偶然决定任务是否完成。
+
+这些分层还让失败责任可以准确归属：计划错误属于决策输入，子 Agent 启动失败属于编排基础设施，工具拒绝属于安全链，产物不合格属于任务结果。若把它们压成单个 success 布尔值，恢复策略会把产品失败误当瞬时故障，也会让重试悄悄改变评测分母。独立状态与关联 ID 因而既服务调试，也服务可信评测。
+
+## 实现思路
+
+教学实现以统一 `OrchestrationRun` 包装不同机制，同时保留具体类型。共享字段包括 run ID、parent Session、目标、预算、状态和 Artifact；各机制仍拥有自己的状态机。
+
+1. **按跨度选择原语。** 当前 Turn 指导、跨 Turn 状态、独立 Agent、批量 Workflow 与运行时 Extension 分别路由，拒绝用一个万能 execute。
+2. **编译能力与预算。** 固定 Provider、tools、permission、maxDepth、maxTurns、并发和交接 Schema；记录是否继承父 Context 或共享工作区。
+3. **创建关联身份。** 每个子 Agent、Workflow item 和 Ralph 轮次都有独立 Session / run ID，绑定 parent 与 input item。
+4. **通过共同安全链执行。** Agent、Skill、MCP、Code Mode 内部工具与 Extension 入口都经过 Registry、Guard、审批和 Sandbox。
+5. **收敛并传播结果。** 子运行终态、结构化报告和父端消费分别记录；父端摘要不覆盖子树原始错误。
+6. **独立验收与清理。** 检查工作区冲突、预算、产物和动态插件撤销；内部 completed 只作为 Artifact 字段。
+
+```text
+spec = compile(kind, goal, provider, tools, budgets, handoff_schema)
+run = create_run(parent_session, spec)
+如果 kind 是 subagent/workflow/ralph:
+    children = start_child_sessions(spec)
+    results = await bounded_join(children)
+否则:
+    results = execute_through_registry(spec)
+record(child_results, parent_consumption, side_effects)
+score = independent_scorer(results, workspace_diff, budgets)
+```
+
+Workflow 必须保留输入身份与 canonical result，不能让先完成的子任务改变输出对应关系。Ralph 每轮 fresh 时，长期状态只来自明确报告与工作区；报告长度、轮次上限和停止判定都要可测试。
+
+Extension 运行前保存有效配置与工具 Header，停止或撤销后再次计算并检查服务释放。撤销失败不能被界面隐藏，必须阻断后续把旧工具表当稳定前缀。
+
+实现时还要为父子关系建立不可变关联记录：父运行只能追加「已消费哪个子结果」，不能修改子运行的原始终态。这样即使父 Agent 重新组织摘要，复核者仍能沿 run ID 找回输入、预算、工具轨迹和产物。这个约束也是并发结果保持输入身份的基础。
+
+## 贯穿案例
+
+用户要求并行审查三个模块、汇总风险并更新报告。宿主选择 Workflow 调度三个 reviewer 子 Agent，Todo 展示当前进度，Goal 保存跨 Turn 目标；最终写入仍由父 Agent 完成。
+
+1. **编译 Workflow。** 三个输入 item 获得固定 ID，maxConcurrency=2，每个子 Agent 只读、maxTurns=4，输出统一风险 Schema。
+2. **启动子树。** a、b 先运行，b 先完成；Workflow 保留 item ID，不按完成顺序错配。c 在槽位释放后启动。
+3. **处理失败。** b 的结构化输出无效，记录产品失败，不自动重跑到通过；Hook 发送通知但不改变终态。
+4. **父端汇总。** 父 Agent 消费 a、b、c 原始结果，Todo 更新进度；Goal 仍 active，直到独立 Scorer 检查报告。
+5. **验收。** Scorer 发现 b 缺失必需字段，Trial fail；Goal 的 completed 或报告中的「完成」不能覆盖。
+
+```json
+{"workflow":"review-1","items":["a","b","c"],"maxConcurrency":2,"completionOrder":["b","a","c"]}
+```
+
+```json
+{"canonicalResults":{"a":"valid","b":"schema-error","c":"valid"},"parentConsumed":["a","b","c"]}
+```
+
+```json
+{"goalState":"completed","todoRemaining":0,"eval":{"status":"fail","reason":"b 缺失风险证据"}}
+```
+
+递归变体让 b 子 Agent 再委派两层。根端只看到汇总，验证器必须读取最深 Session 的 depth rejection；不能凭根回复 `DEPTH_ONE_DONE` 宣称限制已触发。
+
+Code Mode 变体在一个 `run_code` 中读取三个模块，内部每次 Read 仍走 Registry；Extension 变体动态注册审查工具，则还需来源签名、Header 变化和撤销检查。两者不能因都能「批量执行」就合并治理。
+
+案例最终应保存四组互不覆盖的证据：Workflow 调度事件说明三个 item 如何运行；各子 Session 说明 reviewer 实际看了什么；父端报告说明哪些结果被消费；独立 Scorer 说明为何发布门禁失败。下一次修复只针对 b 产生一个新 Trial，旧失败仍留在记录中，不能通过重复执行把原有失败改写成通过。
 
 ## 真实输入与输出
 

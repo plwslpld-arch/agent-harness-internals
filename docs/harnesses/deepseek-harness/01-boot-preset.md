@@ -17,11 +17,20 @@ sources: [{"repo":"deepseek-harness","path":"packages/boot/app-boot/src/profile.
 
 先算出这次到底装了什么。
 
-## 核心机制
+## 核心概念
 
 ![DSH 从启动输入、分层补丁、插件激活到智能体预设和会话加入的中文装配图](../../../assets/diagrams/deepseek-harness/01-boot-preset.svg)
 
 Claim: deepseek-harness.boot.profile-preset-composition
+
+| 概念 | 所属层 | 决定什么 | 不代表什么 |
+| --- | --- | --- | --- |
+| bundle | 发行组合 | 提供一组可复用 Patch | 最终有效配置 |
+| profile | 部署组合 | 选择有序 bundle 与用户层 | Agent 身份 |
+| overlay Patch | 配置变换 | 插入、覆盖或调整 Entry | 插件已经激活 |
+| Entry / Fiber | Loader 运行时 | 配置行与活动插件实例的对应 | 文件顺序就是启动顺序 |
+| host composition | 进程宿主 | 注册表、模型路由、持久化与安全服务 | 某个 Agent 已选择全部服务 |
+| agent preset | Agent 平面 | persona、Prompt、工具和委派选择 | 独立进程或完整宿主 |
 
 一个 profile 是部署组合，不是 Agent 身份。锁定源码把 profile 放在 Harness home 下：其 `package.json` 的 `dsh.profile.bundles` 保存有序 bundle 名称，自己的 `cordis.patch.yml` 作为用户层。`loadProfile()` 按清单顺序解析每个 bundle 声明的 patch，然后读取 profile patch；CLI 启动还会继续叠加 home 级 patch、按参数顺序出现的 `--patch` 覆盖和由启动标志导出的补丁。
 
@@ -34,6 +43,71 @@ agent preset 是另一条轴。standard preset 文件明确把自己称为 agent
 不要把 profile 和 preset 合成一个词。profile 决定进程有哪些服务及部署覆盖，preset 决定某类 Agent 在这些服务上选择哪些模型可见能力；一个宿主可以挂多个 preset，而同一 preset 也依赖 profile 已经提供的宿主服务。图中把它们画成先后链，是启动到会话的观察顺序，不宣称两者只能一对一。
 
 最后是激活。`boot()` 创建 Context 与 Loader，挂载根 include，把补丁交给同一配置树，等待条目稳定，再审计每个启用条目的 fiber。条目没有 fiber、激活失败或仍在等待注入服务都会拒绝启动；只有明确 disabled 的条目可以没有活动 fiber。这样可以避免进程以「部分插件没起来但仍退出 0」的半空状态伪装成功。
+
+## 为什么这样设计
+
+第一，bundle 把产品发行能力与具体部署分开。基础能力可以作为共享补丁发布，web、headless 或组织 profile 再按顺序覆盖；升级公共 bundle 时不必复制整份配置，部署差异也能单独审计。
+
+第二，Patch 顺序与服务依赖承担不同责任。顺序决定同一 Entry 最终长什么样，Cordis 注入关系决定插件何时激活。若用 YAML 行号推断启动顺序，异步服务依赖会被误诊；若只看依赖，又解释不了后层为何覆盖前层。
+
+第三，host 与 preset 分轴让一个进程承载多类 Agent。持久化、模型路由和审批服务可以共享，persona、工具与压缩策略按 preset 选择。这个结构减少重复宿主，也要求 scope 边界防止会话状态或工具选择串线。
+
+第四，启动后审计把「配置可解析」提升为「启用插件均已活动」。导入失败、激活异常和等待缺失服务会在正常 Turn 前暴露，避免半成品进程继续接受任务并产生难以解释的局部失败。
+
+这种设计也支持安全恢复。配置转储可以在不启动完整产品树时解释损坏层，部署者先修正组合，再重新进入激活；诊断命令不会因为加载网络、终端或持久化插件而制造新的副作用。
+
+最终得到的是可解释、可复现且能拒绝半启动状态的装配过程。
+
+## 实现思路
+
+下面是配置驱动 Harness 启动器的教学蓝图。DSH 的真实 Patch、Loader 与 preset 证据来自锁定源码；provenance 清单和运行快照是课程建议的可观测补强。
+
+1. **冻结启动输入。** 在创建插件树前解析 Harness home、profile、模式、命令行 Patch 与平台，保存匿名化 RunSpec。
+2. **加载有序层。** 验证每个 bundle 包和声明，按 profile 顺序读取 Patch，再追加 profile、home、命令行和标志派生层。
+3. **组合并记录来源。** 对同一 Patch 算法计算有效 Entry；每次插入、覆盖、跳过都记录来源层与目标 ID。
+4. **挂载 Loader。** 解析插件模块并根据服务注入驱动 Fiber，不用文件顺序替代依赖关系。
+5. **等待稳定并审计。** 启用 Entry 必须有活动 Fiber；失败和 pending 都携带插件与缺失服务，启动整体拒绝。
+6. **挂载 preset 并创建会话。** preset 只选择 Agent 平面能力；Session 绑定 preset 与有效宿主快照，二者分开保存。
+
+```text
+层 = bundles(profile顺序) + profile + home + cli_overlays + flags
+有效Entry, provenance = applyEntryPatches(空树, 层)
+loader.mount(有效Entry)
+await loader.stable()
+如果 存在 enabled 且 fiber 非 active: 启动失败(原因与缺失服务)
+host.mount(agent_presets)
+session = host.create(preset_id, effective_config_hash)
+```
+
+实现要提供 `explain entry-id` 一类诊断：显示最终值、最后修改层、被跳过 Patch 和活动 Fiber。只有源 YAML 而没有有效树，无法判断安全设置到底是否生效。
+
+热更新必须带能力边界。只允许重算用户层的变化应生成新有效哈希，并标出哪些 Entry 已重新挂载；启动来源、进程环境和不可安全替换的宿主服务则要求重启。磁盘内容变化不能直接宣称活动配置变化。
+
+失败清理同样属于启动器责任。任一 Fiber 激活失败时，已创建的终端、watcher、连接和临时目录都应按反向所有权释放；清理结果进入启动 Artifact，避免下一次重试被旧资源污染。
+
+## 贯穿案例
+
+设想部署者用 base 与 headless 两个 bundle，profile 把模型路由改为测试 Provider，并为 reviewer preset 只开放只读工具。案例沿启动到会话验证组合与激活不是同一状态。
+
+1. **组合 bundle。** base 插入 `model-router` 与 `sandbox`，headless 覆盖终端表面；provenance 显示两层目标和顺序。
+2. **应用 profile。** profile 把 `model-router.config.provider` 改为 test，并保留 sandbox；有效树哈希从 C1 变为 C2。
+3. **发现激活失败。** reviewer preset 依赖 `tool-registry`，但 profile 错误禁用该 Entry；Loader 稳定后显示 preset Fiber pending，启动拒绝，不创建 Session。
+4. **修复并重启。** 恢复 tool-registry，所有启用 Fiber active；reviewer preset 挂载，Session s1 加入其 scope。
+5. **核对能力。** s1 的模型上下文只含 Read / Grep，而 Sandbox、持久化和模型路由来自 host；独立 Artifact 保存 preset ID 与有效树哈希 C3。
+
+```json
+{"profile":"ci","layers":["base","headless","profile"],"effectiveHash":"C2","pending":[{"entry":"reviewer","missing":"tool-registry"}]}
+```
+
+```json
+{"profile":"ci","effectiveHash":"C3","fibers":"all-active","session":{"id":"s1","preset":"reviewer","visibleTools":["Read","Grep"]}}
+```
+
+若只检查 YAML 解析，C2 会被误报成功；若只检查 s1 的工具列表，又无法证明 Sandbox Fiber 活动。案例的完成条件同时要求有效值、活动服务和会话可见能力，三者分别核对。
+
+再把 profile Patch 的目标 ID 拼错。组合器应把它记录为 skipped，最终 Provider 仍来自 base；如果系统只检查进程退出码，这个错误会潜伏到真实模型调用。对抗测试因此还要断言关键覆盖确实改变了目标值。
+
+最后并行创建 reviewer 与 writer 两个 Session，检查它们共享 host 服务却得到不同工具与 persona；任何 Session 状态或 preset 工具串线都应阻断发布。这一步验证多 preset 是同宿主上的隔离选择，而非两个独立进程。
 
 ## 真实输入与输出
 

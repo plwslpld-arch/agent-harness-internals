@@ -23,11 +23,103 @@ sources: [{"repo":"deepseek-harness","path":"packages/core/tools/src/index.ts","
 
 入口不是许可。许可不是隔离。模式不是效果。
 
+## 核心概念
+
 ![DSH 工具调用经过注册、策略、Guard、一次性审批和多平台执行后端的中文安全边界图](../../../assets/diagrams/deepseek-harness/04-tools-security.svg)
 
 Claim: deepseek-harness.security.approval-sandbox-separation
 
 图中绿色主链表示调用仍可继续，红色支路表示在副作用发生前形成失败结果。平台面板故意不把三种系统画成同等级：Linux 与 macOS 有「后端可用时才运行」的真实写入拒绝测试；Windows 的跨平台链测试把执行强度明确记录为 `partial`，真实 Windows 运行器效果仍须在 Windows 主机上单独核对。
+
+| 概念 | 回答的问题 | 直接证据 | 不能证明 |
+| --- | --- | --- | --- |
+| 工具注册与 Schema | 调用名称和参数是否有效 | Registry 与解析结果 | 当前调用获准 |
+| pre-execute 策略 | 扩展是否提前处理或拒绝 | Waterfall 决定 | 内核隔离 |
+| 单调 Guard | 是否存在不可被后续 allow 覆盖的否决 | Guard 理由与主体未进入 | 所有绕行路径都被覆盖 |
+| 一次性审批 | 用户是否批准本次严格变宽 | asked / decided 事件 | 会话永久授权 |
+| Sandbox mode | 请求采用哪种资源策略 | effective / granted mode | 后端实际强制效果 |
+| enforcement | 平台运行器强制能力等级 | Provider、平台和实验 | 其他平台同等安全 |
+| 副作用证据 | 文件、进程和网络实际发生什么 | 差异、系统拒绝与退出状态 | 仅凭工具成功推断正确性 |
+
+工具可见、策略允许、审批通过与操作系统执行是四个时间点。模型看到 Bash 只说明动作空间；Guard allow 只说明进程内策略没有拒绝；`allowed-once` 只把更宽模式交给当前调用；只有 Provider 真正启动受限进程并观察资源结果，才有隔离证据。
+
+`enforcement` 也不是安全总分。它描述某后端在某平台的执行强度；即使 full，错误工具仍可能在允许目录内删错文件。安全评测还需任务范围、目标产物和禁止副作用。
+
+## 为什么这样设计
+
+第一，工具扩展需要可组合策略，但安全否决不能被注册顺序翻转。可扩展 pre-execute 放在前，单调 Guard 放在后；插件可以补充上下文或提前拒绝，却不能用后到的 allow 取消核心 Guard。
+
+第二，一次性审批把用户意图限制到具体调用。升级函数先验证确实变宽，再询问并只返回给本次调用，避免无效请求骚扰用户，也避免一次点击悄悄改变整个 Session。
+
+第三，审批与 Sandbox 分离形成双重边界。策略失误时，操作系统仍限制资源；后端不可用时，Harness 可以失败关闭或诚实报告 partial，而不是把界面允许当成内核保证。
+
+第四，平台证据分别记录。Linux bwrap、macOS Seatbelt 和 Windows ACL 有不同能力、探针与跳过条件；统一抽象方便调用，独立实验防止一套测试替其他平台背书。
+
+第五，失败结果进入 Agent Loop，使模型可以换参数，却不抹掉原始违规请求。恢复服务于任务推进，安全 Scorer 仍保留每一次尝试和真实副作用。
+
+第六，结构化安全 Artifact 让产品与平台团队共享事实。产品层可以解释为什么批准，系统层可以解释内核实际阻止什么，评测层可以检查目标范围；三方不必从一段终端错误猜测彼此状态。
+
+## 实现思路
+
+教学实现使用「候选请求—策略决定—批准模式—受限执行—副作用核对」五段式管线。DSH 源码证明 Registry、Guard、审批升级和 Provider 链；统一安全 Artifact 是课程建议。
+
+1. **解析候选调用。** 保留 call ID、工具名、原始参数和 Agent；未知工具、非法参数或不可直接调用在主体前失败。
+2. **执行扩展策略与 Guard。** pre-execute 可返回结果或上下文，随后 Guard 单调求拒绝；记录两个阶段，拒绝时主体次数必须为零。
+3. **计算有效模式。** 从 Session、preset 与调用要求得到当前模式；只有请求严格变宽才进入审批。
+4. **请求一次性决定。** 写入 asked / decided，区分 allow-once、rejected、cancelled、unavailable；异常和缺失依赖失败关闭。
+5. **选择平台 Provider。** 探测后端，生成受限命令，记录平台、runner、enforcement 和降级原因；未达最低强度则拒绝高风险调用。
+6. **执行并核对副作用。** 保存退出状态、stderr 摘要、文件与网络差异；工具结果与 call ID 关联，再由独立 Scorer 判断范围。
+
+```text
+request = parse(tool_call)
+policy = pre_execute(request)
+guard = monotonic_guard(request, policy)
+如果 guard.deny: 返回 not_executed
+mode = effective_mode(session, request)
+如果 request 需要更宽模式:
+    mode = approve_once(current=mode, requested, call_id)
+provider = choose_platform_provider(mode, minimum_enforcement)
+outcome = provider.execute(request)
+artifact = record(request, policy, guard, approval, provider, outcome, side_effects)
+```
+
+模式比较必须是显式偏序，不能靠字符串大小。审批记录还要包含当前模式、目标模式、理由和 subject，防止批准「写工作区」被复用于网络或全盘访问。Provider 不可用和用户拒绝属于不同错误类型。
+
+Provider 选择需要最低强度策略。若请求要求 workspace-write，但平台只提供参数构造或 partial enforcement，宿主应按部署策略拒绝、降级为人工执行或标为 inconclusive；它不能把模式名称写进结果就假装隔离已发生。
+
+执行前后应对允许根、相邻目录、进程和网络做差分。单个退出码不足以说明拒绝发生在哪里；系统错误、工具业务错误和 Scorer 失败分别保留。对于远端副作用，还要使用幂等键和服务端审计 ID。
+
+## 贯穿案例
+
+用户要求生成工作区报告。当前 Session 为 read-only，模型先读取配置，再请求 Bash 写 `reports/a.md`，随后错误地尝试写工作区外路径。案例覆盖一次性升级与真实隔离。
+
+1. **只读调用。** Read 通过 Registry、策略与 Guard，在 read-only Provider 中执行；无需升级，Artifact 记录无副作用。
+2. **工作区写入。** Bash 参数有效，Guard 放行；请求从 read-only 严格升级到 workspace-write，用户返回 allowed-once。
+3. **受限执行。** Linux 示例选择 bwrap，报告 enforcement full；目标位于工作区，命令成功并产生指定文件。批准只属于 call-2。
+4. **越界调用。** call-3 重新从 Session 的 read-only 计算，不能继承 call-2。即使再次获批 workspace-write，Provider 对相邻目录写入产生系统拒绝。
+5. **独立评分。** Scorer 检查报告哈希、工作区外无文件和每次审批；工具成功与安全通过分别记录。
+
+```json
+{"callId":"call-2","current":"read-only","requested":"workspace-write","approval":"allowed-once","runner":"bwrap"}
+```
+
+```json
+{"callId":"call-3","current":"read-only","requested":"workspace-write","approval":"allowed-once","exitCode":1,"outsideFileExists":false}
+```
+
+```json
+{"score":{"artifactCorrect":true,"outsideWriteBlocked":true,"approvalReuse":false},"platformEvidence":"本次 Linux 后端实验"}
+```
+
+Windows 变体若只得到 `partial`，同样的配置不能宣布完整隔离。Trial 应按最低强度策略阻断或标为 inconclusive，并要求目标 Windows 主机的真实 ACL 拒绝实验；不能借用 Linux 结果补齐。
+
+再让 pre-execute 返回 allow、Guard 返回 deny。工具主体次数必须为零，证明扩展许可不能覆盖核心拒绝。这个反例防止安全性依赖监听器注册顺序。
+
+取消变体在审批等待时终止信号，结果必须是 cancelled，Provider 从未启动；执行期间取消则可能已有副作用，需要等待或查询真实进程状态。两个取消点不能共用「未执行」结论。
+
+最后故意把工具标成只读却在 Handler 内写文件。Schema 和注解都可能通过，只有 Sandbox 差分与目标文件检查能发现。这个实验说明语义声明不能替代独立执行边界。
+
+课程验收要求学习者能画出每一层的输入、决定与失败状态，并能从 Artifact 判断某次调用究竟是未获许可、后端未启动、系统拒绝，还是已经执行但产物错误。
 
 ## 真实输入与输出
 
