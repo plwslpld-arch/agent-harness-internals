@@ -115,6 +115,27 @@ function claudeEntryFailures(content, errors) {
   if (claims.size < 2) errors.push('Claude 一级入口必须引用至少两个正式 Claim');
 }
 
+function piEntryFailures(content, errors) {
+  if (!/ai、agent 与 coding-agent/u.test(content)
+      || !/Session/u.test(content)
+      || !/Protocol/u.test(content)
+      || !/Telemetry/u.test(content)
+      || !/Evals/u.test(content)) {
+    errors.push('pi 一级入口必须声明 ai、agent 与 coding-agent 三层组合，以及 Session、Protocol、Telemetry 与 Evals 横切表面');
+  }
+  if (!/现行运行时源码[\s\S]{0,120}设计文档[\s\S]{0,120}扩展示例[\s\S]{0,120}外部项目/u.test(content)
+      || !/(?:不等于|不能证明)[^\n。；]{0,50}默认运行能力/u.test(content)) {
+    errors.push('pi 一级入口必须分开现行运行时源码、设计文档、扩展示例和外部项目');
+  }
+  if (!/默认继承[^\n。；]{0,50}宿主进程权限/u.test(content)
+      || !/不内建[^\n。；]{0,80}(?:文件系统|进程|网络|凭据)[^\n。；]{0,80}隔离/u.test(content)
+      || !/(?:外部容器|外部[^\n。；]{0,20}沙箱)/u.test(content)) {
+    errors.push('pi 一级入口必须声明默认宿主权限以及外部容器或沙箱边界');
+  }
+  const claims = new Set(content.match(/\bClaim:\s*[a-z0-9][a-z0-9-]*(?:\.[a-z0-9][a-z0-9-]*)+/gu) ?? []);
+  if (claims.size < 2) errors.push('pi 一级入口必须引用至少两个正式 Claim');
+}
+
 function harnessEntryFailures(content, errors, relativePath) {
   const course = requireSection(content, '课程状态与顺序', errors);
   if (course !== null && !/^\|[^\n]*状态[^\n]*\|/mu.test(course)) {
@@ -130,6 +151,7 @@ function harnessEntryFailures(content, errors, relativePath) {
     errors.push('一级主线入口必须引用至少一个正式 Claim');
   }
   if (relativePath === 'docs/harnesses/claude/README.md') claudeEntryFailures(content, errors);
+  if (relativePath === 'docs/harnesses/pi/README.md') piEntryFailures(content, errors);
 }
 
 function foundationFailures(content, errors) {

@@ -1,0 +1,164 @@
+{
+  "harness": "pi",
+  "source": {
+    "id": "pi",
+    "kind": "locked-source-and-tests",
+    "commit": "c1279a65b3ef6b0b19950ed1771d5933241c240f",
+    "availability": "runtime-source-available",
+    "license": "MIT",
+    "boundary": "可核对锁定 Commit 的源码、测试、上游文档和示例；设计文档、示例扩展、外部 Session 分享项目与未执行的真实 Provider 行为必须另行限定。"
+  },
+  "modules": [
+    {
+      "id": "pi-overview",
+      "article": "README.md",
+      "question": "AI、Agent、Coding Agent 与 Session、Protocol、TUI、Telemetry、Evals 怎样组合成一次可核对任务？",
+      "evidence": [
+        {"path":"README.md","type":"upstream-doc","reason":"项目定位、包清单、默认权限和外部容器化边界。"},
+        {"path":"package.json","type":"source","reason":"Workspace、构建顺序和 Eval 命令。"},
+        {"path":"packages/coding-agent/src/core/sdk.ts","type":"source","reason":"Coding Agent 程序化装配入口。"},
+        {"path":"packages/agent/src/agent.ts","type":"source","reason":"Agent 状态与循环入口。"},
+        {"path":"packages/evals/src/pi-harness.ts","type":"source","reason":"评测 Target 适配入口。"}
+      ],
+      "plannedClaims": ["pi.architecture.layers-are-composed", "pi.task.coding-agent-composes-core"]
+    },
+    {
+      "id": "pi-evidence-runtime-design-boundaries",
+      "article": "01-evidence-runtime-design-boundaries.md",
+      "question": "哪些结论来自现行源码、未来设计文档、扩展示例、容器化说明或外部项目？",
+      "evidence": [
+        {"path":"packages/agent/src/harness/agent-harness.ts","type":"source","reason":"当前可核对的 Agent Harness 实现表面。"},
+        {"path":"packages/agent/docs/harness.md","type":"design-doc","reason":"包含未来切片和可删除旧实现的设计说明，不能当现行实现。"},
+        {"path":"packages/coding-agent/examples/extensions/sandbox/index.ts","type":"example","reason":"扩展示例，不是默认启用能力。"},
+        {"path":"packages/coding-agent/docs/containerization.md","type":"upstream-doc","reason":"Gondolin、Docker 与 OpenShell 外部隔离方案。"},
+        {"path":"README.md","type":"upstream-doc","reason":"Session 分享指向外部 pi-share-hf 项目。"}
+      ],
+      "plannedClaims": ["pi.evidence.design-doc-is-not-runtime", "pi.security.examples-are-not-default-boundaries"]
+    },
+    {
+      "id": "pi-ai-provider-stream-normalization",
+      "article": "02-ai-provider-stream-normalization.md",
+      "question": "不同 Provider 的模型、消息、流事件、工具调用、Usage 和错误怎样进入统一类型？",
+      "evidence": [
+        {"path":"packages/ai/src/types.ts","type":"source","reason":"模型、消息、内容、Usage、StopReason 与流事件类型。"},
+        {"path":"packages/ai/src/models.ts","type":"source","reason":"模型目录查询和运行时模型集合。"},
+        {"path":"packages/ai/src/providers/all.ts","type":"source","reason":"内建 Provider 注册集合。"},
+        {"path":"packages/ai/src/api/transform-messages.ts","type":"source","reason":"跨 Provider 消息转换。"},
+        {"path":"packages/ai/src/utils/event-stream.ts","type":"source","reason":"统一事件流控制。"},
+        {"path":"packages/ai/src/utils/overflow.ts","type":"source","reason":"Context Overflow 分类。"},
+        {"path":"packages/ai/test/faux-provider.test.ts","type":"upstream-test","reason":"无真实密钥的确定性 Provider 测试。"},
+        {"path":"packages/ai/test/cross-provider-handoff.test.ts","type":"upstream-test","reason":"跨 Provider 消息交接测试。"},
+        {"path":"packages/ai/test/abort.test.ts","type":"upstream-test","reason":"Abort 生命周期测试。"}
+      ],
+      "plannedClaims": ["pi.ai.provider-stream-is-normalized", "pi.ai.model-catalog-is-not-runtime-availability"]
+    },
+    {
+      "id": "pi-agent-loop-state-tools",
+      "article": "03-agent-loop-state-tools.md",
+      "question": "Agent 怎样解释消息、队列、模型流、工具批次和终止条件？",
+      "evidence": [
+        {"path":"packages/agent/src/agent.ts","type":"source","reason":"Agent 状态、订阅、Prompt、Steer、Follow-up 与 Abort。"},
+        {"path":"packages/agent/src/agent-loop.ts","type":"source","reason":"外层/内层循环、工具执行和终止。"},
+        {"path":"packages/agent/src/types.ts","type":"source","reason":"AgentMessage、AgentTool、QueueMode 与 AgentEvent。"},
+        {"path":"packages/agent/test/agent-loop.test.ts","type":"upstream-test","reason":"工具回合、被截断参数、队列和终止测试。"},
+        {"path":"packages/agent/test/agent.test.ts","type":"upstream-test","reason":"状态、订阅、队列与 Abort 测试。"}
+      ],
+      "plannedClaims": ["pi.agent.loop-interprets-multiple-stop-signals", "pi.agent.length-truncated-tool-is-not-executed"]
+    },
+    {
+      "id": "pi-coding-agent-prompt-extensions",
+      "article": "04-coding-agent-prompt-extensions.md",
+      "question": "Coding Agent 怎样把 Prompt、资源、工具、Skill、模板和 Extension 组合到核心循环？",
+      "evidence": [
+        {"path":"packages/coding-agent/src/core/sdk.ts","type":"source","reason":"程序化 Session 创建和依赖装配。"},
+        {"path":"packages/coding-agent/src/core/system-prompt.ts","type":"source","reason":"Coding Agent 系统 Prompt 拼装。"},
+        {"path":"packages/coding-agent/src/core/resource-loader.ts","type":"source","reason":"AGENTS、Skill、Prompt Template 与 Extension 资源发现。"},
+        {"path":"packages/coding-agent/src/core/tools/index.ts","type":"source","reason":"内建编码工具集合。"},
+        {"path":"packages/coding-agent/src/core/extensions/loader.ts","type":"source","reason":"Extension 发现与加载。"},
+        {"path":"packages/coding-agent/src/core/extensions/runner.ts","type":"source","reason":"Extension 事件和工具运行。"},
+        {"path":"packages/coding-agent/docs/extensions.md","type":"upstream-doc","reason":"Extension 契约和安全提醒。"},
+        {"path":"packages/coding-agent/test/extensions-runner.test.ts","type":"upstream-test","reason":"Extension 行为测试。"}
+      ],
+      "plannedClaims": ["pi.coding.prompt-is-resource-assembly", "pi.extensions.can-change-runtime-surfaces"]
+    },
+    {
+      "id": "pi-session-context-compaction-storage",
+      "article": "05-session-context-compaction-storage.md",
+      "question": "持久 Session、分支、模型 Context、摘要和存储后端怎样保持不同权威边界？",
+      "evidence": [
+        {"path":"packages/agent/src/harness/session/session.ts","type":"source","reason":"Session 操作和条目提交。"},
+        {"path":"packages/agent/src/harness/session/context.ts","type":"source","reason":"Session 路径到模型 Context 的投影。"},
+        {"path":"packages/agent/src/harness/compaction/compaction.ts","type":"source","reason":"Compaction 准备与摘要。"},
+        {"path":"packages/agent/src/harness/session/jsonl/repo.ts","type":"source","reason":"JSONL Session Repository。"},
+        {"path":"packages/session-backends/sqlite-node/src/sqlite/repo.ts","type":"source","reason":"SQLite Session Repository。"},
+        {"path":"packages/session-backends/sqlite-node/src/sqlite/storage/writer-leases.ts","type":"source","reason":"Writer Lease 并发边界。"},
+        {"path":"packages/agent/test/harness/session/context.test.ts","type":"upstream-test","reason":"Context 投影测试。"},
+        {"path":"packages/session-backends/sqlite-node/test/writer-leases.test.ts","type":"upstream-test","reason":"Writer Lease 行为测试。"}
+      ],
+      "plannedClaims": ["pi.session.context-is-derived-projection", "pi.session.writer-lease-does-not-make-summary-lossless"]
+    },
+    {
+      "id": "pi-protocol-server-client",
+      "article": "06-protocol-server-client.md",
+      "question": "Framing、Codec、Schema、Server 与 Client 怎样建立远程 Session 表面？",
+      "evidence": [
+        {"path":"packages/protocol/src/framing.ts","type":"source","reason":"Length-prefixed Frame 编解码。"},
+        {"path":"packages/protocol/src/codec.ts","type":"source","reason":"JSON 与 CBOR Codec。"},
+        {"path":"packages/protocol/src/schemas.ts","type":"source","reason":"协议请求、响应和事件 Schema。"},
+        {"path":"packages/server/src/server.ts","type":"source","reason":"Server 生命周期和连接接入。"},
+        {"path":"packages/server/src/sessions.ts","type":"source","reason":"服务端 Session 操作。"},
+        {"path":"packages/client/src/client.ts","type":"source","reason":"Client 请求与连接入口。"},
+        {"path":"packages/client/src/session-handle.ts","type":"source","reason":"客户端 Session Handle 和状态投影。"},
+        {"path":"packages/protocol/test/protocol.test.ts","type":"upstream-test","reason":"协议往返和错误测试。"},
+        {"path":"packages/server/test/conformance.test.ts","type":"upstream-test","reason":"服务表面一致性测试。"},
+        {"path":"packages/client/test/sessions.test.ts","type":"upstream-test","reason":"客户端 Session 行为测试。"}
+      ],
+      "plannedClaims": ["pi.protocol.frame-codec-schema-are-distinct", "pi.protocol.session-handle-is-not-task-success"]
+    },
+    {
+      "id": "pi-cli-tui-permissions-containerization",
+      "article": "07-cli-tui-permissions-containerization.md",
+      "question": "CLI/TUI 怎样投影任务状态，默认宿主权限和外部隔离又怎样分层？",
+      "evidence": [
+        {"path":"packages/coding-agent/src/cli.ts","type":"source","reason":"CLI 入口和模式选择。"},
+        {"path":"packages/coding-agent/src/modes/interactive/interactive-mode.ts","type":"source","reason":"交互模式事件投影。"},
+        {"path":"packages/tui/src/tui.ts","type":"source","reason":"终端组件树和渲染循环。"},
+        {"path":"packages/tui/src/terminal.ts","type":"source","reason":"差分输出到终端。"},
+        {"path":"packages/tui/test/tui-render.test.ts","type":"upstream-test","reason":"TUI 渲染行为测试。"},
+        {"path":"README.md","type":"upstream-doc","reason":"默认继承用户和进程权限。"},
+        {"path":"packages/coding-agent/docs/containerization.md","type":"upstream-doc","reason":"三种外部隔离方案。"},
+        {"path":"packages/coding-agent/examples/extensions/confirm-destructive.ts","type":"example","reason":"交互确认示例，不是强制权限边界。"}
+      ],
+      "plannedClaims": ["pi.tui.rendering-is-event-projection", "pi.security.host-permissions-are-default", "pi.security.containerization-is-external"]
+    },
+    {
+      "id": "pi-telemetry-evals-data-contracts",
+      "article": "08-telemetry-evals-data-contracts.md",
+      "question": "Telemetry、Eval Artifact、Scorer、Session 分享和训练/发布链怎样关联而不互相替代？",
+      "evidence": [
+        {"path":"packages/telemetry/src/index.ts","type":"source","reason":"Vendor-neutral Telemetry 接口与 Schema。"},
+        {"path":"packages/telemetry/src/memory.ts","type":"source","reason":"内存适配器。"},
+        {"path":"packages/telemetry/src/noop.ts","type":"source","reason":"Noop 适配器。"},
+        {"path":"packages/telemetry/test/conformance.test.ts","type":"upstream-test","reason":"Telemetry 适配器一致性。"},
+        {"path":"packages/evals/src/pi-harness.ts","type":"source","reason":"pi Eval Harness 适配。"},
+        {"path":"packages/evals/src/vitest-evals/artifacts.ts","type":"source","reason":"Eval Artifact 写入。"},
+        {"path":"packages/evals/src/vitest-evals/summary.ts","type":"source","reason":"Trial 汇总。"},
+        {"path":"packages/evals/test/pi-harness.test.ts","type":"upstream-test","reason":"无真实 Provider 的 Eval Harness 测试。"},
+        {"path":"packages/evals/test/vitest-evals/artifacts.test.ts","type":"upstream-test","reason":"Artifact 生成测试。"},
+        {"path":"README.md","type":"upstream-doc","reason":"Session 分享是外部、自愿的数据出口。"}
+      ],
+      "plannedClaims": ["pi.telemetry.contract-is-not-scorer", "pi.eval.artifact-is-not-release-gate", "pi.session.sharing-is-external-and-opt-in"]
+    }
+  ],
+  "risks": [
+    {"id":"design-doc-runtime-collapse","severity":"high","mitigation":"把现行源码、未来设计切片、示例与外部项目分别登记。"},
+    {"id":"model-catalog-runtime-availability","severity":"high","mitigation":"分开目录存在、Provider 注册、凭据、区域、网络和真实请求结果。"},
+    {"id":"extension-default-capability","severity":"high","mitigation":"核对发现、加载、启用、注册、模型可见、执行与失败阶段。"},
+    {"id":"prompt-permission-collapse","severity":"high","mitigation":"确认提示、Extension Hook、宿主权限和外部强隔离分别说明。"},
+    {"id":"session-context-summary-collapse","severity":"high","mitigation":"持久条目、分支路径、模型 Context 与派生摘要分开。"},
+    {"id":"protocol-task-success","severity":"high","mitigation":"分开编码、连接、请求响应、Session 状态、Agent 终止和 Eval 通过。"},
+    {"id":"telemetry-eval-reward-collapse","severity":"high","mitigation":"Telemetry、Artifact、Scorer、训练 Reward、Checkpoint 与独立发布 Eval 分开。"},
+    {"id":"session-sharing-default-upload","severity":"high","mitigation":"外部分享项目只作为需用户授权的可选出口，不写成默认遥测。"},
+    {"id":"upstream-test-production-proof","severity":"medium","mitigation":"上游确定性测试只证明锁定夹具，不扩大成真实 Provider 或生产部署证明。"}
+  ]
+}

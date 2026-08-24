@@ -315,3 +315,49 @@ Claim: claude.task.transport-control-loop
     content: entry.content.replace('Claim: claude.task.transport-control-loop', ''),
   }).join('\n'), /至少两个正式 Claim/u);
 });
+
+test('pi 一级入口必须声明模块分层、设计边界与默认宿主权限', () => {
+  const entry = {
+    relativePath: 'docs/harnesses/pi/README.md',
+    metadata: { status: 'reviewed' },
+    content: `${harnessContent()}
+## 课程状态与顺序
+
+| 序号 | 课程 | 状态 |
+| --- | --- | --- |
+| 00 | 总览 | 已复核 |
+
+![pi 中文系统架构图](../../../assets/diagrams/pi/system-architecture.svg)
+
+![pi 中文端到端任务流程图](../../../assets/diagrams/pi/end-to-end-task.svg)
+
+pi 沿着 ai、agent 与 coding-agent 三层组合任务，并由 Session、Protocol、Client/Server、TUI、Telemetry 与 Evals 提供横切表面。
+
+现行运行时源码、未来设计文档、扩展示例与外部项目必须分开核对；设计目标和示例存在不等于默认运行能力。
+
+pi 默认继承启动它的宿主进程权限，不内建文件系统、进程、网络或凭据隔离；需要使用外部容器或沙箱建立边界。
+
+Claim: pi.architecture.layers-are-composed
+
+Claim: pi.task.coding-agent-composes-core
+`,
+  };
+
+  assert.deepEqual(contentContractFailures(entry), []);
+  assert.match(contentContractFailures({
+    ...entry,
+    content: entry.content.replace('pi 沿着 ai、agent 与 coding-agent 三层组合任务，并由 Session、Protocol、Client/Server、TUI、Telemetry 与 Evals 提供横切表面。', ''),
+  }).join('\n'), /ai、agent 与 coding-agent/u);
+  assert.match(contentContractFailures({
+    ...entry,
+    content: entry.content.replace('现行运行时源码、未来设计文档、扩展示例与外部项目必须分开核对；设计目标和示例存在不等于默认运行能力。', ''),
+  }).join('\n'), /设计文档/u);
+  assert.match(contentContractFailures({
+    ...entry,
+    content: entry.content.replace('pi 默认继承启动它的宿主进程权限，不内建文件系统、进程、网络或凭据隔离；需要使用外部容器或沙箱建立边界。', ''),
+  }).join('\n'), /默认宿主权限/u);
+  assert.match(contentContractFailures({
+    ...entry,
+    content: entry.content.replace('Claim: pi.task.coding-agent-composes-core', ''),
+  }).join('\n'), /至少两个正式 Claim/u);
+});
