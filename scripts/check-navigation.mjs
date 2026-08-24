@@ -151,6 +151,19 @@ function main() {
           '06-extensions-code-mode.md',
           '07-subagents-orchestration.md',
           '08-surfaces-trace-eval-design.md',
+      ]
+      : [];
+    const geminiTargets = relativePath === 'docs/harnesses/gemini-cli/README.md'
+      ? [
+          'README.md',
+          '01-config-prompt-context.md',
+          '02-turn-scheduler-routing.md',
+          '03-tools-lifecycle.md',
+          '04-confirmation-policy-safety-sandbox.md',
+          '05-session-history-compression-memory.md',
+          '06-agents-hooks-skills-mcp.md',
+          '07-surfaces-output-protocol.md',
+          '08-telemetry-errors-eval-design.md',
         ]
       : [];
     const fileErrors = navigationFailures(content, (target) => {
@@ -164,6 +177,7 @@ function main() {
         ...(foundationTargets.length > 0 ? [{ name: '共同基础', targets: foundationTargets }] : []),
         ...(dshTargets.length > 0 ? [{ name: 'DSH 主线', targets: dshTargets, required: true }] : []),
         ...(codexTargets.length > 0 ? [{ name: 'Codex 主线', targets: codexTargets, required: true }] : []),
+        ...(geminiTargets.length > 0 ? [{ name: 'Gemini CLI 主线', targets: geminiTargets, required: true }] : []),
       ],
       forbiddenPrefixes: relativePath === 'README.md'
         ? [{ name: '扩展样本', prefix: 'docs/samples/' }]
@@ -173,7 +187,9 @@ function main() {
             ? [{ name: '扩展样本', prefix: '../../samples/' }]
             : relativePath === 'docs/harnesses/codex/README.md'
               ? [{ name: '扩展样本', prefix: '../../samples/' }]
-            : [],
+              : relativePath === 'docs/harnesses/gemini-cli/README.md'
+                ? [{ name: '扩展样本', prefix: '../../samples/' }]
+                : [],
     });
     for (const error of fileErrors) errors.push(`${relativePath}: ${error}`);
   }

@@ -108,13 +108,13 @@
 - [x] 完成 `08-telemetry-errors-eval-design.md`、中文证据流图和遥测/评测边界 Claim。
 - [x] 覆盖请求、响应、Tool Call Decision、Hook、压缩、错误分类、采样、脱敏与导出器。
 - [x] 设计固定 Trial、Target surface、Artifact、Scorer、RewardAdapter 与独立 holdout；不把工具接受率、FinishReason 或 Telemetry 事件当发布门禁。
-- [ ] 提交：`docs(gemini-cli): 发布遥测错误与评测设计课程`。
+- [x] 提交：`docs(gemini-cli): 发布遥测错误与评测设计课程`。
 
 ### Task 11：正式导航与批量发布门禁
 
-- [ ] 先增加 Gemini CLI 九篇必需批次和零链接绕过失败测试；验证缺一、降级或不链接时均失败。
-- [ ] README、总入口和 Gemini CLI 入口整批改为 `reviewed` 可点击链接，只开放前三条主线，不提前开放 Claude、pi、OpenCode。
-- [ ] 修复受影响链接，不创建旧路径兼容页；运行链接、导航、内容、Claim、视觉和聚合检查。
+- [x] 先增加 Gemini CLI 九篇必需批次和零链接绕过失败测试；验证缺一、降级或不链接时均失败。
+- [x] README、总入口和 Gemini CLI 入口整批改为 `reviewed` 可点击链接，只开放前三条主线，不提前开放 Claude、pi、OpenCode。
+- [x] 修复受影响链接，不创建旧路径兼容页；运行链接、导航、内容、Claim、视觉和聚合检查。
 - [ ] 提交：`docs(navigation): 开放 Gemini CLI 一级主线`。
 
 ### Task 12：阶段 3C 全量对抗复核

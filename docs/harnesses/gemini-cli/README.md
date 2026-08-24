@@ -37,19 +37,21 @@ Eval 位于轨迹出口。Telemetry、日志、FinishReason、工具接受率和
 
 ## 课程状态与顺序
 
+<!-- course-navigation:start -->
 | 顺序 | 模块 | 状态 | 先回答的问题 |
 | ---: | --- | --- | --- |
 | 00 | [主线入口](README.md) | 已复核 | Agent Session、Turn 与 Scheduler 怎样完成一次真实工具闭环？ |
-| 01 | 配置、Prompt 与 Context | 提纲 | Settings、GEMINI.md 与上下文资源怎样形成有效请求？ |
-| 02 | Turn、Scheduler 与 Routing | 提纲 | 模型响应、工具批次和 Agent Session 何时继续或终止？ |
-| 03 | 工具生命周期 | 提纲 | 注册、校验、确认、执行和 Function Response 怎样闭环？ |
-| 04 | Confirmation、Policy、Safety 与 Sandbox | 提纲 | 授权、模型安全与平台隔离怎样分层？ |
-| 05 | Session、历史、压缩与 Memory | 提纲 | 记录、模型历史、摘要、快照和记忆谁是权威？ |
-| 06 | Agent、Hook、Skill 与 MCP | 提纲 | 编排和扩展怎样改变一次运行的真实能力？ |
+| 01 | [配置、Prompt 与 Context](01-config-prompt-context.md) | 已复核 | Settings、GEMINI.md 与上下文资源怎样形成有效请求？ |
+| 02 | [Turn、Scheduler 与 Routing](02-turn-scheduler-routing.md) | 已复核 | 模型响应、工具批次和 Agent Session 何时继续或终止？ |
+| 03 | [工具生命周期](03-tools-lifecycle.md) | 已复核 | 注册、校验、确认、执行和 Function Response 怎样闭环？ |
+| 04 | [Confirmation、Policy、Safety 与 Sandbox](04-confirmation-policy-safety-sandbox.md) | 已复核 | 授权、模型安全与平台隔离怎样分层？ |
+| 05 | [Session、历史、压缩与 Memory](05-session-history-compression-memory.md) | 已复核 | 记录、模型历史、摘要、快照和记忆谁是权威？ |
+| 06 | [Agent、Hook、Skill 与 MCP](06-agents-hooks-skills-mcp.md) | 已复核 | 编排和扩展怎样改变一次运行的真实能力？ |
 | 07 | [产品表面与输出协议](07-surfaces-output-protocol.md) | 已复核 | 交互、Headless、IDE、A2A 与 JSON 输出怎样映射事件？ |
 | 08 | [遥测、错误与评测设计](08-telemetry-errors-eval-design.md) | 已复核 | 观测和错误怎样接入独立评测而不冒充评分？ |
+<!-- course-navigation:end -->
 
-当前只有入口达到发布状态。其余模块完成正文、Claim、图示与复核后，才会在阶段末整批进入正式导航；目录和计划存在不等于课程已经可用。
+入口与八篇课程已完成正文、Claim、中文图示和批量发布门禁，并在本阶段整批进入正式导航。单篇文件存在、篇幅增长或局部测试通过都不能绕过这组九篇契约。
 
 状态先于导航。
 

@@ -141,6 +141,44 @@ ${targets.map((target) => `[DSH](${target})`).join('\n')}
   ]);
 });
 
+test('Gemini CLI 主线九篇不能缺失、降级或用零链接绕过', () => {
+  const targets = [
+    'README.md',
+    '01-config-prompt-context.md',
+    '02-turn-scheduler-routing.md',
+    '03-tools-lifecycle.md',
+    '04-confirmation-policy-safety-sandbox.md',
+    '05-session-history-compression-memory.md',
+    '06-agents-hooks-skills-mcp.md',
+    '07-surfaces-output-protocol.md',
+    '08-telemetry-errors-eval-design.md',
+  ];
+  const batch = [{ name: 'Gemini CLI 主线', targets, required: true }];
+  const documents = Object.fromEntries(targets.map((target) => [target, '---\nstatus: reviewed\n---\n']));
+
+  const incomplete = `<!-- course-navigation:start -->
+${targets.slice(0, 8).map((target) => `[Gemini CLI](${target})`).join('\n')}
+<!-- course-navigation:end -->`;
+  assert.deepEqual(navigationFailures(incomplete, (target) => documents[target], { requiredBatches: batch }), [
+    'Gemini CLI 主线批量导航不完整：缺少 08-telemetry-errors-eval-design.md',
+  ]);
+
+  documents['05-session-history-compression-memory.md'] = '---\nstatus: draft\n---\n';
+  const complete = `<!-- course-navigation:start -->
+${targets.map((target) => `[Gemini CLI](${target})`).join('\n')}
+<!-- course-navigation:end -->`;
+  assert.deepEqual(navigationFailures(complete, (target) => documents[target], { requiredBatches: batch }), [
+    '05-session-history-compression-memory.md: 正式导航不能链接 status=draft',
+    'Gemini CLI 主线批量发布失败：05-session-history-compression-memory.md status=draft',
+  ]);
+
+  const empty = `<!-- course-navigation:start -->
+<!-- course-navigation:end -->`;
+  assert.deepEqual(navigationFailures(empty, (target) => documents[target], { requiredBatches: batch }), [
+    `Gemini CLI 主线批量导航不完整：缺少 ${targets.join('、')}`,
+  ]);
+});
+
 test('已配置为必需的主线不能用零链接绕过整批导航', () => {
   const targets = ['README.md', '01-course.md', '02-course.md'];
   const batch = [{ name: 'Codex 主线', targets, required: true }];
