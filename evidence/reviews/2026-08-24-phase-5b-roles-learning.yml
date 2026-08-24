@@ -1,0 +1,39 @@
+{
+  "stage": "phase-5b-roles-learning",
+  "date": "2026-08-24",
+  "commit": "2499f46b8821d72d4e0358cc1f29c72216607098",
+  "promises": [
+    {"id":"p-role-curriculum","statement":"工程、运维安全、产品和质量评测四条路径具备学习目标、前置知识、工作流、实践任务、验收与作品证据。"},
+    {"id":"p-role-evidence","statement":"角色作品以可复现实验和边界声明证明，不把课程通过、第三方验收或本地夹具扩大成生产能力。"},
+    {"id":"p-adversarial-review","statement":"逐条反查角色路径是否只给阅读顺序，或遗漏故障注入、独立验收、残余风险和未证明事项。"}
+  ],
+  "evidence": [
+    {"id":"e-four-roles","promise":"p-role-curriculum","type":"file","reference":"docs/roles/","summary":"四条路径均提供角色专属学习目标、准备条件、至少四步工作流、完整实践与作品集交付。"},
+    {"id":"e-contract","promise":"p-role-curriculum","type":"test","reference":"scripts/check-content-contract.mjs","summary":"四篇定向内容契约全部通过，验收清单均有四项以上可检查标准。"},
+    {"id":"e-boundaries","promise":"p-role-evidence","type":"file","reference":"docs/roles/quality-and-evaluation.md","summary":"明确 Trial/Attempt、RewardAdapter、选点、发布 Holdout 与生产证据边界。"},
+    {"id":"e-cross-gates","promise":"p-role-evidence","type":"test","reference":"scripts/verify-anchors.mjs","summary":"源码锚点、Claim 与本地链接保持通过。"},
+    {"id":"e-tests-style","promise":"p-adversarial-review","type":"test","reference":"scripts/run-tests.mjs","summary":"一百一十三项测试通过；文风无阻断错误。"}
+  ],
+  "findings": [
+    {"id":"f-reading-list","priority":"high","status":"resolved","summary":"角色路径原先更接近阅读清单，缺少明确学习成果与前置条件。"},
+    {"id":"f-practice-depth","priority":"high","status":"resolved","summary":"工作流缺少可运行实践、故障注入和逐项验收。"},
+    {"id":"f-portfolio-proof","priority":"high","status":"resolved","summary":"缺少可提交的作品证据，容易把阅读完成误写成实际能力。"},
+    {"id":"f-role-boundary","priority":"high","status":"resolved","summary":"工程、运维、产品和评测结论容易越过各自责任与生产证据边界。"},
+    {"id":"f-style-rhythm","priority":"low","status":"open","summary":"四篇仍有句长节奏非阻断提醒，留到全仓总编辑处理。"}
+  ],
+  "resolutions": [
+    {"id":"f-reading-list","action":"为四种角色加入主题专属学习目标、基础知识、隔离夹具与先修文章。","evidence":["e-four-roles","e-contract"]},
+    {"id":"f-practice-depth","action":"工程实现可恢复 Harness，运维执行威胁演练，产品构建三风险状态机，评测实现四 Trial 独立管线。","evidence":["e-four-roles","e-tests-style"]},
+    {"id":"f-portfolio-proof","action":"要求架构图、Schema、事件、故障记录、Scorer、决策表和未证明事项组成可复现作品集。","evidence":["e-four-roles","e-cross-gates"]},
+    {"id":"f-role-boundary","action":"每条路径显式区分本地夹具、预生产实验、真实部署、发布授权和个人能力证明。","evidence":["e-boundaries","e-contract"]}
+  ],
+  "commands": [
+    {"command":"角色路径四篇 contentContractFailures 相对路径定向检查","exit_code":0,"summary":"四篇全部通过角色课程专属教学契约。"},
+    {"command":"node scripts/verify-anchors.mjs && node scripts/verify-claims.mjs","exit_code":0,"summary":"源码锚点与 Claim 通过。"},
+    {"command":"node scripts/check-links.mjs","exit_code":0,"summary":"一百一十二个 Markdown 本地链接通过。"},
+    {"command":"node scripts/run-tests.mjs","exit_code":0,"summary":"一百一十三项测试通过。"},
+    {"command":"node scripts/check-style.mjs","exit_code":0,"summary":"无阻断文风错误。"},
+    {"command":"git diff --check","exit_code":0,"summary":"提交前无空白错误。"}
+  ],
+  "result": "pass"
+}
