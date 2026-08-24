@@ -584,6 +584,14 @@
       "scope": "docs/comparisons/03-permissions-state-recovery.md",
       "alt": "六类 Agent Harness 把应用权限、操作系统隔离、持久会话、模型上下文、有损摘要、工作树恢复和外部副作用分层核对的中文边界图",
       "claims": ["deepseek-harness.security.approval-sandbox-separation", "codex.security.approval-policy-sandbox-separation", "gemini-cli.security.confirmation-policy-sandbox-separation", "claude.permissions.allowed-tools-are-not-availability", "pi.security.examples-are-not-default-boundaries", "opencode.permission.ask-is-not-os-sandbox"]
+    },
+    {
+      "id": "comparison-orchestration-protocol-surfaces",
+      "path": "assets/diagrams/comparisons/04-orchestration-protocol-surfaces.svg",
+      "type": "architecture",
+      "scope": "docs/comparisons/04-orchestration-protocol-surfaces.md",
+      "alt": "六类 Agent Harness 的子任务、技能、插件、钩子、模型上下文协议与客户端表面围绕共享任务核心扩展，并经过发现、启用、连接、可见、获批和执行六个阶段的中文架构图",
+      "claims": ["deepseek-harness.orchestration.extensions-share-core-loop", "codex.extensions.capabilities-are-dynamically-assembled", "gemini-cli.extensions.capabilities-are-dynamically-assembled", "claude.extensions.configuration-is-not-execution", "pi.extensions.can-change-runtime-surfaces", "opencode.extensions.change-runtime-surfaces"]
     }
   ]
 }

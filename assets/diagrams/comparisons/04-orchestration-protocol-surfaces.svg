@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="920" viewBox="0 0 1440 920" role="img" aria-labelledby="title desc">
+  <title id="title">六类 Harness 的编排、扩展、协议与产品表面</title><desc id="desc">子任务、技能、插件、钩子、模型上下文协议与语言服务围绕任务核心扩展，并经过发现、启用、连接、可见、获批和执行阶段，最后投影到多个客户端表面的中文架构图。</desc>
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#526179"/></marker><style>text{font-family:"Microsoft YaHei","Noto Sans CJK SC",sans-serif;fill:#17233b}.t{font-size:34px;font-weight:700}.s{font-size:16px;fill:#596981}.h{font-size:20px;font-weight:700}.b{font-size:17px}.l{stroke:#526179;stroke-width:3;fill:none;marker-end:url(#a)}.d{stroke:#8b5cf6;stroke-width:3;stroke-dasharray:8 7;fill:none;marker-end:url(#a)}</style></defs>
+  <rect width="1440" height="920" rx="28" fill="#f7f9fc"/><text x="70" y="67" class="t">扩展进入运行时，要跨过六个可观察状态</text><text x="70" y="99" class="s">配置、发现或连接成功都不能提前冒充模型可见、获批或执行成功</text>
+  <rect x="70" y="145" width="230" height="120" rx="20" fill="#f0eaff" stroke="#8b5cf6" stroke-width="2"/><text x="98" y="186" class="h">子任务与子智能体</text><text x="98" y="224" class="b">会话、预算、权限、血缘</text>
+  <rect x="335" y="145" width="230" height="120" rx="20" fill="#fff4df" stroke="#f59e0b" stroke-width="2"/><text x="363" y="186" class="h">技能与说明资产</text><text x="363" y="224" class="b">发现、选择、上下文注入</text>
+  <rect x="600" y="145" width="230" height="120" rx="20" fill="#fff0f0" stroke="#e25555" stroke-width="2"/><text x="628" y="186" class="h">插件与钩子</text><text x="628" y="224" class="b">宿主代码、改写与副作用</text>
+  <rect x="865" y="145" width="230" height="120" rx="20" fill="#edf9f2" stroke="#22a06b" stroke-width="2"/><text x="893" y="186" class="h">模型上下文协议</text><text x="893" y="224" class="b">认证、连接、外部工具</text>
+  <rect x="1130" y="145" width="240" height="120" rx="20" fill="#e8f1ff" stroke="#3b82f6" stroke-width="2"/><text x="1158" y="186" class="h">语言与服务协议</text><text x="1158" y="224" class="b">诊断、请求、事件、客户端</text>
+  <rect x="370" y="334" width="700" height="128" rx="24" fill="#17233b"/><text x="415" y="380" style="font:700 24px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#fff">共享任务核心</text><text x="415" y="420" style="font:18px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#c8d6ef">项目 · 会话 · 模型循环 · 工具 · 权限 · 事件 · 持久产物</text>
+  <path d="M185 265V300H470V334" class="l"/><path d="M450 265V334" class="l"/><path d="M715 265V334" class="l"/><path d="M980 265V334" class="l"/><path d="M1250 265V300H970V334" class="l"/>
+  <g><rect x="80" y="535" width="180" height="90" rx="16" fill="#e8f1ff"/><text x="108" y="570" class="h">一　发现</text><text x="108" y="599" class="s">目录或配置出现</text>
+  <rect x="300" y="535" width="180" height="90" rx="16" fill="#f0eaff"/><text x="328" y="570" class="h">二　启用</text><text x="328" y="599" class="s">策略和开关接受</text>
+  <rect x="520" y="535" width="180" height="90" rx="16" fill="#edf9f2"/><text x="548" y="570" class="h">三　连接</text><text x="548" y="599" class="s">认证与握手成功</text>
+  <rect x="740" y="535" width="180" height="90" rx="16" fill="#fff4df"/><text x="768" y="570" class="h">四　可见</text><text x="768" y="599" class="s">进入模型工具表面</text>
+  <rect x="960" y="535" width="180" height="90" rx="16" fill="#e8f7f7"/><text x="988" y="570" class="h">五　获批</text><text x="988" y="599" class="s">调用通过权限判断</text>
+  <rect x="1180" y="535" width="180" height="90" rx="16" fill="#fff0f0"/><text x="1208" y="570" class="h">六　执行</text><text x="1208" y="599" class="s">产生结果或错误</text>
+  <path d="M260 580H300" class="l"/><path d="M480 580H520" class="l"/><path d="M700 580H740" class="l"/><path d="M920 580H960" class="l"/><path d="M1140 580H1180" class="l"/></g>
+  <path d="M720 462V500H170V535" class="d"/>
+  <rect x="90" y="720" width="230" height="108" rx="18" fill="#e8f1ff" stroke="#3b82f6" stroke-width="2"/><text x="120" y="760" class="h">终端与单次运行</text><text x="120" y="797" class="s">格式、输入与退出状态</text>
+  <rect x="350" y="720" width="230" height="108" rx="18" fill="#edf9f2" stroke="#22a06b" stroke-width="2"/><text x="380" y="760" class="h">服务端与开发包</text><text x="380" y="797" class="s">请求、事件与重连</text>
+  <rect x="610" y="720" width="230" height="108" rx="18" fill="#fff4df" stroke="#f59e0b" stroke-width="2"/><text x="640" y="760" class="h">网页与桌面</text><text x="640" y="797" class="s">窗口、路由与本地能力</text>
+  <rect x="870" y="720" width="230" height="108" rx="18" fill="#f0eaff" stroke="#8b5cf6" stroke-width="2"/><text x="900" y="760" class="h">编辑器协议</text><text x="900" y="797" class="s">模式、事件和内容投影</text>
+  <rect x="1130" y="720" width="230" height="108" rx="18" fill="#fff0f0" stroke="#e25555" stroke-width="2"/><text x="1160" y="760" class="h">独立任务核验</text><text x="1160" y="797" class="s">读取核心产物，不看动画</text>
+  <path d="M1270 625V680H205V720" class="l"/><path d="M465 680V720" class="l"/><path d="M725 680V720" class="l"/><path d="M985 680V720" class="l"/><path d="M1245 680V720" class="l"/>
+  <text x="70" y="880" class="s">共享核心不等于共享全部客户端状态；父任务摘要也不等于子任务完整轨迹。</text>
+</svg>
