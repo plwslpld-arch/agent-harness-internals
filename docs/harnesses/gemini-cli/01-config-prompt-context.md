@@ -17,6 +17,103 @@ sources: [{"repo":"gemini-cli","path":"packages/cli/src/config/settings.ts","com
 
 先问：本轮真正生效的值来自哪一层？
 
+## 核心概念
+
+Gemini CLI 的输入链可以分成「设置来源、有效 Core Config、提示与上下文、模型工具声明」四层。设置文件描述候选值，LoadedSettings 在信任和字段策略下合并，CLI 再把结果转换为 Core Config，PromptProvider 才根据当前模式、ToolRegistry 和项目记忆生成模型可见内容。
+
+| 概念 | 所属层 | 主要来源 | 直接证明 |
+|---|---|---|---|
+| Schema 默认 | 设置 | 设置 Schema | 缺省候选值 |
+| system defaults / system | 设置 | 管理员文件 | 组织默认与强制覆盖 |
+| user / workspace | 设置 | 用户与项目文件 | 个体和项目候选配置 |
+| Folder Trust | 合并边界 | 当前目录信任状态 | 工作区设置是否可参与 |
+| LoadedSettings.merged | CLI 有效设置 | 按字段合并 | 当前 CLI 看到的配置视图 |
+| Core Config | 运行时 | CLI 转换、环境与参数 | Core 服务实际采用的值 |
+| 项目记忆 | 上下文 | GEMINI.md 等 | 候选指导内容及作用域 |
+| PromptProvider | 请求构造 | 模式、工具表、记忆 | 系统提示与首条上下文布局 |
+| Function Declaration | 模型能力 | 活动 ToolRegistry | 本轮模型可请求的工具 Schema |
+
+优先级必须按字段理解。单值可以按 Schema 默认、系统默认、用户、受信工作区、系统覆盖的顺序合并；列表或对象可能连接、去重或采用自定义策略。系统层既可以给默认值，也可以在最后限制工作区扩大后的集合，例如 MCP allowlist。
+
+Folder Trust 不是文件可读性判断，而是设置是否有资格进入有效视图的安全边界。未受信工作区的原始文件仍保存在 LoadedSettings 中用于展示或重新信任，但普通 merged 使用空工作区替代。若 UI 展示原文件却把它标成已生效，就会造成能力假象。
+
+Core Config 是下一道边界。CLI 可以应用命令行参数、环境白名单、认证选择、远程管理和规范化，某些设置还会因 Feature 或平台被禁用。只检查 `settings.json` 不能回答模型、Sandbox 或 MCP 的真实运行值。
+
+项目记忆也有层次。全局与用户项目记忆进入系统指令，扩展和当前项目内容进入首条用户消息并带边界标记；它们的刷新、作用域和信任不同。文件存在只证明候选来源，PromptProvider 输出或最终请求才证明模型可见。
+
+计划模式进一步说明「提示清单」和「执行能力」的差别。PromptProvider 从当前活动 ToolRegistry 渲染工具名，并给写工具附加计划文件约束；真正 Function Declaration、Policy、Confirmation 和 Sandbox 仍决定调用能否落地。
+
+## 为什么这样设计
+
+第一，分层设置允许组织、用户和项目分别表达约束。用户可选择主题，项目可提供上下文文件和工具偏好，系统层仍能限制 Sandbox 或 MCP 服务，既保留定制又维持管理边界。
+
+第二，按字段 merge strategy 避免把整个对象简单覆盖。工作区新增一个核心工具时不应清除用户的其他工具设置，系统 allowlist 又需要收紧集合；每个字段的语义由 Schema 决定，比统一深合并更安全。
+
+第三，Folder Trust 在合并前清空工作区贡献，阻止陌生目录通过设置自动启用工具、MCP 或环境变量。保留原始文件则支持 UI 解释「检测到但未信任」，信任切换后可以重算而无需重新读取丢失的来源。
+
+第四，CLI Settings 与 Core Config 分离，使终端交互、认证和文件路径处理留在 CLI，模型、工具与调度使用稳定的 Core 接口。这个边界也便于测试：Settings 合并和 Prompt 渲染可以分别使用 Mock。
+
+第五，项目记忆分系统指令与首条用户上下文，可以保留来源和优先级。全局规则作为长期指导，项目和扩展内容以明确边界进入任务上下文；若全部拼成一个字符串，模型和审计者都难以区分来源。
+
+第六，提示根据活动 ToolRegistry 动态生成，避免列出当前不可用工具。计划模式仍保留写计划文件的专门约束，说明模型指导与执行强制互补；提示能减少误用，却不是权限系统。
+
+## 实现思路
+
+教学实现建立一条带 provenance 的配置编译管线。它用于理解锁定行为，不声称 Gemini CLI 内部存在同名 `EffectiveConfigLedger`。
+
+1. **读取来源。** 为 Schema 默认、系统默认、用户、工作区和系统覆盖分别保存路径、原始文本、解析错误与内容哈希。
+2. **应用信任。** 未受信工作区以空设置参与 merged，原始来源仍保留；信任变化触发纯重算。
+3. **按字段合并。** 查询 Schema 的 merge strategy，分别处理单值、列表、对象和显式清空，生成值与来源链。
+4. **编译 Core Config。** 应用 CLI 参数、环境白名单、认证、远程管理、Feature 与平台规范化，保存被拒绝或降级的原因。
+5. **发现项目记忆。** 按文件名、目录边界、导入与忽略规则读取，标记全局、用户、扩展和项目作用域。
+6. **渲染提示。** PromptProvider 使用审批模式、计划模式、活动 ToolRegistry 和记忆层构造系统指令与首条用户上下文。
+7. **捕获请求。** 保存脱敏的最终 systemInstruction、contents 与 Function Declarations，只有这一层回答本次模型看见什么。
+
+```text
+layers = load(schema, system_defaults, user, workspace, system)
+trusted_layers = filter_workspace_by_trust(layers)
+merged = merge_each_field(trusted_layers, schema.strategies)
+core = compile_cli_settings(merged, argv, environment, auth, features)
+memory = discover_context(core.context_files, cwd, trust)
+prompt = render(core.mode, memory, active_tool_registry)
+request = assemble(prompt, history, current_user_input, declarations)
+```
+
+每个关键字段的记录包含最终值、来源层、合并策略、信任状态和转换原因。秘密字段只保存存在性与不可逆哈希；公开证据不得复制令牌或 `.env` 内容。工作区信任切换前后用同一来源快照重算，便于证明差异来自信任而非文件变化。
+
+上下文正规化报告列出每份记忆的 discovered、loaded、position、truncated 与 omitted 状态。多文件名按确定顺序渲染，导入循环和超限显式报错；模型窗口压缩不能反向删除原始来源。工具表同样保存活动集合哈希与提示清单差异。
+
+测试采用冲突哨兵值：系统、用户和工作区为同一字段设置不同值，避免偶然相同掩盖来源错误。安全字段再加入未受信、远程管理和命令行覆盖，逐步捕获 merged、Core Config 和最终请求。
+
+## 贯穿案例
+
+用户在一个新检出的项目中运行计划模式。用户设置启用 Sandbox 并指定 `USER_CONTEXT.md`，工作区尝试关闭 Sandbox、启用额外 MCP Server 和指定 `PROJECT_GUIDE.md`，系统设置禁止该 MCP 并强制 Sandbox。
+
+1. **未受信启动。** 工作区原始设置被读取但不进入 merged；系统强制 Sandbox，用户上下文仍可参与。UI 标记工作区设置「检测到、未生效」。
+2. **编译 Core Config。** 环境白名单过滤项目 `.env`，认证与命令行模型选择进入运行时；被禁 MCP 不出现在活动连接集合。
+3. **构造首轮提示。** 全局和用户记忆进入系统指令，未受信项目指导不进入首条用户消息；计划模式只列当前活动工具。
+4. **切换信任。** 用户信任目录，LoadedSettings 重新合并工作区；`PROJECT_GUIDE.md` 进入项目上下文，但系统 Sandbox 和 MCP allowlist 继续覆盖。
+5. **捕获第二轮请求。** 请求带新的项目上下文与同一系统安全值，工具声明仍不含被禁止 MCP；历史保留第一轮当时的可见边界。
+6. **独立验收。** Scorer 检查计划只写指定计划文件，不能因提示列出写工具就允许修改源码。
+
+```json
+{"trusted":false,"workspaceApplied":false,"sandbox":true,"mcpAllowed":["server1"],"projectContext":"omitted"}
+```
+
+```json
+{"trusted":true,"workspaceApplied":true,"sandbox":true,"mcpAllowed":["server1"],"projectContext":"PROJECT_GUIDE.md"}
+```
+
+反例一让工作区 JSON 损坏。加载器保留带来源的解析错误，不能静默使用半份配置；根据具体安全策略，启动失败或忽略该层都必须可见。反例二让项目指令超过大小或导入边界，报告 omitted / truncated，不能只显示文件已发现。
+
+最后比较提示与执行：模型请求确实看见 `write_file`，但计划模式只允许计划文件，Scheduler 的 Policy 或确认链拒绝源码写入。Prompt 可见性、工具声明和执行结果分别留证，避免将模型尝试写文件归因成配置合并失败。
+
+远程管理反例在文件合并完成后把某个模型或安全字段改成组织值。证据链同时保存 merged 与最终 Core Config，差异明确归因给远程层；若只导出 merged，会错误声称用户值已生效。远程配置不可达时采用缓存、失败关闭还是本地回退，也要按实际契约记录，不能猜测。
+
+上下文刷新反例在活动 Session 中修改项目指导。实现需要说明新内容从下一 Turn 生效、是否替换旧首条上下文，还是只在新 Session 加载；旧历史不能被无痕改写。本篇锁定测试主要证明初次渲染，因此未覆盖的热刷新语义应标为 partial，再用请求差分实验补证。
+
+最终配置报告不提供一个含糊的「配置正确」结论，而是为模型、Sandbox、MCP allowlist、项目指令和计划工具表分别列出来源、有效值、模型可见值及执行结果。不同字段可以拥有不同证据等级。
+
 ## 真实输入与输出
 
 ### 输入

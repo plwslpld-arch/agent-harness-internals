@@ -15,6 +15,107 @@ sources: [{"repo":"gemini-cli","path":"packages/core/src/services/chatRecordingS
 
 这些对象有关联，却没有共同的权威范围。记录不等于当前上下文，检查点不等于环境快照，压缩复核不等于无损，长期记忆也不应保存瞬态任务状态。把它们合成一个 `history` 字段，会让恢复、审计和评测同时失真。
 
+## 核心概念
+
+Gemini CLI 至少维护六类状态：物理 JSONL、重放后的逻辑记录、AgentChatHistory、模型 Content 投影、压缩替代历史、Checkpoint 与长期记忆。它们有不同的身份、丢失风险和消费者。
+
+| 对象 | 权威范围 | 是否有损 | 主要用途 |
+|---|---|---|---|
+| ChatRecording JSONL | 已追加的物理记录 | 追加时尽量无损 | 回放与诊断 |
+| 逻辑消息视图 | 应用 `$set` / `$rewindTo` 后的当前记录 | 会排除被回退项 | 恢复当前会话 |
+| AgentChatHistory | 活动进程内带 ID 回合 | 可覆盖 / 回滚 | Agent 状态管理 |
+| `Content[]` | 模型 API 可见投影 | 去 ID、可截断 | 下一次采样 |
+| 压缩历史 | 摘要、确认消息、保留尾部 | 明确有损 | 控制上下文窗口 |
+| Checkpoint | history 与可选 authType | 很窄 | 手动恢复点 |
+| GEMINI.md / 私有记忆 | 项目或个人长期知识 | 人工选择 | 跨会话指导 |
+| 外部 Artifact | 文件、进程、远端副作用 | 不受聊天存储控制 | 任务与安全评分 |
+
+物理 JSONL 行并不等于当前逻辑消息。`$rewindTo` 可以回退，`$set.messages` 可以替换集合；恢复器必须按顺序解释控制记录。磁盘空间耗尽时记录服务可能停止追加而活动会话继续，因此「还能聊天」不能证明「可恢复」。
+
+AgentChatHistory 为每个 HistoryTurn 保留稳定 ID，`getContents()` 去掉 ID，只产生 Gemini API 需要的 Content。恢复数据中的用户和 gemini 消息可以重建 HistoryTurn，其他控制、元数据和工具事件不会原样进入模型上下文。
+
+压缩是有损替代。服务按模型预算把历史分成较旧区域和保留尾部，长工具输出可能先截断或外置；第一次模型生成摘要，第二次探针尝试复核。复核为空时仍可使用初版，因此 verified 不是形式化完备证明。
+
+Checkpoint 不保存工作区、进程、Registry、Sandbox 或远端事务。恢复 history 只能重建对话输入，不能让文件和服务回到保存时状态。工具副作用需要幂等键、补偿或外部探测。
+
+长期记忆按作用域选择：团队共享规则放版本化 GEMINI.md，不应提交的项目知识放私有层，跨项目个人偏好放全局层。一次事实只选一层，临时进度不进入长期记忆；任何记忆仍是下一次 Prompt 的候选上下文。
+
+## 为什么这样设计
+
+第一，追加物理记录与逻辑回放分离，使撤回、回滚和集合替换可以保留审计痕迹。直接删除旧行会丢失发生过什么，也无法解释模型为何在某一时点看见不同历史。
+
+第二，AgentChatHistory 与模型 Content 分开，保留内部稳定 ID，同时满足 API 载荷。ID 用于更新、回滚和关联，模型无需看见；更换投影策略也不会改写运行时身份。
+
+第三，把压缩做成独立服务与明确替代结构，允许在令牌阈值前减小 Context，并保留摘要与尾部边界。失败或膨胀时可以不压缩，避免静默丢失全部历史。
+
+第四，二次模型复核能发现部分摘要遗漏，却不被称为无损验证。设计选择是实用质量检查，不是事实级证明；关键约束仍应结构化保存或在压缩后单独核对。
+
+第五，Checkpoint 保持窄结构，降低格式复杂度和敏感状态复制。代价是它不提供完整环境快照，文档必须明确范围，恢复流程也不能重放工具来假装回到过去。
+
+第六，长期记忆与会话记录分层，避免派生偏好覆盖历史事实。团队规则、项目私有知识和个人偏好有不同共享与生命周期，重复写入多个层会造成冲突和过期清理困难。
+
+第七，外部 Artifact 单独保存，是因为聊天记录无法拥有文件系统和远端服务。记录能关联工具结果与哈希，却不能阻止其他进程改变产物；恢复与 Eval 都需要重新核对环境，而不是信任历史文字。
+
+## 实现思路
+
+教学原型建立 `RecordReplayPipeline`，用于说明提交与派生边界，不表示 Gemini CLI 使用同名统一组件。
+
+1. **追加记录。** 每行含 session、message ID、类型、时间和负载；写失败明确禁用 recording 并发出诊断，不伪造成功。
+2. **重放控制。** 顺序应用普通消息、`$rewindTo` 和 `$set.messages`，生成逻辑消息集合与 replay report。
+3. **构建活动历史。** 为恢复的 user / gemini 消息分配或保留稳定 ID，显式调用历史优先于恢复记录。
+4. **投影模型内容。** 去除内部 ID，过滤非模型事件，应用模态与预算限制，记录 kept / transformed / dropped。
+5. **触发压缩。** 达到阈值时分割旧区与尾部，处理长工具输出，生成摘要并做有界复核。
+6. **验证替代历史。** 核对目标、权限、未完成项和工具关系，成功后才切换「摘要 + 确认 + 尾部」。
+7. **保存 Checkpoint。** 只写声明字段与版本，外部 Artifact 另存哈希；恢复时不执行旧工具。
+8. **写长期记忆。** 按共享范围选择一个层级，保存来源和更新时间，拒绝瞬态任务状态。
+
+```text
+physical = append_jsonl(event)
+logical = replay(physical, rewind_and_set_controls)
+history = build_agent_history(logical.user_and_gemini)
+contents, report = project_for_model(history, budget)
+如果 token_ratio 超阈值:
+    summary = summarize_and_probe(old_region)
+    如果 required_facts 保留且令牌下降:
+        history = summary + confirmation + retained_tail
+checkpoint = {history: history.contents, authType}
+```
+
+压缩验证器的 required facts 来自结构化状态：当前目标、禁止条件、允许路径、未结算工具和关键 Artifact。它不要求逐字保留，却要求语义可核对；缺一项就保持旧历史或标记压缩失败。
+
+故障矩阵覆盖尾行损坏、磁盘满、`$set` 后崩溃、摘要为空、复核为空、压缩令牌膨胀、旁路文件丢失和 Checkpoint 版本不兼容。每个场景分别检查记录、活动会话和模型 Context，不能只看 UI 重开。
+
+物理追加与逻辑控制要定义提交顺序。普通消息写入成功后才能发布可恢复水位，`$set` 或 `$rewindTo` 作为新行原子追加；索引更新失败可由 JSONL 重建。尾行无法解析时停止在最后完整水位并报告，不静默跳过未知控制记录。
+
+旁路工具文件使用内容哈希、创建 Turn 和保留期引用。压缩后模型只见摘要时，审计者仍能验证原输出；文件清理后引用明确变成 unavailable，而非让摘要冒充完整内容。
+
+## 贯穿案例
+
+用户修改解析器并运行测试，随后回退一条错误建议、压缩历史、保存 Checkpoint 并重启。最后把稳定项目约束写入 GEMINI.md，而不把当前测试进度写进长期记忆。
+
+1. **追加会话。** 用户、模型和工具结果以稳定 ID 写入 JSONL；AgentChatHistory 同步活动回合，外部补丁与测试日志保存哈希。
+2. **执行回退。** `$rewindTo` 指向错误建议之前，物理行保留，逻辑消息和模型 Contents 排除被回退后续。
+3. **压缩。** 较旧历史摘要必须保留目标文件、测试失败和「不要修改快照」；保留最近尾部，完整工具日志外置。
+4. **保存 Checkpoint。** 文件只含当前 history 和 authType；证据明确说明它不含工作区快照。
+5. **重启恢复。** 读取逻辑记录或显式 Checkpoint 重建 AgentChatHistory，不重新应用补丁或运行测试。
+6. **写长期规则。** 「此项目的生成快照禁止手改」写项目 GEMINI.md；「测试仍失败」属于瞬态状态，不写长期记忆。
+
+```json
+{"physicalLines":24,"logicalTurns":12,"rewindTo":"turn-8","compression":"summary-v1","checkpointFields":["history","authType"]}
+```
+
+```json
+{"workspaceRestoredByCheckpoint":false,"externalArtifactHash":"patch-a1","memoryWrite":"项目规则","transientProgressStored":false}
+```
+
+崩溃反例发生在文件已修改、工具结果未写记录。恢复器看到对话缺口，不能默认重放 edit；先比较文件哈希，无法确定就标 unknown。Checkpoint 也不能解决这一点，因为它没有副作用事务。
+
+压缩反例让第二次复核返回空。服务可以回退初版摘要，但课程验证器发现缺少禁止条件，于是不接受替代历史。源码流程结算与教学质量门禁在这里分别记录，避免把「有摘要」冒充「摘要可靠」。
+
+记录失败反例模拟磁盘满。Chat 仍可继续，但 recording 状态变 disabled；若 Trial 要求完整可恢复 Trace，就标为基础设施失败或 partial，不能用最终回答正常覆盖证据缺口。
+
+这次 Trial 的分母保持不变。
+
 ## 真实输入与输出
 
 ### 输入

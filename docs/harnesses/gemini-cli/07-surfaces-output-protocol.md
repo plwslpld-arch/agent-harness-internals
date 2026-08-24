@@ -15,6 +15,96 @@ Gemini CLI 的交互终端、非交互命令、IDE 集成与 A2A Server 共享�
 
 本篇给出一张可核对的投影表。你将能判断某个字段究竟是核心事实、表面状态还是序列化结果，并解释为什么「终端显示完成」「JSON status 为 success」「进程退出码为 0」「A2A Task 进入 input-required」不能互相替代，更不能直接充当独立 Eval 的通过结论。
 
+## 核心概念
+
+产品表面由输入适配、事件投影、传输和终态契约组成。交互 TUI、非交互 text / json / stream-json、IDE 与 A2A 可以消费同一 AgentEvent，却选择不同字段与身份。表面响应是核心事件的视图，不是无损副本。
+
+| 表面 | 主要身份 | 增量能力 | 自身终态 |
+|---|---|---|---|
+| 交互终端 | Session、requestId | 文本、thought、tool update | UI Idle / error |
+| text | 进程、Session | stdout 文本、stderr | 退出码 / 信号 |
+| json | Session | 结束时聚合一次 | 单对象与退出码 |
+| stream-json | Session、tool_id | JSONL 增量事件 | result 与退出码 |
+| IDE | 连接、workspace、diff | context 与工具通知 | 连接 / diff 决定 |
+| A2A | taskId、contextId、messageId | Message、Artifact、status-update | TaskState |
+| Core AgentEvent | Session、callId | 完整运行事件集合 | agent_end |
+
+投影有四种操作：保留、重命名、合并和丢弃。json 合并多条消息为最后 response，stream-json 重命名工具事件并忽略 usage / custom 等类型，TUI 把 tool_update 合并到同 requestId 卡片。映射表必须版本化。
+
+stdout、stderr 和退出码属于进程契约。text 的警告可能只在 stderr，EPIPE 因下游提前关闭可退出 0，进程终止也可能没有完整 result。自动化消费者应分别保存字节流、顺序、信号和解析边界。
+
+A2A Task 的 input-required 表示远程任务等待下一步输入或确认，不等于本地 Agent Session 失败；completed 也不是 Scorer pass。IDE 的 diff accepted 只表示一次编辑选择，不证明文件最终内容和测试。
+
+协议完整性和任务正确性是两项门禁。Harness Gate 检查 init / result、JSON 可解析、tool_id 关联和终态映射；独立 Scorer 检查 Artifact。协议 success 可以伴随错误答案，协议不完整也可能留下部分正确文件。
+
+## 为什么这样设计
+
+第一，针对消费者设计投影，可以让 TUI 关注体验、JSON 关注摘要、JSONL 关注流式自动化、IDE 关注编辑上下文、A2A 关注远程任务，而不把内部事件 Schema 直接暴露为永久协议。
+
+第二，稳定的小型 stream-json 枚举降低消费者耦合。代价是它不是完整 Trace，所以系统仍需保存核心事件或录制证据；消费者不能用未定义事件推断全部运行状态。
+
+第三，json 主动保留最后回答，符合一次性脚本需求；中间工具前文本被丢弃则避免把未完成草稿当最终结果。需要审计时选择 stream-json 加 Core Trace，而不是强迫 json 变成事件日志。
+
+第四，IDE 与 A2A 使用独立协议，是因为编辑器交互和远程长任务需要不同身份与状态。将它们压成 stdout 会丢失 diff 确认、Task 恢复和 Artifact 语义。
+
+第五，表面终态与 Eval 分开，允许协议兼容演进而不改变质量标准。Scorer 读取统一 Artifact Schema，Target 记录 surface 与协议版本，结果按表面分层。
+
+第六，显式记录 ignored 与 merged 事件，让信息损失成为协议契约的一部分。客户端可以知道某种格式不含 thought、usage 或工具进度，从而选择 Core Trace 补证，而不是误以为缺失事件从未发生。
+
+第七，进程壳与远程 Task 分开，支持短命令管道和长任务恢复。EPIPE、退出码、taskId、contextId 各自解决不同消费者问题；强行统一会让管道关闭被解释为远程取消，或让 input-required 被解释为进程失败。
+
+## 实现思路
+
+教学适配层建立 `ProjectionLedger`，它是课程蓝图，不表示 Gemini CLI 存在同名统一组件。
+
+1. **冻结 surface。** 记录表面、输出格式、协议版本、输入、取消方式和有效配置。
+2. **关联身份。** 建立 runId 到 sessionId、requestId、tool_id、taskId、contextId 和 diffId 的映射。
+3. **投影事件。** 每个 AgentEvent 按表面规则保留、重命名、合并或忽略，并记录操作和目标序号。
+4. **写多通道输出。** stdout / stderr 分开保存；json 只在结束聚合，JSONL 逐行校验；IDE / A2A 保留协议对象。
+5. **映射终态。** 原始 agent_end、错误和取消映射为表面 status / exit code，未知枚举使契约测试失败。
+6. **检查完整性。** 验证流首尾、唯一 ID、tool_use / result 配对、A2A Task 状态和 EPIPE 边界。
+7. **收集 Artifact。** 保存核心 Trace、表面输出、工作区差异和外部副作用，不能只存最终 response。
+8. **独立评分。** Harness Gate 与任务 Scorer分别输出，协议 pass 不覆盖任务 fail。
+
+```text
+run = freeze(surface, protocol_version, config)
+for event in core_agent_events:
+    projection = mapping[surface].apply(event)
+    ledger.append(event.id, projection.action, projection.output_ids)
+surface_terminal = map_terminal(core_terminal)
+protocol_result = validate_projection(surface_output, ledger)
+task_result = scorer(artifacts)
+```
+
+ProjectionLedger 保留 ignored 事件清单，使「没输出」可解释。敏感 thought 或参数即使不投影，也只在受控 Trace 中保留；公开 Artifact 需脱敏。协议映射变化生成新版本，不无痕改变旧运行。
+
+故障测试注入 EPIPE、stdout 写失败、JSON 序列化错误、无 result、重复 tool_id、IDE 断线、A2A input-required 和终态重入。每次检查核心任务是否继续、表面如何结算和 Artifact 是否完整。
+
+## 贯穿案例
+
+同一任务「读取配置并汇总证据」分别运行 json、stream-json 与 A2A。Core 产生文本、thought、tool_request、tool_update、tool_response、usage 和 agent_end。
+
+1. **json 投影。** 工具前的草稿文本被移出最终 response，结束时输出最后回答、stats 和 warnings；没有逐事件顺序。
+2. **stream-json 投影。** 发 init、message、tool_use、tool_result 和 result；thought、usage、tool_update 被 Ledger 标为 ignored。
+3. **A2A 投影。** 文本成为 Message，工具进度成为 status-update，输出成为 Artifact；首轮结束进入 input-required 等待用户确认。
+4. **注入 EPIPE。** JSONL 消费者在 tool_use 后关闭管道，进程可退出 0，但没有读到 result；Harness Gate 判 incomplete。
+5. **恢复 A2A。** 使用相同 taskId / contextId 发送确认，Task 最终 completed；本地进程退出语义不参与。
+6. **独立评分。** 三条 Target 都对最终报告运行同一 Scorer，并按 surface 分层报告。
+
+```json
+{"surface":"stream-json","received":["init","message","tool_use"],"exitCode":0,"protocolComplete":false}
+```
+
+```json
+{"surface":"a2a","taskState":"completed","artifact":"report-ref","taskScore":"fail"}
+```
+
+json 反例最终对象无 error，但中间工具失败后模型给出错误总结。协议 Gate 通过，Scorer因报告缺少证据判 fail。最终 response 可读不代表工具轨迹正确。
+
+IDE 反例用户接受 diff，随后外部格式化器改坏文件。diff decision 保留 accepted，最终 Artifact测试失败；IDE 决定与工作区终态各自留证。
+
+A2A 反例 Task completed 但 Artifact 丢失。远程协议结算和内容评分分开，不能因 TaskState 绿色跳过产物验证。
+
 ## 真实输入与输出
 
 ### 输入
