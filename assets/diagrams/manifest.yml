@@ -312,6 +312,14 @@
       "scope": "docs/harnesses/gemini-cli/07-surfaces-output-protocol.md",
       "alt": "Gemini CLI 核心事件在交互终端、三种非交互输出、IDE 与 A2A 之间形成不同中文投影的架构图",
       "claims": ["gemini-cli.surfaces.output-projections-are-not-equivalent"]
+    },
+    {
+      "id": "gemini-cli-telemetry-errors-eval-design",
+      "path": "assets/diagrams/gemini-cli/08-telemetry-errors-eval-design.svg",
+      "type": "data-flow",
+      "scope": "docs/harnesses/gemini-cli/08-telemetry-errors-eval-design.md",
+      "alt": "Gemini CLI 执行、错误与遥测证据进入独立评测和训练适配器，但观察信号不直接充当评分的中文证据流图",
+      "claims": ["gemini-cli.telemetry.tool-decisions-are-not-eval", "gemini-cli.eval.requires-independent-scorer", "gemini-cli.architecture.policy-layering-has-tradeoffs"]
     }
   ]
 }

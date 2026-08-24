@@ -1,0 +1,19 @@
+{
+  "id": "gemini-cli.eval.requires-independent-scorer",
+  "harness": "gemini-cli",
+  "dimension": "eval.requires-independent-scorer",
+  "statement": "本仓库对 Gemini CLI 采用独立评测契约：固定 Dataset 与 Trial，经明确 Target surface 保存回答、工件和原始协议证据，再由独立 Scorer 判定；训练 RewardAdapter、Checkpoint 选择和隔离发布 holdout 分别承担不同责任。",
+  "capability": "not-applicable",
+  "version": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+  "surface": "repository-evaluation-adapter",
+  "platform": "all",
+  "mode": "normative-evaluation-design",
+  "evidence_level": "D",
+  "inference": "锁定源码证明 Gemini CLI 能产生表面输出、工具状态和可选遥测，但这些 Schema 不含 Dataset、Trial、Artifact Scorer、RewardAdapter 或发布阈值。把执行证据接入固定 Trial 与独立 Scorer，并将训练、Checkpoint 和发布 holdout 分离，是本仓库登记的规范性评测架构，不冒充上游内置能力。",
+  "evidence": [
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/output/types.ts","lines":"21-27","excerpt":"export interface JsonOutput"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/telemetry/loggers.ts","lines":"139-161","excerpt":"success: event.success"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/code_assist/telemetry.ts","lines":"181-192","excerpt":"ConversationInteractionInteraction.ACCEPT_FILE"}
+  ],
+  "last_verified": "2026-08-24"
+}

@@ -1,0 +1,25 @@
+{
+  "id": "gemini-cli.telemetry.tool-decisions-are-not-eval",
+  "harness": "gemini-cli",
+  "dimension": "telemetry.tool-decisions-are-not-eval",
+  "statement": "锁定 Gemini CLI 将工具确认映射为 accept、auto_accept、modify 或 reject，并把 decision、success、耗时和工具类型记录为遥测；Code Assist 还会聚合整批工具交互。这些字段描述审批与执行观察，不包含任务答案或独立评分语义。",
+  "capability": "optional",
+  "version": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+  "surface": "otel-clearcut-ui-and-code-assist-telemetry",
+  "platform": "configuration-dependent",
+  "mode": "telemetry-enabled-with-optional-prompt-content",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/telemetry/tool-call-decision.ts","lines":"9-30","excerpt":"AUTO_ACCEPT = 'auto_accept'"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/telemetry/loggers.ts","lines":"139-161","excerpt":"recordToolCallMetrics(config, event.duration_ms"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/code_assist/telemetry.ts","lines":"117-192","excerpt":"summarize them into a single conversation"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/code_assist/telemetry.ts","lines":"232-274","excerpt":"candidate.finishReason !== FinishReason.STOP"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/code_assist/telemetry.test.ts","lines":"315-536","excerpt":"recordToolCallInteractions"}
+  ],
+  "limitations": [
+    "遥测可以关闭、脱敏、聚合或因导出失败而缺失，不能作为完整执行审计。",
+    "工具 decision 和 success 不检查最终文件、答案或越界副作用。",
+    "上游测试使用合成交互，不证明真实 Collector、GCP 或生产用户行为分布。"
+  ],
+  "last_verified": "2026-08-24"
+}

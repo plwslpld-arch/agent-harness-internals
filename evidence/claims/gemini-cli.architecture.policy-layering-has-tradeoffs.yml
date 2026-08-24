@@ -1,0 +1,19 @@
+{
+  "id": "gemini-cli.architecture.policy-layering-has-tradeoffs",
+  "harness": "gemini-cli",
+  "dimension": "architecture.policy-layering-has-tradeoffs",
+  "statement": "锁定 Gemini CLI 将 Hook 修改、Policy Rule、Safety Checker、用户确认和平台 Sandbox 组合成分层执行边界；这有利于解耦声明、人工决定与系统兑现，也增加优先级、参数版本、错误归因和跨层关联成本。",
+  "capability": "not-applicable",
+  "version": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+  "surface": "repository-security-architecture",
+  "platform": "all",
+  "mode": "design-analysis",
+  "evidence_level": "D",
+  "inference": "源码证明 Hook 能改模型或工具输入，Policy Engine 能组合规则与 Checker，SandboxManager 最终准备受限命令；解耦收益与跨层语义漂移成本是基于真实调用边界作出的架构取舍分析，不是生产安全实验或性能基准。",
+  "evidence": [
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/hooks/hookSystem.ts","lines":"42-81","excerpt":"modifiedContents?: ContentListUnion"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/policy/policy-engine.ts","lines":"768-819","excerpt":"Running safety checker"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/services/sandboxManager.ts","lines":"76-115","excerpt":"Security boundaries and permissions applied"}
+  ],
+  "last_verified": "2026-08-24"
+}

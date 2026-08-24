@@ -47,7 +47,7 @@ Eval 位于轨迹出口。Telemetry、日志、FinishReason、工具接受率和
 | 05 | Session、历史、压缩与 Memory | 提纲 | 记录、模型历史、摘要、快照和记忆谁是权威？ |
 | 06 | Agent、Hook、Skill 与 MCP | 提纲 | 编排和扩展怎样改变一次运行的真实能力？ |
 | 07 | [产品表面与输出协议](07-surfaces-output-protocol.md) | 已复核 | 交互、Headless、IDE、A2A 与 JSON 输出怎样映射事件？ |
-| 08 | Telemetry、错误与 Eval | 提纲 | 观测和错误怎样接入独立评测而不冒充评分？ |
+| 08 | [遥测、错误与评测设计](08-telemetry-errors-eval-design.md) | 已复核 | 观测和错误怎样接入独立评测而不冒充评分？ |
 
 当前只有入口达到发布状态。其余模块完成正文、Claim、图示与复核后，才会在阶段末整批进入正式导航；目录和计划存在不等于课程已经可用。
 

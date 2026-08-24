@@ -141,9 +141,14 @@
       "evidence": [
         {"path":"packages/core/src/telemetry/loggers.ts","type":"source","reason":"请求、响应、工具、Hook 与压缩事件记录。"},
         {"path":"packages/core/src/telemetry/tool-call-decision.ts","type":"source","reason":"工具接受与确认决定事件。"},
+        {"path":"packages/core/src/telemetry/config.ts","type":"source","reason":"遥测启用、目标、提示正文与导出参数的有效配置。"},
+        {"path":"packages/core/src/telemetry/sdk.ts","type":"source","reason":"本地、GCP、OTLP 导出器与批处理生命周期。"},
         {"path":"packages/core/src/telemetry/sanitize.ts","type":"source","reason":"遥测脱敏边界。"},
         {"path":"packages/core/src/code_assist/telemetry.ts","type":"source","reason":"响应与错误分类。"},
-        {"path":"packages/core/src/code_assist/telemetry.test.ts","type":"upstream-test","reason":"FinishReason 和 Tool Call Interaction 分类测试。"}
+        {"path":"packages/core/src/code_assist/telemetry.test.ts","type":"upstream-test","reason":"FinishReason 和 Tool Call Interaction 分类测试。"},
+        {"path":"packages/core/src/policy/policy-engine.ts","type":"source","reason":"规则、Checker 与最终策略决定的分层。"},
+        {"path":"packages/core/src/hooks/hookSystem.ts","type":"source","reason":"模型和工具输入可被 Hook 修改的边界。"},
+        {"path":"packages/core/src/services/sandboxManager.ts","type":"source","reason":"最终平台执行权限与环境兑现。"}
       ],
       "plannedClaims": ["gemini-cli.telemetry.tool-decisions-are-not-eval", "gemini-cli.eval.requires-independent-scorer", "gemini-cli.architecture.policy-layering-has-tradeoffs"]
     }

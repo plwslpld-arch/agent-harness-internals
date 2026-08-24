@@ -101,13 +101,13 @@
 - [x] 完成 `07-surfaces-output-protocol.md`、中文表面映射图和协议投影 Claim。
 - [x] 覆盖交互 UI、NonInteractiveCliAgentSession、IDE Client、A2A Server、text/json/stream-json 与退出码。
 - [x] 建立核心事件到各表面的保留、合并、重命名和丢失映射，不让某一表面的 cancelled/success 互证其他表面。
-- [ ] 提交：`docs(gemini-cli): 发布产品表面与输出协议课程`。
+- [x] 提交：`docs(gemini-cli): 发布产品表面与输出协议课程`。
 
 ### Task 10：Telemetry、错误分类与 Eval 接入
 
-- [ ] 完成 `08-telemetry-errors-eval-design.md`、中文证据流图和遥测/评测边界 Claim。
-- [ ] 覆盖请求、响应、Tool Call Decision、Hook、压缩、错误分类、采样、脱敏与导出器。
-- [ ] 设计固定 Trial、Target surface、Artifact、Scorer、RewardAdapter 与独立 holdout；不把工具接受率、FinishReason 或 Telemetry 事件当发布门禁。
+- [x] 完成 `08-telemetry-errors-eval-design.md`、中文证据流图和遥测/评测边界 Claim。
+- [x] 覆盖请求、响应、Tool Call Decision、Hook、压缩、错误分类、采样、脱敏与导出器。
+- [x] 设计固定 Trial、Target surface、Artifact、Scorer、RewardAdapter 与独立 holdout；不把工具接受率、FinishReason 或 Telemetry 事件当发布门禁。
 - [ ] 提交：`docs(gemini-cli): 发布遥测错误与评测设计课程`。
 
 ### Task 11：正式导航与批量发布门禁
