@@ -110,9 +110,9 @@
 
 ### Task 10：Telemetry、Evals 与数据契约
 
-- [ ] 创建 `08-telemetry-evals-data-contracts.md`、对应 SVG 和 Claim，覆盖 Vendor-neutral Telemetry、Memory/Noop Adapter、Schema、Vitest Eval Harness、Artifact、Summary、Session 分享与外部 Scorer。
-- [ ] 建立 Dataset、固定 Trial、Target、Trace/Artifact、Scorer、统计、RewardAdapter、Checkpoint 与独立 holdout；Session 分享只作需授权的数据出口。
-- [ ] 渲染复核，运行门禁并提交：`docs(pi): 发布遥测评测与数据契约课程`。
+- [x] 创建 `08-telemetry-evals-data-contracts.md`、对应 SVG 和 Claim，覆盖 Vendor-neutral Telemetry、Memory/Noop Adapter、Schema、Vitest Eval Harness、Artifact、Summary、Session 分享与外部 Scorer。
+- [x] 建立 Dataset、固定 Trial、Target、Trace/Artifact、Scorer、统计、RewardAdapter、Checkpoint 与独立 holdout；Session 分享只作需授权的数据出口。
+- [x] 渲染复核，运行门禁并提交：`docs(pi): 发布遥测评测与数据契约课程`。
 
 ### Task 11：原子导航发布
 
