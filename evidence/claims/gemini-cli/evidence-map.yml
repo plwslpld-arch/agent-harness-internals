@@ -122,11 +122,15 @@
       "article": "07-surfaces-output-protocol.md",
       "question": "交互、Headless、IDE、A2A 与输出格式怎样投影核心事件？",
       "evidence": [
+        {"path":"packages/cli/src/ui/hooks/useAgentStream.ts","type":"source","reason":"交互终端对消息、思考、工具状态和未处理事件的投影。"},
         {"path":"packages/cli/src/nonInteractiveCliAgentSession.ts","type":"source","reason":"Headless Agent Session 和输出路径。"},
         {"path":"packages/cli/src/nonInteractiveCliAgentSession.test.ts","type":"upstream-test","reason":"text、json、stream-json、取消和退出语义测试。"},
+        {"path":"packages/core/src/output/types.ts","type":"source","reason":"三种输出格式与流式事件协议定义。"},
+        {"path":"packages/core/src/output/json-formatter.ts","type":"source","reason":"单对象 JSON 聚合与错误格式。"},
         {"path":"packages/core/src/output/stream-json-formatter.ts","type":"source","reason":"流式 JSON 协议投影。"},
         {"path":"packages/core/src/ide/ide-client.ts","type":"source","reason":"IDE 通信表面。"},
-        {"path":"packages/a2a-server/src/index.ts","type":"source","reason":"A2A Server 入口。"}
+        {"path":"packages/a2a-server/src/agent/task.ts","type":"source","reason":"模型与工具活动到 A2A Message、状态和 Artifact 的映射。"},
+        {"path":"packages/a2a-server/src/agent/executor.ts","type":"source","reason":"A2A Task 创建、恢复、取消和执行循环。"}
       ],
       "plannedClaims": ["gemini-cli.surfaces.output-projections-are-not-equivalent"]
     },

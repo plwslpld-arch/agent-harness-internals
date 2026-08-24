@@ -1,0 +1,27 @@
+{
+  "id": "gemini-cli.surfaces.output-projections-are-not-equivalent",
+  "harness": "gemini-cli",
+  "dimension": "surfaces.output-projections-are-not-equivalent",
+  "statement": "锁定 Gemini CLI 的交互终端、非交互 text、json、stream-json、IDE 与 A2A 会对核心事件做不同的筛选、聚合和状态映射；因此任一表面的显示完成、结果成功、任务终态或进程退出码都不能直接替代另一表面，更不能替代独立 Eval。",
+  "capability": "default",
+  "version": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+  "surface": "interactive-headless-ide-and-a2a",
+  "platform": "source-and-upstream-vitest-fixtures",
+  "mode": "text-json-stream-json-ide-a2a-projections",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/output/types.ts","lines":"9-37","excerpt":"STREAM_JSON = 'stream-json'"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/cli/src/nonInteractiveCliAgentSession.ts","lines":"441-484","excerpt":"Consume AgentEvents for output formatting"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/cli/src/nonInteractiveCliAgentSession.ts","lines":"675-684","excerpt":"Explicitly ignore these non-interactive events"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/cli/src/ui/hooks/useAgentStream.ts","lines":"148-193","excerpt":"setThought(parseThought(part.thought));"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/ide/ide-client.ts","lines":"204-278","excerpt":"name: `openDiff`"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/a2a-server/src/agent/task.ts","lines":"313-360","excerpt":"kind: 'status-update'"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/cli/src/nonInteractiveCliAgentSession.test.ts","lines":"1694-1755","excerpt":"OutputFormat.STREAM_JSON"}
+  ],
+  "limitations": [
+    "上游测试使用合成事件与进程夹具，不证明真实终端、IDE 扩展或跨网络 A2A 客户端已经互操作。",
+    "stream-json 比 text 和 json 保留更多结构，但仍主动忽略部分核心 AgentEvent，不能充当无损 Trace。",
+    "任何表面的协议成功都只证明一次结算路径，不证明最终工件满足独立评分标准。"
+  ],
+  "last_verified": "2026-08-24"
+}

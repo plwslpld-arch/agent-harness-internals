@@ -304,6 +304,14 @@
       "scope": "docs/harnesses/gemini-cli/06-agents-hooks-skills-mcp.md",
       "alt": "Gemini CLI 扩展能力经过启用、信任、发现、注册和授权，并分流到本地与远程子智能体生命周期的中文架构图",
       "claims": ["gemini-cli.extensions.capabilities-are-dynamically-assembled", "gemini-cli.orchestration.agents-have-separate-lifecycle"]
+    },
+    {
+      "id": "gemini-cli-surfaces-output-protocol",
+      "path": "assets/diagrams/gemini-cli/07-surfaces-output-protocol.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/gemini-cli/07-surfaces-output-protocol.md",
+      "alt": "Gemini CLI 核心事件在交互终端、三种非交互输出、IDE 与 A2A 之间形成不同中文投影的架构图",
+      "claims": ["gemini-cli.surfaces.output-projections-are-not-equivalent"]
     }
   ]
 }

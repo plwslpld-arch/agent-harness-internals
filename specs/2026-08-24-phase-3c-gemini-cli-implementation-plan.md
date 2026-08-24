@@ -98,9 +98,9 @@
 
 ### Task 9：交互 CLI、Headless、IDE、A2A 与输出协议
 
-- [ ] 完成 `07-surfaces-output-protocol.md`、中文表面映射图和协议投影 Claim。
-- [ ] 覆盖交互 UI、NonInteractiveCliAgentSession、IDE Client、A2A Server、text/json/stream-json 与退出码。
-- [ ] 建立核心事件到各表面的保留、合并、重命名和丢失映射，不让某一表面的 cancelled/success 互证其他表面。
+- [x] 完成 `07-surfaces-output-protocol.md`、中文表面映射图和协议投影 Claim。
+- [x] 覆盖交互 UI、NonInteractiveCliAgentSession、IDE Client、A2A Server、text/json/stream-json 与退出码。
+- [x] 建立核心事件到各表面的保留、合并、重命名和丢失映射，不让某一表面的 cancelled/success 互证其他表面。
 - [ ] 提交：`docs(gemini-cli): 发布产品表面与输出协议课程`。
 
 ### Task 10：Telemetry、错误分类与 Eval 接入
