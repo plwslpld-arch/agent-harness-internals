@@ -1,0 +1,135 @@
+{
+  "harness": "gemini-cli",
+  "source": "gemini-cli",
+  "commit": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+  "modules": [
+    {
+      "id": "gemini-cli-overview",
+      "article": "README.md",
+      "question": "CLI/Core、Agent Session、Turn 与 Scheduler 怎样完成一次真实工具任务？",
+      "evidence": [
+        {"path":"packages/core/src/agent/legacy-agent-session.ts","type":"source","reason":"Agent Session 模型流与工具闭环。"},
+        {"path":"packages/core/src/agent/legacy-agent-session.test.ts","type":"upstream-test","reason":"多次模型采样、工具调度、结果回送与中间 Finished 测试。"},
+        {"path":"packages/core/src/core/turn.ts","type":"source","reason":"模型流到 GeminiEvent 的转换。"},
+        {"path":"packages/core/src/scheduler/scheduler.ts","type":"source","reason":"工具批次状态与结算。"}
+      ],
+      "plannedClaims": ["gemini-cli.architecture.session-turn-scheduler", "gemini-cli.task.tool-result-loop"]
+    },
+    {
+      "id": "gemini-cli-config-prompt-context",
+      "article": "01-config-prompt-context.md",
+      "question": "Settings、GEMINI.md、Prompt 和上下文资源怎样形成有效请求？",
+      "evidence": [
+        {"path":"packages/cli/src/config/settings.ts","type":"source","reason":"CLI 分层设置加载。"},
+        {"path":"packages/core/src/config/config.ts","type":"source","reason":"Core 有效配置和运行服务。"},
+        {"path":"packages/core/src/core/prompts.ts","type":"source","reason":"核心系统提示生成。"},
+        {"path":"packages/core/src/prompts/promptProvider.test.ts","type":"upstream-test","reason":"PromptProvider 装配测试。"},
+        {"path":"packages/cli/src/config/settings.test.ts","type":"upstream-test","reason":"设置优先级与合并测试。"}
+      ],
+      "plannedClaims": ["gemini-cli.config.layered-effective-settings", "gemini-cli.context.gemini-md-is-bounded-input"]
+    },
+    {
+      "id": "gemini-cli-turn-scheduler-routing",
+      "article": "02-turn-scheduler-routing.md",
+      "question": "Agent Session、Turn、Routing 与 Scheduler 怎样解释继续和终止？",
+      "evidence": [
+        {"path":"packages/core/src/core/turn.ts","type":"source","reason":"Turn 事件和 FinishReason 映射。"},
+        {"path":"packages/core/src/core/turn.test.ts","type":"upstream-test","reason":"STOP、MAX_TOKENS、SAFETY 和工具请求测试。"},
+        {"path":"packages/core/src/agent/legacy-agent-session.ts","type":"source","reason":"多 Turn Agent Session 驱动。"},
+        {"path":"packages/core/src/routing/modelRouterService.ts","type":"source","reason":"模型路由入口。"},
+        {"path":"packages/core/src/scheduler/scheduler.test.ts","type":"upstream-test","reason":"工具队列、并行与取消测试。"}
+      ],
+      "plannedClaims": ["gemini-cli.turn.finished-is-not-agent-success", "gemini-cli.scheduler.tool-batch-has-own-state"]
+    },
+    {
+      "id": "gemini-cli-tools-lifecycle",
+      "article": "03-tools-lifecycle.md",
+      "question": "工具怎样从注册和请求走到受控执行及 Function Response？",
+      "evidence": [
+        {"path":"packages/core/src/tools/tool-registry.ts","type":"source","reason":"内建与发现工具注册。"},
+        {"path":"packages/core/src/scheduler/scheduler.ts","type":"source","reason":"工具请求排队和结果聚合。"},
+        {"path":"packages/core/src/scheduler/tool-executor.ts","type":"source","reason":"真实工具执行边界。"},
+        {"path":"packages/core/src/scheduler/scheduler.test.ts","type":"upstream-test","reason":"Function Response、有序结果与终止工具测试。"},
+        {"path":"packages/core/src/tools/tool-registry.test.ts","type":"upstream-test","reason":"注册和发现行为测试。"}
+      ],
+      "plannedClaims": ["gemini-cli.tools.registration-is-not-execution", "gemini-cli.tools.responses-are-scheduler-settlements"]
+    },
+    {
+      "id": "gemini-cli-confirmation-policy-safety-sandbox",
+      "article": "04-confirmation-policy-safety-sandbox.md",
+      "question": "确认、策略、模型 Safety 和平台 Sandbox 怎样共同限制副作用？",
+      "evidence": [
+        {"path":"packages/core/src/confirmation-bus/message-bus.ts","type":"source","reason":"确认消息总线。"},
+        {"path":"packages/core/src/policy/policy-engine.ts","type":"source","reason":"ALLOW、DENY 与 ASK_USER 决策。"},
+        {"path":"packages/core/src/policy/policy-engine.test.ts","type":"upstream-test","reason":"交互与非交互默认策略测试。"},
+        {"path":"packages/core/src/sandbox/linux/LinuxSandboxManager.ts","type":"source","reason":"Linux Bubblewrap 命令变换。"},
+        {"path":"packages/core/src/sandbox/linux/LinuxSandboxManager.test.ts","type":"upstream-test","reason":"Linux 沙箱包装测试。"},
+        {"path":"packages/core/src/core/turn.test.ts","type":"upstream-test","reason":"SAFETY FinishReason 行为。"}
+      ],
+      "plannedClaims": ["gemini-cli.security.confirmation-policy-sandbox-separation", "gemini-cli.security.safety-is-not-tool-authorization"]
+    },
+    {
+      "id": "gemini-cli-session-history-compression-memory",
+      "article": "05-session-history-compression-memory.md",
+      "question": "记录、运行时历史、压缩、快照和 Memory 谁拥有哪部分真相？",
+      "evidence": [
+        {"path":"packages/core/src/services/chatRecordingService.ts","type":"source","reason":"会话记录持久化。"},
+        {"path":"packages/core/src/core/agentChatHistory.ts","type":"source","reason":"拥有稳定身份的 Turn 历史。"},
+        {"path":"packages/core/src/context/chatCompressionService.ts","type":"source","reason":"摘要与保留尾部重建。"},
+        {"path":"packages/core/src/context/chatCompressionService.test.ts","type":"upstream-test","reason":"阈值、摘要验证和新历史测试。"},
+        {"path":"packages/core/src/core/logger.ts","type":"source","reason":"Checkpoint 文件与恢复辅助。"}
+      ],
+      "plannedClaims": ["gemini-cli.state.record-history-context-separation", "gemini-cli.compaction.summary-remains-lossy"]
+    },
+    {
+      "id": "gemini-cli-agents-hooks-skills-mcp",
+      "article": "06-agents-hooks-skills-mcp.md",
+      "question": "Agent 与扩展入口怎样改变运行时能力和编排？",
+      "evidence": [
+        {"path":"packages/core/src/agents/registry.ts","type":"source","reason":"Agent 定义注册表。"},
+        {"path":"packages/core/src/agents/agent-scheduler.ts","type":"source","reason":"Agent 执行调度。"},
+        {"path":"packages/core/src/agents/remote-subagent-protocol.ts","type":"source","reason":"远程子代理协议。"},
+        {"path":"packages/core/src/hooks/hookSystem.ts","type":"source","reason":"Hook 计划和执行入口。"},
+        {"path":"packages/core/src/skills/skillManager.ts","type":"source","reason":"Skill 发现与启用。"},
+        {"path":"packages/core/src/tools/mcp-client-manager.ts","type":"source","reason":"MCP 服务发现和生命周期。"}
+      ],
+      "plannedClaims": ["gemini-cli.extensions.capabilities-are-dynamically-assembled", "gemini-cli.orchestration.agents-have-separate-lifecycle"]
+    },
+    {
+      "id": "gemini-cli-surfaces-output-protocol",
+      "article": "07-surfaces-output-protocol.md",
+      "question": "交互、Headless、IDE、A2A 与输出格式怎样投影核心事件？",
+      "evidence": [
+        {"path":"packages/cli/src/nonInteractiveCliAgentSession.ts","type":"source","reason":"Headless Agent Session 和输出路径。"},
+        {"path":"packages/cli/src/nonInteractiveCliAgentSession.test.ts","type":"upstream-test","reason":"text、json、stream-json、取消和退出语义测试。"},
+        {"path":"packages/core/src/output/stream-json-formatter.ts","type":"source","reason":"流式 JSON 协议投影。"},
+        {"path":"packages/core/src/ide/ide-client.ts","type":"source","reason":"IDE 通信表面。"},
+        {"path":"packages/a2a-server/src/index.ts","type":"source","reason":"A2A Server 入口。"}
+      ],
+      "plannedClaims": ["gemini-cli.surfaces.output-projections-are-not-equivalent"]
+    },
+    {
+      "id": "gemini-cli-telemetry-errors-eval-design",
+      "article": "08-telemetry-errors-eval-design.md",
+      "question": "观测、错误、工具决定和独立 Eval 怎样关联又不互相替代？",
+      "evidence": [
+        {"path":"packages/core/src/telemetry/loggers.ts","type":"source","reason":"请求、响应、工具、Hook 与压缩事件记录。"},
+        {"path":"packages/core/src/telemetry/tool-call-decision.ts","type":"source","reason":"工具接受与确认决定事件。"},
+        {"path":"packages/core/src/telemetry/sanitize.ts","type":"source","reason":"遥测脱敏边界。"},
+        {"path":"packages/core/src/code_assist/telemetry.ts","type":"source","reason":"响应与错误分类。"},
+        {"path":"packages/core/src/code_assist/telemetry.test.ts","type":"upstream-test","reason":"FinishReason 和 Tool Call Interaction 分类测试。"}
+      ],
+      "plannedClaims": ["gemini-cli.telemetry.tool-decisions-are-not-eval", "gemini-cli.eval.requires-independent-scorer", "gemini-cli.architecture.policy-layering-has-tradeoffs"]
+    }
+  ],
+  "risks": [
+    {"id":"settings-file-effective-config","severity":"high","mitigation":"分别核对加载层、优先级、环境隔离、信任和运行时 Config。"},
+    {"id":"finished-task-success","severity":"high","mitigation":"分开模型 FinishReason、Turn Finished、Scheduler 结算、Agent Session 终态、CLI 退出和 Eval Trial。"},
+    {"id":"confirmation-sandbox-collapse","severity":"high","mitigation":"Confirmation Bus、Policy、审批模式、工具校验、Safety 和平台隔离逐层登记。"},
+    {"id":"extension-presence-default-capability","severity":"high","mitigation":"核对发现、启用、信任、注册、模型可见、授权和真实执行器。"},
+    {"id":"state-surface-collapse","severity":"high","mitigation":"Session 记录、AgentChatHistory、Context、Compression、Checkpoint 和 Memory 分开说明权威。"},
+    {"id":"telemetry-eval-collapse","severity":"high","mitigation":"遥测、错误分类、工具接受率、训练适配和独立发布 Eval 分开。"},
+    {"id":"surface-status-equivalence","severity":"high","mitigation":"各表面输出、取消、错误和退出码映射回原始事件，不直接互证。"},
+    {"id":"upstream-test-production-proof","severity":"medium","mitigation":"上游测试只证明锁定夹具和平台条件，不扩大成线上模型或生产部署证明。"}
+  ]
+}
