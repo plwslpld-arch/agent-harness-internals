@@ -22,22 +22,22 @@
 - [x] 完成阶段 6 内容提交并在隔离分支重跑全量门禁。
 - [x] 主工作树干净时以 `--ff-only` 快进 `main`，不产生额外合并提交。
 
-## Task 4：受控重写与强制推送
+## Task 4：受控历史审计与保护分支部署
 
-- [ ] 在本地建立带时间标识的备份引用；不得把含旧元数据的备份分支推到 GitHub。
-- [ ] 对 `main` 执行消息级重写，保留所有 Tree、人类作者、提交主题、顺序和拓扑。
-- [ ] 确认历史中不再存在目标尾注或 Session 行，以明确旧 SHA 的 `--force-with-lease` 推送。
+- [x] 核对本地带时间标识的备份引用存在；没有把任何本地备份分支推到 GitHub。
+- [x] 审计 `main` 的二百二十三个提交，确认消息级重写已经完成，Tree、人类作者、提交主题、顺序和拓扑保持不变。
+- [x] 确认历史中不存在目标尾注或 Session 行；远端是本地主线祖先，因此遵守保护规则改用受保护 PR 与 rebase 合并，不执行不必要的强制推送。
 
 ## Task 5：GitHub 元数据与社交预览
 
-- [ ] 把仓库改名为 `agent-harness-internals`，更新 Origin、中文 About、Topics、Issues、Wiki、可见性和默认分支。
+- [x] 把仓库改名为 `agent-harness-internals`，更新 Origin、中文 About、Topics、Issues、Wiki、可见性和默认分支。
 - [ ] 上传 `assets/brand/social-preview.png`，在 GitHub 设置页和公开仓库页验证预览、Logo、README 与相对链接。
-- [ ] 应用 main 分支保护：要求 `verify`、管理员同样受约束、禁止强推和删除。
+- [x] 应用 main 分支保护：要求 `verify`、管理员同样受约束、禁止强推和删除。
 
 ## Task 6：公开状态验证与最终复核
 
-- [ ] 通过 GitHub API 和公开网页核对仓库名、About、Topics、默认分支、License、保护规则、最新提交与工作流。
-- [ ] 核对 Contributors 页面不再出现 Codex 或 Claude；若 GitHub 缓存尚未刷新，持续验证到公开状态稳定。
+- [x] 通过 GitHub API 和公开网页核对仓库名、About、Topics、默认分支、License、保护规则、最新提交与工作流。
+- [x] 核对 Contributors 页面不再出现 Codex 或 Claude；API 只返回人类账号和匿名人类提交者，公开页面无对应贡献者条目。
 - [ ] 写入阶段 6 对抗复核，勾选总路线，提交并普通推送最终记录。
 
 ## 完成定义
