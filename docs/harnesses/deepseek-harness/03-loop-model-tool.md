@@ -17,11 +17,20 @@ sources: [{"repo":"deepseek-harness","path":"packages/core/agent-loop/src/agent.
 
 先找边界，再数调用。
 
-## 核心机制
+## 核心概念
 
 ![DSH 从模型流式响应、工具并发与有序提交到下一次请求和终止原因的中文时序图](../../../assets/diagrams/deepseek-harness/03-loop-model-tool.svg)
 
 Claim: deepseek-harness.loop.tool-results-before-next-request
+
+| 概念 | 边界 | 结束条件 | 不应混同 |
+| --- | --- | --- | --- |
+| Turn | 一次外层任务推进 | 稳定终止原因 | 单次模型请求 |
+| Step | 一次请求与工具处理 | 形成下一步或终止 | Eval Attempt |
+| StreamChunk | 模型增量 | 流中单片到达 | 完整 AssistantMessage |
+| Tool slot | 模型顺序位置 | 对应结果已 settle | 实际完成顺序 |
+| Provider retry | 当前 Step 的请求恢复 | 得到可用模型流 | 工具错误后的再采样 |
+| Turn reason | Harness 状态机结论 | completed 等终态 | 任务评分 |
 
 外层 Turn 负责持久边界。它追加 `turn/start`，循环执行 step；每个 step 前从 inbox 认领消息并装配 Prompt，结束时无论成功或异常都追加 `step/end`。当没有下一步消息且得到稳定结束原因时，最终追加 `turn/end`。因此一个 Turn 可以有多个模型请求，不能用 Turn 数量代替 Provider 调用数。
 
@@ -42,6 +51,79 @@ DeepSeek adapter 可以在传输层解析 SSE，但 Agent Loop 不直接依赖 S
 取消也要保持日志可重放。已开始的调用会被 drain 并按序提交；尚未调度的模型调用得到合成的 aborted result，避免 assistant 留下没有配对结果的调用。内部 scheduler failure 则不伪造恢复结果：它停止新 dispatch，等待已开始任务 settle，再抛出第一个内部故障。这两条路径故意不同。
 
 终止原因不能压成一个布尔值。锁定测试分别覆盖 completed、blocked、aborted、error 和 max-tokens；其中 max-tokens 在同一 Turn 中具有 sticky 语义，后续 completed step 不会把早先截断降级成成功。Eval 仍需独立判断任务产物是否正确。
+
+## 为什么这样设计
+
+第一，流式显示与确定性执行需要不同边界。界面可以即时消费 Chunk，工具调度却必须等待完整调用块，否则网络分片会把半截参数当成动作。BlockAssembler 在两者之间建立明确提交点。
+
+第二，并发执行提升吞吐，有序提交保持模型因果。工具可以反序完成，但下一请求仍按模型调用顺序看到结果；这样操作系统调度不会改变对话历史，外部竞态则由工具契约和隔离另外处理。
+
+第三，恢复层分开才能计算成本和可靠性。Provider retry、工具错误后的模型修正、Turn 重启与 Eval Attempt 分别记录，避免一个重试数字同时掩盖网络、产品与评测基础设施问题。
+
+第四，多种终止原因保留安全语义。max-tokens 不执行半截调用，aborted 闭合未开始调用，blocked 与 error 保留不同恢复方向；completed 只说明状态机收敛，不抢占独立 Scorer 的职责。
+
+第五，持久事件先于派生界面。Turn、Step、Chunk、Message、Call 与 Result 都有明确序号，终端和评测从同一日志投影；这样取消或崩溃后可以解释已提交到哪里，不靠最后一屏文本猜测。
+
+这些分层共同保证性能优化不会改变模型看到的确定性因果链，也不会掩盖真实副作用。
+
+## 实现思路
+
+教学实现可把 Turn 控制器、Step 采样器、Chunk Assembler、Tool Scheduler 和终止归约器分开。以下蓝图复用 DSH 已证明的边界，但不替代具体源码。
+
+1. **开启持久边界。** 追加 turn/start，认领 inbox 消息；每个 Step 都有 start/end，即使异常也写入终态。
+2. **冻结请求并消费流。** 保存 config、system、tools、history 与 abort signal；逐 Chunk 记录，只有 assembler 完成才提交 AssistantMessage。
+3. **分类模型终态。** error / aborted 进入有界请求恢复，max-tokens 直接终止工具路径，无 ToolUse 则完成。
+4. **调度完整工具调用。** 根据实时 mode 分组，exclusive 形成屏障，parallel 进入有界池；每个调用占据模型顺序 slot。
+5. **按 slot 提交。** settle 可以乱序，commit pointer 只跨越连续完成 slot；结果关联 call ID 后写 Session。
+6. **决定下一 Step。** 普通结果进入派生历史，concludesTurn、取消或错误进入终止归约；sticky 原因不得被后续成功覆盖。
+
+```text
+while turn 未终止:
+    request = freeze(preStep())
+    message, finish = assemble(await stream(request))
+    如果 finish 是 max-tokens: 记录截断并终止
+    如果 finish 是 error/aborted: 按策略恢复或终止
+    session.append(message)
+    如果 message 无 tool-call: 终止为 completed
+    slots = schedule(message.tool_calls)
+    并发执行 slots；仅按模型顺序 commitReady()
+    如果 任一结果 concludesTurn: 终止
+    否则 tool-results 进入下一 Step
+```
+
+内部 scheduler failure 与工具业务 error 必须使用不同通道。前者说明 Harness 无法可靠提交调用，应停止 dispatch 并抛出；后者是模型可观察 ToolResult，可以进入下一步尝试修正。
+
+调度器还要记录 started、settled 与 committed 三个时间。started 证明副作用可能发生，settled 说明执行已返回，committed 才说明结果进入模型历史；三者解决取消、超时与完成顺序的不同诊断问题。
+
+恢复时只能从已持久提交点继续。已经 committed 的工具调用不得重放；started 但未 settled 的调用属于副作用未知，需要查询外部状态或人工处理。用同一 call ID 静默重跑会破坏幂等性。
+
+## 贯穿案例
+
+用户要求同时读取两个独立报告，再根据结果写摘要。模型按 c1、c2 发出两个并发 Read，c2 先完成；随后模型调用 Write。案例验证并发、顺序和终止不是同一件事。
+
+1. **第一 Step 采样。** 完整 AssistantMessage 含 c1 / c2；Chunk 到达期间不执行任何半成品参数。
+2. **反序执行。** 两个 Read 同时 dispatch，c2 先 settle。slot 1 已有结果，但 slot 0 未完成，所以 Session 暂无 ToolResult。
+3. **有序提交。** c1 settle 后 commit pointer 依次写入 c1、c2；下一模型请求看到确定性配对。
+4. **第二 Step 写入。** 模型基于两个结果提出 Write，权限与执行成功，结果进入 Session；下一响应无工具调用，Turn completed。
+5. **独立验收。** Scorer 检查摘要内容、只修改目标文件和读取顺序无关性；completed 只是输入之一。
+
+```json
+{"calls":["c1","c2"],"settled":["c2"],"committed":[]}
+```
+
+```json
+{"calls":["c1","c2"],"settled":["c2","c1"],"committed":["c1","c2"]}
+```
+
+```json
+{"turnReason":"completed","providerRequests":3,"toolExecutions":3,"score":{"summaryCorrect":true,"unexpectedWrites":0}}
+```
+
+取消变体在 c2 settle 后触发 Abort：已开始的 c1/c2 被 drain 并按序提交，尚未 dispatch 的调用得到合成 aborted result。Artifact 必须区分真实执行与合成闭合，不能用相同 ToolResult 文本推断副作用。
+
+截断变体让模型在 Write 参数中途达到 max-tokens。Assembler 不生成完整 ToolUse，调度器执行次数保持为 2，Turn 原因为 max-tokens；提高上限后只能发起新的受控运行，不能执行保存下来的半截 JSON。
+
+最后让 Write 返回业务错误。错误 ToolResult按正常事件提交，下一 Step 可选择修正路径；若 scheduler 自身抛错，则不得伪造 ToolResult 让模型继续。两条路径的对照用于证明恢复层没有被混合。
 
 ## 真实输入与输出
 

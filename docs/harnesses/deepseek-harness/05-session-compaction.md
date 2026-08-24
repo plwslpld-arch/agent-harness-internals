@@ -19,6 +19,8 @@ sources: [{"repo":"deepseek-harness","path":"packages/core/session/src/surface.t
 
 日志不能省略。
 
+## 核心概念
+
 ![DSH 从追加事件日志派生模型表面、压缩替换、持久化恢复与外部 Spill 的中文状态图](../../../assets/diagrams/deepseek-harness/05-session-compaction.svg)
 
 Claim: deepseek-harness.session.log-surface-separation
@@ -36,6 +38,94 @@ Claim: deepseek-harness.session.recovery-does-not-replay-committed-tools
 外溢不是记忆。
 
 路径不能作证。
+
+| 概念 | 保存对象 | 是否权威 | 关键限制 |
+| --- | --- | --- | --- |
+| 追加事件日志 | 用户、模型、工具与边界事实 | 会话事实源 | 不是当前模型可见序列 |
+| Surface | 带 surfaceOp 的模型消息视图 | 派生视图 | 替换会遮蔽旧节点 |
+| Context | 某次请求的完整输入 | 瞬时装配 | 不等于持久 Session |
+| Compaction summary | 被遮蔽范围的压缩表达 | 新模型视图的一部分 | 可能遗漏原文约束 |
+| Persistence checkpoint | 已提交事件前缀与游标 | 存储恢复边界 | 不包含外部副作用快照 |
+| Cold repair | 为开放边界合成缺失 closers | 日志平衡操作 | 不执行历史工具 |
+| Spill | 大内容的外部副本与定位符 | 独立存储对象 | 路径可能失效 |
+
+追加日志和 Surface回答不同问题。审计要知道发生过什么，读取日志；模型下一次看见什么，读取 Surface。压缩通过 append 新摘要和 replace 改变视图，没有回头修改旧事件，因此同一 Session 可以同时保留完整事实与缩短 Context。
+
+恢复的关键不是把日志「重放一遍」，而是判断已持久到哪个副作用边界。已有 ToolResult 只补 Step / Turn closer；只有 ToolCall 没结果时状态未知。未知不是失败，也不是可安全重试，它要求按工具幂等性查询外部世界。
+
+## 为什么这样设计
+
+第一，追加日志减少恢复歧义。每个事实只追加一次，Surface 与 transcript 都从同一来源投影；压缩、界面或评测规则变化时，可以重新派生而不破坏原始顺序。
+
+第二，replace 让模型 Context 缩短，同时保留人类可见历史。若直接删除旧事件，审计、错误归因和安全调查都会失去来源；若完全不压缩，长 Session 又无法继续进入模型窗口。
+
+第三，冷恢复只补结构，不重做副作用。崩溃可能发生在外部动作完成与结果落盘之间，自动重放会重复付款、提交或删除；合成 unknown ToolResult 把决定交回新运行与人工策略。
+
+第四，Spill 把大内容成本从 Session 消息移走，却显式暴露新的生命周期。Session 只保存预览与定位符，外部文件的保留、权限、跨主机复制和哈希核验由独立契约负责。
+
+第五，错误录制仍被保留。夹具中命令退出 1 后 Agent 回复 DONE，日志如实记录；独立 Scorer 可以拒绝任务，而不会为了快照看起来成功而改写历史。
+
+第六，格式版本与业务事件分开，使迁移可以保留原件。新构建若无法解释未知事件，应停止在可证明前缀并报告不兼容；它不能删除未知字节后继续宣称完整恢复。
+
+这些分层最终让恢复过程可以被证明没有重做已提交副作用，也没有用摘要或定位符冒充完整事实。
+
+## 实现思路
+
+教学实现将 EventStore、SurfaceReducer、Compactor、PersistenceCoordinator、RecoveryRepairer 与 SpillStore 分开。DSH 源码证明追加、replace 和修复语义；外部副作用查询与完整性水位是宿主需要补齐的策略。
+
+1. **追加带序号事件。** 用户、Assistant、ToolCall、ToolResult、Step 和 Turn 都获得连续 seq；写入后不可原地修改。
+2. **派生 Surface。** 只消费带 surfaceOp 的消息生产事件，append 加尾，replace 遮蔽平衡范围；缓存失效后可从 seed 重建。
+3. **事务式压缩。** 选择不切断工具对的区域，冻结计量，生成更小摘要；依次追加 summary、replace message 和 compaction/end。
+4. **批量持久化。** 只推进连续游标，保存格式版本与事件哈希；尾部破损不覆盖原件。
+5. **冷恢复平衡。** 分类未记录调用、调用无结果、结果已提交三种开放状态，只合成缺失 closer 或 unknown result，不调用工具运行时。
+6. **管理 Spill。** 保存完整内容与哈希，Session 写预览、稳定 locator 和过期策略；取回时验证哈希与权限。
+
+```text
+stored = persistence.load_prefix(session_id)
+validated, damaged_tail = validate_format_and_sequence(stored)
+closers = repair_open_turn(validated)
+session = Session.seed(validated + closers)
+
+如果 最后状态 == tool_call_without_result:
+    append synthetic_result(status="unknown", retry="only-readonly-or-idempotent")
+绝不在 cold_repair 中调用 tool.execute()
+```
+
+每个 ToolCall 还应带幂等键、started / committed 状态与外部审计 ID。恢复器本身只给出分类；调用方若选择重试，要生成新的 Call 并记录依据，不能覆盖旧 unknown。
+
+持久化协调器要在批次、游标与存储提交之间使用幂等写入。只有连续前缀才能推进 checkpoint；部分批次成功时先对账，避免下一次启动既跳过事件又重复追加。格式迁移始终在副本上进行。
+
+SurfaceReducer 需要性质测试：同一事件 seed 重建得到相同节点，replace 不越界且不切断工具对，未知非消息事件不进入模型历史。Compaction 摘要还应接受关键 ID 与安全约束保留检查。
+
+## 贯穿案例
+
+用户让 Agent 生成报告并读取一个超长工具结果。进程在写文件后、ToolResult 持久化前崩溃；同时前半段对话已被压缩。恢复过程必须同时保护日志、Surface 与副作用。
+
+1. **压缩前缀。** 原日志 seq 1–80 保留，Compactor 追加摘要和 replace；当前 Surface 只显示摘要与后续消息，人类 transcript 仍可从原事件重建。
+2. **发生写入崩溃。** seq 95 记录 ToolCall 与 started，文件实际生成，但 ToolResult 未落盘。Persistence 游标停在 95。
+3. **冷恢复。** Repairer识别 call-without-result，合成 `unknown` ToolResult 和缺失 closers；工具主体计数不增加。
+4. **核对外部状态。** 宿主读取目标文件哈希，确认与预期一致，追加新的观察事件；它没有重新执行 Write。
+5. **验证 Spill。** 长结果 locator 仍存在，读取外部内容并比较哈希；若文件已过期，任务标成 Artifact 缺失而非 DONE。
+
+```json
+{"seq":95,"event":"tool/call","callId":"w1","execution":"started","result":"missing"}
+```
+
+```json
+{"recovery":"cold","syntheticResult":{"callId":"w1","status":"unknown"},"toolExecutionsDuringRepair":0}
+```
+
+```json
+{"externalCheck":{"fileHash":"H-report","matchesExpected":true},"spill":{"available":true,"hashVerified":true},"score":"pass-after-explicit-verification"}
+```
+
+把目标文件删掉再恢复，Session 历史仍声称工具曾被调用，但外部核对失败；正确结果是环境不一致，而非重放 Write。再让 Spill locator 失效，模型只能看到预览，Scorer 不得把最终 DONE 当完整内容已核验。
+
+压缩反例故意选择从 ToolCall 中间到 ToolResult 之前的范围，Compactor 必须拒绝。只有保持调用与结果平衡，摘要才能成为合法的模型历史替代节点。
+
+再模拟 Store 在 seq 94 后损坏半行。恢复保留原文件，加载到最后一个完整事件，并把尾部损坏作为 Artifact；它不能猜测 seq 95 的内容，也不能因此重做此前已完成的 ToolCall。
+
+最后让摘要语言流畅但遗漏「不得发布」约束。日志和来源序列使验证器能够检测缺失，当前 Surface 则必须拒绝该摘要或重新压缩。压缩率不能覆盖安全约束。
 
 ## 真实输入与输出
 

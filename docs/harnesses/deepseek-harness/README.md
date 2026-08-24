@@ -21,6 +21,94 @@ sources: [{"repo":"deepseek-harness","path":"packages/bundle/base/cordis.patch.y
 
 先看全景，再沿任务链深入。不要从目录名猜行为，也不要把插件已安装直接等同于能力已启用。
 
+## 核心概念
+
+DSH 可以用「组合、请求、循环、行动、记忆、编排、表面、验证」八个相连视角理解。它们不是八套孤立功能，而是一条任务在不同生命周期阶段经过的边界。入口页先给出共同词汇，后续章节再把每个边界落到源码、事件与实验。
+
+| 层次 | 核心对象 | 负责决定 | 权威证据 |
+|---|---|---|---|
+| 启动组合 | bundle、profile、patch、preset | 哪些服务和能力实际存在 | 有效 Cordis 树、启动记录 |
+| 请求装配 | prompt section、context、tool schema | 模型本次真正看到什么 | 最终请求、缓存观测 |
+| Agent 循环 | Turn、Step、chunk、停止原因 | 何时采样、调用工具和收敛 | Session 事件、Provider 响应 |
+| 工具安全 | Registry、Guard、Approval、Sandbox | 请求能否执行、在哪里执行 | 决策链、退出状态、副作用 |
+| 会话记忆 | 追加日志、派生 Context、摘要、Spill | 什么可恢复、什么可丢弃 | 原始事件、checkpoint、产物 |
+| 编排扩展 | Goal、Subagent、Workflow、Extension | 多次或多 Agent 工作怎样协调 | 父子 run、预算、结构化结果 |
+| 产品表面 | Web、Headless、ACP、SDK | 外部怎样驱动并观察核心 | 协议响应、退出码、通知 |
+| 验证与 Eval | invariant、Trial、Scorer | 哪条约束成立、任务是否通过 | 测试产物、独立评分 |
+
+组合是整条链的起点。源码中存在一个工具包，只说明候选实现可被引用；bundle 与 profile 提供宿主服务，preset 决定 Agent 可见能力，平台和环境再影响实际装配。复核任何行为前，都要记录最终有效配置，不能从目录或依赖清单直接推断能力已启用。
+
+Agent 循环以 Turn 表示一次用户驱动，以 Step 表示一次模型采样及其后续工具处理。Prompt 与 Context 在每个 Step 前形成请求，模型返回流式 chunk，组装后的 assistant message 若包含 tool-call，就经安全链执行并把 tool-result 投影回下一次请求。终止原因只描述循环为何停止，不评价任务正确性。
+
+Session 是跨层证据脊柱。模型消息、工具调用、工具结果、步骤边界和停止原因追加为原始事件；Context、界面卡片、摘要和协议响应都是派生视图。派生视图可以压缩或筛选信息，却不应反向改写历史。外部文件和进程副作用仍要单独保存，因为 Session 无法独占整个世界状态。
+
+Eval 横切整条主线。固定 Dataset item 创建 Trial，Target 指定 DSH 表面与运行配置，Trace 关联 Session 和外部产物，Scorer 独立判断约束。用户反馈与遥测可进入数据管道，但需要明确 RewardAdapter 才能获得训练语义；Checkpoint 选择和发布 holdout 继续隔离。
+
+## 为什么这样设计
+
+第一，组合式运行时让同一核心支持不同产品表面与 Agent 配置。宿主提供模型路由、持久化和执行能力，preset 提供 persona 与可见工具，产品表面只处理交互或协议。职责分开后，替换入口不必复制 Agent Loop，改变 persona 也不必重建宿主服务。
+
+第二，追加型 Session 与派生 Context 分离，兼顾可恢复证据和有限模型窗口。原始日志保留发生过什么，派生器选择本次需要的消息，compaction 用摘要替换早期上下文但不删除历史。故障调查可以回到原始事件，模型请求又不必无限增长。
+
+第三，工具意图与真实副作用之间设置 Registry、Guard、Approval、Sandbox 和执行后端，是为了将模型能力转换成可治理行动。每层回答不同问题：工具是否存在、策略是否允许、是否需要人确认、操作系统能否隔离、命令实际如何结束。将它们合并成一个 allow 布尔值会隐藏平台强度和执行失败。
+
+第四，编排复用同一 Agent 与安全核心，使子 Agent、Workflow 和 Ralph 的差异集中在上下文、预算、并发与交接。子运行拥有独立身份，父端摘要不能覆盖子端原始结果；这样既能扩展任务规模，也能保留失败归属。
+
+第五，内部完成与独立 Eval 分开，防止 Harness 自己宣布任务通过。`completed`、Goal 勾选、Workflow 返回和进程退出 0 都属于运行信号；只有固定任务上的外部 Scorer 能形成可比较结论。这个分层也让训练 Reward、恢复 Attempt 和发布判定不互相污染。
+
+## 实现思路
+
+学习和复核 DSH 时，可建立一个最小「任务证据包」，让八个章节都围绕同一 run 展开。不要一开始遍历所有包；先选一个带工具副作用的任务，再沿身份和事件追到每个边界。
+
+1. **冻结运行配置。** 记录源码提交、bundle、profile、preset、模型、平台、权限模式和工作区水位，导出最终有效插件树。
+2. **捕获模型请求。** 保存稳定 prompt section、运行时 Context、工具 Schema 和缓存指标，区分应用前缀变化与 Provider 报告。
+3. **追踪循环身份。** 为 Turn、Step、message 和 tool call 保留关联 ID，记录 chunk 组装、重试、取消与最终停止原因。
+4. **核对行动链。** 从模型参数经过 Registry、Guard、Approval、Sandbox 到执行后端，保存每层决定、命令退出和外部产物哈希。
+5. **验证恢复语义。** 在工具副作用、结果提交与 checkpoint 之间注入崩溃，检查恢复器不会把 unknown 调用无条件重放。
+6. **扩展到编排。** 创建一个有界子 Agent 或 Workflow，记录 parent、depth、预算和 canonical result，检查共享工作区冲突。
+7. **比较产品表面。** 用同一 Session 观察 Web、Headless、ACP 或 SDK 投影，建立内部原因与协议结果映射。
+8. **运行独立评分。** 把完整 Session、外部产物和配置绑定 Trial，由隔离 Scorer 判定；反馈、遥测与 RewardAdapter 另行登记。
+
+```text
+effective_runtime = compose(bundle, profile, preset, platform)
+session = start(effective_runtime, frozen_task)
+while session.turn_active:
+    request = derive_context(session.log, prompt_sections, tool_schema)
+    response = model(request)
+    result = loop_settle(response, guarded_tool_executor)
+artifacts = collect(session.log, workspace_diff, surface_outputs)
+score = independent_scorer(frozen_trial, artifacts)
+```
+
+实现最小原型时，优先保留边界接口，而非复制全部功能：`compose()` 返回能力清单，`derive_context()` 从追加日志产生请求，`execute_tool()` 返回结构化决定与副作用，`project_surface()` 只读事件，`score()` 不接受 Harness 自报完成作为答案。每个接口都能被替身驱动，也能在后续换成锁定源码的真实适配器。
+
+证据包还要保存「未观察到什么」。没有真实 Provider 就标记录制夹具，没有 Linux 沙箱就把平台证据写为 unavailable，没有 RewardAdapter 就把反馈标成 raw signal。显式缺口比笼统的「支持」更有学习价值，也能防止入口页承诺超过各章节正文。
+
+## 贯穿案例
+
+贯穿任务沿用上游夹具的意图：「调用 bash 执行 `echo SNAPSHOT_OK`，随后只回复 DONE」。教学变体再加一条独立约束：Scorer 必须观察到 stdout 精确包含目标文本、工具结果正确关联，且最终回复只含一个单词。
+
+1. **启动。** base bundle、CLI profile 与 standard preset 组合出 LLM、Session、Agent、bash、Permission 和执行后端；记录有效工具表与 `danger-full-access` 测试模式。
+2. **首个 Step。** Prompt 与 Session Context 形成请求，模型返回 `bash` tool-call；chunk 被组装并写入 assistant message。
+3. **执行工具。** Registry 找到 bash，安全链记录当前策略与无需审批的模式，执行后端运行命令并返回 stdout；外部副作用在本例仅是进程输出。
+4. **第二个 Step。** tool-result 通过派生 Context 进入下一次模型请求，模型回复 `DONE`，循环写入 `turn/end: completed`。
+5. **表面投影。** ACP 只发送已提交文本并返回 `end_turn`；Headless 会打印最终文本，并依据内部原因选择退出码。
+6. **独立评分。** Scorer 同时检查 tool call 参数、callId 关联、stdout、最终文本和停止原因；任何一项不符都判 Trial fail。
+
+```json
+{"trialId":"dsh-echo-001","task":"执行固定命令并回复单词","surface":"acp","permissionMode":"danger-full-access"}
+```
+
+```json
+{"tool":{"name":"bash","stdout":"SNAPSHOT_OK\n","isError":false},"assistant":"DONE","internalStop":"completed","score":"pass"}
+```
+
+现在注入第一个反例：模型直接回复 `DONE`，没有 tool-call。Agent Loop仍可能正常 completed，ACP 也正常 `end_turn`，但 Scorer 因缺少命令证据判 fail。它证明运行收敛和任务通过属于不同层。
+
+第二个反例让 Guard 拒绝 bash。Session 应保存拒绝决定和非成功工具结果，模型可以解释无法执行；若产品表面只显示最终文字，评测仍要读取原始 Session。此时失败归属于当前权限配置下的产品结果，不能通过重试时悄悄切换为完全访问来改成通过。
+
+第三个变体在工具进程成功后、结果写入前崩溃。恢复器看到 started 或 unknown，不应再次执行非幂等命令；本例命令无持久副作用，但测试要替换成追加文件操作验证只写一次。完整证据包因此横跨组合、循环、安全、会话、表面和 Eval，后续八篇都能从同一案例深化，而非形成彼此无关的术语摘要。
+
 ## 系统全景
 
 ![DeepSeek Harness 从产品表面、Cordis 组合到模型工具会话和评测接入的中文系统架构图](../../../assets/diagrams/deepseek-harness/system-architecture.svg)

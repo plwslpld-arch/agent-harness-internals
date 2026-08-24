@@ -21,7 +21,7 @@
 
 ## Task 3：重写六条核心主线
 
-- [ ] DeepSeek Harness 九篇：重点补齐分层运行时、Agent 循环、会话、工具、上下文、评测接口和控制实验的教学链。
+- [x] DeepSeek Harness 九篇：重点补齐分层运行时、Agent 循环、会话、工具、上下文、评测接口和控制实验的教学链。
 - [ ] Codex 九篇：重点补齐 Rust 核心、工具编排、审批与沙箱、会话、协议、压缩和评测出口的教学链。
 - [ ] Gemini CLI 九篇：重点补齐 Core/CLI 分工、Policy/Safety/Confirmation、工具、调度、会话和评测的教学链。
 - [x] Claude 九篇：重点补齐闭源产品可观察边界、工具权限、Hook、子代理、会话、SDK 映射和评测出口的教学链。
