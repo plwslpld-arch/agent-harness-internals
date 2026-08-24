@@ -17,6 +17,119 @@ sources: [{"repo":"opencode","path":"packages/opencode/src/agent/agent.ts","comm
 
 Subagent 权限尤其需要精确理解。锁定实现从父 Session 继承 Deny 与 External Directory 规则，再由子 Agent 自身权限决定能力，并在未显式允许时追加 TodoWrite 与 Task Deny。Task 调用本身还需权限检查和深度限制。父 Agent 的全部 Allow 并不会被无条件复制给子会话；反过来，子 Agent 自身规则也不能越过继承的关键拒绝项。
 
+## 核心概念
+
+Agent 是模型、提示、模式与权限的组合定义；Subagent 是由 Task Tool 创建或复用的独立子会话。父会话获得子任务结果投影，但子会话拥有自己的消息、工具、压缩和错误。把 Subagent 当普通函数会丢失轨迹、权限和并发副作用，也无法解释恢复 Task ID 的语义。
+
+Skill、Plugin、MCP 和 LSP 位于不同信任域。Skill 主要提供可读指令资源，Plugin 是宿主进程内代码，MCP 通过协议调用外部服务，LSP 是面向代码智能的独立子进程。发现某资源只是第一状态；启用、模型可见、连接、执行与结果正确仍要逐层验证。
+
+Subagent Permission 采用收窄继承。父会话的 Deny 与 External Directory 规则进入子会话，子 Agent 自身规则继续生效，未显式允许的递归 Task/Todo 追加拒绝；Task Tool 还执行调用权限和深度检查。这能减少权限膨胀，却不等于操作系统隔离，子工具仍受宿主能力支配。
+
+| 扩展类型 | 运行位置 | 改变的表面 | 主要风险 |
+| --- | --- | --- | --- |
+| Agent | 当前实例配置 | 模型、提示、模式与 Permission | 规则组合和模型漂移 |
+| Subagent | 独立 Child Session | 子任务工具循环与结果 | 权限、深度、并发副作用 |
+| Skill | 提示资源路径 | 模型可读指令与工作流 | 指令注入、来源漂移 |
+| Plugin | 宿主进程内 | Tool、Auth、Provider 和 Hook | 高权限代码与数据外发 |
+| MCP | 本地/远端协议服务 | Tool、Prompt、Resource、Template | 远端身份、授权和副作用 |
+| LSP | 语言服务器子进程 | Diagnostic、Definition、Reference | 配置过时与子进程权限 |
+| Permission Scope | 父子 Ruleset | 可调用能力边界 | 应用层规则不等于沙箱 |
+| Extension Snapshot | 版本、状态和最终 Schema | 可重放证据 | 发现列表不证明运行成功 |
+
+## 为什么这样设计
+
+多种扩展机制各自服务不同需求。Skill 让知识以文本资源复用，Plugin 允许深度定制运行时，MCP 连接跨进程生态，LSP 提供语言专用分析，Subagent 并行或分解任务。统一成一个插件接口会模糊权限与生命周期，也让故障无法定位。
+
+子会话而非同一上下文中的嵌套调用，使 Subagent 能独立选择模型、保留历史和恢复任务。父会话只接收结果可以降低上下文压力，但必须保存 Child Session ID；否则父回答无法回到子工具证据。深度限制和默认 Task Deny 防止无界递归。
+
+关键拒绝继承体现最小权限方向。父层禁止的外部目录和能力不应因委派消失，父层的 Allow 也不自动扩张子 Agent。真正有效权限由继承规则、子 Agent Ruleset 和运行时边界共同决定，需要用实际派生结果验证。
+
+MCP Capability 探测与 LSP Root 发现采用动态方式，是为了适配不同服务和项目。连接成功不意味着所有能力存在，找到 Binary 也不意味着 Root 与配置正确。状态机和分页结果必须保留，不能用「已连接」一个布尔值覆盖认证、能力和执行。
+
+Plugin Hook 的顺序同样属于运行语义。多个 Hook 可以依次改写系统提示、工具定义或压缩内容，后一项看到的是前一项输出；只保存插件集合而不保存顺序，无法重放最终表面。
+
+## 实现思路
+
+教学实现为每种扩展生成独立清单，并在创建模型请求时汇总为 Extension Snapshot。以下结构只表示证据关系，不声称上游存在同名类型。
+
+Snapshot 对远端对象采用内容哈希与服务器身份双重绑定。MCP 工具同名但来自不同服务器时不得合并，LSP 同一语言由不同 Root 启动也要分开；名称只是显示字段，不能作为全局身份。
+
+```ts
+interface ExtensionSnapshot {
+  agents: Array<{ name: string; mode: string; permissionDigest: string }>;
+  skills: Array<{ name: string; origin: string; allowed: boolean }>;
+  plugins: Array<{ id: string; version: string; hooks: string[] }>;
+  mcp: Array<{ server: string; status: string; capabilities: string[] }>;
+  lsp: Array<{ server: string; root: string; status: string }>;
+}
+```
+
+1. 从 Config 与目录发现 Agent、Skill、Plugin、MCP 和 LSP 定义，保留 origin、版本、诊断与信任决定。
+2. 合并 Agent 默认与用户规则，计算 Primary/Subagent/All 模式、模型、提示和最终 Permission Digest。
+3. Skill 按来源去重并应用 Agent `skill` Permission；只把允许且可读取的资源交给模型，保存内容哈希。
+4. Plugin 在受控入口初始化，记录 Tool/Auth/Provider/Hook。Hook 前后保存脱敏摘要，异常不能静默跳过后仍声称相同表面。
+5. MCP 按 Stdio、SSE 或 Streamable HTTP 建连，记录认证状态和 Server Capabilities，分页读取每类资源并命名空间化 Tool。
+6. Task Tool 检查功能开关、调用权限与嵌套深度，派生父 Deny/External Directory 和子规则，创建带 Parent ID 的 Child Session。
+7. LSP 按文件识别 Root 与 Server，启动 Client、发送打开通知并等待诊断；Binary 缺失与无匹配 Root 分开报告。
+8. Eval 关联父子 Session、Extension Snapshot、MCP 回执、LSP 诊断和最终文件。扩展可用与任务正确分别给出结论。
+
+运行中扩展变化应产生新 Revision。Plugin 改写 Tool Definition、MCP 重连后 Schema 改变或 LSP 切换 Root 时，正在进行的 Tool Call 使用开始时版本；下一轮模型请求再采用新 Snapshot。
+
+子会话关闭时要汇总但不删除其 Trace。父会话收到文本结果、Artifact 引用、最终权限摘要和 Child Session ID；若子任务被取消，父层先核对已提交副作用再决定是否重新委派。
+
+外部 Skill 获取需要固定来源、版本和内容哈希。下载成功只说明资源可读，不能证明指令安全；公开课程默认使用本地夹具，真实远端来源需要单独供应链审查。
+
+## 贯穿案例
+
+假设主 Agent 委派 Subagent 修复 TypeScript 错误。项目提供同名 Skill，Plugin 改写测试工具描述，本地 MCP 暴露只读 issue 资源，LSP 提供诊断。父 Session 拒绝外部目录，子 Agent 自身允许 Read/Edit，但没有显式允许递归 Task。
+
+实验为父子会话分配独立工作区变更日志，并让受控文件锁检测同时编辑。这样可以区分权限派生正确但并发冲突失败的情况；Subagent 能运行不等于协作调度正确。
+
+```json
+{
+  "parentPermission":[{"permission":"external_directory","pattern":"*","action":"deny"}],
+  "childAgent":{"allow":["read","edit"],"task":"unspecified"},
+  "resources":{"skill":"project-overrides-builtin","mcp":"local-readonly","lsp":"typescript"},
+  "plugin":"test-tool-definition-hook"
+}
+```
+
+1. Skill Service 选择项目版本并按 child Agent Permission 过滤，Snapshot 保存 origin 与哈希；发现不等于模型已读取正文。
+2. Task Tool 验证父调用权限和深度，创建 Child Session。派生规则保留 external_directory deny，并追加 Task Deny，防止子 Agent 继续递归。
+3. Plugin Hook 修改测试工具 Schema，模型请求保存最终定义。若 Hook 抛错，当前 Revision 标记失败，不能退回旧 Schema 后假装一致。
+4. MCP 建连后只声明 Resource 能力，没有 Tool；客户端分页读取 issue 内容，不能因为连接成功就展示不存在的工具。
+5. LSP 以正确项目 Root 启动并报告两个诊断。子 Agent 编辑后诊断归零，但这只是一项信号，仍需运行测试。
+6. 子 Agent 尝试项目外路径被继承规则拒绝，尝试递归 Task 被默认 Deny；父会话收到结果投影与 Child Session ID。
+
+```json
+{
+  "child":{"session":"recorded","externalDirectory":"denied","recursiveTask":"denied"},
+  "skill":{"origin":"project","allowed":true},
+  "plugin":{"toolSchemaRevision":"captured"},
+  "mcp":{"resources":1,"tools":0},
+  "lsp":{"diagnosticsAfter":0},
+  "eval":{"tests":"required","verdict":"pending"}
+}
+```
+
+故障变体让 MCP Resource 分页第二页失败。已取得第一页不应被写成完整目录；状态标为 partial，并阻止依赖完整列表的结论。另一个变体让父子同时编辑同一文件，最终 Diff 需要冲突检查，Subagent 完成通知本身不能解决合并。
+
+案例最后运行构建、测试和目标断言。即使 LSP 零诊断、MCP 正常、Plugin Hook 成功、子会话 Idle，只要测试失败，Trial 仍失败。扩展机制提供能力与证据，不拥有最终质量判定权。
+
+再让 Plugin 在 Tool Call 前改写参数。模型看到的 Schema、模型给出的参数和最终执行参数分别保存；若高风险字段改变，旧 Permission 失效并重新询问。Plugin 运行在进程内，宿主秘密不能默认注入其环境。
+
+MCP 故障实验在调用提交后断线。客户端无法确定远端副作用时记录 unknown，并用服务器幂等键或查询接口核对；盲目重连重试可能重复创建对象。远端服务没有查询能力时，Trial 保持 inconclusive。
+
+LSP 故障实验故意选择错误 Root。诊断可能仍为零，但构建在真实项目根失败，说明启动成功和零诊断都不足以证明代码健康。Snapshot 保存 Binary、Root、配置和文档版本，便于定位。
+
+最后测试父 Session 取消。子会话若仍运行，系统必须显式传播取消或记录脱离状态；父 UI 显示停止不能证明子进程和 MCP 请求收敛。发布前检查所有 Child Session 终态与未决远端调用。
+
+Skill 内容还可能引用不存在的工具或过期路径。加载成功后应验证所需能力与当前 Tool Surface 的兼容性，并把缺失项写入诊断；模型遵循错误 Skill 导致的失败属于资源语义问题，不能归因成模型随机性。
+
+扩展总审最终输出一张状态矩阵：discovered、enabled、connected、model-visible、executed、verified。每个格子引用独立证据，避免用绿色「扩展已安装」图标覆盖后续失败。
+
+这张矩阵也用于版本漂移复核。
+
 ## 真实输入与输出
 
 ### 输入
@@ -131,4 +244,3 @@ MCP 已连接是否说明 Tool、Prompt 和 Resource 全部存在？
 LSP 零诊断能否作为发布门禁唯一依据？
 
 **答案：** 不能。它只是静态代码智能信号，还需构建、测试、产物和独立任务评分。
-

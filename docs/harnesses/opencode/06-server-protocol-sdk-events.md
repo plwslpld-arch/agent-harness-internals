@@ -17,6 +17,116 @@ sources: [{"repo":"opencode","path":"packages/protocol/src/api.ts","commit":"3a3
 
 HTTP 成功也不等于编码任务成功。`session.prompt` 可以成功接受并运行一次会话，但助手消息仍可能带 Error，文件可能错误，测试可能失败；`session.wait` 只表示运行不再活跃。服务器健康检查、Schema 解析和授权通过属于传输与服务门禁，最终任务 Verdict 仍需独立 Evaluator 读取会话轨迹与真实产物。
 
+## 核心概念
+
+Protocol Package 拥有路径、方法、Schema、错误和 Middleware Placement，Server Package 注入具体服务与 Handler，SDK 把协议包装成类型化调用。三者共享契约但责任不同：协议描述可交换的数据，Server 执行业务，SDK 管理调用体验。直接从 Handler 实现推断所有客户端行为，或从 SDK 类型推断 Server 当前部署能力，都会跨越版本边界。
+
+请求响应与事件流提供互补视图。请求建立会话、提交 Prompt 或执行控制操作；Event 传播后续 Message、Tool、Permission 和状态变化。客户端先读取 Snapshot/History 基线，再从 Cursor 接续增量，才能覆盖订阅前状态和断线窗口。Event ID 用于幂等合并，不等于业务事务 ID。
+
+Location 与 Session Location 把 HTTP 请求映射到正确项目实例和会话。Authorization、Schema 和定位都通过后，Handler 才调用 Session Service。HTTP 200 只证明这个命令边界成功返回；Agent、工具、文件和 Eval 仍可能失败。
+
+| 概念 | 责任 | 成功信号 | 不能推出 |
+| --- | --- | --- | --- |
+| API Group | 组织 Location、Session、Event 等端点 | Group 可构建 | Handler 已部署 |
+| Endpoint Schema | 约束 Path、Query、Payload 与结果 | 解码通过 | 业务状态正确 |
+| Middleware Placement | 声明授权与定位位置 | 中间件执行 | 配置足够安全 |
+| Server Handler | 调用具体 Session/Project 服务 | Effect 返回 | 用户任务正确 |
+| SDK Method | 类型化请求与错误包装 | Promise 完成 | 服务端版本完全兼容 |
+| Snapshot / History | 当前基线与历史窗口 | Revision/Cursor 可读 | 永久事件日志 |
+| Event Stream | 持续状态增量 | Event Envelope 到达 | 无丢失、无重复 |
+| Eval Verdict | 检查 Artifact 与业务断言 | passed/failed/unscored | HTTP 健康状态 |
+
+## 为什么这样设计
+
+契约与 Handler 分离，使客户端和服务端可以围绕同一 Schema 演进，也避免 Protocol 依赖具体 Core Service 身份。Middleware Placement 让横切规则进入契约结构，Server 再注入实现。版本漂移仍需 OpenAPI 摘要和兼容测试，类型共享不能消除部署差异。
+
+事件流适合长生命周期 Agent。Prompt 请求无需一直携带所有中间状态，多个客户端也能订阅 Session 变化；History/Cursor 提供重连能力。代价是客户端必须处理重复、过期 Cursor、断线和背压，不能把 SSE 之类的长连接当可靠队列。
+
+Location 中间件支持多项目服务，但也扩大串实例风险。目录、Workspace 与 Session ID 必须共同校验；Global Event 和 Session Event 保持作用域。只按 Session 名称合并事件，可能把另一项目的变化显示到当前视图。
+
+传输成功与任务评分分离，让服务可以准确报告自身契约，同时由独立 Evaluator检查产品目标。一个自然结束但改错文件的 Prompt 在 HTTP 层仍可成功，Eval 则应失败；这不是接口矛盾，而是终态层级不同。
+
+分层错误还支持有界重试。Schema 或 Authorization 失败不应自动重发，网络中断可按幂等条件恢复，Prompt 已提交但响应丢失时则先查询 Session。所有重试策略依赖命令是否可能产生副作用。
+
+## 实现思路
+
+教学客户端采用「基线 + 增量 + 对账」模型，并为每个命令保存 Request、Response、Event Cursor 与 Artifact 关联。以下状态结构不是 OpenCode 上游同名类型。
+
+客户端 Replica 不是权威数据库。它可以为 UI 合并事件和离线展示，但发生 Cursor 过期、Digest 不一致或作用域错误时，必须回到 Server Snapshot；本地缓存不得覆盖服务端较新 Revision。
+
+```ts
+interface SessionReplica {
+  workspace: string;
+  sessionId: string;
+  snapshotRevision: number;
+  lastEventId?: string;
+  appliedEventIds: Set<string>;
+  stateDigest: string;
+}
+```
+
+1. 从锁定 Protocol 生成或读取 OpenAPI，保存版本和 Schema 摘要；SDK 与 Server 启动时声明兼容版本。
+2. 请求先过 Authorization 和 Schema，再由 Location/Session Location 解析 Instance 与归属。失败应标明 auth、schema、location 或 handler 阶段。
+3. 客户端首次 Attach 读取 Snapshot 或 History，建立 Revision、Message/Part 和最新 Event Cursor。
+4. 订阅 Event Stream，按 Workspace、Session 与 Event ID 验证作用域，重复事件幂等忽略，旧 Revision 不覆盖新状态。
+5. 断线时持久化最后 Cursor，重连后请求缺失 History；Cursor 过期则重新读取完整基线并对账 Digest。
+6. Prompt/Compact/Revert/Interrupt 等请求分别保存响应与后续事件。Response 完成不停止事件消费。
+7. 对慢消费者设置缓冲预算和重建策略；超过预算时主动断开并从基线恢复，避免无界内存。
+8. Agent Idle 后收集最终 Session、文件 Diff、测试和副作用，由 Evaluator 给出 Verdict。
+
+部署证据还要包含监听地址、TLS/代理、Authorization 配置和日志脱敏。无密码本地服务只有在绑定与网络边界均受控时才可接受，localhost 名称本身也不能替代实际 Listener 检查。
+
+请求幂等性按 Endpoint 分级。纯查询可安全重试，Create 需要客户端幂等键，Prompt/Compact/Revert 先查询现有 Session 状态，Interrupt 则允许重复但要记录目标 Run。SDK 不应给所有方法套用同一自动重试策略。
+
+Event 消费还要处理背压和权限变化。连接建立后若凭据被撤销或 Workspace 权限变化，Server 应关闭或重新验证；长连接持续存在不能绕过新的授权决定。敏感 Event 字段进入日志前做脱敏。
+
+## 贯穿案例
+
+假设客户端为两个 Workspace 各打开一个 Session，在第一个会话发起修复 Prompt。事件流在工具执行中断开，重连时出现一个重复 Event；Prompt 最终 HTTP 200，但目标测试仍失败。案例验证作用域、Cursor 和任务终态分离。
+
+实验给 Prompt 请求分配客户端操作 ID，并让 Server 测试夹具在提交业务后、发送响应前断线。客户端无法仅凭网络错误判断命令未执行，必须从 Session History 查询操作关联，避免再次提交相同 Prompt。
+
+```json
+{
+  "request":{"workspace":"repo-a","session":"s1","command":"prompt"},
+  "baseline":{"revision":12,"cursor":"e100"},
+  "fault":"disconnect-after-e103",
+  "otherWorkspace":{"workspace":"repo-b","session":"s2"}
+}
+```
+
+1. SDK 请求先通过授权、Payload Schema 和 Session Location，确认 `s1` 属于 repo-a。用 repo-b Location 访问同一 ID 应被拒绝。
+2. 客户端从 Revision 12 与 Cursor e100 建立基线，收到 e101-e103 后持久化 Cursor；每个 Event 同时校验 Workspace 和 Session。
+3. 断线重连请求 after=e103，Server 重放 e103-e106。客户端用 Event ID 忽略重复 e103，应用其余增量并更新 Digest。
+4. 若 Cursor 已过期，客户端重新读 History/Snapshot，不从缺口后的事件猜状态；对账失败时标为 stale。
+5. Prompt Response 为 200，Session 随后 Idle。测试 Artifact 显示断言失败，Evaluator 判 Trial failed。
+6. repo-b 的 Global Event 不得写入 s1 视图；若作用域缺失，客户端停止合并并报告协议错误。
+
+```json
+{
+  "transport":{"status":200,"reconnected":true,"duplicateIgnored":1},
+  "replica":{"workspace":"repo-a","latestRevision":16,"digest":"matched"},
+  "session":{"idle":true},
+  "eval":{"tests":"failed","verdict":"failed"}
+}
+```
+
+再注入 SDK/Server 版本不匹配：新增 Event 字段若超出锁定 Schema，应形成兼容错误或按明确前向策略处理，不能静默丢失工具终态。服务可达、Replica 收敛和任务正确仍是三个独立验收项。
+
+第二个变体撤销 Authorization 后保持旧 Event 连接。测试要求连接停止收到新事件，并在重连时被拒绝；若仍能读取，则部署安全失败，即使 Session 数据本身正确。
+
+第三个变体让消费者处理速度低于事件生成速度。缓冲达到预算后客户端保存 Cursor、主动断开并重建基线，不得无限占用内存。重建后消息和 Tool Part Digest 与 Server 一致，才算 Replica 恢复。
+
+最终发布证据同时保存 OpenAPI 摘要、SDK/Server 版本、监听与认证配置、重连记录、Session Artifact 和 Eval Verdict。任何一类缺失都只能证明局部链路，不能声称远程 Harness 已完整验证。
+
+如果服务部署在反向代理之后，还要验证原始路径、流式缓冲、超时和断开传播。普通 JSON 请求成功不能证明 Event Stream 未被代理缓存；测试用持续事件和心跳检查真实行为。
+
+审计日志将 Request ID、客户端操作 ID、Session ID 和 Event Cursor 关联，但不记录完整 Prompt、源码或认证正文。需要复盘内容时通过受控 Artifact 引用，兼顾可追踪与数据最小化。
+
+对账结果必须保存服务端与客户端两个摘要，并记录比较时间和版本，避免后来状态覆盖当次验证证据。
+
+证据长期保留。
+
 ## 真实输入与输出
 
 ### 输入
@@ -131,4 +241,3 @@ Protocol 与 Server Handler 为什么要分开？
 服务端没有配置密码时就一定安全吗？
 
 **答案：** 不一定。还取决于监听接口、网络暴露、代理配置和宿主访问边界。
-
