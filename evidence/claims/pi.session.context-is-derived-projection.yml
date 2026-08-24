@@ -1,0 +1,11 @@
+{
+  "id":"pi.session.context-is-derived-projection","harness":"pi","dimension":"session.context-is-derived-projection",
+  "statement":"锁定 pi Coding Agent 从活动叶节点构造分支路径，并用最新 Compaction、保留区间和 Entry 转换规则派生模型 Context；持久 Session Tree 的全部 Entry 不会原样进入模型。",
+  "capability":"default","version":"c1279a65b3ef6b0b19950ed1771d5933241c240f","surface":"coding-agent-session","platform":"jsonl-session-tree","mode":"compaction-aware-projection","evidence_level":"B",
+  "evidence":[
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/coding-agent/src/core/session-manager.ts","lines":"334-469","excerpt":"const messages = buildContextEntries(entries, leafId, byId).flatMap(sessionEntryToContextMessages);"},
+    {"type":"upstream-test","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/coding-agent/test/compaction.test.ts","lines":"378-457","excerpt":"expect(loaded.messages[0].role).toBe(\"compactionSummary\");"}
+  ],
+  "limitations":["Summary 是有损模型输出，结构测试不证明关键事实保真。","投影规则不代表原 Session Entry 已删除。","外部工具副作用不包含在 Context 重建保证中。"],"last_verified":"2026-08-24"
+}
+

@@ -1,0 +1,6 @@
+{
+  "id":"pi.session.sqlite-backend-is-unavailable","harness":"pi","dimension":"session.sqlite-backend-is-unavailable",
+  "statement":"在锁定 pi 的 AgentHarness Session 导出树中可核对 Memory 与 JSONL v4 Backend，但没有 SQLite Backend 的模块、导出或测试，因此不能声称当前支持 SQLite Session 存储。",
+  "capability":"absent","version":"c1279a65b3ef6b0b19950ed1771d5933241c240f","surface":"agent-harness-session-storage","platform":"repository-tree","mode":"backend-inventory","evidence_level":"U","evidence":[],
+  "limitations":["这是锁定 Commit 的缺失结论，未来版本可能加入 SQLite。","通用 SessionStorage 接口允许扩展，不等于具体 Backend 已实现。","JSONL 的 Writer 行为不能外推为数据库事务语义。"],"last_verified":"2026-08-24"
+}

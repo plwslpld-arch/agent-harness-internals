@@ -92,7 +92,7 @@
 
 ### Task 7：Session、Context、Compaction 与存储
 
-- [ ] 创建 `05-session-context-compaction-storage.md`、对应 SVG 和 Claim，覆盖 Session/Entry/Branch、Context 投影、Compaction、JSONL、SQLite、Writer Lease 与恢复。
+- [x] 创建 `05-session-context-compaction-storage.md`、对应 SVG 和 Claim，覆盖 Session/Entry/Branch、Context 投影、Compaction、JSONL、SQLite、Writer Lease 与恢复。
 - [ ] 分开持久历史、模型可见 Context、派生摘要和并发提交；不能把摘要当原始历史。
 - [ ] 渲染复核，运行门禁并提交：`docs(pi): 发布会话上下文与存储课程`。
 
