@@ -1,0 +1,25 @@
+{
+  "id": "pi.agent.loop-interprets-multiple-stop-signals",
+  "harness": "pi",
+  "dimension": "agent.loop-interprets-multiple-stop-signals",
+  "statement": "锁定 pi Agent Loop 用双层循环解释模型错误与中止、工具批次 terminate、shouldStopAfterTurn、steering 和 follow-up；这些信号分别在响应后、工具后、Turn 后或 Agent 原本准备停止时生效。",
+  "capability": "default",
+  "version": "c1279a65b3ef6b0b19950ed1771d5933241c240f",
+  "surface": "agent-core-loop",
+  "platform": "provider-neutral-core",
+  "mode": "evented-tool-loop",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/agent/src/agent-loop.ts","lines":"169-274","excerpt":"while (hasMoreToolCalls || pendingMessages.length > 0) {"},
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/agent/src/agent-loop.ts","lines":"582-584","excerpt":"return finalizedCalls.length > 0 && finalizedCalls.every((finalized) => finalized.result.terminate === true);"},
+    {"type":"upstream-test","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/agent/test/agent-loop.test.ts","lines":"1104-1198","excerpt":"expect(followUpPolls).toBe(0);"},
+    {"type":"upstream-test","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/agent/test/agent-loop.test.ts","lines":"1201-1250","excerpt":"expect(llmCalls).toBe(1);"}
+  ],
+  "limitations": [
+    "Agent End 只表示当前控制循环收敛，不证明用户目标或工具副作用正确。",
+    "Hook 和队列由上层宿主提供；不同产品装配会改变实际停止策略。",
+    "上游测试使用 Mock Stream 与进程内工具，没有验证真实 Provider 或外部系统。"
+  ],
+  "last_verified": "2026-08-24"
+}
+

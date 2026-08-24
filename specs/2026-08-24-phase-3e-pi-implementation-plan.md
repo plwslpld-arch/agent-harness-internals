@@ -80,7 +80,7 @@
 
 ### Task 5：Agent Loop、状态与工具
 
-- [ ] 创建 `03-agent-loop-state-tools.md`、对应 SVG 和 Claim，覆盖 Agent 状态、steering/follow-up 队列、外层/内层循环、工具批次、事件和终止。
+- [x] 创建 `03-agent-loop-state-tools.md`、对应 SVG 和 Claim，覆盖 Agent 状态、steering/follow-up 队列、外层/内层循环、工具批次、事件和终止。
 - [ ] 核对被 `length` 截断的工具参数、Abort、Error、`shouldStopAfterTurn` 与工具 `terminate`。
 - [ ] 渲染复核，运行门禁并提交：`docs(pi): 发布 Agent Loop 与工具状态课程`。
 

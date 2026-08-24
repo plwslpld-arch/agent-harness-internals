@@ -1,0 +1,24 @@
+{
+  "id": "pi.agent.length-truncated-tool-is-not-executed",
+  "harness": "pi",
+  "dimension": "agent.length-truncated-tool-is-not-executed",
+  "statement": "锁定 pi Agent Loop 在 Assistant Message 因 length 截断时不执行其中任何 Tool Call，而是为每个调用生成错误 Tool Result，并允许模型下一轮重新发起完整调用。",
+  "capability": "default",
+  "version": "c1279a65b3ef6b0b19950ed1771d5933241c240f",
+  "surface": "agent-core-tool-execution",
+  "platform": "provider-neutral-core",
+  "mode": "truncated-tool-call-guard",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/agent/src/agent-loop.ts","lines":"202-216","excerpt":"message.stopReason === \"length\""},
+    {"type":"source","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/agent/src/agent-loop.ts","lines":"381-405","excerpt":"was not executed: the response hit the output token limit"},
+    {"type":"upstream-test","source":"pi","commit":"c1279a65b3ef6b0b19950ed1771d5933241c240f","path":"packages/agent/test/agent-loop.test.ts","lines":"371-441","excerpt":"expect(executed).toEqual([]);"}
+  ],
+  "limitations": [
+    "该防护依赖 Provider 正确映射 length；错误映射可能绕过分支。",
+    "生成错误 Tool Result 不保证模型下一轮一定能恢复或重新发起正确参数。",
+    "测试使用无副作用 echo 工具，没有证明外部工具的补偿与幂等能力。"
+  ],
+  "last_verified": "2026-08-24"
+}
+

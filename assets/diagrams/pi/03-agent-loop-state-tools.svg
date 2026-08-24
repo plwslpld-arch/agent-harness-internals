@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 900" role="img" aria-labelledby="title desc">
+  <title id="title">pi Agent Loop 状态与工具执行</title>
+  <desc id="desc">状态包装器把消息交给双层循环，模型响应经工具批次和队列处理后，由错误、中止、长度截断、工具终止与宿主停止策略决定继续或结束。</desc>
+  <defs><marker id="a" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto"><path d="M0 0l14 7-14 7z" fill="#087F7C"/></marker><marker id="r" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto"><path d="M0 0l14 7-14 7z" fill="#C96138"/></marker><filter id="s"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#17324D" flood-opacity=".13"/></filter></defs>
+  <rect width="1400" height="900" rx="34" fill="#F6F9FC"/>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <text x="700" y="54" text-anchor="middle" font-size="35" font-weight="760" fill="#17324D">一次结束，要经过多层控制信号解释</text>
+    <text x="700" y="88" text-anchor="middle" font-size="18" fill="#50677D">模型终态、工具结果、消息队列与宿主策略各自决定下一步</text>
+
+    <rect x="55" y="130" width="1290" height="105" rx="23" fill="#E9F2FF" stroke="#3569A8" stroke-width="2.5"/>
+    <text x="85" y="169" font-size="22" font-weight="760" fill="#244F81">状态包装器</text>
+    <g font-size="17" text-anchor="middle" fill="#17324D">
+      <rect x="245" y="151" width="205" height="58" rx="14" fill="#fff"/><text x="347" y="186">当前消息记录</text>
+      <rect x="480" y="151" width="205" height="58" rx="14" fill="#fff"/><text x="582" y="186">打断消息队列</text>
+      <rect x="715" y="151" width="205" height="58" rx="14" fill="#fff"/><text x="817" y="186">后续消息队列</text>
+      <rect x="950" y="151" width="205" height="58" rx="14" fill="#fff"/><text x="1052" y="186">中止与事件监听</text>
+    </g>
+
+    <rect x="55" y="285" width="1290" height="410" rx="26" fill="#E7F5F3" stroke="#087F7C" stroke-width="3" filter="url(#s)"/>
+    <text x="85" y="326" font-size="23" font-weight="760" fill="#076663">双层循环</text>
+    <rect x="90" y="355" width="1220" height="285" rx="21" fill="#fff" stroke="#8BC9C3" stroke-width="2"/>
+    <text x="118" y="390" font-size="19" font-weight="760" fill="#17324D">内层：模型、工具与打断消息</text>
+    <g font-size="17" text-anchor="middle" fill="#17324D">
+      <rect x="120" y="425" width="200" height="82" rx="16" fill="#E9F2FF" stroke="#3569A8" stroke-width="2"/><text x="220" y="457">注入待处理消息</text><text x="220" y="483" fill="#50677D">写入当前上下文</text>
+      <rect x="370" y="425" width="200" height="82" rx="16" fill="#F0EAF8" stroke="#76559B" stroke-width="2"/><text x="470" y="457">模型响应</text><text x="470" y="483" fill="#50677D">统一停止原因</text>
+      <rect x="620" y="425" width="230" height="82" rx="16" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2"/><text x="735" y="457">工具批次</text><text x="735" y="483" fill="#50677D">并行／串行／截断失败</text>
+      <rect x="900" y="425" width="200" height="82" rx="16" fill="#E7F5F3" stroke="#087F7C" stroke-width="2"/><text x="1000" y="457">轮次结束策略</text><text x="1000" y="483" fill="#50677D">准备下一轮／强制停止</text>
+    </g>
+    <g stroke="#087F7C" stroke-width="4" marker-end="url(#a)"><path d="M320 466h42"/><path d="M570 466h42"/><path d="M850 466h42"/></g>
+    <path d="M1000 515v62H220v-62" fill="none" stroke="#087F7C" stroke-width="3.5" marker-end="url(#a)"/>
+    <text x="610" y="603" text-anchor="middle" font-size="16" fill="#50677D">仍有工具调用或打断消息时继续</text>
+    <rect x="1115" y="407" width="165" height="118" rx="16" fill="#FFECE5" stroke="#C96138" stroke-width="2"/>
+    <text x="1197" y="442" text-anchor="middle" font-size="17" font-weight="760" fill="#9A3E24">立即结束</text>
+    <text x="1197" y="472" text-anchor="middle" font-size="16" fill="#17324D">错误／中止</text>
+    <text x="1197" y="499" text-anchor="middle" font-size="16" fill="#17324D">宿主强制停止</text>
+    <path d="M470 425v-25h727v7" fill="none" stroke="#C96138" stroke-width="3" marker-end="url(#r)"/>
+
+    <rect x="90" y="655" width="1220" height="80" rx="18" fill="#17324D"/>
+    <text x="120" y="687" font-size="18" font-weight="760" fill="#fff">外层：当前链路原本准备停止</text>
+    <text x="120" y="716" font-size="17" fill="#8EE1D8">有后续消息 → 回到内层　　无后续消息 → 发出智能体结束事件</text>
+
+    <g>
+      <rect x="55" y="780" width="400" height="75" rx="19" fill="#FFECE5" stroke="#C96138" stroke-width="2.5"/>
+      <text x="255" y="812" text-anchor="middle" font-size="18" font-weight="760" fill="#9A3E24">长度截断的工具参数</text><text x="255" y="838" text-anchor="middle" font-size="16" fill="#17324D">拒绝执行，生成错误结果</text>
+      <rect x="500" y="780" width="400" height="75" rx="19" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2.5"/>
+      <text x="700" y="812" text-anchor="middle" font-size="18" font-weight="760" fill="#955A00">工具批次要求终止</text><text x="700" y="838" text-anchor="middle" font-size="16" fill="#17324D">必须全部结果明确同意</text>
+      <rect x="945" y="780" width="400" height="75" rx="19" fill="#E9F2FF" stroke="#3569A8" stroke-width="2.5"/>
+      <text x="1145" y="812" text-anchor="middle" font-size="18" font-weight="760" fill="#244F81">智能体结束事件</text><text x="1145" y="838" text-anchor="middle" font-size="16" fill="#17324D">不等于用户目标已通过</text>
+    </g>
+  </g>
+</svg>

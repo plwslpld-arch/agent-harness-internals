@@ -432,6 +432,14 @@
       "scope": "docs/harnesses/pi/02-ai-provider-stream-normalization.md",
       "alt": "pi 多模型服务从目录、认证、接口路由、原始响应到统一消息事件和智能体核心的中文数据流图",
       "claims": ["pi.ai.provider-stream-is-normalized", "pi.ai.model-catalog-is-not-runtime-availability"]
+    },
+    {
+      "id": "pi-agent-loop-state-tools",
+      "path": "assets/diagrams/pi/03-agent-loop-state-tools.svg",
+      "type": "state",
+      "scope": "docs/harnesses/pi/03-agent-loop-state-tools.md",
+      "alt": "pi 智能体从状态与消息队列进入双层循环、模型响应和工具批次，再由多种终止信号决定继续或结束的中文状态图",
+      "claims": ["pi.agent.loop-interprets-multiple-stop-signals", "pi.agent.length-truncated-tool-is-not-executed"]
     }
   ]
 }
