@@ -60,9 +60,10 @@
 
 ## Task 6：可观测性、评测与部署
 
-- [ ] 比较 Trace、Telemetry、Feedback、Artifact、Scorer 接口、部署信任边界、凭据和维护成本。
-- [ ] 重申训练 Reward、Checkpoint 选择与独立 Release Eval 隔离，不能用总分替代场景决策。
-- [ ] 新增中文评测责任链图并提交：`docs(comparison): 发布可观测评测与部署比较`。
+- [x] 比较 Trace、Telemetry、Feedback、Artifact、Scorer 接口、部署信任边界、凭据和维护成本。
+- [x] 重申训练 Reward、Checkpoint 选择与独立 Release Eval 隔离，不能用总分替代场景决策。
+- [x] 新增中文评测责任链图并登记 Manifest。
+- [x] 提交：`docs(comparison): 发布可观测评测与部署比较`。
 
 ## Task 7：四条角色路径
 

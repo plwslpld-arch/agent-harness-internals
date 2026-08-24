@@ -592,6 +592,14 @@
       "scope": "docs/comparisons/04-orchestration-protocol-surfaces.md",
       "alt": "六类 Agent Harness 的子任务、技能、插件、钩子、模型上下文协议与客户端表面围绕共享任务核心扩展，并经过发现、启用、连接、可见、获批和执行六个阶段的中文架构图",
       "claims": ["deepseek-harness.orchestration.extensions-share-core-loop", "codex.extensions.capabilities-are-dynamically-assembled", "gemini-cli.extensions.capabilities-are-dynamically-assembled", "claude.extensions.configuration-is-not-execution", "pi.extensions.can-change-runtime-surfaces", "opencode.extensions.change-runtime-surfaces"]
+    },
+    {
+      "id": "comparison-observability-eval-deployment",
+      "path": "assets/diagrams/comparisons/05-observability-eval-deployment.svg",
+      "type": "data-flow",
+      "scope": "docs/comparisons/05-observability-eval-deployment.md",
+      "alt": "六类 Agent Harness 生成运行轨迹和产物，经过冻结试验、独立评分、训练适配、候选选择与独立发布留出集的中文责任链图",
+      "claims": ["deepseek-harness.feedback.is-not-training-reward", "codex.feedback-trace.is-not-release-eval", "gemini-cli.telemetry.tool-decisions-are-not-eval", "claude.feedback.is-not-training-or-release-reward", "pi.telemetry.contract-is-not-scorer", "opencode.telemetry-and-tests-are-not-release-eval"]
     }
   ]
 }
