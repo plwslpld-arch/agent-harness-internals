@@ -1,0 +1,58 @@
+{
+  "stage":"phase-5-extension-samples","date":"2026-08-24","commit":"ac5d52d82f60282c1ef518cd188205849e884f5e",
+  "promises":[
+    {"id":"p-six-samples","statement":"mini-swe-agent、OpenHands、Cline、goose、Aider 与 Qwen Code 各有一篇 reviewed 独特机制专题，不升级为一级主线或综合排名。"},
+    {"id":"p-source-bounds","statement":"六篇专题只陈述十七个锁定来源直接覆盖的事实；OpenHands 当前仓库按 Agent Canvas 控制平面处理，不冒充未锁定 Agent 内核。"},
+    {"id":"p-twelve-claims","statement":"每个扩展样本至少两条正式 Claim，能力状态、证据等级、源码行号、摘录与限定条件可核对。"},
+    {"id":"p-six-chinese-diagrams","statement":"六张机制图使用中文自然语言，文章、Manifest 与 Claim 双向绑定，并完成集中渲染目检。"},
+    {"id":"p-sample-navigation","statement":"README 与总入口在正式课程导航标记之外开放扩展样本，明确其不属于一级主线。"},
+    {"id":"p-node24-all","statement":"Node 24 聚合门禁、十七个全部来源、内容、链接、许可、敏感信息、源码锚点与单元测试全部通过。"}
+  ],
+  "evidence":[
+    {"id":"e-sample-files","promise":"p-six-samples","type":"file","reference":"docs/samples/","summary":"六篇专题分别覆盖最小循环、多后端控制、批准与恢复、配方扩展、仓库映射与规划编辑、服务回放与批准作用域。"},
+    {"id":"e-content-gate","promise":"p-six-samples","type":"test","reference":"scripts/check-content-contract.mjs","summary":"每篇达到一千八百非空白字符、十个有效段落、完整运行链、两条 Claim、中文图和四题自检。"},
+    {"id":"e-source-lock","promise":"p-source-bounds","type":"file","reference":"sources/sources.lock.yml","summary":"六个样本来源以完整 Commit 与许可证文本散列锁定；全部来源总数为十七。"},
+    {"id":"e-openhands-boundary","promise":"p-source-bounds","type":"file","reference":"docs/samples/openhands-agent-canvas.md","summary":"正文按当前 README 的多仓库责任表区分 Canvas、software-agent-sdk 与 automation。"},
+    {"id":"e-sample-claims","promise":"p-twelve-claims","type":"file","reference":"evidence/claims/samples/","summary":"十二条 C 级源码 Claim 覆盖六方独特机制并保留部署、安全和任务正确性限定。"},
+    {"id":"e-claim-gate","promise":"p-twelve-claims","type":"test","reference":"scripts/verify-claims.mjs","summary":"结论门禁递归校验样本目录；全仓一百一十九条 Claim 无重复且源码摘录匹配。"},
+    {"id":"e-diagram-sheet","promise":"p-six-chinese-diagrams","type":"render","reference":"evidence/reviews/phase-5-samples-contact-sheet.png","summary":"六图集中复核未发现裁切、重叠、箭头误向、颜色单点依赖或英文自然语言说明残留。"},
+    {"id":"e-visual-manifest","promise":"p-six-chinese-diagrams","type":"file","reference":"assets/diagrams/manifest.yml","summary":"六张图均有中文替代文本、合法图类型、文章范围和两条样本 Claim。"},
+    {"id":"e-navigation","promise":"p-sample-navigation","type":"file","reference":"docs/00-start-here.md","summary":"六个样本在正式课程标记之外原子开放，并声明机制补充、非主线和非排名。"},
+    {"id":"e-navigation-test","promise":"p-sample-navigation","type":"test","reference":"scripts/tests/navigation.test.mjs","summary":"正式导航继续禁止扩展样本进入课程标记，标记外普通正文链接可用。"},
+    {"id":"e-all-sources","promise":"p-node24-all","type":"command","reference":"node scripts/verify-sources.mjs --profile all","summary":"十七个来源定义与十七个 all Checkout 全部匹配锁定提交。"},
+    {"id":"e-check-all","promise":"p-node24-all","type":"command","reference":"node scripts/check-all.mjs","summary":"十七组聚合检查、一百零六项单元测试、一百一十九条 Claim、八十一张正式图和一百八十九次正式导航核对通过。"}
+  ],
+  "findings":[
+    {"id":"f-directory-equals-capability","priority":"high","status":"resolved","summary":"扩展、后端、检查点、沙箱或协议目录容易被解释成默认运行能力。"},
+    {"id":"f-example-equals-default","priority":"high","status":"resolved","summary":"Recipe、环境实现、后端类型与批准模式示例容易被解释成默认有效配置。"},
+    {"id":"f-client-equals-task-success","priority":"high","status":"resolved","summary":"Canvas 会话、扩展装载、工具执行、提交标记或 Git 提交容易被解释成任务正确。"},
+    {"id":"f-same-origin-equals-equivalent","priority":"high","status":"resolved","summary":"Qwen Code 与 Gemini CLI 的共同结构容易被解释成当前行为等价。"},
+    {"id":"f-openhands-repository-identity","priority":"high","status":"resolved","summary":"项目名容易使当前 Agent Canvas 控制平面仓库被误写成独立 OpenHands Agent 内核。"},
+    {"id":"f-test-equals-production","priority":"high","status":"resolved","summary":"源码结构、上游测试与本地门禁容易被外推为生产部署、安全或发布证明。"},
+    {"id":"f-no-live-paid-model","priority":"medium","status":"open","summary":"扩展样本未调用付费模型或生产工具，结论保持锁定源码机制级。"},
+    {"id":"f-upstream-drift","priority":"medium","status":"open","summary":"六个上游持续演进；锁定 Commit 漂移后应标记 stale 并重新核对。"},
+    {"id":"f-style-rhythm","priority":"low","status":"open","summary":"文风门禁仍对部分长文给出句长节奏非阻断提醒，留给最终总编辑处理。"}
+  ],
+  "resolutions":[
+    {"id":"f-directory-equals-capability","action":"正文和图把发现、配置、连接、可见、批准、执行与任务正确分成连续阶段。","evidence":["e-sample-files","e-diagram-sheet"]},
+    {"id":"f-example-equals-default","action":"每篇明确有效配置和默认值；LocalEnvironment、Cline Checkpoint 与 Bridge 批准模式按源码范围表述。","evidence":["e-sample-claims","e-content-gate"]},
+    {"id":"f-client-equals-task-success","action":"六篇均保留独立产物、测试和冻结任务验收，客户端与框架终止只作为运行信号。","evidence":["e-sample-files","e-diagram-sheet"]},
+    {"id":"f-same-origin-equals-equivalent","action":"Qwen Code 专题声明共同结构只用于定位，所有行为结论绑定自身锁定 Commit。","evidence":["e-sample-files","e-sample-claims"]},
+    {"id":"f-openhands-repository-identity","action":"按当前 README 仓库责任表重写专题和图，未锁定 software-agent-sdk 的 Agent 内部机制不进入结论。","evidence":["e-openhands-boundary","e-source-lock"]},
+    {"id":"f-test-equals-production","action":"文章、Claim 与入口统一声明仓库门禁只证明锁定证据一致，不证明生产部署、综合性能或发布授权。","evidence":["e-content-gate","e-check-all"]}
+  ],
+  "commands":[
+    {"command":"node --version","exit_code":0,"summary":"输出 v24.19.0。"},
+    {"command":"node scripts/verify-sources.mjs --profile all","exit_code":0,"summary":"十七个来源定义与十七个 all Checkout 通过。"},
+    {"command":"node scripts/check-all.mjs","exit_code":0,"summary":"十七组聚合检查和一百零六项单元测试通过；只有句长节奏非阻断提醒。"},
+    {"command":"node scripts/check-content-contract.mjs","exit_code":0,"summary":"七十八篇新结构文章通过，六个样本满足深度和自检契约。"},
+    {"command":"node scripts/check-visuals.mjs","exit_code":0,"summary":"八十一张正式 SVG 与八十一条 Manifest 记录通过中文视觉门禁。"},
+    {"command":"node scripts/verify-claims.mjs","exit_code":0,"summary":"一百一十九条 Claim 通过，样本子目录参与递归核验。"},
+    {"command":"node scripts/check-links.mjs","exit_code":0,"summary":"一百一十个 Markdown 文件的本地链接通过。"},
+    {"command":"node scripts/scan-secrets.mjs","exit_code":0,"summary":"敏感信息扫描通过。"},
+    {"command":"渲染并打开 phase-5-samples-contact-sheet.png","exit_code":0,"summary":"六图未见裁切、重叠、箭头误向、颜色单点依赖或英文自然语言说明残留。"},
+    {"command":"六类高风险误读模式检索","exit_code":0,"summary":"命中均已改为明确否定、限定条件、自检或未锁定边界；高优先级问题全部关闭。"},
+    {"command":"git diff --check","exit_code":0,"summary":"没有空白错误。"}
+  ],
+  "result":"pass"
+}

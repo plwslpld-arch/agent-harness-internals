@@ -28,46 +28,46 @@
 
 ## Task 2：mini-swe-agent
 
-- [ ] 核对最小 Agent Loop、环境接口、轨迹与终止边界，新增至少两条 Claim。
-- [ ] 完成中文机制图和专题文章，不把最小实现解释成默认安全或生产完整性。
-- [ ] 提交：`docs(samples): 发布 mini-swe-agent 独特机制`。
+- [x] 核对最小 Agent Loop、环境接口、轨迹与终止边界，新增至少两条 Claim。
+- [x] 完成中文机制图和专题文章，不把最小实现解释成默认安全或生产完整性。
+- [x] 提交：`docs(samples): 发布 mini-swe-agent 独特机制`。
 
 ## Task 3：OpenHands Agent Canvas
 
-- [ ] 以锁定仓库当前自述为准，核对 Canvas、Agent Server 后端、ACP 适配、自动化与本地/远端部署边界，新增至少两条 Claim；不把当前控制中心源码冒充独立 OpenHands Agent 的内部实现。
-- [ ] 完成中文多后端控制图和专题文章，不把 Docker、VM 或远端 Backend 名称解释成实际部署隔离证明。
-- [ ] 提交：`docs(samples): 发布 OpenHands 独特机制`。
+- [x] 以锁定仓库当前自述为准，核对 Canvas、Agent Server 后端、ACP 适配、自动化与本地/远端部署边界，新增至少两条 Claim；不把当前控制中心源码冒充独立 OpenHands Agent 的内部实现。
+- [x] 完成中文多后端控制图和专题文章，不把 Docker、VM 或远端 Backend 名称解释成实际部署隔离证明。
+- [x] 提交：`docs(samples): 发布 OpenHands 独特机制`。
 
 ## Task 4：Cline
 
-- [ ] 核对编辑器宿主、Provider、工具批准、Checkpoint/任务状态与扩展表面，新增至少两条 Claim。
-- [ ] 完成中文人机控制链图和专题文章，不从 UI 成功状态推断任务正确。
-- [ ] 提交：`docs(samples): 发布 Cline 独特机制`。
+- [x] 核对编辑器宿主、Provider、工具批准、Checkpoint/任务状态与扩展表面，新增至少两条 Claim。
+- [x] 完成中文人机控制链图和专题文章，不从 UI 成功状态推断任务正确。
+- [x] 提交：`docs(samples): 发布 Cline 独特机制`。
 
 ## Task 5：goose
 
-- [ ] 核对 Recipe、Extension/MCP、Provider 与 Rust Agent 主链，新增至少两条 Claim。
-- [ ] 完成中文配方与扩展装配图和专题文章，区分配置发现、连接、模型可见与真实调用。
-- [ ] 提交：`docs(samples): 发布 goose 独特机制`。
+- [x] 核对 Recipe、Extension/MCP、Provider 与 Rust Agent 主链，新增至少两条 Claim。
+- [x] 完成中文配方与扩展装配图和专题文章，区分配置发现、连接、模型可见与真实调用。
+- [x] 提交：`docs(samples): 发布 goose 独特机制`。
 
 ## Task 6：Aider
 
-- [ ] 核对 Repository Map、编辑格式、Architect/Editor 分工与 Git 产物链，新增至少两条 Claim。
-- [ ] 完成中文代码编辑证据链图和专题文章，不把 Git 提交或测试通过单独解释成任务完成。
-- [ ] 提交：`docs(samples): 发布 Aider 独特机制`。
+- [x] 核对 Repository Map、编辑格式、Architect/Editor 分工与 Git 产物链，新增至少两条 Claim。
+- [x] 完成中文代码编辑证据链图和专题文章，不把 Git 提交或测试通过单独解释成任务完成。
+- [x] 提交：`docs(samples): 发布 Aider 独特机制`。
 
 ## Task 7：Qwen Code
 
-- [ ] 核对配置、Agent Loop、工具策略、会话和扩展协议，明确与 Gemini CLI 共同结构及独立演进边界，新增至少两条 Claim。
-- [ ] 完成中文机制边界图和专题文章，不因相似目录或继承关系假设行为等价。
-- [ ] 提交：`docs(samples): 发布 Qwen Code 独特机制`。
+- [x] 核对配置、Agent Loop、工具策略、会话和扩展协议，明确与 Gemini CLI 共同结构及独立演进边界，新增至少两条 Claim。
+- [x] 完成中文机制边界图和专题文章，不因相似目录或继承关系假设行为等价。
+- [x] 提交：`docs(samples): 发布 Qwen Code 独特机制`。
 
 ## Task 8：扩展样本入口与阶段复核
 
-- [ ] README 和总入口增加正式导航标记之外的“扩展样本”区域，明确它们是机制补充，不是一级主线或综合排名。
-- [ ] 全量验证 `samples` 与 `all` 来源、Claim、源码锚点、中文图、链接、许可证、敏感信息和 Node 24 聚合门禁。
-- [ ] 集中渲染六张图，主动寻找目录即能力、示例即默认、测试即生产、客户端成功即任务正确和同源即等价。
-- [ ] 修复全部高优先级发现，记录阶段复核，勾选总路线阶段 5 并提交：`chore(review): 完成阶段 5 扩展样本复核`。
+- [x] README 和总入口增加正式导航标记之外的“扩展样本”区域，明确它们是机制补充，不是一级主线或综合排名。
+- [x] 全量验证 `samples` 与 `all` 来源、Claim、源码锚点、中文图、链接、许可证、敏感信息和 Node 24 聚合门禁。
+- [x] 集中渲染六张图，主动寻找目录即能力、示例即默认、测试即生产、客户端成功即任务正确和同源即等价。
+- [x] 修复全部高优先级发现，记录阶段复核，勾选总路线阶段 5 并提交：`chore(review): 完成阶段 5 扩展样本复核`。
 
 ## 完成定义
 

@@ -43,7 +43,7 @@ sources: []
 
 Claude 主线采用双边界：Claude Code 的公开行为只引用官方文档，不能用 Agent SDK 源码替代；Python 和 TypeScript SDK 的实现事实分别绑定锁定源码与许可证。看不见的闭源内部机制标成 `unknown`，不以经验猜测填空。
 
-扩展样本包括 mini-swe-agent、OpenHands、Cline、goose、Aider 和 Qwen Code。它们只用于补充独特机制，不在六条主线完成前进入正式导航，也不会为了数量复制一套较浅的同构课程。
+扩展样本包括 mini-swe-agent、OpenHands、Cline、goose、Aider 和 Qwen Code。它们只用于补充独特机制，不进入一级课程导航，也不会为了数量复制一套较浅的同构课程。
 
 ## 阅读路径
 
@@ -92,6 +92,19 @@ Claude 主线采用双边界：Claude Code 的公开行为只引用官方文档�
 - [独立 Scorer 与 RewardAdapter 能力契约](labs/independent-eval-pipeline.md)
 <!-- course-navigation:end -->
 
+### 扩展样本
+
+扩展样本位于正式课程导航标记之外。建议在完成至少一条一级主线后阅读；它们提供机制补充，不构成项目排名或完整产品课程：
+
+- [mini-swe-agent：最小循环与宿主执行边界](samples/mini-swe-agent.md)
+- [OpenHands Agent Canvas：多后端控制平面与仓库分责](samples/openhands-agent-canvas.md)
+- [Cline：工具批准与可选工作区检查点](samples/cline.md)
+- [goose：配方与扩展的分阶段装配](samples/goose.md)
+- [Aider：仓库映射与规划编辑分工](samples/aider.md)
+- [Qwen Code：服务回放与批准作用域](samples/qwen-code.md)
+
+阅读时继续使用同一证据口径：配置存在不等于能力生效，客户端成功不等于任务正确，目录相似不等于行为等价。每篇只陈述锁定来源直接覆盖的独特机制，并把未锁定仓库、外部部署和生产效果留在结论之外。
+
 如果你准备实现或改造 Harness，选一条与你技术栈最接近的主线从头读完，不要只抽取功能表。完整跟踪真实输入、状态变化、工具结果、失败路径与终止条件后，再去横向比较其他实现；这能减少把表面 API 当成系统语义的风险。
 
 如果你负责质量、发布或评测，沿 Trial、Attempt、Trace、Artifact、Scorer 和 Feedback 阅读。重点检查统计单位是否稳定、基础设施重试是否改变分母、产品失败是否被重试成通过，以及训练数据和独立发布集是否泄漏。
@@ -112,7 +125,7 @@ Claude 主线采用双边界：Claude Code 的公开行为只引用官方文档�
 
 `stale` 用来保护读者免受过期证据误导，它不评价文章的永久质量。当上游 Commit、文档或实验环境发生漂移，页面就应退出正式导航，直到重新绑定来源并复核受影响结论。状态表可以继续显示它，以便读者知道缺口，却不能把它当成仍然有效的课程。
 
-当前正式导航包含这个总入口、六篇共同基础、六条各九篇的项目课程、五篇横向比较、四条角色路径和两项可复现实验。各批次都以原子方式发布；文件存在、篇幅很长或单项测试通过，都不能绕过状态和完整性规则。
+当前正式课程导航包含这个总入口、六篇共同基础、六条各九篇的项目课程、五篇横向比较、四条角色路径和两项可复现实验；导航之外另有六个 `reviewed` 扩展样本。各批次都以原子方式发布；文件存在、篇幅很长或单项测试通过，都不能绕过状态和完整性规则。
 
 ## 证据方法
 

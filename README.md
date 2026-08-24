@@ -10,7 +10,7 @@
 
 **Agent Harness 是唯一主线；Eval 是横切验证能力。** 仓库不会再建设一套与 Agent Harness 并列的 Eval Harness 百科。Inspect AI、SWE-bench、Terminal-Bench 和 LM Evaluation Harness 只在需要回答「任务怎样定义、轨迹怎样收集、结果怎样评分、失败能否重试」时作为外部参照出现。缺少证据，就保留未知。
 
-> 当前状态：仓库正在覆盖式重建。治理、证据门禁、正式品牌、共同基础和六条一级主线已完成阶段复核；五篇横向比较、四条角色路径和两项本地实验已经达到 `reviewed` 或 `verified`。扩展样本仍按独立证据门禁逐批开放。
+> 当前状态：仓库正在覆盖式重建。治理、证据门禁、正式品牌、共同基础、六条一级主线、五篇横向比较、四条角色路径和两项本地实验已完成阶段复核；六个扩展样本已经达到 `reviewed`，等待全仓发布复核。
 
 ## 这里研究的不是「模型排行榜」
 
@@ -122,6 +122,19 @@ Eval 不与六条主线争夺主导航，而是在每条主线中重复回答同
 - [独立 Scorer 与 RewardAdapter 能力契约](docs/labs/independent-eval-pipeline.md)
 <!-- course-navigation:end -->
 
+### 扩展样本
+
+下面六篇不属于一级主线，也不参与综合排名。它们只提炼相对六条主线新增的机制，并各自绑定锁定源码、正式 Claim 和中文机制图：
+
+- [mini-swe-agent：用最小循环看清执行边界](docs/samples/mini-swe-agent.md)
+- [OpenHands Agent Canvas：多后端控制平面与仓库边界](docs/samples/openhands-agent-canvas.md)
+- [Cline：工具批准与可恢复工作区](docs/samples/cline.md)
+- [goose：Recipe 与 Extension 的分阶段装配](docs/samples/goose.md)
+- [Aider：Repository Map 与 Architect Editor 分工](docs/samples/aider.md)
+- [Qwen Code：Serve 回放与批准作用域](docs/samples/qwen-code.md)
+
+样本链接放在正式课程导航标记之外，避免把机制补充误读为第七至第十二条一级主线。它们的 `reviewed` 状态只表示当前锁定版本的文章、来源、图示和边界通过仓库复核，不证明对应上游生产部署或综合优劣。
+
 | 你的目标 | 建议路径 | 需要的背景 |
 | --- | --- | --- |
 | 第一次理解 Agent Harness | 一次模型调用 → Agent Loop → 工具与权限 → 会话与恢复 → Eval 接入 | 无需先读源码 |
@@ -145,7 +158,7 @@ Eval 不与六条主线争夺主导航，而是在每条主线中重复回答同
 
 仓库不按「最新分支大概如此」写结论。每个上游来源都具有稳定 ID、仓库地址、锁定 Commit、许可证和来源分组。默认本地验证只要求六条主线所需的 `core` 来源；扩展样本使用 `samples`，外部评测参照使用 `eval`，全量复核使用 `all`。
 
-当前来源清单包含 12 个定义：DSH、Codex、Gemini CLI、Claude Python SDK、Claude TypeScript SDK、pi、OpenCode、mini-swe-agent，以及四个外部评测参照。机器可读配置见 [`sources/sources.yml`](sources/sources.yml) 和 [`sources/sources.lock.yml`](sources/sources.lock.yml)。
+当前来源清单包含 17 个定义：六条一级主线所需来源、mini-swe-agent、OpenHands、Cline、goose、Aider、Qwen Code，以及四个外部评测参照。机器可读配置见 [`sources/sources.yml`](sources/sources.yml) 和 [`sources/sources.lock.yml`](sources/sources.lock.yml)。
 
 ### 证据等级
 
@@ -204,4 +217,4 @@ npm run check
 - 原创代码按 [MIT](LICENSE-CODE) 授权，原创文档按 [CC BY 4.0](LICENSE-DOCS) 授权；第三方许可证边界见 [THIRD_PARTY.md](THIRD_PARTY.md) 和 [NOTICE.md](NOTICE.md)。
 - 贡献前请阅读 [贡献指南](CONTRIBUTING.md)；维护与证据规则见 [仓库治理](AGENTS.md)。
 
-仓库已经发布共同基础、六条主线、横向比较、角色路径和控制实验；扩展样本继续按证据开放。每个阶段都必须先完成反向审查，再进入下一阶段；文件数量、测试数量或第三方评分都不能单独作为「已经完成」的证据。
+仓库已经发布共同基础、六条主线、横向比较、角色路径、控制实验和六个扩展样本。每个阶段都必须先完成反向审查，再进入下一阶段；文件数量、测试数量或第三方评分都不能单独作为「已经完成」的证据。

@@ -600,6 +600,54 @@
       "scope": "docs/comparisons/05-observability-eval-deployment.md",
       "alt": "六类 Agent Harness 生成运行轨迹和产物，经过冻结试验、独立评分、训练适配、候选选择与独立发布留出集的中文责任链图",
       "claims": ["deepseek-harness.feedback.is-not-training-reward", "codex.feedback-trace.is-not-release-eval", "gemini-cli.telemetry.tool-decisions-are-not-eval", "claude.feedback.is-not-training-or-release-reward", "pi.telemetry.contract-is-not-scorer", "opencode.telemetry-and-tests-are-not-release-eval"]
+    },
+    {
+      "id": "sample-mini-swe-agent-loop",
+      "path": "assets/diagrams/samples/mini-swe-agent-loop.svg",
+      "type": "state",
+      "scope": "docs/samples/mini-swe-agent.md",
+      "alt": "mini-swe-agent 展示模型查询、动作提取、环境执行、观察回填、框架退出和外部任务验证的中文状态图",
+      "claims": ["mini-swe-agent.loop.query-execute-observe", "mini-swe-agent.environment.local-is-host-process-boundary"]
+    },
+    {
+      "id": "sample-openhands-agent-canvas",
+      "path": "assets/diagrams/samples/openhands-agent-canvas.svg",
+      "type": "architecture",
+      "scope": "docs/samples/openhands-agent-canvas.md",
+      "alt": "OpenHands 控制中心组合有效后端参数并路由到 Agent 服务端，同时标出软件 Agent 开发包与自动化服务仓库责任的中文架构图",
+      "claims": ["openhands.canvas.active-backend-builds-client-options", "openhands.canvas-repository-is-control-plane"]
+    },
+    {
+      "id": "sample-cline-approval-checkpoint",
+      "path": "assets/diagrams/samples/cline-approval-checkpoint.svg",
+      "type": "architecture",
+      "scope": "docs/samples/cline.md",
+      "alt": "Cline 将工具策略与客户端批准形成执行控制链，并把可选版本库检查点作为独立工作区恢复机制的中文架构图",
+      "claims": ["cline.tools.denial-is-fail-closed", "cline.checkpoint-is-opt-in-snapshot"]
+    },
+    {
+      "id": "sample-goose-recipe-extension",
+      "path": "assets/diagrams/samples/goose-recipe-extension.svg",
+      "type": "flow",
+      "scope": "docs/samples/goose.md",
+      "alt": "goose 配方从解析、会话装配、扩展连接、工具发现到获准执行的中文流程图",
+      "claims": ["goose.recipe-binds-instructions-and-extensions", "goose.extension-tools-require-successful-load"]
+    },
+    {
+      "id": "sample-aider-map-architect-editor",
+      "path": "assets/diagrams/samples/aider-map-architect-editor.svg",
+      "type": "data-flow",
+      "scope": "docs/samples/aider.md",
+      "alt": "Aider 从仓库源码生成受预算约束的仓库映射，再经规划器建议与编辑器修改形成可验证产物的中文数据流图",
+      "claims": ["aider.repomap-is-budgeted-context", "aider.architect-hands-plan-to-editor"]
+    },
+    {
+      "id": "sample-qwen-code-serve-boundary",
+      "path": "assets/diagrams/samples/qwen-code-serve-boundary.svg",
+      "type": "architecture",
+      "scope": "docs/samples/qwen-code.md",
+      "alt": "Qwen Code 服务把 Agent 流式事件按轮次压缩成多客户端回放，并以显式全局作用域限制危险批准模式的中文边界图",
+      "claims": ["qwen-code.serve-compacts-at-turn-boundaries", "qwen-code.bridge-restricts-dangerous-approval-modes"]
     }
   ]
 }
