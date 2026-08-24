@@ -24,7 +24,7 @@
   - 验收：Rust 核心、工具、沙箱、会话、协议和评测接口形成完整课程。
 - [x] 阶段 3C：Gemini CLI 主线。
   - 验收：Core/CLI、Policy/Safety/Confirmation、工具、会话和评测形成完整课程。
-- [ ] 阶段 3D：Claude 主线。
+- [x] 阶段 3D：Claude 主线。
   - 验收：Claude Code 文档证据与 Python/TypeScript SDK 源码证据严格分层。
 - [ ] 阶段 3E：pi 主线。
   - 验收：AI、Agent、Coding Agent、Protocol、Session、Telemetry 和 Evals 全链路完成。

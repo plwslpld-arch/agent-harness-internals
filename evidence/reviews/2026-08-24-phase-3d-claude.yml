@@ -1,0 +1,70 @@
+{
+  "stage": "phase-3d-claude",
+  "date": "2026-08-24",
+  "commit": "8b50151124eb24f38ec7094ac3be865db5357d38",
+  "promises": [
+    {"id": "p-nine-course-line", "statement": "Claude 主线入口与八篇课程均达到 reviewed，覆盖产品与双 SDK 证据边界、Python 传输、消息生命周期、工具权限、会话存储、MCP 扩展、双 SDK 对齐、产品表面和独立评测。"},
+    {"id": "p-product-sdk-boundary", "statement": "Claude Code 闭源产品只使用官方公开契约，Python SDK 实现绑定锁定源码与测试，TypeScript 锁定仓库只作为公开分发材料和示例证据。"},
+    {"id": "p-runtime-boundaries", "statement": "工具存在、模型可见、自动允许、Hook、MCP、Agent、Skill、Result、进程退出、Session Mirror 和任务成功保持不同观察层。"},
+    {"id": "p-versioned-parity", "statement": "Python 与 TypeScript 对齐绑定各自版本、Commit、官方文档访问日期和证据等级；同名 API 不作为实现同构证明。"},
+    {"id": "p-eval-boundary", "statement": "协议 Result、用户反馈、代码接受、训练 RewardAdapter、Checkpoint 选择和隔离发布 Eval 保持语义分离。"},
+    {"id": "p-chinese-visuals", "statement": "十张 Claude 正式图使用中文说明，必要项目、协议、代码和产品标识保留，并经集中渲染目检。"},
+    {"id": "p-atomic-navigation", "statement": "Claude 九篇在根入口、总入口和主线入口整批开放；缺失、降级或零链接都会失败，pi、OpenCode 与扩展样本没有提前进入正式导航。"},
+    {"id": "p-node24-all-sources", "statement": "Node 24 聚合门禁与十二个锁定来源的 all 配置验证全部通过。"}
+  ],
+  "evidence": [
+    {"id": "e-course-files", "promise": "p-nine-course-line", "type": "file", "reference": "docs/harnesses/claude/", "summary": "入口与 01 至 08 共九篇均为 reviewed；每篇具有真实输入输出、调用链、证据块、失败限制、验证方法和四道带答案自检。"},
+    {"id": "e-content-contract", "promise": "p-nine-course-line", "type": "test", "reference": "scripts/check-content-contract.mjs", "summary": "Claude 一级入口契约和八篇 Harness 深度契约通过。"},
+    {"id": "e-claims", "promise": "p-product-sdk-boundary", "type": "file", "reference": "evidence/claims/claude.*.yml", "summary": "十九条 Claude Claim 登记版本、表面、平台、模式、证据等级、摘录、限定条件和必要推断。"},
+    {"id": "e-evidence-map", "promise": "p-product-sdk-boundary", "type": "file", "reference": "evidence/claims/claude/evidence-map.yml", "summary": "三类来源边界、九篇证据路由和八类误读风险集中登记；双 SDK 许可证分别锁定。"},
+    {"id": "e-product-boundary-article", "promise": "p-product-sdk-boundary", "type": "file", "reference": "docs/harnesses/claude/01-evidence-product-sdk-boundaries.md", "summary": "把官方产品契约、Python 源码、TypeScript 公开材料、许可证与课程推断分成五层。"},
+    {"id": "e-runtime-articles", "promise": "p-runtime-boundaries", "type": "file", "reference": "docs/harnesses/claude/04-tools-permissions-hooks.md", "summary": "工具、权限、Hook、执行和系统隔离分层；会话与扩展课程另行建立 Mirror、恢复、能力配置和真实调用边界。"},
+    {"id": "e-parity-article", "promise": "p-versioned-parity", "type": "file", "reference": "docs/harnesses/claude/07-typescript-contract-parity.md", "summary": "以 Python 0.2.143、TypeScript 0.3.241 和访问日官方参考构建逐维度矩阵，未知实现不补写。"},
+    {"id": "e-tree-inventory", "promise": "p-versioned-parity", "type": "file", "reference": "evidence/experiments/claude-typescript-tree-inventory.yml", "summary": "锁定 TypeScript 公开树 33 个文件，不含 SDK Runtime 主体源码；结论不外推 npm 包或私有仓库。"},
+    {"id": "e-eval-article", "promise": "p-eval-boundary", "type": "file", "reference": "docs/harnesses/claude/08-surfaces-errors-eval-design.md", "summary": "三类表面、八层错误、固定 Trial、Artifact、独立 Scorer、反馈治理、训练适配、Checkpoint 和发布留出集分别定义。"},
+    {"id": "e-diagram-sheet", "promise": "p-chinese-visuals", "type": "render", "reference": "evidence/reviews/phase-3d-claude-contact-sheet.png", "summary": "十图集中复核未发现裁切、重叠、箭头误向、颜色单点依赖或英文自然语言说明残留；必要专名与协议标识予以保留。"},
+    {"id": "e-visual-manifest", "promise": "p-chinese-visuals", "type": "file", "reference": "assets/diagrams/manifest.yml", "summary": "十张 Claude 图具有中文替代文本、合法图类型、文章范围和 Claim 绑定。"},
+    {"id": "e-navigation-test", "promise": "p-atomic-navigation", "type": "test", "reference": "scripts/tests/navigation.test.mjs", "summary": "Claude 九篇缺失、降级与零链接均失败；扩展样本不得进入正式导航。"},
+    {"id": "e-navigation-files", "promise": "p-atomic-navigation", "type": "file", "reference": "docs/harnesses/claude/README.md", "summary": "入口状态表九篇均为已复核链接，根 README 与总入口只增加第四条主线。"},
+    {"id": "e-source-all", "promise": "p-node24-all-sources", "type": "command", "reference": "node scripts/verify-sources.mjs --profile all", "summary": "十二个来源定义与十二个 all 配置 Checkout 全部匹配锁定提交。"},
+    {"id": "e-check-all", "promise": "p-node24-all-sources", "type": "command", "reference": "node scripts/check-all.mjs", "summary": "十七组聚合检查、九十二项单元测试、七十一条 Claim、五十张正式图、一百零五次正式导航核对与八十三篇 Markdown 链接检查通过。"}
+  ],
+  "findings": [
+    {"id": "f-sdk-product-inference", "priority": "high", "status": "resolved", "summary": "Python SDK 类和控制协议容易被画成 Claude Code 闭源产品内部模块。"},
+    {"id": "f-typescript-docs-as-source", "priority": "high", "status": "resolved", "summary": "TypeScript 官方 API、README 与 CHANGELOG 容易被写成锁定仓库的 Runtime 主体源码。"},
+    {"id": "f-allowed-tools-availability", "priority": "high", "status": "resolved", "summary": "allowed_tools 容易被解释成工具可用性清单或执行成功证明。"},
+    {"id": "f-result-task-success", "priority": "high", "status": "resolved", "summary": "Result success、is_error=false 或 CLI 退出 0 容易被升级成任务成功和发布通过。"},
+    {"id": "f-mirror-runtime-history", "priority": "high", "status": "resolved", "summary": "外部 Session Store Transcript Mirror 容易被称为 Claude Code 实时运行历史的唯一权威。"},
+    {"id": "f-feedback-reward-eval", "priority": "high", "status": "resolved", "summary": "用户反馈、代码接受、权限与工具信号容易被直接命名为训练 Reward 或独立发布 Eval。"},
+    {"id": "f-sdk-name-parity", "priority": "high", "status": "resolved", "summary": "Python 与 TypeScript 中的 query、Hook、MCP、Session Store 同名项容易被写成永久实现同构。"},
+    {"id": "f-navigation-stale", "priority": "high", "status": "resolved", "summary": "八篇正文完成后，Claude 入口与两级总导航仍保留提纲状态和无链接描述。"},
+    {"id": "f-visual-language", "priority": "medium", "status": "resolved", "summary": "部分新图初稿保留 Agent、Skill、Hook、Tool、Eval、Result 等可翻译概念词。"},
+    {"id": "f-live-runtime-unverified", "priority": "medium", "status": "open", "summary": "本阶段没有用真实模型、真实凭据、外部 MCP、跨主机 Session Store 或各平台 CLI 运行全部场景，相关结论保持源码、上游测试或官方契约级。"},
+    {"id": "f-upstream-drift", "priority": "medium", "status": "open", "summary": "Claude SDK、官方文档和 CLI 将继续演进；课程只以锁定 Commit 与访问日期为权威，漂移后需重新复核。"},
+    {"id": "f-remote-not-deployed", "priority": "medium", "status": "open", "summary": "GitHub 仓库名、About、Topics、社交预览、保护规则、Contributors 和推送验证留到最终部署阶段统一处理。"},
+    {"id": "f-style-rhythm", "priority": "low", "status": "open", "summary": "中文文风检查对 Claude 多篇给出句长节奏非阻断提醒；后续总编辑阶段统一润色。"}
+  ],
+  "resolutions": [
+    {"id": "f-sdk-product-inference", "action": "系统图把 Claude Code 画成不透明闭源边界；所有 Python InternalClient、Query、Transport 和 Bridge 只放在应用 SDK 框。", "evidence": ["e-product-boundary-article", "e-diagram-sheet", "e-claims"]},
+    {"id": "f-typescript-docs-as-source", "action": "TypeScript 课程只引用 README、CHANGELOG、真实 Session Store 示例和官方参考，并以树清单实验证明主体源码边界。", "evidence": ["e-parity-article", "e-tree-inventory", "e-claims"]},
+    {"id": "f-allowed-tools-availability", "action": "工具课逐层区分注册、模型可见、自动允许、询问、Hook、回调、执行、Sandbox 和独立评分。", "evidence": ["e-runtime-articles", "e-claims"]},
+    {"id": "f-result-task-success", "action": "消息课与评测课分别记录协议 Result、后续进程异常、产物、任务断言和独立 Scorer，并加入成功 Result 但测试失败反例。", "evidence": ["e-course-files", "e-eval-article", "e-claims"]},
+    {"id": "f-mirror-runtime-history", "action": "会话课把本地 JSONL、外部二次副本、恢复材料化、Runtime 历史、文件系统和 Eval Artifact 分开。", "evidence": ["e-course-files", "e-diagram-sheet", "e-claims"]},
+    {"id": "f-feedback-reward-eval", "action": "评测课要求反馈先经归因、去重、隐私与版本化 RewardAdapter；训练、Checkpoint 选择和隔离发布 holdout 分别报告。", "evidence": ["e-eval-article", "e-claims"]},
+    {"id": "f-sdk-name-parity", "action": "双 SDK 课程建立带版本的 equivalent、partial、one-sided、unknown 矩阵，明确接口相近不能证明内部同构。", "evidence": ["e-parity-article", "e-claims"]},
+    {"id": "f-navigation-stale", "action": "一次性开放 Claude 九篇并新增缺篇、降级和零链接失败测试，同时更新根入口和总入口为四条已完成主线。", "evidence": ["e-navigation-test", "e-navigation-files"]},
+    {"id": "f-visual-language", "action": "将新图中可翻译的 Agent、Skill、Hook、Tool、Eval、Result 等改为子智能体、技能、钩子、工具、评测和结果消息；保留必要标识。", "evidence": ["e-diagram-sheet", "e-visual-manifest"]}
+  ],
+  "commands": [
+    {"command": "node --version", "exit_code": 0, "summary": "输出 v24.19.0。"},
+    {"command": "node scripts/check-all.mjs", "exit_code": 0, "summary": "十七组聚合检查和九十二项单元测试通过；仅有句长节奏非阻断提醒。"},
+    {"command": "node scripts/verify-sources.mjs --profile all", "exit_code": 0, "summary": "十二个来源定义与十二个 all 配置 Checkout 通过。"},
+    {"command": "渲染并打开 phase-3d-claude-contact-sheet.png", "exit_code": 0, "summary": "十图未见裁切、重叠、箭头误向、颜色单点依赖或英文自然语言说明残留。"},
+    {"command": "逐篇统计 status、Claim、证据块、失败与限制、验证方法和自检", "exit_code": 0, "summary": "九篇全部 reviewed；十九条 Claim，每篇均有三至六组证据块、必需章节和四道完整答案。"},
+    {"command": "七类高风险反推模式检索", "exit_code": 0, "summary": "命中均为明确否定、限制或自检问题；未发现 SDK 反推产品、TypeScript 伪源码、Result／Mirror／反馈语义升级。"},
+    {"command": "node scripts/check-navigation.mjs", "exit_code": 0, "summary": "一百零五次正式导航核对通过，Claude 九篇不能缺失、降级或零链接发布。"},
+    {"command": "node scripts/check-links.mjs", "exit_code": 0, "summary": "八十三篇 Markdown 的本地链接通过。"},
+    {"command": "git diff --check", "exit_code": 0, "summary": "没有空白错误。"}
+  ],
+  "result": "pass"
+}

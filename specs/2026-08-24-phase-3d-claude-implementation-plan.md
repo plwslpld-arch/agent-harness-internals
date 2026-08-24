@@ -192,12 +192,12 @@
 - 修改：`specs/2026-08-23-agent-harness-internals-program-plan.md`
 - 修改：本计划复选框
 
-- [ ] 从已提交基线运行 Node 24 聚合检查和 `--profile all` 来源验证。
-- [ ] 逐篇审计真实输入输出、调用链、源码或官方文档锚点、能力条件、失败语义和自检答案。
-- [ ] 打开十张正式图，检查中文、截断、箭头、颜色依赖、闭源边界和证据绑定。
-- [ ] 主动寻找：SDK 反推 Claude Code、TypeScript 文档冒充源码、allowed_tools 冒充工具可用性、Result 冒充任务成功、Session Mirror 冒充运行历史、反馈冒充 Reward/Eval、双 SDK 同名冒充实现一致。
-- [ ] 修复全部高优先级发现，记录中低风险；创建阶段复核记录并勾选总路线 3D。
-- [ ] 提交：`chore(review): 完成阶段 3D Claude 主线复核`。
+- [x] 从已提交基线运行 Node 24 聚合检查和 `--profile all` 来源验证。
+- [x] 逐篇审计真实输入输出、调用链、源码或官方文档锚点、能力条件、失败语义和自检答案。
+- [x] 打开十张正式图，检查中文、截断、箭头、颜色依赖、闭源边界和证据绑定。
+- [x] 主动寻找：SDK 反推 Claude Code、TypeScript 文档冒充源码、allowed_tools 冒充工具可用性、Result 冒充任务成功、Session Mirror 冒充运行历史、反馈冒充 Reward/Eval、双 SDK 同名冒充实现一致。
+- [x] 修复全部高优先级发现，记录中低风险；创建阶段复核记录并勾选总路线 3D。
+- [x] 提交：`chore(review): 完成阶段 3D Claude 主线复核`。
 
 ## 阶段完成证据
 
