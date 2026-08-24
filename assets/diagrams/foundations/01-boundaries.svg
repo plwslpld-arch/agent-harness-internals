@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="boundaries-title boundaries-desc">
+  <title id="boundaries-title">一次智能体任务的四层职责与归因边界</title>
+  <desc id="boundaries-desc">用户目标经模型生成、智能体运行框架编排和执行环境产生结果，运行轨迹与产物交给评测验证；比较时一次只改变一层。</desc>
+  <defs>
+    <marker id="boundary-arrow" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto">
+      <path d="M0 0l14 7-14 7z" fill="#0B8F8C"/>
+    </marker>
+    <marker id="evidence-arrow" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto">
+      <path d="M0 0l14 7-14 7z" fill="#C97A00"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="760" rx="32" fill="#F7FAFC"/>
+  <text x="600" y="56" text-anchor="middle" fill="#17324D" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="34" font-weight="760">一次智能体任务的四层职责与归因边界</text>
+  <text x="600" y="88" text-anchor="middle" fill="#496179" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="18">记录每层的输入、配置与产物；比较时一次只改变一层</text>
+
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <g transform="translate(42 206)">
+      <rect width="138" height="104" rx="20" fill="#17324D"/>
+      <text x="69" y="45" text-anchor="middle" fill="#FFFFFF" font-size="23" font-weight="720">用户目标</text>
+      <text x="69" y="76" text-anchor="middle" fill="#CFE0E9" font-size="16">任务与约束</text>
+    </g>
+
+    <g transform="translate(222 122)">
+      <rect width="242" height="170" rx="24" fill="#E8F1FF" stroke="#3569A8" stroke-width="3"/>
+      <text x="26" y="40" fill="#285383" font-size="25" font-weight="760">模型层</text>
+      <text x="26" y="76" fill="#17324D" font-size="18">生成内容与工具意图</text>
+      <text x="26" y="106" fill="#496179" font-size="16">受输入上下文与模型版本影响</text>
+      <text x="26" y="140" fill="#8A3D2F" font-size="16">不直接拥有真实副作用</text>
+    </g>
+
+    <g transform="translate(502 122)">
+      <rect width="292" height="170" rx="24" fill="#E8F6F5" stroke="#0B8F8C" stroke-width="4"/>
+      <text x="26" y="40" fill="#0B7775" font-size="25" font-weight="760">智能体运行框架层</text>
+      <text x="26" y="76" fill="#17324D" font-size="18">装配上下文、暴露工具</text>
+      <text x="26" y="106" fill="#17324D" font-size="18">执行策略、循环、持久化</text>
+      <text x="26" y="140" fill="#8A3D2F" font-size="16">不等于模型，也不等于环境</text>
+    </g>
+
+    <g transform="translate(832 122)">
+      <rect width="326" height="170" rx="24" fill="#F0ECFA" stroke="#7155A5" stroke-width="3"/>
+      <text x="26" y="40" fill="#5C4588" font-size="25" font-weight="760">执行环境层</text>
+      <text x="26" y="76" fill="#17324D" font-size="18">文件、进程、网络、凭据</text>
+      <text x="26" y="106" fill="#496179" font-size="16">决定资源可见性与实际副作用</text>
+      <text x="26" y="140" fill="#8A3D2F" font-size="16">环境边界不自动等于隔离沙箱</text>
+    </g>
+
+    <g transform="translate(222 400)">
+      <rect width="936" height="178" rx="26" fill="#FFF3D3" stroke="#C97A00" stroke-width="3"/>
+      <text x="28" y="44" fill="#9B5C00" font-size="25" font-weight="760">评测验证层</text>
+      <text x="28" y="82" fill="#17324D" font-size="18">固定任务与环境口径</text>
+      <text x="270" y="82" fill="#17324D" font-size="18">读取运行轨迹与产物</text>
+      <text x="556" y="82" fill="#17324D" font-size="18">运行评分器</text>
+      <text x="768" y="82" fill="#17324D" font-size="18">形成反馈或发布门槛</text>
+      <line x1="28" y1="106" x2="908" y2="106" stroke="#DCA84B" stroke-width="2"/>
+      <text x="28" y="142" fill="#6D5734" font-size="17">评测解释运行产物，不接管智能体运行框架的工具循环；运行框架能记录轨迹，也不代表已经完成有效评测。</text>
+    </g>
+  </g>
+
+  <g fill="none" stroke="#0B8F8C" stroke-width="6" marker-end="url(#boundary-arrow)">
+    <path d="M180 258h34"/>
+    <path d="M464 207h30"/>
+    <path d="M794 207h30"/>
+  </g>
+  <path d="M994 292v80c0 18-14 28-30 28H680" fill="none" stroke="#C97A00" stroke-width="4" stroke-dasharray="10 8" marker-end="url(#evidence-arrow)"/>
+  <path d="M648 292v80" fill="none" stroke="#C97A00" stroke-width="4" stroke-dasharray="10 8" marker-end="url(#evidence-arrow)"/>
+  <text x="1018" y="354" fill="#9B5C00" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="16">轨迹与产物</text>
+
+  <g transform="translate(42 626)" font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <rect width="1116" height="86" rx="20" fill="#FFFFFF" stroke="#B8C7D4" stroke-width="2"/>
+    <text x="24" y="35" fill="#17324D" font-size="21" font-weight="720">归因规则</text>
+    <text x="148" y="35" fill="#0B7775" font-size="18">只换模型 → 只能讨论模型差异</text>
+    <text x="470" y="35" fill="#0B7775" font-size="18">只换运行框架 → 才能讨论编排差异</text>
+    <text x="826" y="35" fill="#0B7775" font-size="18">多层一起变 → 结论不可归因</text>
+    <text x="24" y="66" fill="#496179" font-size="16">若任务、工具、镜像、网络、评分器或重试规则不同，必须记录为混杂变量，而不是藏进一个总分。</text>
+  </g>
+</svg>

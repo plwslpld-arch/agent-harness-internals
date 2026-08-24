@@ -1,0 +1,286 @@
+{
+  "schemaVersion": 2,
+  "project": "Agent Harness Internals",
+  "sources": [
+    {
+      "id": "deepseek-harness",
+      "name": "DeepSeek Harness",
+      "category": "official",
+      "url": "https://github.com/deepseek-ai/deepseek-harness.git",
+      "defaultBranch": "master",
+      "fetchPolicy": "automatic",
+      "profiles": ["core"],
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE"
+      },
+      "redistribution": {
+        "policy": "metadata-and-analysis-only",
+        "notes": "Checkout locally; do not vendor upstream source."
+      }
+    },
+    {
+      "id": "codex",
+      "name": "OpenAI Codex",
+      "category": "reference-agents",
+      "url": "https://github.com/openai/codex.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "profiles": ["core"],
+      "license": {
+        "spdx": "Apache-2.0",
+        "file": "LICENSE"
+      },
+      "redistribution": {
+        "policy": "metadata-and-analysis-only",
+        "notes": "Checkout locally; preserve NOTICE and attribution when required."
+      }
+    },
+    {
+      "id": "gemini-cli",
+      "name": "Gemini CLI",
+      "category": "reference-agents",
+      "url": "https://github.com/google-gemini/gemini-cli.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "profiles": ["core"],
+      "license": {
+        "spdx": "Apache-2.0",
+        "file": "LICENSE"
+      },
+      "redistribution": {
+        "policy": "metadata-and-analysis-only",
+        "notes": "Official open-source agent harness; checkout locally and preserve attribution."
+      }
+    },
+    {
+      "id": "claude-agent-sdk-python",
+      "name": "Claude Agent SDK for Python",
+      "category": "reference-agents",
+      "url": "https://github.com/anthropics/claude-agent-sdk-python.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "profiles": ["core"],
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE"
+      },
+      "redistribution": {
+        "policy": "metadata-and-analysis-only",
+        "notes": "Official SDK contract surface only; do not infer closed-source Claude Code internals."
+      },
+      "analysisScope": {
+        "runtimeSource": "available",
+        "tests": "available",
+        "productInternals": "unavailable",
+        "notes": "Python SDK implementation and tests are reviewable at the locked commit; Claude Code product internals remain outside this source."
+      }
+    },
+    {
+      "id": "claude-agent-sdk-typescript",
+      "name": "Claude Agent SDK for TypeScript",
+      "category": "reference-agents",
+      "url": "https://github.com/anthropics/claude-agent-sdk-typescript.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "profiles": ["core"],
+      "license": {
+        "spdx": "LicenseRef-Anthropic-Commercial-Terms",
+        "file": "LICENSE.md"
+      },
+      "redistribution": {
+        "policy": "metadata-and-analysis-only",
+        "notes": "Official SDK contract surface under Anthropic commercial terms; do not redistribute or infer closed-source Claude Code internals."
+      },
+      "analysisScope": {
+        "runtimeSource": "unavailable",
+        "tests": "examples-only",
+        "productInternals": "unavailable",
+        "notes": "The locked repository exposes README, CHANGELOG, license, scripts and Session Store examples, but not the SDK runtime implementation."
+      }
+    },
+    {
+      "id": "opencode",
+      "name": "OpenCode",
+      "category": "comparison-agents",
+      "url": "https://github.com/anomalyco/opencode.git",
+      "defaultBranch": "dev",
+      "fetchPolicy": "automatic",
+      "profiles": ["core"],
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE"
+      },
+      "redistribution": {
+        "policy": "metadata-and-analysis-only",
+        "notes": "Production-oriented open-source coding-agent comparison; not a Harness dependency."
+      }
+    },
+    {
+      "id": "pi",
+      "name": "Pi",
+      "category": "reference-agents",
+      "url": "https://github.com/earendil-works/pi.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "profiles": ["core"],
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE"
+      },
+      "redistribution": {
+        "policy": "metadata-and-analysis-only",
+        "notes": "Checkout locally; do not vendor upstream source."
+      }
+    },
+    {
+      "id": "mini-swe-agent",
+      "name": "mini-swe-agent",
+      "category": "comparison-agents",
+      "url": "https://github.com/SWE-agent/mini-swe-agent.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "profiles": ["samples"],
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE.md"
+      },
+      "redistribution": {
+        "policy": "metadata-and-analysis-only",
+        "notes": "Minimal agent-loop baseline; not a Harness dependency."
+      }
+    },
+    {
+      "id": "openhands",
+      "name": "OpenHands Agent Canvas",
+      "category": "comparison-agents",
+      "url": "https://github.com/All-Hands-AI/OpenHands.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "profiles": ["samples"],
+      "license": { "spdx": "MIT", "file": "LICENSE" },
+      "redistribution": {
+        "policy": "metadata-and-analysis-only",
+        "notes": "Current OpenHands repository exposes Agent Canvas control-center code; do not infer the separate agent runtime internals."
+      },
+      "analysisScope": {
+        "runtimeSource": "control-center-only",
+        "tests": "available",
+        "productInternals": "partial",
+        "notes": "The locked repository identifies itself as Agent Canvas and orchestrates local, remote and ACP-compatible backends; the separate OpenHands agent implementation is outside this source."
+      }
+    },
+    {
+      "id": "cline",
+      "name": "Cline",
+      "category": "comparison-agents",
+      "url": "https://github.com/cline/cline.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "profiles": ["samples"],
+      "license": { "spdx": "Apache-2.0", "file": "LICENSE" },
+      "redistribution": { "policy": "metadata-and-analysis-only", "notes": "Multi-surface coding-agent sample; checkout locally and preserve Apache attribution." }
+    },
+    {
+      "id": "goose",
+      "name": "goose",
+      "category": "comparison-agents",
+      "url": "https://github.com/block/goose.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "profiles": ["samples"],
+      "license": { "spdx": "Apache-2.0", "file": "LICENSE" },
+      "redistribution": { "policy": "metadata-and-analysis-only", "notes": "Rust agent, recipe and extension sample; checkout locally and preserve Apache attribution." }
+    },
+    {
+      "id": "aider",
+      "name": "Aider",
+      "category": "comparison-agents",
+      "url": "https://github.com/Aider-AI/aider.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "profiles": ["samples"],
+      "license": { "spdx": "Apache-2.0", "file": "LICENSE.txt" },
+      "redistribution": { "policy": "metadata-and-analysis-only", "notes": "Repository-map and edit-format sample; checkout locally and preserve Apache attribution." }
+    },
+    {
+      "id": "qwen-code",
+      "name": "Qwen Code",
+      "category": "comparison-agents",
+      "url": "https://github.com/QwenLM/qwen-code.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "profiles": ["samples"],
+      "license": { "spdx": "Apache-2.0", "file": "LICENSE" },
+      "redistribution": { "policy": "metadata-and-analysis-only", "notes": "Open-source coding-agent sample; checkout locally and preserve Apache attribution." }
+    },
+    {
+      "id": "lm-evaluation-harness",
+      "name": "Language Model Evaluation Harness",
+      "category": "eval-harnesses",
+      "url": "https://github.com/EleutherAI/lm-evaluation-harness.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "profiles": ["eval"],
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE.md"
+      },
+      "redistribution": {
+        "policy": "metadata-and-analysis-only",
+        "notes": "Evaluation harness reference; checkout locally and do not vendor source."
+      }
+    },
+    {
+      "id": "inspect-ai",
+      "name": "Inspect AI",
+      "category": "eval-harnesses",
+      "url": "https://github.com/UKGovernmentBEIS/inspect_ai.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "profiles": ["eval"],
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE"
+      },
+      "redistribution": {
+        "policy": "metadata-and-analysis-only",
+        "notes": "Evaluation harness reference; checkout locally and do not vendor source."
+      }
+    },
+    {
+      "id": "terminal-bench",
+      "name": "Terminal-Bench 1",
+      "category": "eval-harnesses",
+      "url": "https://github.com/harbor-framework/terminal-bench-1.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "profiles": ["eval"],
+      "license": {
+        "spdx": "Apache-2.0",
+        "file": "LICENSE"
+      },
+      "redistribution": {
+        "policy": "metadata-and-analysis-only",
+        "notes": "Canonical successor of laude-institute/terminal-bench; preserve Apache attribution."
+      }
+    },
+    {
+      "id": "swe-bench",
+      "name": "SWE-bench",
+      "category": "eval-harnesses",
+      "url": "https://github.com/SWE-bench/SWE-bench.git",
+      "defaultBranch": "main",
+      "fetchPolicy": "automatic",
+      "profiles": ["eval"],
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE"
+      },
+      "redistribution": {
+        "policy": "metadata-and-analysis-only",
+        "notes": "Canonical successor of princeton-nlp/SWE-bench; checkout locally and do not vendor source."
+      }
+    }
+  ]
+}

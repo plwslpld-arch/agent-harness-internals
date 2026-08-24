@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 850" role="img" aria-labelledby="security-title security-desc">
+  <title id="security-title">工具调用穿过授权与隔离边界的五道门</title>
+  <desc id="security-desc">工具调用依次经过工具注册、参数校验与策略、必要的用户批准、平台隔离后端和真实执行环境；任何一层通过都不能替代其他层。</desc>
+  <defs>
+    <marker id="security-arrow" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto">
+      <path d="M0 0l14 7-14 7z" fill="#0B8F8C"/>
+    </marker>
+    <marker id="security-deny" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto">
+      <path d="M0 0l14 7-14 7z" fill="#B34A3C"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="850" rx="32" fill="#F7FAFC"/>
+  <text x="600" y="54" text-anchor="middle" fill="#17324D" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="34" font-weight="760">一次工具调用必须穿过五道不同的门</text>
+  <text x="600" y="86" text-anchor="middle" fill="#496179" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="18">授权回答能不能做，隔离回答即使做了能碰到什么</text>
+
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <g transform="translate(42 136)">
+      <rect width="190" height="174" rx="22" fill="#E8F1FF" stroke="#3569A8" stroke-width="3"/>
+      <text x="95" y="40" text-anchor="middle" fill="#285383" font-size="22" font-weight="760">一　工具暴露</text>
+      <text x="22" y="80" fill="#17324D" font-size="17">注册表中是否存在</text>
+      <text x="22" y="112" fill="#17324D" font-size="17">当前模式是否可见</text>
+      <text x="22" y="146" fill="#8A3D2F" font-size="15">存在不等于允许</text>
+    </g>
+    <g transform="translate(274 136)">
+      <rect width="206" height="174" rx="22" fill="#E8F6F5" stroke="#0B8F8C" stroke-width="3"/>
+      <text x="103" y="40" text-anchor="middle" fill="#0B7775" font-size="22" font-weight="760">二　校验与策略</text>
+      <text x="22" y="80" fill="#17324D" font-size="17">参数与路径是否合法</text>
+      <text x="22" y="112" fill="#17324D" font-size="17">允许、拒绝或询问</text>
+      <text x="22" y="146" fill="#8A3D2F" font-size="15">策略决定不是隔离</text>
+    </g>
+    <g transform="translate(522 136)">
+      <rect width="190" height="174" rx="22" fill="#FFF3D3" stroke="#C97A00" stroke-width="3"/>
+      <text x="95" y="40" text-anchor="middle" fill="#9B5C00" font-size="22" font-weight="760">三　用户批准</text>
+      <text x="22" y="80" fill="#17324D" font-size="17">只在策略要求时出现</text>
+      <text x="22" y="112" fill="#17324D" font-size="17">批准范围必须明确</text>
+      <text x="22" y="146" fill="#8A3D2F" font-size="15">弹窗不是隔离沙箱</text>
+    </g>
+    <g transform="translate(754 136)">
+      <rect width="206" height="174" rx="22" fill="#F0ECFA" stroke="#7155A5" stroke-width="3"/>
+      <text x="103" y="40" text-anchor="middle" fill="#5C4588" font-size="22" font-weight="760">四　平台隔离</text>
+      <text x="22" y="80" fill="#17324D" font-size="17">文件、进程与网络约束</text>
+      <text x="22" y="112" fill="#17324D" font-size="17">后端是否可用并生效</text>
+      <text x="22" y="146" fill="#8A3D2F" font-size="15">不可静默降级</text>
+    </g>
+    <g transform="translate(1002 136)">
+      <rect width="156" height="174" rx="22" fill="#17324D"/>
+      <text x="78" y="40" text-anchor="middle" fill="#FFFFFF" font-size="22" font-weight="760">五　执行</text>
+      <text x="78" y="80" text-anchor="middle" fill="#CFE0E9" font-size="17">真实副作用</text>
+      <text x="78" y="112" text-anchor="middle" fill="#CFE0E9" font-size="17">结果与错误</text>
+      <text x="78" y="146" text-anchor="middle" fill="#F3C4BA" font-size="15">必须可追踪</text>
+    </g>
+  </g>
+
+  <g fill="none" stroke="#0B8F8C" stroke-width="5" marker-end="url(#security-arrow)">
+    <path d="M232 222h34"/>
+    <path d="M480 222h34"/>
+    <path d="M712 222h34"/>
+    <path d="M960 222h34"/>
+  </g>
+
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <rect x="42" y="374" width="1116" height="190" rx="26" fill="#FFFFFF" stroke="#B8C7D4" stroke-width="2"/>
+    <text x="70" y="416" fill="#17324D" font-size="24" font-weight="760">危险写入例子：目标路径位于工作区外</text>
+    <text x="70" y="456" fill="#496179" font-size="17">工具存在且参数可解析</text>
+    <text x="340" y="456" fill="#B34A3C" font-size="17">路径语义或策略应拒绝</text>
+    <text x="644" y="456" fill="#496179" font-size="17">即使用户批准</text>
+    <text x="866" y="456" fill="#B34A3C" font-size="17">隔离仍应阻断越界访问</text>
+    <path d="M70 484H322" fill="none" stroke="#0B8F8C" stroke-width="4" marker-end="url(#security-arrow)"/>
+    <path d="M340 484H622" fill="none" stroke="#B34A3C" stroke-width="4" marker-end="url(#security-deny)"/>
+    <path d="M644 484H844" fill="none" stroke="#C97A00" stroke-width="4" marker-end="url(#security-arrow)"/>
+    <path d="M866 484H1130" fill="none" stroke="#B34A3C" stroke-width="4" marker-end="url(#security-deny)"/>
+    <text x="70" y="532" fill="#6D5734" font-size="16">纵深防御意味着前一层失误时，后一层仍有独立约束；它不意味着可以省略前面的语义与授权检查。</text>
+  </g>
+
+  <g transform="translate(42 612)" font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <rect width="1116" height="188" rx="26" fill="#EAF0F5" stroke="#8BA1B4" stroke-width="2"/>
+    <text x="28" y="42" fill="#17324D" font-size="23" font-weight="760">能力状态必须带文字，不靠颜色猜</text>
+    <g font-size="17" fill="#17324D">
+      <text x="28" y="84"><tspan font-weight="720">默认：</tspan>标准路径就会启用</text>
+      <text x="250" y="84"><tspan font-weight="720">可选：</tspan>配置后由核心提供</text>
+      <text x="506" y="84"><tspan font-weight="720">扩展：</tspan>由插件或钩子接入</text>
+      <text x="778" y="84"><tspan font-weight="720">外部：</tspan>依赖容器或宿主平台</text>
+      <text x="28" y="124"><tspan font-weight="720">缺失：</tspan>锁定范围确认没有</text>
+      <text x="250" y="124"><tspan font-weight="720">未知：</tspan>证据不足，不能写成缺失</text>
+      <text x="560" y="124"><tspan font-weight="720">不适用：</tspan>该比较维度不成立</text>
+    </g>
+    <text x="28" y="162" fill="#496179" font-size="16">同一能力在不同操作系统、客户端、执行后端和模式下可以拥有不同状态，必须把条件写进结论。</text>
+  </g>
+</svg>

@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 820" role="img" aria-labelledby="io-title io-desc">
+  <title id="io-title">模型消息、工具调用与工具结果的数据流</title>
+  <desc id="io-desc">编排器把内部规范消息转换为模型服务格式，模型返回带标识的工具调用，工具执行结果沿相同标识写回内部消息并进入下一次模型输入。</desc>
+  <defs>
+    <marker id="io-main" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto">
+      <path d="M0 0l14 7-14 7z" fill="#0B8F8C"/>
+    </marker>
+    <marker id="io-return" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto">
+      <path d="M0 0l14 7-14 7z" fill="#C97A00"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="820" rx="32" fill="#F7FAFC"/>
+  <text x="600" y="54" text-anchor="middle" fill="#17324D" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="34" font-weight="760">工具调用与结果如何重新进入模型上下文</text>
+  <text x="600" y="86" text-anchor="middle" fill="#496179" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="18">内部消息负责稳定语义，适配层负责项目与模型服务的格式差异</text>
+
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <g transform="translate(42 126)">
+      <rect width="356" height="532" rx="26" fill="#E8F6F5" stroke="#0B8F8C" stroke-width="4"/>
+      <text x="28" y="44" fill="#0B7775" font-size="25" font-weight="760">编排器内部规范消息</text>
+      <text x="28" y="80" fill="#496179" font-size="16">项目自己的持久语义，不是通用网络协议</text>
+
+      <rect x="24" y="112" width="308" height="74" rx="16" fill="#FFFFFF" stroke="#8ABDBB" stroke-width="2"/>
+      <text x="44" y="142" fill="#17324D" font-size="18" font-weight="700">系统与用户内容</text>
+      <text x="44" y="169" fill="#496179" font-size="15">指令、历史、运行上下文</text>
+
+      <rect x="24" y="214" width="308" height="96" rx="16" fill="#FFFFFF" stroke="#3569A8" stroke-width="2"/>
+      <text x="44" y="244" fill="#285383" font-size="18" font-weight="700">助手工具调用</text>
+      <text x="44" y="272" fill="#17324D" font-size="16">调用标识：A17</text>
+      <text x="44" y="296" fill="#496179" font-size="15">工具名称与结构化参数</text>
+
+      <rect x="24" y="338" width="308" height="108" rx="16" fill="#FFFFFF" stroke="#C97A00" stroke-width="2"/>
+      <text x="44" y="368" fill="#9B5C00" font-size="18" font-weight="700">工具结果</text>
+      <text x="44" y="396" fill="#17324D" font-size="16">关联调用：A17</text>
+      <text x="44" y="420" fill="#496179" font-size="15">内容、错误、结构化详情</text>
+
+      <rect x="24" y="458" width="308" height="58" rx="16" fill="#17324D"/>
+      <text x="178" y="495" text-anchor="middle" fill="#FFFFFF" font-size="18" font-weight="700">构造下一次模型可见上下文</text>
+    </g>
+
+    <g transform="translate(458 242)">
+      <rect width="260" height="278" rx="24" fill="#FFF3D3" stroke="#C97A00" stroke-width="3"/>
+      <text x="130" y="42" text-anchor="middle" fill="#9B5C00" font-size="24" font-weight="760">模型服务适配层</text>
+      <text x="28" y="84" fill="#17324D" font-size="17">映射消息角色</text>
+      <text x="28" y="116" fill="#17324D" font-size="17">转换内容块与工具说明</text>
+      <text x="28" y="148" fill="#17324D" font-size="17">合并流式参数增量</text>
+      <text x="28" y="180" fill="#17324D" font-size="17">保留调用与结果关联</text>
+      <line x1="28" y1="204" x2="232" y2="204" stroke="#DCA84B" stroke-width="2"/>
+      <text x="28" y="236" fill="#6D5734" font-size="15">字段名与角色因服务而异</text>
+      <text x="28" y="260" fill="#8A3D2F" font-size="15">不得把适配格式冒充通用格式</text>
+    </g>
+
+    <g transform="translate(778 126)">
+      <rect width="380" height="230" rx="26" fill="#E8F1FF" stroke="#3569A8" stroke-width="3"/>
+      <text x="190" y="44" text-anchor="middle" fill="#285383" font-size="25" font-weight="760">模型服务</text>
+      <text x="28" y="88" fill="#17324D" font-size="18">接收服务专用请求格式</text>
+      <text x="28" y="122" fill="#17324D" font-size="18">返回文本、推理或工具意图</text>
+      <text x="28" y="156" fill="#17324D" font-size="18">工具调用携带服务侧标识</text>
+      <text x="28" y="194" fill="#8A3D2F" font-size="16">模型不直接证明工具已执行</text>
+    </g>
+
+    <g transform="translate(778 406)">
+      <rect width="380" height="230" rx="26" fill="#F0ECFA" stroke="#7155A5" stroke-width="3"/>
+      <text x="190" y="44" text-anchor="middle" fill="#5C4588" font-size="25" font-weight="760">工具注册、策略与执行</text>
+      <text x="28" y="88" fill="#17324D" font-size="18">按名称找到工具并校验参数</text>
+      <text x="28" y="122" fill="#17324D" font-size="18">应用策略后进入执行环境</text>
+      <text x="28" y="156" fill="#17324D" font-size="18">产生结果、错误与副作用证据</text>
+      <text x="28" y="194" fill="#8A3D2F" font-size="16">必须返回原调用的稳定关联</text>
+    </g>
+  </g>
+
+  <g fill="none" stroke="#0B8F8C" stroke-width="5" marker-end="url(#io-main)">
+    <path d="M398 284h52"/>
+    <path d="M718 284h52"/>
+    <path d="M398 462h52"/>
+    <path d="M718 462h52"/>
+  </g>
+  <g fill="none" stroke="#C97A00" stroke-width="4" stroke-dasharray="10 8" marker-end="url(#io-return)">
+    <path d="M778 332h-52"/>
+    <path d="M458 332h-52"/>
+    <path d="M778 544h-52"/>
+    <path d="M458 544h-52"/>
+  </g>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="15" fill="#496179" text-anchor="middle">
+    <text x="428" y="270">请求</text>
+    <text x="748" y="270">序列化</text>
+    <text x="748" y="448">分派</text>
+    <text x="428" y="448">调用</text>
+    <text x="748" y="318" fill="#9B5C00">响应</text>
+    <text x="428" y="318" fill="#9B5C00">解析</text>
+    <text x="748" y="530" fill="#9B5C00">执行结果</text>
+    <text x="428" y="530" fill="#9B5C00">关联</text>
+    <text x="588" y="580" fill="#9B5C00">调用标识 A17 贯通执行与回送</text>
+  </g>
+
+  <g transform="translate(42 682)" font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <rect width="1116" height="94" rx="20" fill="#FFFFFF" stroke="#B8C7D4" stroke-width="2"/>
+    <text x="24" y="36" fill="#17324D" font-size="20" font-weight="720">关联不变量</text>
+    <text x="154" y="36" fill="#0B7775" font-size="17">结果能回到唯一原调用</text>
+    <text x="400" y="36" fill="#0B7775" font-size="17">错误不会丢失调用标识</text>
+    <text x="660" y="36" fill="#0B7775" font-size="17">下一次请求包含可解释结果</text>
+    <text x="936" y="36" fill="#0B7775" font-size="17">适配失败可追踪</text>
+    <text x="24" y="70" fill="#496179" font-size="16">角色名、字段名和内容结构可以变化；调用与结果的语义关联不能在适配过程中消失。</text>
+  </g>
+</svg>

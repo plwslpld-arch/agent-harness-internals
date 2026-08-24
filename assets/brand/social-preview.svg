@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" role="img" aria-labelledby="social-title social-desc">
+  <title id="social-title">Agent Harness 源码内核 GitHub 社交预览</title>
+  <desc id="social-desc">用代码边界和三节点调用链介绍六套编程智能体运行系统的中文源码教材。</desc>
+  <rect width="1280" height="640" fill="#F7FAFC"/>
+  <path d="M0 524h1280" stroke="#D8E3E9" stroke-width="2"/>
+  <path d="M1018 0h262v262z" fill="#E4F5F2"/>
+  <path d="M0 640V486L154 640z" fill="#FFF0C4"/>
+  <g transform="translate(68 95) scale(.8)">
+    <g fill="none" stroke="#16324F" stroke-linecap="round" stroke-linejoin="round" stroke-width="38">
+      <path d="M194 86h-82v340h82"/>
+      <path d="M318 86h82v340h-82"/>
+    </g>
+    <path d="M174 336l82-80 82-80" fill="none" stroke="#0A8F87" stroke-linecap="round" stroke-linejoin="round" stroke-width="32"/>
+    <path d="M320 168l30-4-4 30" fill="none" stroke="#0A8F87" stroke-linecap="round" stroke-linejoin="round" stroke-width="18"/>
+    <g stroke="#16324F" stroke-width="11">
+      <circle cx="174" cy="336" r="23" fill="#F8FBFC"/>
+      <circle cx="256" cy="256" r="25" fill="#FFB318"/>
+      <circle cx="338" cy="176" r="23" fill="#F0645A"/>
+    </g>
+  </g>
+  <text x="430" y="188" fill="#16324F" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="59" font-weight="760">Agent Harness 源码内核</text>
+  <text x="434" y="252" fill="#50677C" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="29" font-weight="520">六套编程智能体运行系统的中文源码教材</text>
+  <text x="434" y="322" fill="#08766F" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="21" font-weight="700">DeepSeek Harness · Codex · Gemini CLI · Claude · pi · OpenCode</text>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="22" font-weight="650" fill="#16324F">
+    <rect x="448" y="386" width="142" height="54" rx="27" fill="#E4F5F2"/>
+    <rect x="606" y="386" width="142" height="54" rx="27" fill="#FFF0C4"/>
+    <rect x="764" y="386" width="142" height="54" rx="27" fill="#FBE7E4"/>
+    <rect x="922" y="386" width="142" height="54" rx="27" fill="#E7EDF2"/>
+    <text x="519" y="421" text-anchor="middle">模型输入</text>
+    <text x="677" y="421" text-anchor="middle">工具循环</text>
+    <text x="835" y="421" text-anchor="middle">权限执行</text>
+    <text x="993" y="421" text-anchor="middle">会话恢复</text>
+  </g>
+  <text x="448" y="570" fill="#50677C" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="23">从一个失败测试出发，沿锁定源码核对真实调用链</text>
+</svg>

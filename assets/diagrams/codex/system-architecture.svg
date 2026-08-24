@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 940" role="img" aria-labelledby="title desc">
+  <title id="title">Codex 多表面共享核心系统架构</title>
+  <desc id="desc">从产品表面经协议操作、线程和会话进入模型工具循环，再连接安全执行、持久化与独立评测的中文分层架构。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0l14 7-14 7z" fill="#087F7C"/></marker>
+    <marker id="dash" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0l14 7-14 7z" fill="#76559B"/></marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#17324D" flood-opacity=".12"/></filter>
+  </defs>
+  <rect width="1400" height="940" rx="34" fill="#F6F9FC"/>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <text x="700" y="55" text-anchor="middle" fill="#17324D" font-size="36" font-weight="760">Codex：多种产品表面，共享可追踪的智能体核心</text>
+    <text x="700" y="91" text-anchor="middle" fill="#50677D" font-size="19">课程架构投影；入口、功能开关、配置和平台共同决定一次运行的真实能力</text>
+
+    <rect x="55" y="126" width="1290" height="132" rx="24" fill="#E9F2FF" stroke="#3569A8" stroke-width="2.5" filter="url(#shadow)"/>
+    <text x="84" y="164" fill="#285383" font-size="23" font-weight="760">一　产品表面：接收目标，呈现事件，但不保证能力完全相同</text>
+    <g font-size="18" text-anchor="middle" fill="#17324D">
+      <rect x="88" y="187" width="184" height="47" rx="13" fill="#FFFFFF"/><text x="180" y="217">交互终端</text>
+      <rect x="292" y="187" width="184" height="47" rx="13" fill="#FFFFFF"/><text x="384" y="217">无界面执行</text>
+      <rect x="496" y="187" width="184" height="47" rx="13" fill="#FFFFFF"/><text x="588" y="217">应用服务器</text>
+      <rect x="700" y="187" width="184" height="47" rx="13" fill="#FFFFFF"/><text x="792" y="217">开发工具协议</text>
+      <rect x="904" y="187" width="184" height="47" rx="13" fill="#FFFFFF"/><text x="996" y="217">云端任务</text>
+      <rect x="1108" y="187" width="200" height="47" rx="13" fill="#FFFFFF"/><text x="1208" y="217">自动化与软件接口</text>
+    </g>
+
+    <rect x="55" y="300" width="1290" height="150" rx="24" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2.5" filter="url(#shadow)"/>
+    <text x="84" y="338" fill="#955A00" font-size="23" font-weight="760">二　共享线程边界：协议操作进入活动运行时</text>
+    <g font-size="18" text-anchor="middle">
+      <rect x="93" y="360" width="250" height="62" rx="15" fill="#FFFFFF" stroke="#D8A84D"/><text x="218" y="386" fill="#17324D" font-weight="720">配置与协议操作</text><text x="218" y="409" fill="#50677D">输入、模式、环境与取消</text>
+      <rect x="395" y="360" width="250" height="62" rx="15" fill="#FFFFFF" stroke="#D8A84D"/><text x="520" y="386" fill="#17324D" font-weight="720">线程管理器</text><text x="520" y="409" fill="#50677D">创建、定位与维护线程</text>
+      <rect x="697" y="360" width="250" height="62" rx="15" fill="#FFFFFF" stroke="#D8A84D"/><text x="822" y="386" fill="#17324D" font-weight="720">活动线程</text><text x="822" y="409" fill="#50677D">会话与双向消息通道</text>
+      <rect x="999" y="360" width="306" height="62" rx="15" fill="#FFFFFF" stroke="#D8A84D"/><text x="1152" y="386" fill="#17324D" font-weight="720">单轮上下文</text><text x="1152" y="409" fill="#50677D">有效配置、环境、模型与权限</text>
+    </g>
+    <g fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"><path d="M343 391h44"/><path d="M645 391h44"/><path d="M947 391h44"/></g>
+
+    <rect x="55" y="492" width="862" height="316" rx="26" fill="#E7F5F3" stroke="#087F7C" stroke-width="3" filter="url(#shadow)"/>
+    <text x="84" y="532" fill="#086E6B" font-size="24" font-weight="760">三　智能体核心：一次轮次的模型与工具闭环</text>
+    <g font-size="18" text-anchor="middle">
+      <rect x="91" y="561" width="230" height="86" rx="17" fill="#FFFFFF" stroke="#51A9A5"/><text x="206" y="591" fill="#17324D" font-weight="760">模型可见输入</text><text x="206" y="620" fill="#50677D">指令、历史、工具规格</text>
+      <rect x="371" y="561" width="230" height="86" rx="17" fill="#17324D"/><text x="486" y="591" fill="#FFFFFF" font-weight="760">模型响应采样</text><text x="486" y="620" fill="#D3E1EA">流事件、重试与取消</text>
+      <rect x="651" y="561" width="230" height="86" rx="17" fill="#FFFFFF" stroke="#51A9A5"/><text x="766" y="591" fill="#17324D" font-weight="760">工具路由</text><text x="766" y="620" fill="#50677D">规格不等于运行时</text>
+      <rect x="91" y="686" width="230" height="86" rx="17" fill="#FFFFFF" stroke="#51A9A5"/><text x="206" y="716" fill="#17324D" font-weight="760">继续或终止</text><text x="206" y="745" fill="#50677D">后续采样、完成、取消</text>
+      <rect x="371" y="686" width="230" height="86" rx="17" fill="#FFFFFF" stroke="#51A9A5"/><text x="486" y="716" fill="#17324D" font-weight="760">会话历史</text><text x="486" y="745" fill="#50677D">输入、响应与工具结果</text>
+      <rect x="651" y="686" width="230" height="86" rx="17" fill="#FFF0E8" stroke="#D2673A"/><text x="766" y="716" fill="#8A3D2F" font-weight="760">受控副作用</text><text x="766" y="745" fill="#8A3D2F">策略、审批、隔离、执行</text>
+    </g>
+    <g fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"><path d="M321 604h42"/><path d="M601 604h42"/><path d="M766 647v31"/><path d="M651 729h-42"/><path d="M371 729h-42"/><path d="M206 686v-21h250v-10"/></g>
+
+    <rect x="957" y="492" width="388" height="316" rx="26" fill="#F0ECF8" stroke="#76559B" stroke-width="2.5" filter="url(#shadow)"/>
+    <text x="985" y="532" fill="#60458C" font-size="23" font-weight="760">四　持久证据与外部消费者</text>
+    <g font-size="18" text-anchor="middle">
+      <rect x="991" y="561" width="320" height="60" rx="15" fill="#FFFFFF"/><text x="1151" y="587" fill="#17324D" font-weight="720">线程存储</text><text x="1151" y="610" fill="#50677D">持久句柄与元数据</text>
+      <rect x="991" y="642" width="320" height="60" rx="15" fill="#FFFFFF"/><text x="1151" y="668" fill="#17324D" font-weight="720">运行记录与轨迹</text><text x="1151" y="691" fill="#50677D">事件、产物与恢复材料</text>
+      <rect x="991" y="723" width="320" height="58" rx="15" fill="#FFFFFF"/><text x="1151" y="748" fill="#17324D" font-weight="720">反馈、遥测与独立评测</text><text x="1151" y="770" fill="#8A3D2F" font-size="15">三者语义不能合并</text>
+    </g>
+    <g fill="none" stroke="#76559B" stroke-width="4" stroke-dasharray="10 8" marker-end="url(#dash)"><path d="M881 604h102"/><path d="M881 729h102"/></g>
+
+    <path d="M700 258v34" fill="none" stroke="#087F7C" stroke-width="5" marker-end="url(#arrow)"/>
+    <path d="M700 450v34" fill="none" stroke="#087F7C" stroke-width="5" marker-end="url(#arrow)"/>
+    <rect x="55" y="850" width="1290" height="54" rx="16" fill="#17324D"/>
+    <text x="700" y="884" text-anchor="middle" fill="#FFFFFF" font-size="18">阅读规则：表面显示的事件、模型提出的调用、系统允许的动作和真实发生的副作用必须分别核对</text>
+  </g>
+</svg>

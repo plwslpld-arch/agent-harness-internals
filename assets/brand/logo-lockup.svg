@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 300" role="img" aria-labelledby="lockup-title lockup-desc">
+  <title id="lockup-title">Agent Harness 源码内核中文组合标</title>
+  <desc id="lockup-desc">左侧是代码边界和三节点调用链，右侧是 Agent Harness 源码内核标题与中文源码教材说明。</desc>
+  <style>
+    .ink { stroke: #16324F; }
+    .title { fill: #16324F; }
+    .muted { fill: #50677C; }
+    .paper { fill: #F8FBFC; }
+    @media (prefers-color-scheme: dark) {
+      .ink { stroke: #ECF5F7; }
+      .title { fill: #F7FBFC; }
+      .muted { fill: #BDD0DA; }
+      .paper { fill: #10283D; }
+    }
+  </style>
+  <g transform="translate(20 4) scale(.55)">
+    <g class="ink" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="38">
+      <path d="M194 86h-82v340h82"/>
+      <path d="M318 86h82v340h-82"/>
+    </g>
+    <path d="M174 336l82-80 82-80" fill="none" stroke="#0A8F87" stroke-linecap="round" stroke-linejoin="round" stroke-width="32"/>
+    <path d="M320 168l30-4-4 30" fill="none" stroke="#0A8F87" stroke-linecap="round" stroke-linejoin="round" stroke-width="18"/>
+    <g class="ink" stroke-width="11">
+      <circle class="paper" cx="174" cy="336" r="23"/>
+      <circle cx="256" cy="256" r="25" fill="#FFB318"/>
+      <circle cx="338" cy="176" r="23" fill="#F0645A"/>
+    </g>
+  </g>
+  <text class="title" x="318" y="152" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="66" font-weight="760">Agent Harness 源码内核</text>
+  <text class="muted" x="322" y="208" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="27" font-weight="520" letter-spacing="1.5">六套编程智能体运行系统的中文源码教材</text>
+</svg>

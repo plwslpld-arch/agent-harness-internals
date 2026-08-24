@@ -1,0 +1,30 @@
+name: 上游来源更新提示
+
+# 课程链接固定在可复现的提交上。这个任务每周提醒维护者哪些上游已有新提交，
+# 但不会自动改写课程，也不会把“有更新”等同于“现有讲解错误”。
+on:
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          submodules: false
+      - name: 配置 Node 24
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '24'
+      - name: 准备锁定来源
+        run: npm run bootstrap
+      - name: 生成更新提示
+        run: node scripts/check-drift.mjs --fetch >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,28 @@
+{
+  "name": "agent-harness-internals",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0 <25"
+  },
+  "scripts": {
+    "bootstrap": "node scripts/bootstrap.mjs",
+    "sources:verify": "node scripts/verify-sources.mjs --profile core",
+    "lab:minimal": "node --test examples/minimal-harness/harness.test.mjs",
+    "check:content": "node scripts/check-content-contract.mjs",
+    "check:brand": "node scripts/check-brand.mjs",
+    "check:visuals": "node scripts/check-visuals.mjs",
+    "check:anchors": "node scripts/verify-anchors.mjs",
+    "check:drift": "node scripts/check-drift.mjs",
+    "drift:report": "node scripts/check-drift.mjs --fetch",
+    "check:links": "node scripts/check-links.mjs",
+    "check:portability": "node scripts/verify-portability.mjs",
+    "check:licenses": "node scripts/verify-licenses.mjs",
+    "check:secrets": "node scripts/scan-secrets.mjs",
+    "test": "node scripts/run-tests.mjs",
+    "check": "node scripts/check-all.mjs",
+    "check:style": "node scripts/check-style.mjs",
+    "style:report": "node scripts/check-style.mjs --report"
+  }
+}

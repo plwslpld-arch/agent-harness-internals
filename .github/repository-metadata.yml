@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "name": "agent-harness-internals",
+  "visibility": "public",
+  "defaultBranch": "main",
+  "about": "面向开发者的中文 Agent Harness 源码教材：解析 DeepSeek Harness、Codex、Gemini CLI、Claude、pi 与 OpenCode。",
+  "topics": [
+    "agent-harness",
+    "coding-agents",
+    "source-code-analysis",
+    "ai-evaluation",
+    "deepseek-harness",
+    "openai-codex",
+    "gemini-cli",
+    "claude-code",
+    "pi-coding-agent",
+    "opencode",
+    "chinese"
+  ],
+  "socialPreview": "assets/brand/social-preview.png",
+  "features": {
+    "issues": true,
+    "wiki": false,
+    "discussions": false
+  },
+  "branchProtection": {
+    "requiredStatusChecks": ["verify"],
+    "enforceAdmins": true,
+    "requiredApprovingReviewCount": 0
+  }
+}

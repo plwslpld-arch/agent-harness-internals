@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="logo-title logo-desc">
+  <title id="logo-title">Agent Harness 源码内核标记</title>
+  <desc id="logo-desc">一对代码边界包住输入、执行与反馈三个节点组成的调用链，表达 Harness 把模型决定连接到真实环境。</desc>
+  <style>
+    .ink { stroke: #16324F; }
+    .paper { fill: #F8FBFC; }
+    @media (prefers-color-scheme: dark) {
+      .ink { stroke: #ECF5F7; }
+      .paper { fill: #10283D; }
+    }
+  </style>
+  <g class="ink" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="38">
+    <path d="M194 86h-82v340h82"/>
+    <path d="M318 86h82v340h-82"/>
+  </g>
+  <path d="M174 336l82-80 82-80" fill="none" stroke="#0A8F87" stroke-linecap="round" stroke-linejoin="round" stroke-width="32"/>
+  <path d="M320 168l30-4-4 30" fill="none" stroke="#0A8F87" stroke-linecap="round" stroke-linejoin="round" stroke-width="18"/>
+  <g class="ink" stroke-width="11">
+    <circle class="paper" cx="174" cy="336" r="23"/>
+    <circle cx="256" cy="256" r="25" fill="#FFB318"/>
+    <circle cx="338" cy="176" r="23" fill="#F0645A"/>
+  </g>
+</svg>

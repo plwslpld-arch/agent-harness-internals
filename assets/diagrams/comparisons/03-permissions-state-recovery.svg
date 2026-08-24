@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="920" viewBox="0 0 1440 920" role="img" aria-labelledby="title desc">
+  <title id="title">六类 Harness 的权限、状态与恢复边界</title><desc id="desc">应用权限、操作系统隔离、真实副作用、持久会话、模型上下文、有损摘要、工作树恢复和外部副作用分层的中文边界图。</desc>
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#53627a"/></marker><style>text{font-family:"Microsoft YaHei","Noto Sans CJK SC",sans-serif;fill:#17233b}.t{font-size:34px;font-weight:700}.s{font-size:16px;fill:#596981}.h{font-size:21px;font-weight:700}.b{font-size:17px}.l{stroke:#53627a;stroke-width:3;fill:none;marker-end:url(#a)}.d{stroke:#e25555;stroke-width:3;stroke-dasharray:9 7;fill:none;marker-end:url(#a)}</style></defs>
+  <rect width="1440" height="920" rx="28" fill="#f7f9fc"/><text x="70" y="67" class="t">权限决策、强制隔离与状态恢复是三套责任</text><text x="70" y="99" class="s">能继续调用、能触达资源、能恢复会话和能撤销副作用必须分别验证</text>
+  <rect x="75" y="145" width="300" height="150" rx="22" fill="#e8f1ff" stroke="#3b82f6" stroke-width="2"/><text x="105" y="187" class="h">一　应用层权限</text><text x="105" y="225" class="b">规则、策略、风险判断</text><text x="105" y="257" class="b">允许、询问、拒绝</text>
+  <rect x="438" y="145" width="300" height="150" rx="22" fill="#f0eaff" stroke="#8b5cf6" stroke-width="2"/><text x="468" y="187" class="h">二　操作系统隔离</text><text x="468" y="225" class="b">文件、进程、网络、凭据</text><text x="468" y="257" class="b">宿主、容器或专用沙箱</text>
+  <rect x="801" y="145" width="300" height="150" rx="22" fill="#fff0f0" stroke="#e25555" stroke-width="2"/><text x="831" y="187" class="h">三　真实副作用</text><text x="831" y="225" class="b">工作树、外部目录、数据库</text><text x="831" y="257" class="b">网络请求与后台进程</text>
+  <rect x="1164" y="145" width="205" height="150" rx="22" fill="#fff4df" stroke="#f59e0b" stroke-width="2"/><text x="1194" y="187" class="h">提交事实</text><text x="1194" y="225" class="b">幂等标识</text><text x="1194" y="257" class="b">结果与错误</text>
+  <path d="M375 220H438" class="l"/><path d="M738 220H801" class="l"/><path d="M1101 220H1164" class="l"/>
+  <rect x="75" y="360" width="1294" height="170" rx="24" fill="#ffffff" stroke="#9aa8bc" stroke-width="2"/><text x="108" y="404" class="h">四　持续状态不是单一对象</text>
+  <rect x="110" y="432" width="220" height="68" rx="14" fill="#e8f1ff"/><text x="135" y="473" class="b">持久会话与事件</text>
+  <rect x="360" y="432" width="220" height="68" rx="14" fill="#edf9f2"/><text x="385" y="473" class="b">活动分支与环境状态</text>
+  <rect x="610" y="432" width="220" height="68" rx="14" fill="#fff4df"/><text x="635" y="473" class="b">模型可见上下文</text>
+  <rect x="860" y="432" width="220" height="68" rx="14" fill="#f0eaff"/><text x="885" y="473" class="b">有损压缩摘要</text>
+  <rect x="1110" y="432" width="220" height="68" rx="14" fill="#fff0f0"/><text x="1135" y="473" class="b">工作树快照与补丁</text>
+  <path d="M1266 295V330H720V360" class="l"/>
+  <rect x="75" y="610" width="210" height="150" rx="20" fill="#f0eaff" stroke="#8b5cf6" stroke-width="2"/><text x="102" y="651" class="h">DeepSeek Harness</text><text x="102" y="690" class="b">审批与沙箱分层</text><text x="102" y="721" class="s">恢复不重放已提交工具</text>
+  <rect x="306" y="610" width="210" height="150" rx="20" fill="#e8f1ff" stroke="#3b82f6" stroke-width="2"/><text x="333" y="651" class="h">Codex</text><text x="333" y="690" class="b">策略与平台强制分层</text><text x="333" y="721" class="s">事件、历史、上下文分开</text>
+  <rect x="537" y="610" width="210" height="150" rx="20" fill="#edf9f2" stroke="#22a06b" stroke-width="2"/><text x="564" y="651" class="h">Gemini CLI</text><text x="564" y="690" class="b">确认、策略、安全分层</text><text x="564" y="721" class="s">摘要仍然有损</text>
+  <rect x="768" y="610" width="210" height="150" rx="20" fill="#fff0f0" stroke="#e25555" stroke-width="2"/><text x="795" y="651" class="h">Claude</text><text x="795" y="690" class="b">许可不等于可用</text><text x="795" y="721" class="s">产品与开发包分界</text>
+  <rect x="999" y="610" width="180" height="150" rx="20" fill="#fff4df" stroke="#f59e0b" stroke-width="2"/><text x="1026" y="651" class="h">pi</text><text x="1026" y="690" class="b">默认宿主权限</text><text x="1026" y="721" class="s">强隔离来自外部</text>
+  <rect x="1200" y="610" width="180" height="150" rx="20" fill="#e8f7f7" stroke="#159b9b" stroke-width="2"/><text x="1227" y="651" class="h">OpenCode</text><text x="1227" y="690" class="b">询问是应用控制</text><text x="1227" y="721" class="s">回退不包外部副作用</text>
+  <path d="M220 530V610" class="l"/><path d="M470 530V575H411V610" class="l"/><path d="M720 530V575H642V610" class="l"/><path d="M970 530V575H873V610" class="l"/><path d="M1220 530V575H1089V610" class="l"/><path d="M1220 575H1290V610" class="l"/>
+  <path d="M950 295C950 800 1210 800 1210 850H360" class="d"/><rect x="360" y="816" width="720" height="58" rx="16" fill="#17233b"/><text x="405" y="852" style="font:18px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#fff">外部副作用不可因界面回退或消息恢复被假定消失；恢复前必须核对提交事实</text>
+</svg>

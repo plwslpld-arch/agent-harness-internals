@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="920" viewBox="0 0 1440 920" role="img" aria-labelledby="title desc">
+  <title id="title">六类 Harness 的可观测性、独立评测与部署维护</title><desc id="desc">六类 Agent Harness 生成运行轨迹与产物，经过冻结试验、独立评分、训练适配、候选选择和独立发布留出集的责任链图。</desc>
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#526179"/></marker><style>text{font-family:"Microsoft YaHei","Noto Sans CJK SC",sans-serif;fill:#17233b}.t{font-size:34px;font-weight:700}.s{font-size:16px;fill:#596981}.h{font-size:20px;font-weight:700}.b{font-size:17px}.l{stroke:#526179;stroke-width:3;fill:none;marker-end:url(#a)}.d{stroke:#8b5cf6;stroke-width:3;stroke-dasharray:8 7;fill:none;marker-end:url(#a)}</style></defs>
+  <rect width="1440" height="920" rx="28" fill="#f7f9fc"/><text x="70" y="67" class="t">运行证据进入评测，要经过五段独立责任</text><text x="70" y="99" class="s">日志、反馈和测试都是输入，不能提前冒充训练奖励或发布批准</text>
+  <rect x="70" y="145" width="1300" height="128" rx="24" fill="#17233b"/><text x="110" y="190" style="font:700 23px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#fff">六类 Agent Harness 运行层</text><text x="110" y="230" style="font:18px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#c8d6ef">消息 · 工具调用 · 权限决定 · 用量 · 错误 · 用户反馈 · 文件与外部副作用</text>
+  <path d="M720 273V326" class="l"/>
+  <rect x="95" y="330" width="1250" height="125" rx="22" fill="#e8f1ff" stroke="#3b82f6" stroke-width="2"/><text x="130" y="374" class="h">一　冻结试验与产物</text><text x="130" y="410" class="b">固定数据集、目标、配置与评分器版本；试验是统计单位，尝试只承担恢复</text><text x="1065" y="386" class="s">不可变血缘</text><text x="1065" y="416" class="s">缺失显式标记</text>
+  <path d="M720 455V508" class="l"/>
+  <rect x="85" y="515" width="235" height="118" rx="20" fill="#edf9f2" stroke="#22a06b" stroke-width="2"/><text x="115" y="557" class="h">二　独立评分</text><text x="115" y="593" class="b">规则、模型与人工</text><text x="115" y="618" class="s">读取冻结产物</text>
+  <rect x="350" y="515" width="235" height="118" rx="20" fill="#fff4df" stroke="#f59e0b" stroke-width="2"/><text x="380" y="557" class="h">三　训练适配</text><text x="380" y="593" class="b">语义完整才转换</text><text x="380" y="618" class="s">不替代发布评测</text>
+  <rect x="615" y="515" width="235" height="118" rx="20" fill="#f0eaff" stroke="#8b5cf6" stroke-width="2"/><text x="645" y="557" class="h">四　候选选择</text><text x="645" y="593" class="b">固定统计口径</text><text x="645" y="618" class="s">冻结入选候选</text>
+  <rect x="880" y="515" width="235" height="118" rx="20" fill="#fff0f0" stroke="#e25555" stroke-width="2"/><text x="910" y="557" class="h">五　发布留出集</text><text x="910" y="593" class="b">独立任务与门槛</text><text x="910" y="618" class="s">签署发布责任</text>
+  <rect x="1145" y="515" width="210" height="118" rx="20" fill="#e8f7f7" stroke="#28939b" stroke-width="2"/><text x="1175" y="557" class="h">部署与维护</text><text x="1175" y="593" class="b">留存、脱敏、成本</text><text x="1175" y="618" class="s">告警与事故响应</text>
+  <path d="M320 574H350" class="l"/><path d="M585 574H615" class="l"/><path d="M850 574H880" class="l"/><path d="M1115 574H1145" class="l"/><path d="M720 508V490H202V515" class="l"/>
+  <rect x="95" y="710" width="390" height="118" rx="20" fill="#fff" stroke="#526179" stroke-width="2"/><text x="125" y="752" class="h">恢复边界</text><text x="125" y="789" class="b">基础设施错误可以新建尝试</text><text x="125" y="816" class="s">产品失败不能靠重试改成通过</text>
+  <rect x="525" y="710" width="390" height="118" rx="20" fill="#fff" stroke="#526179" stroke-width="2"/><text x="555" y="752" class="h">证据边界</text><text x="555" y="789" class="b">轨迹能解释过程，产物决定结果</text><text x="555" y="816" class="s">采集缺口不能解释为零错误</text>
+  <rect x="955" y="710" width="390" height="118" rx="20" fill="#fff" stroke="#526179" stroke-width="2"/><text x="985" y="752" class="h">职责边界</text><text x="985" y="789" class="b">训练、选择与发布分别冻结</text><text x="985" y="816" class="s">同一评分信号不能包办全部决定</text>
+  <path d="M468 633V675H290V710" class="d"/><path d="M732 633V710" class="d"/><path d="M998 633V675H1150V710" class="d"/>
+  <text x="70" y="882" class="s">可观测性提高可追溯性；独立评测与发布治理仍需由明确契约和责任主体完成。</text>
+</svg>

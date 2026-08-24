@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="760" viewBox="0 0 1440 760" role="img" aria-labelledby="title desc">
+  <title id="title">Aider 仓库映射与规划编辑分工</title><desc id="desc">仓库映射压缩代码上下文，规划器生成方案，用户确认后由编辑器形成文件变更，再接受独立验证。</desc>
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#526179"/></marker><style>text{font-family:"Microsoft YaHei","Noto Sans CJK SC",sans-serif;fill:#17233b}.t{font-size:34px;font-weight:700}.s{font-size:16px;fill:#596981}.h{font-size:21px;font-weight:700}.b{font-size:17px}.l{stroke:#526179;stroke-width:3;fill:none;marker-end:url(#a)}</style></defs>
+  <rect width="1440" height="760" rx="28" fill="#f7f9fc"/><text x="70" y="68" class="t">上下文压缩与编辑分工是两条互补机制</text><text x="70" y="101" class="s">仓库映射选择看什么，规划器与编辑器决定如何改</text>
+  <rect x="70" y="160" width="260" height="145" rx="22" fill="#e8f1ff" stroke="#3b82f6" stroke-width="2"/><text x="105" y="207" class="h">仓库源码</text><text x="105" y="247" class="b">聊天文件与其他文件</text><text x="105" y="278" class="s">符号、引用与提及线索</text>
+  <rect x="390" y="160" width="300" height="145" rx="22" fill="#fff4df" stroke="#f59e0b" stroke-width="2"/><text x="425" y="207" class="h">仓库映射</text><text x="425" y="247" class="b">排序标签并服从令牌预算</text><text x="425" y="278" class="s">是投影，不是完整仓库</text>
+  <rect x="750" y="160" width="260" height="145" rx="22" fill="#f0eaff" stroke="#8b5cf6" stroke-width="2"/><text x="785" y="207" class="h">规划器</text><text x="785" y="247" class="b">分析需求并形成编辑建议</text><text x="785" y="278" class="s">默认等待用户确认</text>
+  <rect x="1070" y="160" width="300" height="145" rx="22" fill="#edf9f2" stroke="#22a06b" stroke-width="2"/><text x="1105" y="207" class="h">编辑器</text><text x="1105" y="247" class="b">按编辑模型和格式修改文件</text><text x="1105" y="278" class="s">产出差异与可选版本库记录</text>
+  <path d="M330 232H390" class="l"/><path d="M690 232H750" class="l"/><path d="M1010 232H1070" class="l"/>
+  <rect x="70" y="430" width="400" height="155" rx="22" fill="#fff" stroke="#526179" stroke-width="2"/><text x="108" y="478" class="h">上下文缺口</text><text x="108" y="518" class="b">预算与排序可能省略关键符号</text><text x="108" y="550" class="s">需要按任务补读真实源码</text>
+  <rect x="520" y="430" width="400" height="155" rx="22" fill="#fff0f0" stroke="#e25555" stroke-width="2"/><text x="558" y="478" class="h">控制边界</text><text x="558" y="518" class="b">自动接受会改变人工确认路径</text><text x="558" y="550" class="s">两个角色也可能使用同一模型</text>
+  <rect x="970" y="430" width="400" height="155" rx="22" fill="#17233b"/><text x="1008" y="478" style="font:700 21px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#fff">独立验证</text><text x="1008" y="518" style="font:18px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#d5e0f2">差异、测试、需求与外部副作用</text><text x="1008" y="550" style="font:16px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#aebed8">提交存在不等于任务通过</text>
+  <text x="70" y="704" class="s">关键边界：映射提高上下文密度，分工提高编辑可控性；二者都需要真实产物验证。</text>
+</svg>

@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 940" role="img" aria-labelledby="title desc">
+  <title id="title">Codex 真实工具轮次端到端任务流程</title>
+  <desc id="desc">基于上游排除视窗系统的集成测试，从用户输入到两次模拟模型采样、真实本地命令执行、工具结果回送和轮次完成的中文流程图。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0l14 7-14 7z" fill="#087F7C"/></marker>
+    <marker id="warn" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0l14 7-14 7z" fill="#D2673A"/></marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#17324D" flood-opacity=".12"/></filter>
+  </defs>
+  <rect width="1400" height="940" rx="34" fill="#F6F9FC"/>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif">
+    <text x="700" y="55" text-anchor="middle" fill="#17324D" font-size="36" font-weight="760">一次真实工具轮次：结果必须回到模型，而不只是显示出来</text>
+    <text x="700" y="91" text-anchor="middle" fill="#50677D" font-size="19">证据范围：上游测试排除视窗系统；模拟模型服务，真实本地命令执行</text>
+
+    <rect x="55" y="126" width="1290" height="92" rx="22" fill="#E9F2FF" stroke="#3569A8" stroke-width="2.5" filter="url(#shadow)"/>
+    <text x="84" y="161" fill="#285383" font-size="21" font-weight="760">用户输入</text>
+    <text x="250" y="161" fill="#17324D" font-size="19">请运行这个命令行命令（原始测试输入见正文）</text>
+    <text x="84" y="193" fill="#50677D" font-size="17">测试条件：审批永不询问；权限保护禁用；工作目录派生沙箱字段——仅限本夹具，不是默认安全配置</text>
+
+    <g font-size="18" text-anchor="middle">
+      <rect x="75" y="270" width="230" height="100" rx="19" fill="#FFFFFF" stroke="#51A9A5" stroke-width="2.5" filter="url(#shadow)"/>
+      <text x="190" y="302" fill="#17324D" font-weight="760">一　建立轮次</text><text x="190" y="331" fill="#50677D">线程、会话、有效配置</text><text x="190" y="355" fill="#50677D">历史与取消边界</text>
+
+      <rect x="365" y="270" width="255" height="100" rx="19" fill="#E7F5F3" stroke="#087F7C" stroke-width="2.5" filter="url(#shadow)"/>
+      <text x="492" y="302" fill="#086E6B" font-weight="760">二　第一次采样</text><text x="492" y="331" fill="#17324D">模拟模型响应流</text><text x="492" y="355" fill="#50677D">创建 → 函数调用 → 完成</text>
+
+      <rect x="680" y="270" width="285" height="100" rx="19" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2.5" filter="url(#shadow)"/>
+      <text x="822" y="302" fill="#955A00" font-weight="760">三　保留调用标识</text><text x="822" y="331" fill="#17324D">原始标识值见正文</text><text x="822" y="355" fill="#50677D">命令执行工具</text>
+
+      <rect x="1025" y="270" width="300" height="100" rx="19" fill="#FFF0E8" stroke="#D2673A" stroke-width="2.5" filter="url(#shadow)"/>
+      <text x="1175" y="302" fill="#8A3D2F" font-weight="760">四　真实本地执行</text><text x="1175" y="331" fill="#17324D">执行回显命令</text><text x="1175" y="355" fill="#50677D">进程退出码：0</text>
+    </g>
+    <g fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"><path d="M305 320h52"/><path d="M620 320h52"/></g>
+    <path d="M965 320h52" fill="none" stroke="#D2673A" stroke-width="4" marker-end="url(#warn)"/>
+    <path d="M190 218v44" fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"/>
+
+    <rect x="110" y="429" width="1180" height="126" rx="22" fill="#17324D" filter="url(#shadow)"/>
+    <text x="140" y="466" fill="#FFFFFF" font-size="22" font-weight="760">工具结果进入会话历史，并关联原调用标识</text>
+    <text x="140" y="501" fill="#D3E1EA" font-size="18">工具输出：耗时、退出码为零、标准输出；原始字段和值见正文</text>
+    <text x="140" y="531" fill="#7FE0D5" font-size="17">关键不变量：输出成为第二次模型请求的输入；只向用户打印输出不构成工具闭环</text>
+    <path d="M1175 370v51" fill="none" stroke="#D2673A" stroke-width="4" marker-end="url(#warn)"/>
+
+    <g font-size="18" text-anchor="middle">
+      <rect x="105" y="618" width="305" height="112" rx="20" fill="#E7F5F3" stroke="#087F7C" stroke-width="2.5" filter="url(#shadow)"/>
+      <text x="257" y="652" fill="#086E6B" font-weight="760">五　第二次采样</text><text x="257" y="682" fill="#17324D">历史含工具结果</text><text x="257" y="708" fill="#50677D">模拟服务返回：全部完成</text>
+
+      <rect x="548" y="618" width="305" height="112" rx="20" fill="#FFFFFF" stroke="#51A9A5" stroke-width="2.5" filter="url(#shadow)"/>
+      <text x="700" y="652" fill="#17324D" font-weight="760">六　轮次收敛</text><text x="700" y="682" fill="#50677D">没有继续工具调用</text><text x="700" y="708" fill="#50677D">发出轮次完成事件</text>
+
+      <rect x="990" y="618" width="305" height="112" rx="20" fill="#F0ECF8" stroke="#76559B" stroke-width="2.5" filter="url(#shadow)"/>
+      <text x="1142" y="652" fill="#60458C" font-weight="760">七　产品与评测读取</text><text x="1142" y="682" fill="#17324D">界面投影、运行记录、轨迹</text><text x="1142" y="708" fill="#8A3D2F">完成事件不等于评测通过</text>
+    </g>
+    <path d="M340 555v55" fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"/>
+    <g fill="none" stroke="#087F7C" stroke-width="4" marker-end="url(#arrow)"><path d="M410 674h130"/><path d="M853 674h129"/></g>
+
+    <rect x="55" y="785" width="1290" height="119" rx="20" fill="#FFF2D4" stroke="#C57A0B" stroke-width="2"/>
+    <text x="84" y="821" fill="#955A00" font-size="21" font-weight="760">三个“完成”不能混为一个结论</text>
+    <text x="84" y="855" fill="#17324D" font-size="18">进程退出码为零：命令进程成功　｜　响应完成：一次模型响应结束　｜　轮次完成：当前轮次生命周期收敛</text>
+    <text x="84" y="884" fill="#8A3D2F" font-size="17">要得到评测结论，还需固定试验、保存产物，并由独立评分器检查任务目标与安全约束。</text>
+  </g>
+</svg>

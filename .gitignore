@@ -1,0 +1,23 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+build/
+coverage/
+*.log
+
+# 自动生成的源码索引：本地由 npm run catalogs:generate 产出，
+# 由 CI 发布到 gh-pages 分支，不进入主干。
+.generated/
+
+# 本地 agent 工具配置，不属于仓库内容。
+.claude/
+.worktrees/
+
+# Generated temporary files and local experiment output.
+.tmp/
+research/working-notes/private/
+research/benchmarks/runs/
+research/runtime-evidence/private/

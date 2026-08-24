@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" role="img" aria-labelledby="scope-title scope-desc">
+  <title id="scope-title">Agent Harness 主线与独立评测关系图</title>
+  <desc id="scope-desc">用户目标沿 Agent Harness 主线经过上下文、模型、工具、会话和终止阶段；运行证据向下进入独立评测链路。</desc>
+  <defs>
+    <marker id="arrow-main" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto">
+      <path d="M0 0l14 7-14 7z" fill="#0B8F8C"/>
+    </marker>
+    <marker id="arrow-eval" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto">
+      <path d="M0 0l14 7-14 7z" fill="#C97A00"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="700" rx="32" fill="#F7FAFC"/>
+  <text x="600" y="62" text-anchor="middle" fill="#17324D" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="34" font-weight="760">一次任务怎样穿过 Agent Harness</text>
+
+  <rect x="36" y="188" width="144" height="92" rx="20" fill="#17324D"/>
+  <text x="108" y="225" text-anchor="middle" fill="#F7FAFC" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="22" font-weight="700">用户目标</text>
+  <text x="108" y="255" text-anchor="middle" fill="#CFE0E9" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="17">约束与输入</text>
+
+  <rect x="220" y="104" width="940" height="332" rx="26" fill="#E8F6F5" stroke="#0B8F8C" stroke-width="3"/>
+  <text x="252" y="146" fill="#0B7775" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="24" font-weight="760">Agent Harness 主线</text>
+  <text x="1130" y="144" text-anchor="end" fill="#496179" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="16">改变模型看见什么、能做什么、何时停止</text>
+
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif" text-anchor="middle">
+    <g transform="translate(250 188)">
+      <rect width="154" height="92" rx="18" fill="#FFFFFF" stroke="#17324D" stroke-width="3"/>
+      <text x="77" y="40" fill="#17324D" font-size="21" font-weight="700">上下文装配</text>
+      <text x="77" y="68" fill="#496179" font-size="16">指令、历史、策略</text>
+    </g>
+    <g transform="translate(430 188)">
+      <rect width="154" height="92" rx="18" fill="#FFFFFF" stroke="#17324D" stroke-width="3"/>
+      <text x="77" y="40" fill="#17324D" font-size="21" font-weight="700">模型请求</text>
+      <text x="77" y="68" fill="#496179" font-size="16">内容与工具意图</text>
+    </g>
+    <g transform="translate(610 188)">
+      <rect width="154" height="92" rx="18" fill="#FFFFFF" stroke="#17324D" stroke-width="3"/>
+      <text x="77" y="40" fill="#17324D" font-size="21" font-weight="700">工具与策略</text>
+      <text x="77" y="68" fill="#496179" font-size="16">校验、审批、执行</text>
+    </g>
+    <g transform="translate(790 188)">
+      <rect width="154" height="92" rx="18" fill="#FFFFFF" stroke="#17324D" stroke-width="3"/>
+      <text x="77" y="40" fill="#17324D" font-size="21" font-weight="700">会话与恢复</text>
+      <text x="77" y="68" fill="#496179" font-size="16">事件、压缩、重试</text>
+    </g>
+    <g transform="translate(970 188)">
+      <rect width="154" height="92" rx="18" fill="#FFFFFF" stroke="#17324D" stroke-width="3"/>
+      <text x="77" y="40" fill="#17324D" font-size="21" font-weight="700">终止与产物</text>
+      <text x="77" y="68" fill="#496179" font-size="16">结果、补丁、轨迹</text>
+    </g>
+  </g>
+
+  <g fill="none" stroke="#0B8F8C" stroke-width="6" marker-end="url(#arrow-main)">
+    <path d="M180 234h60"/>
+    <path d="M404 234h18"/>
+    <path d="M584 234h18"/>
+    <path d="M764 234h18"/>
+    <path d="M944 234h18"/>
+  </g>
+  <path d="M867 280c0 54-74 38-74 0" fill="none" stroke="#0B8F8C" stroke-width="4" marker-end="url(#arrow-main)"/>
+  <text x="830" y="354" text-anchor="middle" fill="#0B7775" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="17">未终止时继续循环</text>
+
+  <rect x="220" y="492" width="940" height="154" rx="26" fill="#FFF3D3" stroke="#C97A00" stroke-width="3"/>
+  <text x="252" y="532" fill="#9B5C00" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="24" font-weight="760">独立评测验证</text>
+  <text x="1130" y="530" text-anchor="end" fill="#6D5734" font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="16">固定任务口径，收集证据，不替代 Agent Harness</text>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="18" font-weight="650" text-anchor="middle" fill="#17324D">
+    <text x="316" y="592">任务与环境</text>
+    <text x="492" y="592">统计试次与恢复尝试</text>
+    <text x="680" y="592">运行轨迹与产物</text>
+    <text x="864" y="592">评分器</text>
+    <text x="1042" y="592">反馈</text>
+  </g>
+  <g fill="none" stroke="#C97A00" stroke-width="4" marker-end="url(#arrow-eval)">
+    <path d="M374 574h58"/>
+    <path d="M557 574h58"/>
+    <path d="M744 574h60"/>
+    <path d="M914 574h68"/>
+  </g>
+  <g fill="none" stroke="#C97A00" stroke-width="3" stroke-dasharray="9 8" marker-end="url(#arrow-eval)">
+    <path d="M327 280v194"/>
+    <path d="M687 280v194"/>
+    <path d="M1047 280v194"/>
+  </g>
+  <g font-family="Noto Sans SC, Microsoft YaHei, sans-serif" font-size="15" fill="#496179">
+    <line x1="42" y1="672" x2="92" y2="672" stroke="#0B8F8C" stroke-width="5"/>
+    <text x="106" y="678">实线表示任务执行</text>
+    <line x1="282" y1="672" x2="332" y2="672" stroke="#C97A00" stroke-width="3" stroke-dasharray="8 7"/>
+    <text x="346" y="678">虚线表示证据采集</text>
+  </g>
+</svg>

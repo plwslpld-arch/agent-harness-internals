@@ -1,0 +1,66 @@
+# 实践一：不用模型，复原一条源码调用链
+
+[返回课程总目录](../README.md) · [下一项：运行最小 Agent Loop](minimal-agent-loop.md)
+
+这一项练习的是源码阅读，不是运行产品。你会从六条课程中选择一个源码站点，独立核对「为什么存在—调用者—输入—状态变化—返回—下一站」，并找到至少一个失败分支。全程只读锁定提交，不需要任何模型账号。
+
+## 先选择一个足够小的问题
+
+不要从「这个项目架构是什么」开始。选择一个能沿调用链回答的问题，例如：
+
+- Codex 的并发工具完成后，历史怎样保持调用顺序；
+- Gemini CLI 的 Scheduler 在哪里等待 Confirmation；
+- Claude Python Agent SDK 怎样把 `can_use_tool` 回调接入控制请求；
+- pi 的 Follow-up 为什么在外层循环消费；
+- OpenCode 的 Permission 为什么由最后一条匹配规则决定；
+- DeepSeek Harness 的 Tool Result 怎样重新进入 Agent Loop。
+
+问题越具体，越容易找到真实调用者和测试。
+
+## 七步阅读法
+
+1. 打开课程给出的 40 位提交永久链接，确认文件与符号存在。
+2. 先读函数签名和相邻类型，写下它解决的问题。
+3. 向上搜索调用者，直到 Session、Turn、Agent 或产品入口。
+4. 向下追返回值，直到状态持久化、事件发布或下一次模型请求。
+5. 找到一个正常分支、一个错误分支和一个取消或清理分支。
+6. 找到上游测试，确认它真的制造了文章描述的边界。
+7. 写出测试没有覆盖什么，避免把局部断言扩大成产品结论。
+
+## 交付模板
+
+```yaml
+project: codex
+commit: c9b19deb09c1841ce7acc33ddb96276030936a29
+question: 多个工具并发完成后怎样保持结果顺序
+why: 模型声明顺序和实际完成顺序可能不同，历史必须可重放
+entry: codex-rs/core/src/session/turn.rs
+caller: 本次 Turn 的工具批次处理
+input: 按模型输出顺序建立的 Tool Futures
+state_change: 结果按调用身份写入 Conversation Items
+return: 下一次模型请求使用的 Function Outputs
+next: Session 继续构造下一轮输入
+error_path: 单个 Tool Error 仍与原 Call ID 关联
+cancellation_path: Turn Cancellation Token 传播到在途调用
+test: codex-rs/core/tests/suite/tool_parallelism.rs
+tradeoff: 保持确定性提交会等待较慢的前序调用
+limits: 测试不证明所有真实工具都适合并行
+```
+
+模板是阅读清单，不要求公开文章都使用固定标题。若某项不存在，应写明「当前来源不可核对」，不要借用其他项目的常见实现补空白。
+
+## 自己核对答案的标准
+
+- 入口、调用者和消费者来自 Runtime 源码，不只来自 README；
+- 解释了这段代码为什么存在，而不只是复述变量名；
+- 区分了内存状态、持久记录与外部副作用；
+- 错误分支说明副作用是否可能已经发生；
+- 测试的输入确实触发目标边界；
+- 对设计取舍至少写出一个好处和一个代价；
+- 所有上游链接固定到同一提交。
+
+## 进阶：画一张局部图
+
+只画 5 至 8 个节点，把当前问题需要的对象放进去。节点文字用中文，真实类型或函数名放在括号里。图中每条箭头都应能回到源码中的调用、事件或数据转换；无法核对的推断使用虚线并在图注中说明。
+
+[下一项：运行一个不需要模型的最小 Agent Loop](minimal-agent-loop.md)

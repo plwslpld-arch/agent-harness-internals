@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="760" viewBox="0 0 1440 760" role="img" aria-labelledby="title desc">
+  <title id="title">Cline 工具批准与检查点恢复链</title><desc id="desc">工具策略、客户端批准、执行与结果构成控制链；可选检查点只恢复工作区文件。</desc>
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#526179"/></marker><style>text{font-family:"Microsoft YaHei","Noto Sans CJK SC",sans-serif;fill:#17233b}.t{font-size:34px;font-weight:700}.s{font-size:16px;fill:#596981}.h{font-size:21px;font-weight:700}.b{font-size:17px}.l{stroke:#526179;stroke-width:3;fill:none;marker-end:url(#a)}</style></defs>
+  <rect width="1440" height="760" rx="28" fill="#f7f9fc"/><text x="70" y="68" class="t">批准控制执行，检查点控制恢复</text><text x="70" y="101" class="s">两条链解决不同问题，也都不能独立证明任务正确</text>
+  <rect x="70" y="165" width="260" height="135" rx="22" fill="#e8f1ff" stroke="#3b82f6" stroke-width="2"/><text x="105" y="213" class="h">工具调用</text><text x="105" y="252" class="b">名称、输入、会话归属</text><text x="105" y="280" class="s">先经过运行时钩子</text>
+  <rect x="400" y="165" width="260" height="135" rx="22" fill="#fff4df" stroke="#f59e0b" stroke-width="2"/><text x="435" y="213" class="h">有效策略</text><text x="435" y="252" class="b">禁用 · 自动批准 · 询问</text><text x="435" y="280" class="s">策略覆盖合并后生效</text>
+  <rect x="730" y="165" width="260" height="135" rx="22" fill="#f0eaff" stroke="#8b5cf6" stroke-width="2"/><text x="765" y="213" class="h">客户端批准</text><text x="765" y="252" class="b">同意、拒绝或不可用</text><text x="765" y="280" class="s">缺少回调时关闭执行</text>
+  <rect x="1060" y="165" width="310" height="135" rx="22" fill="#edf9f2" stroke="#22a06b" stroke-width="2"/><text x="1095" y="213" class="h">执行与结果</text><text x="1095" y="252" class="b">仅获准调用进入执行器</text><text x="1095" y="280" class="s">结果回到智能体迭代</text>
+  <path d="M330 232H400" class="l"/><path d="M660 232H730" class="l"/><path d="M990 232H1060" class="l"/>
+  <rect x="70" y="430" width="400" height="155" rx="22" fill="#17233b"/><text x="108" y="478" style="font:700 21px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#fff">可选检查点</text><text x="108" y="518" style="font:18px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#d5e0f2">根运行开始前保存版本库快照</text><text x="108" y="550" style="font:16px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#aebed8">默认关闭，也允许自定义实现</text>
+  <rect x="520" y="430" width="400" height="155" rx="22" fill="#fff0f0" stroke="#e25555" stroke-width="2"/><text x="558" y="478" class="h">不能恢复</text><text x="558" y="518" class="b">网络请求、数据库与外部服务副作用</text><text x="558" y="550" class="s">批准同样不提供操作系统隔离</text>
+  <rect x="970" y="430" width="400" height="155" rx="22" fill="#fff" stroke="#526179" stroke-width="2"/><text x="1008" y="478" class="h">独立完成门槛</text><text x="1008" y="518" class="b">文件差异、测试、需求与副作用检查</text><text x="1008" y="550" class="s">界面完成状态只是候选信号</text>
+  <text x="70" y="704" class="s">关键边界：批准回答能否执行，检查点回答能否回滚；评测回答结果是否满足任务。</text>
+</svg>
