@@ -368,6 +368,14 @@
       "scope": "docs/harnesses/claude/04-tools-permissions-hooks.md",
       "alt": "Claude 工具请求从模型可见性、Hook、拒绝与询问规则、权限模式、允许规则和回调进入真实执行、系统隔离与独立评测的中文分层架构图",
       "claims": ["claude.permissions.allowed-tools-are-not-availability", "claude.hooks.can-modify-or-deny"]
+    },
+    {
+      "id": "claude-sessions-resume-store",
+      "path": "assets/diagrams/claude/05-sessions-resume-store.svg",
+      "type": "data-flow",
+      "scope": "docs/harnesses/claude/05-sessions-resume-store.md",
+      "alt": "Claude 会话在本地转录、批量镜像、外部 Session Store、跨主机恢复材料化、分叉与独立评测之间流转的中文数据权威图",
+      "claims": ["claude.sessions.resume-materializes-external-state", "claude.sessions.mirror-is-not-runtime-history"]
     }
   ]
 }

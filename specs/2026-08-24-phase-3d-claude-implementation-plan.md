@@ -129,9 +129,9 @@
 - 创建：`evidence/claims/claude.sessions.resume-materializes-external-state.yml`
 - 创建：`evidence/claims/claude.sessions.mirror-is-not-runtime-history.yml`
 
-- [ ] 覆盖 session_id、continue_conversation、resume、fork_session、resume_session_at、Session Store 协议、临时配置目录和凭据清理。
-- [ ] 核对 Transcript Mirror 批次、flush 模式、CAS/版本、并发、失败回报和不同 Store 示例边界。
-- [ ] 渲染复核，运行门禁并提交：`docs(claude): 发布会话恢复与存储课程`。
+- [x] 覆盖 session_id、continue_conversation、resume、fork_session、resume_session_at、Session Store 协议、临时配置目录和凭据清理。
+- [x] 核对 Transcript Mirror 批次、flush 模式、CAS/版本、并发、失败回报和不同 Store 示例边界。
+- [x] 渲染复核，运行门禁并提交：`docs(claude): 发布会话恢复与存储课程`。
 
 ### Task 8：MCP、Agent 与 Skill 装配
 

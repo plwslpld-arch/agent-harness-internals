@@ -1,0 +1,22 @@
+{
+  "id": "claude.sessions.resume-materializes-external-state",
+  "harness": "claude",
+  "dimension": "sessions.resume-materializes-external-state",
+  "statement": "Python Claude Agent SDK 从外部 SessionStore 恢复时，先在父进程 load 条目并材料化为临时 CLAUDE_CONFIG_DIR 下的本地 JSONL，再把具体 resume ID 交给 CLI；CLI 不直接读取外部 Store。",
+  "capability": "optional",
+  "version": "542fefb3b94be87760b2513fff889b91bb5b6672",
+  "surface": "python-session-store-resume",
+  "platform": "local-cli-with-external-store",
+  "mode": "cross-host-resume-materialization",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"src/claude_agent_sdk/_internal/session_resume.py","lines":"130-158","excerpt":"async def materialize_resume_session("},
+    {"type":"upstream-test","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"tests/test_session_resume.py","lines":"121-153","excerpt":"assert json.loads(lines[0]) == entries[0]"}
+  ],
+  "limitations": [
+    "上游测试使用内存 Store 和临时目录，不证明真实远端后端、杀进程或断电条件。",
+    "恢复材料化只恢复对话转录和可枚举子路径，不恢复工作目录文件或外部副作用。",
+    "临时认证配置清理是尽力而为，仍需受限临时卷和独立清扫。"
+  ],
+  "last_verified": "2026-08-24"
+}

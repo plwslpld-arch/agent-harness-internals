@@ -12,7 +12,9 @@
         "https://platform.claude.com/docs/en/agent-sdk/typescript",
         "https://code.claude.com/docs/en/permissions",
         "https://code.claude.com/docs/en/hooks",
-        "https://code.claude.com/docs/en/tools-reference"
+        "https://code.claude.com/docs/en/tools-reference",
+        "https://code.claude.com/docs/en/agent-sdk/sessions",
+        "https://code.claude.com/docs/en/agent-sdk/session-storage"
       ],
       "boundary": "只证明公开产品与 SDK 契约；不提供 Claude Code 内部类、调度器、存储布局或实现源码。"
     },
@@ -107,7 +109,9 @@
         {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/_internal/session_store.py","type":"source","reason":"Store 协议和内存实现。"},
         {"source":"claude-agent-sdk-python","path":"src/claude_agent_sdk/_internal/transcript_mirror_batcher.py","type":"source","reason":"Transcript 批量镜像。"},
         {"source":"claude-agent-sdk-python","path":"tests/test_session_resume.py","type":"upstream-test","reason":"恢复与临时目录行为。"},
-        {"source":"claude-agent-sdk-typescript","path":"examples/session-stores/shared/conformance.ts","type":"example-test","reason":"公开示例的 Store 一致性契约。"}
+        {"source":"claude-agent-sdk-typescript","path":"examples/session-stores/shared/conformance.ts","type":"example-test","reason":"公开示例的 Store 一致性契约。"},
+        {"source":"claude-code-official-docs","url":"https://code.claude.com/docs/en/agent-sdk/sessions","type":"official-doc","reason":"继续、恢复、分叉与文件系统边界。"},
+        {"source":"claude-code-official-docs","url":"https://code.claude.com/docs/en/agent-sdk/session-storage","type":"official-doc","reason":"外部 Store 双写与恢复契约。"}
       ],
       "plannedClaims": ["claude.sessions.resume-materializes-external-state", "claude.sessions.mirror-is-not-runtime-history"]
     },

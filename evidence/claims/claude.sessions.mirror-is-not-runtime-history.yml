@@ -1,0 +1,22 @@
+{
+  "id": "claude.sessions.mirror-is-not-runtime-history",
+  "harness": "claude",
+  "dimension": "sessions.mirror-is-not-runtime-history",
+  "statement": "SessionStore 接收的是 Claude Code 子进程本地写成功后的次级 Transcript Mirror；单 Batcher 可序列化追加，但失败可回报后丢批且运行继续，所以外部 Store 不是实时运行历史、模型 Context 或文件系统的唯一权威。",
+  "capability": "optional",
+  "version": "542fefb3b94be87760b2513fff889b91bb5b6672",
+  "surface": "python-transcript-mirror",
+  "platform": "local-first-dual-write",
+  "mode": "batched-or-eager-flush",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"src/claude_agent_sdk/types.py","lines":"1587-1627","excerpt":"the adapter receives a secondary copy"},
+    {"type":"upstream-test","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"tests/test_transcript_mirror.py","lines":"466-494","excerpt":"assert appended == [1, 2]"}
+  ],
+  "limitations": [
+    "顺序测试只覆盖一个进程内的一个 Batcher，不提供跨进程全局线性化。",
+    "普通异常有限重试，超时不重试；两种路径都可能造成缺批或部分重复。",
+    "外部 Store 条目不包含完整进程内状态、当前模型 Context 和工作树快照。"
+  ],
+  "last_verified": "2026-08-24"
+}
