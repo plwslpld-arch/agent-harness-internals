@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-labelledby="title desc">
+  <title id="title">六类 Harness 的循环、工具与执行</title><desc id="desc">模型流经过工具识别、参数校验、权限决策、真实执行和结果回送，再选择继续、压缩、停止或失败的中文状态图。</desc>
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#526179"/></marker><style>text{font-family:"Microsoft YaHei","Noto Sans CJK SC",sans-serif;fill:#17233b}.t{font-size:34px;font-weight:700}.sub{font-size:17px;fill:#596981}.h{font-size:20px;font-weight:700}.b{font-size:16px}.l{stroke:#526179;stroke-width:3;fill:none;marker-end:url(#a)}.d{stroke:#8b5cf6;stroke-width:3;stroke-dasharray:9 7;fill:none;marker-end:url(#a)}</style></defs>
+  <rect width="1440" height="900" rx="28" fill="#f7f9fc"/><text x="70" y="67" class="t">循环完成只表示控制流结束，任务结论仍需核对产物</text><text x="70" y="99" class="sub">六条主线的状态对象不同，但都必须结算工具结果并保留失败语义</text>
+  <g>
+    <rect x="60" y="150" width="180" height="94" rx="18" fill="#e8f1ff" stroke="#3b82f6" stroke-width="2"/><text x="88" y="186" class="h">一　模型流</text><text x="88" y="216" class="b">文本或工具意图</text>
+    <rect x="282" y="150" width="180" height="94" rx="18" fill="#f0eaff" stroke="#8b5cf6" stroke-width="2"/><text x="310" y="186" class="h">二　工具识别</text><text x="310" y="216" class="b">名称与调用标识</text>
+    <rect x="504" y="150" width="180" height="94" rx="18" fill="#fff4df" stroke="#f59e0b" stroke-width="2"/><text x="532" y="186" class="h">三　参数校验</text><text x="532" y="216" class="b">结构、范围与修复</text>
+    <rect x="726" y="150" width="180" height="94" rx="18" fill="#edf9f2" stroke="#22a06b" stroke-width="2"/><text x="754" y="186" class="h">四　权限决策</text><text x="754" y="216" class="b">允许、询问、拒绝</text>
+    <rect x="948" y="150" width="180" height="94" rx="18" fill="#fff0f0" stroke="#e25555" stroke-width="2"/><text x="976" y="186" class="h">五　真实执行</text><text x="976" y="216" class="b">文件、进程、副作用</text>
+    <rect x="1170" y="150" width="210" height="94" rx="18" fill="#e8f7f7" stroke="#159b9b" stroke-width="2"/><text x="1198" y="186" class="h">六　工具结果</text><text x="1198" y="216" class="b">状态、内容、关联标识</text>
+    <path d="M240 197H282" class="l"/><path d="M462 197H504" class="l"/><path d="M684 197H726" class="l"/><path d="M906 197H948" class="l"/><path d="M1128 197H1170" class="l"/>
+  </g>
+  <rect x="110" y="324" width="1220" height="190" rx="24" fill="#ffffff" stroke="#9aa8bc" stroke-width="2"/><text x="145" y="365" class="h">六种可核控制对象</text>
+  <rect x="145" y="393" width="170" height="82" rx="14" fill="#f0eaff"/><text x="166" y="425" class="b">DSH</text><text x="166" y="452" class="sub">循环与工具结算</text>
+  <rect x="340" y="393" width="170" height="82" rx="14" fill="#e8f1ff"/><text x="361" y="425" class="b">Codex</text><text x="361" y="452" class="sub">线程、任务与轮次</text>
+  <rect x="535" y="393" width="170" height="82" rx="14" fill="#edf9f2"/><text x="556" y="425" class="b">Gemini CLI</text><text x="556" y="452" class="sub">工具批次调度</text>
+  <rect x="730" y="393" width="170" height="82" rx="14" fill="#fff0f0"/><text x="751" y="425" class="b">Claude</text><text x="751" y="452" class="sub">传输与消息协议</text>
+  <rect x="925" y="393" width="170" height="82" rx="14" fill="#fff4df"/><text x="946" y="425" class="b">pi</text><text x="946" y="452" class="sub">核心事件解释</text>
+  <rect x="1120" y="393" width="170" height="82" rx="14" fill="#e8f7f7"/><text x="1141" y="425" class="b">OpenCode</text><text x="1141" y="452" class="sub">流事件处理器</text>
+  <path d="M1275 244V300H720V324" class="l"/>
+  <g><rect x="100" y="620" width="260" height="128" rx="20" fill="#edf9f2" stroke="#22a06b" stroke-width="2"/><text x="132" y="661" class="h">继续</text><text x="132" y="697" class="b">工具结果已回送</text><text x="132" y="726" class="sub">形成下一轮模型请求</text>
+  <rect x="425" y="620" width="260" height="128" rx="20" fill="#fff4df" stroke="#f59e0b" stroke-width="2"/><text x="457" y="661" class="h">压缩或重试</text><text x="457" y="697" class="b">容量或可恢复故障</text><text x="457" y="726" class="sub">改变后续可见上下文</text>
+  <rect x="750" y="620" width="260" height="128" rx="20" fill="#e8f1ff" stroke="#3b82f6" stroke-width="2"/><text x="782" y="661" class="h">自然停止</text><text x="782" y="697" class="b">没有待结算工具</text><text x="782" y="726" class="sub">只表示循环生命周期结束</text>
+  <rect x="1075" y="620" width="260" height="128" rx="20" fill="#fff0f0" stroke="#e25555" stroke-width="2"/><text x="1107" y="661" class="h">失败或取消</text><text x="1107" y="697" class="b">保留阶段与副作用</text><text x="1107" y="726" class="sub">恢复前先判断提交状态</text></g>
+  <path d="M720 514V570H230V620" class="d"/><path d="M720 570H555V620" class="d"/><path d="M720 570H880V620" class="d"/><path d="M720 570H1205V620" class="d"/>
+  <rect x="270" y="804" width="900" height="58" rx="16" fill="#17233b"/><text x="324" y="840" style="font:18px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#fff">独立任务结论读取最终文件、测试、禁止副作用与评分准则；任何控制信号都不能单独代替</text>
+</svg>

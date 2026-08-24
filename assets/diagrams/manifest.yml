@@ -568,6 +568,14 @@
       "scope": "docs/comparisons/01-runtime-config-model-input.md",
       "alt": "六类 Agent Harness 从产品入口、项目实例与分层配置形成有效模型输入，并在模型目录、认证和真实请求之间保留运行条件的中文数据流图",
       "claims": ["deepseek-harness.boot.profile-preset-composition", "codex.config.layered-and-thread-scoped", "gemini-cli.config.layered-effective-settings", "claude.architecture.product-sdk-boundaries", "pi.architecture.layers-are-composed", "opencode.config.layers-build-instance"]
+    },
+    {
+      "id": "comparison-loop-tools-execution",
+      "path": "assets/diagrams/comparisons/02-loop-tools-execution.svg",
+      "type": "state",
+      "scope": "docs/comparisons/02-loop-tools-execution.md",
+      "alt": "六类 Agent Harness 把模型流归约为文本、工具调用、权限决策、真实执行和工具结果，再选择继续、压缩、停止或失败的中文状态图",
+      "claims": ["deepseek-harness.loop.tool-results-before-next-request", "codex.turn.tool-result-loop", "gemini-cli.scheduler.tool-batch-has-own-state", "claude.task.transport-control-loop", "pi.agent.loop-interprets-multiple-stop-signals", "opencode.session.processor-interprets-stream-events"]
     }
   ]
 }
