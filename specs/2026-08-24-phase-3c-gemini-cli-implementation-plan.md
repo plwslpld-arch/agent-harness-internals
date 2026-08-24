@@ -63,10 +63,10 @@
 
 ### Task 4：Agent Session、Turn、Routing 与 Scheduler
 
-- [ ] 完成 `02-turn-scheduler-routing.md`、中文生命周期图和继续/终止 Claim。
-- [ ] 覆盖 Agent Session、Turn.run、GeminiEvent、FinishReason、模型路由、Scheduler 队列、取消和中间 Finished 事件。
-- [ ] 分开模型响应结束、工具批次完成、Agent Session 结束、CLI 退出和 Eval Trial 结算。
-- [ ] 提交：`docs(gemini-cli): 发布轮次调度与路由课程`。
+- [x] 完成 `02-turn-scheduler-routing.md`、中文生命周期图和继续/终止 Claim。
+- [x] 覆盖 Agent Session、Turn.run、GeminiEvent、FinishReason、模型路由、Scheduler 队列、取消和中间 Finished 事件。
+- [x] 分开模型响应结束、工具批次完成、Agent Session 结束、CLI 退出和 Eval Trial 结算。
+- [x] 提交：`docs(gemini-cli): 发布轮次调度与路由课程`。
 
 ### Task 5：Tool Registry 与工具生命周期
 

@@ -1,0 +1,23 @@
+{
+  "id": "gemini-cli.turn.finished-is-not-agent-success",
+  "harness": "gemini-cli",
+  "dimension": "turn.finished-is-not-agent-success",
+  "statement": "锁定 Gemini CLI 的 Turn Finished 只表示模型响应携带结束原因；Agent Session 仍需检查待处理工具，之后才映射为 completed、max_budget、refusal 或 failed，且这些控制流终态都不自动等于任务成功。",
+  "capability": "default",
+  "version": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+  "surface": "core-turn-agent-session",
+  "platform": "upstream-vitest-fixture",
+  "mode": "stream-event-translation",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/core/turn.ts","lines":"380-410","excerpt":"Only yield 'Finished' if there is a finishReason."},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/agent/event-translator.ts","lines":"332-362","excerpt":"Maps a Gemini FinishReason to an AgentEnd reason."},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/agent/legacy-agent-session.test.ts","lines":"1214-1259","excerpt":"does NOT emit agent_end when tool calls are pending"}
+  ],
+  "limitations": [
+    "上游测试使用 Mock 模型流与 Scheduler。",
+    "FinishReason 到 AgentEnd 的映射是该表面的协议约定，不能直接外推到 Headless、IDE 或 A2A 状态。",
+    "completed 只说明控制流收敛，不证明用户目标、文件产物或安全约束满足。"
+  ],
+  "last_verified": "2026-08-24"
+}

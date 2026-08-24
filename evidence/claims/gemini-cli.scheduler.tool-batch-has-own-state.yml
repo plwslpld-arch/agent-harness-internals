@@ -1,0 +1,24 @@
+{
+  "id": "gemini-cli.scheduler.tool-batch-has-own-state",
+  "harness": "gemini-cli",
+  "dimension": "scheduler.tool-batch-has-own-state",
+  "statement": "锁定 Gemini CLI 的 Scheduler 为每个工具调用维护验证、排队、待审批、执行、成功、错误或取消状态；重叠 schedule 批次进入独立请求队列，取消会终结活动调用并拒绝待处理批次。",
+  "capability": "default",
+  "version": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+  "surface": "core-scheduler",
+  "platform": "upstream-vitest-fixture",
+  "mode": "event-driven-tool-batches",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/scheduler/types.ts","lines":"18-180","excerpt":"Internal core statuses for the tool call state machine."},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/scheduler/scheduler.ts","lines":"99-260","excerpt":"private readonly requestQueue: SchedulerQueueItem[] = [];"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/scheduler/scheduler.test.ts","lines":"529-606","excerpt":"should queue requests when scheduler is busy (overlapping batches)"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/scheduler/scheduler.test.ts","lines":"607-669","excerpt":"cancelAll() should cancel active call and clear queue"}
+  ],
+  "limitations": [
+    "状态机终态描述工具调用，不描述整个 Agent Session 或 Eval Trial。",
+    "测试使用 Mock Executor 和 StateManager，不证明具体工具副作用。",
+    "批次内部是否并行还受工具类型、调度策略和安全确认影响。"
+  ],
+  "last_verified": "2026-08-24"
+}

@@ -264,6 +264,14 @@
       "scope": "docs/harnesses/gemini-cli/01-config-prompt-context.md",
       "alt": "Gemini CLI 从分层设置、信任过滤、项目指令与当前工具到模型可见请求的中文上下文装配图",
       "claims": ["gemini-cli.config.layered-effective-settings", "gemini-cli.context.gemini-md-is-bounded-input"]
+    },
+    {
+      "id": "gemini-cli-turn-scheduler-routing",
+      "path": "assets/diagrams/gemini-cli/02-turn-scheduler-routing.svg",
+      "type": "state",
+      "scope": "docs/harnesses/gemini-cli/02-turn-scheduler-routing.md",
+      "alt": "Gemini CLI 模型路由、轮次事件、智能体会话结束判断和工具调度状态的中文生命周期图",
+      "claims": ["gemini-cli.turn.finished-is-not-agent-success", "gemini-cli.scheduler.tool-batch-has-own-state"]
     }
   ]
 }
