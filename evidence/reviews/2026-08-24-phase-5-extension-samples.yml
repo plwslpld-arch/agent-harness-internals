@@ -1,5 +1,5 @@
 {
-  "stage":"phase-5-extension-samples","date":"2026-08-24","commit":"ac5d52d82f60282c1ef518cd188205849e884f5e",
+  "stage":"phase-5-extension-samples","date":"2026-08-24","commit":"39087d72530e457d42bf5fd0fa9a69d48c47f597",
   "promises":[
     {"id":"p-six-samples","statement":"mini-swe-agent、OpenHands、Cline、goose、Aider 与 Qwen Code 各有一篇 reviewed 独特机制专题，不升级为一级主线或综合排名。"},
     {"id":"p-source-bounds","statement":"六篇专题只陈述十七个锁定来源直接覆盖的事实；OpenHands 当前仓库按 Agent Canvas 控制平面处理，不冒充未锁定 Agent 内核。"},

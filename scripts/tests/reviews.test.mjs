@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { reviewFailures } from '../verify-reviews.mjs';
+import { reviewCommitFailures, reviewFailures } from '../verify-reviews.mjs';
 
 const commit = '0123456789012345678901234567890123456789';
 
@@ -62,4 +62,9 @@ test('高优先级发现必须使用相同 ID 的 Resolution 并引用有效证�
 
   assert.match(failures, /f-profile-bypass.*没有同 ID Resolution/u);
   assert.match(failures, /不存在的 Evidence/u);
+});
+
+test('复核提交必须从当前主线可达，不能依赖本地备份引用', () => {
+  assert.deepEqual(reviewCommitFailures(commit, () => true), []);
+  assert.match(reviewCommitFailures(commit, () => false).join('\n'), /当前主线历史/u);
 });

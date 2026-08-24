@@ -1,7 +1,7 @@
 {
   "stage": "phase-3d-claude",
   "date": "2026-08-24",
-  "commit": "8b50151124eb24f38ec7094ac3be865db5357d38",
+  "commit": "9a4a2c8f8bdc2cf7e992feddd536cf082aac89c0",
   "promises": [
     {"id": "p-nine-course-line", "statement": "Claude 主线入口与八篇课程均达到 reviewed，覆盖产品与双 SDK 证据边界、Python 传输、消息生命周期、工具权限、会话存储、MCP 扩展、双 SDK 对齐、产品表面和独立评测。"},
     {"id": "p-product-sdk-boundary", "statement": "Claude Code 闭源产品只使用官方公开契约，Python SDK 实现绑定锁定源码与测试，TypeScript 锁定仓库只作为公开分发材料和示例证据。"},

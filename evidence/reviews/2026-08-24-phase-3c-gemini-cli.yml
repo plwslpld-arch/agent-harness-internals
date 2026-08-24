@@ -1,7 +1,7 @@
 {
   "stage": "phase-3c-gemini-cli",
   "date": "2026-08-24",
-  "commit": "94a73eeaccfd2d48b9d767238717249ffa6c07cf",
+  "commit": "d2e76216929a4a0e69c5615f4af02d39cc0df480",
   "promises": [
     {"id": "p-nine-course-line", "statement": "Gemini CLI 主线入口与八篇课程均达到 reviewed，沿真实 Agent Session 覆盖配置上下文、轮次调度、工具闭环、安全分层、状态恢复、扩展编排、产品表面与独立评测接入。"},
     {"id": "p-locked-evidence", "statement": "关键架构、配置、生命周期、工具、安全、状态、扩展、协议和遥测结论绑定锁定源码、上游测试与明确证据等级。"},

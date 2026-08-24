@@ -1,5 +1,5 @@
 {
-  "stage":"phase-3f-opencode","date":"2026-08-24","commit":"a447b4d912ebf0df871134f139c514da80acec68",
+  "stage":"phase-3f-opencode","date":"2026-08-24","commit":"af63496b383b5063dc777b505cee1d6f1371d497",
   "promises":[
     {"id":"p-nine-course-line","statement":"OpenCode 主线入口与八篇课程均达到 reviewed，覆盖运行入口、配置与 Provider、Session Loop、工具权限、历史恢复、扩展、服务协议、多客户端以及分享遥测与评测边界。"},
     {"id":"p-source-call-path","statement":"课程以锁定调用入口、服务组合、处理器和上游测试为证据，不从包名、目录名或协议名称反推默认运行行为。"},

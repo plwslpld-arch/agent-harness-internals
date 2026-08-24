@@ -1,7 +1,7 @@
 {
   "stage": "phase-3e-pi",
   "date": "2026-08-24",
-  "commit": "5b7a1eec489cd8a1b087bc8b26a0c530e9db05fd",
+  "commit": "378e5bd09808c95166b72e62a66d0451e8f8f9a4",
   "promises": [
     {"id":"p-nine-course-line","statement":"pi 主线入口与八篇课程均达到 reviewed，覆盖证据边界、多 Provider、Agent Loop、Coding Agent、Session、Protocol、产品表面、Telemetry 与 Evals。"},
     {"id":"p-runtime-design-boundary","statement":"现行源码、未来设计文档、扩展示例、外部隔离与 Session 分享项目保持不同证据等级，不把目标设计或示例写成默认能力。"},
@@ -66,4 +66,3 @@
   ],
   "result": "pass"
 }
-

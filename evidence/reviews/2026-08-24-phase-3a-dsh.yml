@@ -1,7 +1,7 @@
 {
   "stage": "phase-3a-dsh",
   "date": "2026-08-24",
-  "commit": "77dd65ada229ae28ed13e255178082403961d665",
+  "commit": "d9a7050a4899205f23daaa9f07541536baf60b72",
   "promises": [
     {"id": "p-nine-course-line", "statement": "DSH 主线入口与八篇课程均达到 reviewed，沿真实任务覆盖启动、上下文、循环、工具安全、状态、编排、产品表面和自验证。"},
     {"id": "p-locked-evidence", "statement": "关键默认、安全、状态、终止、恢复、反馈和验证结论绑定锁定源码、上游测试与明确证据等级。"},

@@ -1,5 +1,5 @@
 {
-  "stage":"phase-4-comparison-roles-eval","date":"2026-08-24","commit":"2894a08433e2acd5c4f499294c0dbeac29cb6f2f",
+  "stage":"phase-4-comparison-roles-eval","date":"2026-08-24","commit":"3a77b897f22e1657b91b92e489c7846cdaaf2cd4",
   "promises":[
     {"id":"p-five-comparisons","statement":"五篇横向比较以同一控制问题对照 DSH、Codex、Gemini CLI、Claude、pi 与 OpenCode，不计算总分、排名或赢家。"},
     {"id":"p-evidence-boundaries","statement":"每个比较单元绑定既有 Claim、能力状态、证据等级和限定条件；目录、配置、测试、遥测、协议成功与任务正确保持不同语义。"},

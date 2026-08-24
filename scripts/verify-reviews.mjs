@@ -105,6 +105,11 @@ export function reviewFailures(review) {
   return errors;
 }
 
+export function reviewCommitFailures(commit, isReachable) {
+  if (!/^[0-9a-f]{40}$/u.test(commit ?? '')) return [];
+  return isReachable(commit) ? [] : [`commit 不在当前主线历史中：${commit}`];
+}
+
 function reviewFiles(directory) {
   if (!existsSync(directory)) return [];
   return readdirSync(directory, { withFileTypes: true })
@@ -122,13 +127,15 @@ function main() {
     const relativePath = posixPath(relative(root, path));
     const review = readDocument(path);
     for (const error of reviewFailures(review)) errors.push(`${relativePath}: ${error}`);
-    if (/^[0-9a-f]{40}$/u.test(review.commit ?? '')) {
+    const commitErrors = reviewCommitFailures(review.commit, (commit) => {
       try {
-        git(root, ['cat-file', '-e', `${review.commit}^{commit}`]);
+        git(root, ['merge-base', '--is-ancestor', commit, 'HEAD']);
+        return true;
       } catch {
-        errors.push(`${relativePath}: commit 在当前仓库中不存在：${review.commit}`);
+        return false;
       }
-    }
+    });
+    for (const error of commitErrors) errors.push(`${relativePath}: ${error}`);
     if (nonempty(review.stage)) {
       if (stages.has(review.stage)) errors.push(`${relativePath}: stage 与 ${stages.get(review.stage)} 重复：${review.stage}`);
       else stages.set(review.stage, relativePath);

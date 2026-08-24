@@ -1,7 +1,7 @@
 {
   "stage": "phase-1-brand-entry",
   "date": "2026-08-23",
-  "commit": "6c50a1b469a3994ea23a621f06a43606f2e8ff93",
+  "commit": "965389cece73cb2700a0b675cb01f29cbe71d904",
   "promises": [
     {"id": "p-brand-candidates", "statement": "三个非吉祥物 Logo 方向具有多尺寸、背景、灰度和单色渲染证据，并经过对抗评分。"},
     {"id": "p-final-assets", "statement": "正式核心标记、中文组合标和 GitHub 社交预览来自评审赢家并完成实图复核。"},

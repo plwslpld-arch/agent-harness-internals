@@ -1,7 +1,7 @@
 {
   "stage": "brand-selection",
   "date": "2026-08-23",
-  "commit": "a66f350c84e846649541e11cb87dfa1529c3393c",
+  "commit": "9399a9ef34f320378ec658ba6e8fd1120fa9a84a",
   "promises": [
     {"id": "p-three-directions", "statement": "三个 Logo 方向均有独立矢量源和多尺寸渲染证据。"},
     {"id": "p-adversarial-scoring", "statement": "选择同时考虑辨识度、独特性、语义、中文组合、混淆风险、可访问性和可维护性。"},

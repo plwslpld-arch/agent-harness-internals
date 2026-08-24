@@ -1,7 +1,7 @@
 {
   "stage": "phase-2-foundations",
   "date": "2026-08-24",
-  "commit": "0ab561b331377cb263c67c72373fc2f9debb8bdf",
+  "commit": "82fb3684d739ebba04b1c11bba77ad975bc3ef9d",
   "promises": [
     {"id": "p-six-foundations", "statement": "六篇共同基础均达到 reviewed，具备完整解释、最小例子、失败边界、验证方法和带答案自检。"},
     {"id": "p-evidence-claims", "statement": "六篇分别绑定锁定来源和正式 Claim，跨实现抽象保持 D 级并公开推断边界。"},

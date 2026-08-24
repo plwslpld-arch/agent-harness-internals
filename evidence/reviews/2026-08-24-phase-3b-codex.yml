@@ -1,7 +1,7 @@
 {
   "stage": "phase-3b-codex",
   "date": "2026-08-24",
-  "commit": "1e0dbd7bb23e814fb1115958adff77c97e93bc63",
+  "commit": "0ae5fb4653b8bfe500341ea60634c80fe2a40259",
   "promises": [
     {"id": "p-nine-course-line", "statement": "Codex 主线入口与八篇课程均达到 reviewed，沿真实 Turn 覆盖配置上下文、生命周期、模型工具闭环、安全执行、记录恢复、扩展、编排、产品表面与评测接入。"},
     {"id": "p-locked-evidence", "statement": "关键架构、配置、状态、安全、恢复、扩展、编排和协议结论绑定锁定源码、上游测试与明确证据等级。"},

@@ -1,7 +1,7 @@
 {
   "stage": "phase-0-foundation",
   "date": "2026-08-23",
-  "commit": "61bc00d84715c2a6f1e79b3245ef092503e6f168",
+  "commit": "1d079422d68c819b067927f2d07eddfbe3ca35db",
   "promises": [
     {"id": "p-source-profiles", "statement": "来源按 core、samples、eval 分组，默认只要求核心来源。"},
     {"id": "p-claude-dual-sdk", "statement": "Claude Python 与 TypeScript SDK 使用独立来源 ID、Commit 和许可证边界。"},
