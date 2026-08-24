@@ -72,4 +72,5 @@ test('发布验证工作流准备全部锁定来源', () => {
   const workflow = readFileSync(join(root, '.github', 'workflows', 'verify.yml'), 'utf8');
 
   assert.match(workflow, /npm run bootstrap -- --profile all/u);
+  assert.match(workflow, /fetch-depth:\s*0/u);
 });
