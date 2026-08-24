@@ -576,6 +576,14 @@
       "scope": "docs/comparisons/02-loop-tools-execution.md",
       "alt": "六类 Agent Harness 把模型流归约为文本、工具调用、权限决策、真实执行和工具结果，再选择继续、压缩、停止或失败的中文状态图",
       "claims": ["deepseek-harness.loop.tool-results-before-next-request", "codex.turn.tool-result-loop", "gemini-cli.scheduler.tool-batch-has-own-state", "claude.task.transport-control-loop", "pi.agent.loop-interprets-multiple-stop-signals", "opencode.session.processor-interprets-stream-events"]
+    },
+    {
+      "id": "comparison-permissions-state-recovery",
+      "path": "assets/diagrams/comparisons/03-permissions-state-recovery.svg",
+      "type": "architecture",
+      "scope": "docs/comparisons/03-permissions-state-recovery.md",
+      "alt": "六类 Agent Harness 把应用权限、操作系统隔离、持久会话、模型上下文、有损摘要、工作树恢复和外部副作用分层核对的中文边界图",
+      "claims": ["deepseek-harness.security.approval-sandbox-separation", "codex.security.approval-policy-sandbox-separation", "gemini-cli.security.confirmation-policy-sandbox-separation", "claude.permissions.allowed-tools-are-not-availability", "pi.security.examples-are-not-default-boundaries", "opencode.permission.ask-is-not-os-sandbox"]
     }
   ]
 }
