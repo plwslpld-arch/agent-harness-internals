@@ -1,0 +1,39 @@
+{
+  "stage": "phase-5b-labs-learning",
+  "date": "2026-08-24",
+  "commit": "08b48951fecf06805169a399370eba3fb233fa5b",
+  "promises": [
+    {"id":"p-lab-reproducible","statement":"两个控制实验提供环境、变量、操作、预期、失败判定、原始记录和可复现机器证据。"},
+    {"id":"p-lab-boundary","statement":"实验仅证明本地确定性评测契约，不外推为真实 Harness 质量、训练收益或生产发布证据。"},
+    {"id":"p-adversarial-review","statement":"反向篡改分母、产品 Attempt、Artifact、Score 版本、不可判定值和 RewardAdapter 能力，门禁必须拒绝。"}
+  ],
+  "evidence": [
+    {"id":"e-two-labs","promise":"p-lab-reproducible","type":"file","reference":"docs/labs/","summary":"两篇实验均具备变量控制、四步操作、两类围栏、失败判定、原始记录与自检。"},
+    {"id":"e-records","promise":"p-lab-reproducible","type":"file","reference":"evidence/experiments/","summary":"已重新写出两份本地机器记录，明确未调用付费模型或网络。"},
+    {"id":"e-lab-gate","promise":"p-lab-reproducible","type":"test","reference":"scripts/verify-eval-labs.mjs","summary":"已核对两份实验记录、两个 Trial 和 Scorer 1.0.0。"},
+    {"id":"e-boundary","promise":"p-lab-boundary","type":"file","reference":"docs/labs/independent-eval-pipeline.md","summary":"明确规则 Scorer、RewardAdapter、训练、选点和发布 Holdout 的证据范围。"},
+    {"id":"e-tests","promise":"p-adversarial-review","type":"test","reference":"scripts/tests/eval-lab.test.mjs","summary":"八项实验专用测试与一百一十三项全库测试通过。"}
+  ],
+  "findings": [
+    {"id":"f-variable-control","priority":"high","status":"resolved","summary":"实验原先未显式区分自变量、受控常量、记录变量和不适用变量。"},
+    {"id":"f-failure-verdict","priority":"high","status":"resolved","summary":"预期注入失败、实验失败、blocked 和 inconclusive 容易混写。"},
+    {"id":"f-raw-record","priority":"high","status":"resolved","summary":"只给命令和解释不足以教读者核对原始 JSON 与血缘。"},
+    {"id":"f-evidence-overreach","priority":"high","status":"resolved","summary":"确定性夹具通过容易被扩大成真实 Harness、训练收益或发布结论。"},
+    {"id":"f-style-rhythm","priority":"low","status":"open","summary":"实验篇有句长节奏非阻断提醒，留到总编辑处理。"}
+  ],
+  "resolutions": [
+    {"id":"f-variable-control","action":"分别固定 Trial/Attempt 故障分类和 Artifact/Adapter 语义完整度，并列出所有受控条件。","evidence":["e-two-labs","e-records"]},
+    {"id":"f-failure-verdict","action":"定义通过条件、预期对抗分支、blocked 与 inconclusive，不复用旧记录伪通过。","evidence":["e-two-labs","e-lab-gate"]},
+    {"id":"f-raw-record","action":"加入最小 JSON 关系、命令退出码、Commit、散列和重复运行核对方法。","evidence":["e-records","e-tests"]},
+    {"id":"f-evidence-overreach","action":"实验范围明确排除真实模型比较、训练、Checkpoint 选择和发布授权。","evidence":["e-boundary","e-two-labs"]}
+  ],
+  "commands": [
+    {"command":"控制实验两篇 contentContractFailures 相对路径定向检查","exit_code":0,"summary":"两篇全部通过实验专属教学契约。"},
+    {"command":"node --test scripts/tests/eval-lab.test.mjs","exit_code":0,"summary":"八项实验专用测试通过。"},
+    {"command":"node scripts/run-eval-labs.mjs --output evidence/experiments","exit_code":0,"summary":"重建两份机器记录，未调用付费模型或网络。"},
+    {"command":"node scripts/verify-eval-labs.mjs","exit_code":0,"summary":"两份记录、两个 Trial 与 Scorer 版本通过。"},
+    {"command":"node scripts/run-tests.mjs","exit_code":0,"summary":"一百一十三项全库测试通过。"},
+    {"command":"node scripts/check-style.mjs","exit_code":0,"summary":"无阻断文风错误。"}
+  ],
+  "result": "pass"
+}
