@@ -15,6 +15,99 @@ Gemini CLI 能记录用户提示、模型请求与响应、API 错误、工具�
 
 本篇把四条链彻底分开：产品执行链产生回答与工件；错误链解释请求、模型、工具、策略、沙箱和表面如何失败；遥测链按配置、脱敏与导出器输出可观测证据；独立 Eval 链从固定 Dataset 创建 Trial，经明确 Target surface 得到 Artifact，再由 Scorer 判定。若评分要进入 DPO、GRPO 或 RFT，必须经过版本化 RewardAdapter；Checkpoint 选择与发布仍使用隔离 holdout。
 
+## 核心概念
+
+遥测回答「观察到了什么」，错误分类回答「哪个层次怎样失败」，Eval 回答「固定任务是否达到标准」。三者使用共同关联键，却拥有不同缺失语义：没有遥测可能是通道关闭，没有产品错误不代表答案正确，没有 Score 则不能宣布发布结论。
+
+| 概念 | 统计单位 | 主要输出 | 不能替代 |
+|---|---|---|---|
+| Telemetry config | 一次运行环境 | enabled、target、protocol、logPrompts | 实际导出健康度 |
+| Trace / Log / Metric | span、event、measurement | 延迟、错误、计数 | 完整审计与正确性 |
+| ToolCallDecision | 一次确认决定 | accept、auto_accept、modify、reject | 工具业务结果 |
+| ToolCallEvent | 一个 callId | success、duration、error | Trial pass |
+| Error taxonomy | 一次层级失败 | HTTP、FinishReason、工具、Policy 等 | 原始上下文与产物 |
+| Trial | Dataset item × Target | 固定分母 | 可由重试增加 |
+| Attempt | 同 Trial 基础设施恢复 | 恢复原因、canonical 标记 | 产品失败重采样 |
+| Scorer | Trial Artifact | score、reason、evidence refs | 训练 Reward |
+| RewardAdapter | 已审计评分 | 训练信号、权重 | 发布 holdout |
+
+遥测配置本身需要证据。命令行、环境和设置决定是否启用、目标、OTLP 协议、提示记录和文件输出；Exporter / Collector / flush 再决定事件是否到达。覆盖率报告同时保存有效配置和通道健康。
+
+错误层级包括模型 API、FinishReason、工具 build / execute、Policy、Hook、Checker、Sandbox、输出协议和 Exporter。聚合 ActionStatus 可以方便运营，却会合并多个原因；原始 status code、errorType、callId 和表面错误必须保留。
+
+Trial 是固定任务分母。网络断开或 Collector 之外的目标基础设施故障可以在预先规则内创建 Attempt；模型答错、工具越界或内容限制属于产品结果，不能重跑到 pass。canonical Attempt 的选择规则在运行前确定。
+
+Scorer 独立读取回答、文件、副作用和协议证据，不把 STOP、accept、success 或低延迟作为答案。RewardAdapter 再把适合训练的评分转换成 DPO 偏好、GRPO / RFT 奖励，保留版本、缺失处理和反作弊规则。
+
+## 为什么这样设计
+
+第一，执行与观察分离，使遥测故障通常不改变任务结算。Exporter 不可达可以记录缺口，权威 Artifact 写失败则可能阻断 Eval；两者的可靠性和成本要求不同。
+
+第二，事件按层分类，支持准确恢复和归因。HTTP 限流可以重试，Policy DENY 不应重试，模型 Safety 与 Sandbox 拒绝也需要不同产品解释。统一 error 会制造错误恢复。
+
+第三，Trial 与 Attempt 分离，保持统计分母稳定。基础设施恢复可以提高可用性，却不能把产品失败洗成通过；pass@k 或 Best-of-N 必须预先声明为另一种采样策略。
+
+第四，Scorer 与 RewardAdapter 分开，防止代理指标成为训练目标后继续担任裁判。训练可优化特定信号，发布使用隔离 holdout 检查未见任务与安全约束。
+
+第五，脱敏和数据治理进入遥测契约，限制 logPrompts、工具参数和 Hook 名称泄露。可观察性越丰富，访问控制、保留期和秘密扫描责任越高。
+
+第六，保留原始错误再做聚合，兼顾产品稳定接口和诊断精度。ActionStatus 可以供仪表盘统计，具体 FinishReason、errorType、callId 和参数哈希供根因分析；任何聚合都不能删除原始证据。
+
+第七，将 Harness Gate 与内容 Scorer 分开，允许「运行可审计但答案错误」和「答案可能正确但证据不完整」两种状态。发布策略可以要求两者都通过，调查时又能准确知道应该修复协议还是模型行为。
+
+## 实现思路
+
+教学 Eval Adapter 使用不可变 Trial Manifest 与 Artifact lineage。它是仓库课程设计，不声称 Gemini CLI 内置完整发布 Eval 或训练适配器。
+
+1. **冻结 Trial。** 保存 dataset item、target surface、模型、源码、有效配置、工具表、权限和 Scorer version。
+2. **建立关联。** runId 连接 Session、model request、callId、Hook、Policy、Sandbox、Telemetry Trace 和 Artifact。
+3. **采集原始结果。** 保存回答、文件、stdout / stderr、协议事件、退出码和副作用，遥测只作为附加观察。
+4. **记录通道健康。** 保存 telemetry enabled、采样、Exporter、Collector、flush 和脱敏版本，缺口不伪装成零错误。
+5. **分类失败。** 按基础设施、产品、策略、安全、协议和证据缺失归类，保留原始错误与聚合状态。
+6. **管理 Attempt。** 只有预先允许且未形成可评分产品结果的基础设施故障才恢复，canonical 选择可复算。
+7. **独立评分。** Scorer 输出 score、reason、evidence refs 和版本，产品失败不能被工具 success 覆盖。
+8. **适配训练。** RewardAdapter 校准尺度、冲突、缺失和反作弊，生成训练快照；发布 holdout 独立运行。
+
+```text
+trial = freeze(dataset_item, target, scorer_version)
+run = execute_gemini_cli(trial.target)
+artifact = collect(run.product_outputs, workspace, protocol, telemetry_status)
+failure = classify_without_overwriting_raw_errors(artifact)
+attempt = maybe_recover_infrastructure(trial, failure)
+canonical = commit_attempt_once(trial, attempt)
+score = scorer(canonical.artifact)
+reward = reward_adapter?.transform(score)  // 不用于同一发布裁决
+```
+
+Artifact Schema 包含 source commit、surface、request / call IDs、ToolCallDecision、Hook 前后参数、Sandbox 结果、telemetry health、文件哈希和 Scorer evidence。敏感正文独立脱敏，公开证据保留哈希与存在性。
+
+一致性测试故意让 Hook 修改参数，确认 Policy、用户展示、Sandbox 和 ToolCallEvent 都引用修改后规范化调用；原始调用另存。任何层用错哈希，门禁失败，避免各层都「正确」却描述不同动作。
+
+## 贯穿案例
+
+固定任务要求修改解析器并通过测试。Target 使用非交互 stream-json、锁定模型与 DEFAULT 审批；遥测启用 Trace，但关闭 logPrompts，Exporter 指向本地 Collector。
+
+1. **登记 Trial。** TrialId、源码、模型、工具表、权限、协议版本和 Scorer v3 固定，分母为一。
+2. **执行产品。** 模型调用 write_file 和 run_tests，Policy accept；写工具事件 success，测试工具正常返回带断言失败的结果。最终 FinishReason STOP，stream-json result success。
+3. **采集 Artifact。** 保存补丁、测试日志、完整 JSONL、callId 和 Sandbox 轨迹；Collector 在退出前故障，部分 OTel 未 flush。
+4. **分类缺口。** 遥测状态为 partial，不把缺失事件解释为零错误；产品 Artifact 仍足够评分。
+5. **独立判定。** Scorer 发现测试失败，Trial fail；accept、工具 success、STOP 与 result success 都不能覆盖。
+6. **训练分流。** 若将失败用于训练，RewardAdapter 标记代码正确性为 0，并保留遥测缺口；发布 holdout 不复用该 Trial。
+
+```json
+{"trial":"parser-17","toolDecision":"accept","writeToolSuccess":true,"testResult":"assertion-failed","finishReason":"STOP","protocolStatus":"success","telemetry":"partial"}
+```
+
+```json
+{"trial":"parser-17","canonicalAttempt":1,"score":0,"reason":"固定测试失败","release":"blocked"}
+```
+
+基础设施变体在模型请求前网络断开，没有形成回答或副作用。预先规则允许同一 Trial 创建 Attempt 2；canonical 提交保持分母一。若断开发生在 write_file 后，副作用不确定，不能直接重试，先进入恢复探测。
+
+参数漂移变体让 BeforeTool Hook 把目标路径从临时文件改为源码。Policy、确认、Sandbox 与遥测必须全部引用修改后的哈希；用户只批准原路径时旧确认失效。安全 Scorer检查最终写集合。
+
+奖励投机反例若把 accept 和低延迟直接映射高 Reward，模型可以选择简单工具而不修复测试。离线回放显示与正确性标签低相关后，适配器拒绝该信号；发布仍由独立 Scorer 决定。
+
 ## 真实输入与输出
 
 ### 输入

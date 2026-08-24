@@ -17,6 +17,104 @@ sources: [{"repo":"gemini-cli","path":"packages/core/src/core/turn.ts","commit":
 
 先确定状态所有者。
 
+## 核心概念
+
+这一主链包含三套状态机：ModelRouter 为一次采样选择模型，Turn 把 Gemini 响应块翻译成事件，Scheduler 管理一批工具调用。Legacy Agent Session 把三者串起来，并决定何时产生唯一 AgentEnd。模型 Finished、工具 Success 和会话 completed 分属不同所有者。
+
+| 对象 | 统计单位 | 典型状态 / 事件 | 不能直接证明 |
+|---|---|---|---|
+| 路由决定 | 一次模型请求 | override、approval、classifier、fallback | 选择的模型质量最佳 |
+| Turn | 一次模型响应流 | content、tool request、Finished | Agent Session 已结束 |
+| FinishReason | 模型候选终止 | STOP、MAX_TOKENS、SAFETY 等 | 工具已结算 |
+| Scheduler batch | 一次 schedule 请求 | queued、active、terminal | 批次内所有工具串行 |
+| ToolCall | 一个 callId | Validating 到 Success / Error / Cancelled | 用户任务成功 |
+| Agent Session | 多次采样与工具批次 | active、agent_end | Eval Trial 通过 |
+| 产品表面 | 一次 CLI 或协议运行 | 文本、JSON、退出码 | 原始原因无损保留 |
+| Eval Trial | 固定任务和 Target | pass / fail / inconclusive | 可按内部重试改变分母 |
+
+ModelRouter 使用有顺序的策略链。显式 override、审批模式、可选分类器和默认策略可能分别选择模型或继续；fallback 元数据解释异常路径。路由结果要保存选中模型、策略名称和理由，后续质量差异才能归因，不把 fallback 隐藏成普通默认。
+
+Turn 的 Finished 表示当前模型响应有 finishReason，并携带该响应的用量。一个响应可以同时包含 tool_call_request 和 STOP；STOP 只终止模型输出，Agent Session 仍需等待 Scheduler、把函数响应送入下一次采样。用量事件也不能作为会话计数器。
+
+Scheduler 为每个 callId 维护细粒度状态，并为一次 `schedule()` 创建批次边界。当前批次忙时，新批次进入 requestQueue；这防止两次模型采样或调用方提交互相混入。批次内部是否并行由工具和调度策略决定，不能从批次队列串行推断调用串行。
+
+AgentEnd 是对原始 FinishReason 和会话状态的归约。STOP 可以映射 completed，MAX_TOKENS 映射预算耗尽，Safety 映射 refusal，畸形调用映射 failed；映射方便产品表面，却会丢掉细节。评测证据同时保存原始与归约原因。
+
+取消横跨四层：模型流可产生 UserCancelled，排队 batch 的 Promise 被拒绝，活动 ToolCall 进入 Cancelled，CLI 还可能给出退出状态。取消请求确认控制动作已发出，不自动证明所有进程停止或副作用回滚。
+
+## 为什么这样设计
+
+第一，路由作为独立服务，使模型选择可以基于模式、分类和回退演进，而 Turn 与 Scheduler 不必了解策略细节。路由元数据还能进入遥测和 Eval 条件，避免模型变化不可解释。
+
+第二，Turn 只翻译模型流，不负责工具执行或会话完成。响应协议和 Agent 生命周期因此解耦：即使模型发 STOP，只要有函数调用，请求仍能安全进入工具闭环。
+
+第三，Scheduler 使用 callId 状态机，允许确认、Policy、执行和取消分别观察。不存在工具和参数无效可以在执行前结算，用户确认可以等待，运行工具可以流式输出；所有路径最终形成 CompletedToolCall。
+
+第四，重叠 schedule 请求排队，保护批次归属。若第二次请求插入第一批活动状态，取消、确认和 CompletedToolCall 容易被返回给错误采样；批次边界让 Agent Session 按轮次回送完整结果。
+
+第五，AgentEnd 将多种底层原因映射为少数稳定类别，方便 CLI 与协议消费者；保存原始 FinishReason 又防止分析丢失 Safety、预算或畸形调用细节。
+
+第六，Trial 与 Session 分开，使内部恢复和产品质量拥有不同统计语义。一个 Trial 可以有多次模型响应和工具批次，基础设施故障可有 Attempt；模型答案错误或工具误用不能通过重新运行改成成功。
+
+## 实现思路
+
+教学实现建立 `RunStateLedger`，用关联 ID 串起路由、响应、批次、调用和 Trial。它是课程蓝图，不表示 Gemini CLI 源码使用同名总账。
+
+1. **创建采样身份。** 为 Agent Session 的第 n 次模型请求生成 sample ID，固定输入 Context 和路由条件。
+2. **执行路由链。** 依序运行策略，保存每个 continue / selected / fallback 决定，得到模型和路由元数据。
+3. **翻译模型流。** Turn 按到达顺序生成内容、思考、工具请求和 Finished，完整保存原始 FinishReason 与 usage。
+4. **收集工具批次。** Agent Session 聚合同一响应的 ToolCallRequest；若非空，即使 STOP 也不结束。
+5. **调度并结算。** Scheduler 为每个 callId 推进状态；已有活动批次时把新 schedule 放入 requestQueue，完成后原子拉取下一批。
+6. **继续采样。** CompletedToolCall 转为函数响应，使用新 sample ID 发起后续模型请求；保持同一 Session 和 Trial。
+7. **生成 AgentEnd。** 只有当前响应无待处理工具时才映射 FinishReason；发出一次结束事件并冻结终态。
+8. **交给 Scorer。** 产品表面投影 AgentEnd，独立 Scorer 检查 Artifact，内部 completed 不直接给分。
+
+```text
+route = model_router.select(sample_context)
+events = turn.stream(route.model, request)
+tool_requests, finished = collect(events)
+如果 tool_requests 非空:
+    batch = scheduler.schedule(tool_requests)
+    function_responses = await batch.completed_calls
+    return next_sample(history + function_responses)
+否则:
+    agent_end = map_finish_reason(finished.reason)
+    emit_once(agent_end)
+```
+
+Ledger 字段包括 sessionId、sampleId、routeDecision、rawFinishReason、batchId、callId、toolState、agentEnd 和 TrialId。状态只向前迁移，重复事件按 event ID 去重；FinishReason 与 AgentEnd 都保存，不能互相覆盖。
+
+Scheduler 测试使用受控门闩。第一 batch 激活后提交第二 batch，确认第二批工具没有进入 Executing；释放第一批后才拉取第二批。批次内测试另行使用互不依赖工具，证明并行条件，不用墙钟阈值冒充确定性。
+
+取消测试分别落在 queued、AwaitingApproval、Executing 和 terminal 后。每个观察点断言 Promise、ToolCall 状态、进程副作用、AgentEnd 和产品输出；已 terminal 的结果不被事后覆盖，queued 批次没有执行事件。
+
+## 贯穿案例
+
+用户要求读取配置并运行测试。ModelRouter 首次选择快速模型；第一次流同时返回两个工具请求、STOP 和用量。Scheduler 正在处理时，另一个产品操作又提交独立 batch，验证队列边界。
+
+1. **路由首个采样。** 策略链记录 approval-mode 命中并选择模型，sample `s1` 保存路由原因。
+2. **处理模型流。** Turn 产生两个 ToolCallRequest 与 Finished(STOP)，用量计入 `s1`；Agent Session 因工具集合非空保持 active。
+3. **调度第一批。** Scheduler 创建 `b1`，两个 callId 经验证、确认和执行；第二个 `schedule()` 请求 `b2` 进入 requestQueue。
+4. **结算并继续。** `b1` 返回一成功一错误，两个函数响应都进入 sample `s2`；模型基于错误提出修复调用。
+5. **拉取第二批。** 只有 `b1` 终态并清理后，`b2` 才激活；其结果归属原调用方，不混入 `s2`。
+6. **最终结束。** 最后一次模型流无工具请求并 STOP，Agent Session 只发一个 completed；Scorer 仍运行固定测试判定任务。
+
+```json
+{"sample":"s1","route":"approval-mode","finished":"STOP","toolCalls":["c1","c2"],"agentEnded":false}
+```
+
+```json
+{"batches":[{"id":"b1","states":["success","error"]},{"id":"b2","startedAfter":"b1-terminal"}],"agentEndCount":1}
+```
+
+预算反例让后续响应 MAX_TOKENS 且无工具。AgentEnd 映射为 max_budget，产品表面可以正常关闭，但 Trial 因无最终产物判 fail。Safety 反例保存具体原始原因，再归约为 refusal，避免统计时把不同保护机制混在一起。
+
+取消反例发生在 c1 已完成、c2 执行中。Scheduler 保留 c1 Success，将 c2 置 Cancelled，并拒绝仍排队的 b2；外部文件检查决定是否有部分副作用。取消成功不等于事务回滚，也不能创建新 Trial 重试到通过。
+
+路由对照再以同一 Dataset item 运行默认策略与显式 override，分别冻结模型、理由和工具表。Scorer 分层报告两个 Target，不在看到结果后挑选较好模型；路由元数据用于解释条件，不充当质量分数。
+
+若第一批部分错误后模型选择继续，错误 callId 和 responseParts 必须进入下一次请求；若选择结束，AgentEnd 可以 completed，但 Scorer仍检查未完成子目标。内部恢复能力不会自动改变 Trial 结论。
+
 ## 真实输入与输出
 
 ### 输入

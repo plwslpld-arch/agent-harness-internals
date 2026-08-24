@@ -17,6 +17,102 @@ sources: [{"repo":"gemini-cli","path":"packages/core/src/tools/tool-registry.ts"
 
 先找真实执行器。
 
+## 核心概念
+
+工具生命周期有三张表和两类输出。`allKnownTools` 保存已发现定义，活动视图应用排除、连接和模式过滤，Scheduler 则为每个 callId 保存运行状态。工具结束后，`responseParts` 面向模型，`resultDisplay` 面向用户，完整长输出还可能保存为旁路工件。
+
+| 概念 | 权威范围 | 产生时点 | 不应直接推出 |
+|---|---|---|---|
+| 已知工具 | Registry 候选定义 | 注册或发现 | 当前可用 |
+| 活动工具 | 当前 Config 与连接过滤 | 构造声明 / 查找 | 模型一定调用 |
+| Function Declaration | 本次模型请求 | 按模型与模式投影 | 执行已授权 |
+| ToolCallRequest | 模型行动意图 | Turn 解析完整调用 | 参数有效或工具仍存在 |
+| ToolInvocation | 真实定义构建的调用对象 | `tool.build(args)` 成功 | Policy 已允许 |
+| Scheduler state | 单个 callId 控制状态 | 验证到终态 | 任务整体成功 |
+| responseParts | 模型可见函数响应 | Executor 归约 | 与 UI 展示逐字相同 |
+| resultDisplay | 产品展示内容 | ToolResult 返回 | 适合作为模型上下文 |
+| outputFile | 完整长输出定位 | 截断或旁路保存 | 文件永远存在 |
+
+Registry 保留被排除定义，是为了会话中重新启用和来源管理；所有模型声明和 Scheduler 查找都走活动视图。内部 Map dump 会产生假阳性，真正能力清单要同时记录 known、active、declared 和 exclusion reason。
+
+模型调用是不可信输入。Scheduler 必须用当前活动 Registry 再查工具，以防模型引用旧声明或动态 MCP 已断开；`tool.build(args)` 使用真实定义校验并构造 invocation。未知名称与无效参数都在副作用前转成带 callId 的 CompletedToolCall。
+
+Policy、Confirmation 与 Hook 位于 invocation 和 ToolExecutor 之间。Policy 可以允许、拒绝或修改请求，确认可能等待用户，PreToolUse Hook 可以干预；它们的决定分别记录。模型已看见工具或参数通过 Schema，不会跳过这些层。
+
+ToolExecutor 负责运行与结果归约。Success 表示工具契约没有返回 error，Error 表示工具或执行路径失败，Cancelled 表示取消被观察；三种终态都携带函数响应。Cancelled 不保证回滚，Success 也不判断用户目标。
+
+长输出分层是上下文管理策略。原始输出可以蒸馏、截断或写入旁路文件，模型收到 responseParts，界面显示 resultDisplay。Artifact 必须保存完整输出哈希和定位，否则 Eval 只能看到摘要，无法复核遗漏内容。
+
+## 为什么这样设计
+
+第一，known 与 active 分离，支持动态启停而不重复解析定义。MCP 连接恢复或会话配置变化时，可以重新计算活动集合；模型和 Scheduler 始终查询同一过滤结果。
+
+第二，在 Scheduler 中再次查找和 build，防止模型请求绕过实时状态。Function Declaration 是采样时快照，调用到达时工具可能已被禁用或 Schema 更新；执行边界必须重新验证。
+
+第三，Policy、Confirmation、Hook 与 Executor 分层，让组织规则、用户控制、扩展生命周期和副作用各自可测试。一个统一 `execute()` 布尔值无法解释谁拒绝、是否有人批准以及进程是否启动。
+
+第四，所有分支都生成 CompletedToolCall，确保 Agent Session 能向模型回送结构化结果。未知工具、参数错误和拒绝不是异常丢包，模型可以基于它们修正后续行动，Trace 也保持 callId 闭环。
+
+第五，模型内容、界面内容和完整工件分开，满足不同大小与展示需求。模型窗口有限，UI 需要可读摘要，评测与调试需要原始证据；把一种字符串供所有消费者会在成本和可核对性之间失控。
+
+第六，活动工具和声明可按模型与模式生成，允许计划模式、模型能力和远程连接收窄工具表。工具表哈希进入运行条件后，Eval 才能区分能力变化与模型质量变化。
+
+## 实现思路
+
+教学原型使用 `ToolCapabilityLedger` 与 `ToolCallRecord`。它们是课程蓝图，不表示锁定 Gemini CLI 存在同名类型。
+
+1. **注册候选定义。** 保存工具名、来源、Schema、版本、别名和执行器工厂；重复名称按来源规则拒绝或消歧。
+2. **计算活动视图。** 应用 excludeTools、模式、模型、MCP 连接和 Feature，生成 active set 与 exclusion reason。
+3. **冻结模型声明。** 为本次采样生成 Function Declarations 和 tool surface 哈希，保存与模型请求关联。
+4. **接收并重验调用。** 按 callId 解析名称与参数，用当前 `getTool()` 查找并调用 build；失败立即生成 error response。
+5. **运行控制链。** invocation 依次经过 Policy、Confirmation 与同步 Hook，所有修改生成新参数哈希；拒绝路径不启动 Executor。
+6. **执行与取消。** ToolExecutor 传入 AbortSignal，记录进程、流式输出、started / terminal 和可观察副作用。
+7. **归约多面输出。** 生成 responseParts、resultDisplay、errorType、outputFile 和内容长度；长输出保留完整工件哈希。
+8. **回送并评分。** Scheduler 返回 CompletedToolCall，Agent Session 将函数响应送入下一次模型请求；独立 Scorer 读取真实产物。
+
+```text
+known = registry.register(definitions)
+active = registry.filter(known, config, mode, model, connections)
+surface = declare(active)
+request = model_output.tool_call
+tool = active.get(request.name) 或返回 TOOL_NOT_REGISTERED
+invocation = tool.build(request.args) 或返回 INVALID_TOOL_PARAMS
+decision = policy_confirmation_hooks(invocation)
+result = decision.allowed ? executor.run(invocation) : denied_result
+return complete(call_id, result, response_parts, display, artifact_ref)
+```
+
+CallRecord 至少保存 request surface version、原参数哈希、Hook 修改后哈希、Policy、确认主体、执行开始与终态、Abort 观察点、responseParts hash 和 artifact refs。秘密参数只保存脱敏摘要，但来源和 callId 不丢。
+
+动态工具刷新采用版本切换。已经发出的模型请求继续绑定旧 surface，调用到达时若当前定义不兼容，则明确返回 unavailable 或按冻结定义执行，不能无痕用新 Schema 解释旧参数。具体选择由产品契约决定，证据必须记录。
+
+长输出测试分别覆盖低于阈值、截断、蒸馏成功、蒸馏失败和旁路文件写失败。responseParts 中的说明要能回到完整工件；文件缺失时不能把截断摘要标为完整证据。
+
+## 贯穿案例
+
+一次模型响应请求三个工具：已排除的 `write_file`、参数无效的 `read_file`、活动的 `run_tests`。Policy 要求测试命令确认，用户批准后执行器产生超过上下文阈值的日志。
+
+1. **冻结工具表。** Registry known 包含三项，active 只有 `read_file` 与 `run_tests`；Function Declaration 不含 `write_file`，surface 哈希写入请求。
+2. **处理旧工具请求。** 模型仍输出 `write_file`，Scheduler 当前 `getTool()` 返回空，生成 TOOL_NOT_REGISTERED，不创建文件。
+3. **构建参数。** `read_file` 缺少路径，`tool.build()` 抛出校验错误，生成 INVALID_TOOL_PARAMS，不进入 Policy。
+4. **确认测试执行。** `run_tests` build 成功，经 Policy 到 AwaitingApproval；用户批准精确命令，Executor 启动进程。
+5. **处理长输出。** 完整测试日志写入旁路工件，responseParts 只含摘要和定位，resultDisplay 给界面展示，三者各有哈希。
+6. **回送模型。** 三个 CompletedToolCall 都保留原 callId，模型基于两个错误和测试结果修正下一步；Scorer 读取完整日志和工作区。
+
+```json
+{"surface":{"known":["write_file","read_file","run_tests"],"active":["read_file","run_tests"]},"calls":["c-write","c-read","c-test"]}
+```
+
+```json
+{"completed":[{"id":"c-write","error":"tool_not_registered"},{"id":"c-read","error":"invalid_params"},{"id":"c-test","status":"success","outputFile":"artifact-ref"}]}
+```
+
+取消变体在测试进程已经写出一半日志后触发。Scheduler 将 c-test 置 Cancelled，保留部分内容与进程终止信息；独立检查器核对是否遗留子进程或文件。Cancelled 不能被解释为没有副作用。
+
+动态 MCP 变体在模型采样后断开服务。工具声明曾可见，调用时 Registry 当前活动视图已移除，系统返回 unavailable；这属于能力漂移，不应归因成模型幻觉。若实验比较模型，必须冻结连接条件或将该 Trial 标为基础设施异常。
+
+教学合成反例定义一个只负责「成功取得测试日志」的 `run_tests` 工具：处理器正常返回 Success，但日志里的断言失败。这里不声称锁定 Gemini CLI 的具体测试工具采用该契约；它只说明工具契约成功与任务 Scorer 仍可 fail，执行器结算不是业务正确性裁决。
+
 ## 真实输入与输出
 
 ### 输入

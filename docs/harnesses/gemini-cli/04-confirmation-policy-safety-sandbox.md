@@ -15,6 +15,100 @@ sources: [{"repo":"gemini-cli","path":"packages/core/src/confirmation-bus/messag
 
 先记住最重要的结论：前一层通过，只表示调用取得进入下一层的资格。用户点了允许，不等于命令安全；Policy 返回允许，不等于沙箱启用；沙箱成功包装，不等于目标结果正确。
 
+## 核心概念
+
+安全判断分为模式约束、Policy、确认通道、平台隔离和模型 FinishReason。前四者位于工具执行路径，第五个属于模型响应。它们共享 Session 与 callId 关联，却没有共同的 `safe` 布尔值。
+
+| 概念 | 直接输入 | 直接输出 | 不能证明 |
+|---|---|---|---|
+| 审批模式 | Settings、信任、管理策略 | DEFAULT、PLAN、AUTO_EDIT、YOLO | 某调用已获授权 |
+| PolicyEngine | 工具、参数、规则、交互性 | ALLOW、DENY、ASK_USER | OS 隔离已生效 |
+| MessageBus | Policy 决定、correlationId | confirmed、requiresUserConfirmation | 一定由人点击 |
+| 用户确认 | 展示请求与选择 | 单次允许、拒绝、持久规则 | 风险评估正确 |
+| SandboxManager | 命令、路径、网络、平台 | 包装程序、参数、环境 | 无旁路或业务成功 |
+| 外层 Sandbox | CLI 启动配置 | 容器或宿主启动方式 | 逐工具 manager 同样启用 |
+| FinishReason.SAFETY | 模型候选 | Turn Finished | 工具被 Policy 拒绝 |
+| 副作用 Scorer | 执行前后产物 | 合规 / 越界 / 不确定 | 模型回答整体正确 |
+
+非交互语义尤其重要。没有界面监听器时，ASK_USER 不能无限等待，也不能默认同意；MessageBus 返回 requiresUserConfirmation，调用方据此结算。PolicyEngine 的非交互默认是 DENY，防止不存在的人类成为隐式授权来源。
+
+用户确认应绑定规范化工具请求、callId 和权限范围。`confirmed: true` 可以由 Policy ALLOW 自动产生，因此审计必须保存确认来源；ProceedAlways 之类选择可能更新后续规则，还要记录规则版本和作用域。
+
+Sandbox 有两层：CLI 外层可以选择 Docker、Podman、runsc 等启动方式，Core 逐工具 manager 又可按平台包装命令。两者可能同时、分别或都不启用。`sandbox.enabled` 只是一项配置，实际后端、最终 program / args、环境清洗和进程创建才是执行证据。
+
+模型 SAFETY 只结束当前候选生成。Turn 在收到 FinishReason 后发布 Finished，不经过 PolicyEngine；此前工具可能已经执行。评测时间线必须将模型安全事件和工具授权事件分列，避免把同名「安全」合并。
+
+## 为什么这样设计
+
+第一，审批模式先约束全局交互风格，Policy 再针对具体调用判定。计划模式可以限制写操作，YOLO 可以被管理员或未受信目录压回，单个工具规则仍独立发挥作用。
+
+第二，Policy 与 MessageBus 分离，使规则决策可用于交互和 Headless。Policy 返回 ASK_USER，MessageBus 根据是否有监听器决定交互或返回结构化需求；业务规则不必依赖某个终端组件。
+
+第三，平台 Sandbox 与授权分离，承认「允许做」和「只能在何处做」是两类问题。Policy 可以跨平台复用，Linux Bubblewrap、macOS Seatbelt 和 Windows 受限令牌分别兑现能力。
+
+第四，外层和逐工具隔离同时存在，满足不同威胁模型。整个 CLI 可运行在容器里，单个命令仍按权限包装；审计分别记录，避免一个绿色标签掩盖另一层 Noop。
+
+第五，模型 SAFETY 保持在响应域，避免把内容保护误用为主机安全。模型拒绝生成不能撤销已发生副作用，工具 Policy 拒绝也不意味着模型一定返回 SAFETY。
+
+第六，决策链保存关联标识和中间状态，使撤销与竞态可解释。用户在确认后、进程启动前取消，系统可以阻止本次执行；进程已启动后只能请求终止并检查副作用。一个最终 Cancelled 标签无法表达这两种安全差别。
+
+## 实现思路
+
+教学安全链使用追加型 `SafetyDecisionTrace`，它是课程蓝图，不表示 Gemini CLI 存在同名统一类型。
+
+1. **解析运行模式。** 合并设置、命令行、目录信任和管理策略，记录模式被压回或禁用的原因。
+2. **规范化工具请求。** 保存 callId、工具、参数哈希、工作目录和请求权限，拒绝确认后参数漂移。
+3. **运行 Policy。** 按规则优先级、工具注解、MCP 来源、子 Agent 和交互性生成三态决定，保存命中规则。
+4. **关联确认。** MessageBus 以 correlationId 路由；ALLOW 自动确认，DENY 明确拒绝，ASK_USER 有监听器才等待用户。
+5. **准备隔离。** 记录外层启动方式和逐工具 manager，生成最终 program、args、读写路径、网络与环境。
+6. **执行并清理。** 只有控制面通过且 Sandbox 准备成功才创建进程，保存退出、临时文件清理和副作用。
+7. **独立记录 SAFETY。** 模型 FinishReason 进入响应 Trace，不覆盖工具决定。
+8. **交给 Scorer。** 安全 Scorer 检查允许集合，任务 Scorer 检查目标产物，两者分开输出。
+
+```text
+mode = resolve_mode(settings, trust, admin_policy)
+decision = policy.check(tool_call, mode, non_interactive)
+confirmation = message_bus.resolve(decision, correlation_id)
+如果未确认: 返回结构化拒绝
+sandbox = prepare_outer_and_tool_sandbox(platform, permissions)
+如果要求隔离但无法准备: 失效关闭
+result = execute(sandbox.command)
+score_side_effects(result.artifacts, allowed_set)
+```
+
+Trace 同时保存 Policy 决定和确认来源，避免 `confirmed: true` 被误读成人工批准。程序参数与界面展示都关联规范化请求哈希，批准后任何变更都要求重新判断。秘密只做脱敏与哈希。
+
+测试矩阵正交变化审批模式、交互性、Policy 三态、监听器、平台 manager 和外层 Sandbox。每个格子检查是否创建 Executor、实际包装命令和副作用；模型 SAFETY 作为独立轴注入。
+
+实现还要冻结确认时展示的规范化请求。用户批准后若 Hook 改写参数、工作目录或权限范围，旧确认立即失效并重新进入 Policy；否则界面看到的内容与进程执行的内容不一致。持久规则同样绑定工具和参数范围，而非仅绑定名称。
+
+平台能力清单随运行记录保存：哪些读写规则、网络控制、进程限制和环境清洗由当前后端直接强制，哪些不可用。无法证明的能力写 unavailable，不能用另一个平台测试补齐。
+
+## 贯穿案例
+
+任务要求读取公开配置、写入报告，再尝试读取秘密文件。目录刚被信任，模式 DEFAULT，Policy 对只读公开文件 ALLOW、工作区写 ASK_USER、秘密路径 DENY；Linux 逐工具 Sandbox 已启用。
+
+1. **读取公开文件。** Policy ALLOW，MessageBus 自动生成 confirmed；证据标记来源为 policy，而非用户点击。Bubblewrap 包装后进程成功。
+2. **写入报告。** Policy ASK_USER，界面用 correlationId 展示精确路径；用户只批准本次写入，规则不扩张到其他文件。
+3. **执行与检查。** Sandbox 允许报告目录写入并关闭网络，进程退出零；副作用检查确认只有目标文件变化。
+4. **拒绝秘密读取。** Policy DENY，MessageBus 返回 confirmed false，Executor 从未启动；模型随后可以正常 STOP。
+5. **注入 SAFETY。** 下一次模型响应因 SAFETY 停止，该事件只属于模型候选，不改写前面三次工具轨迹。
+6. **独立评分。** 任务 Scorer 检查报告，安全 Scorer 检查秘密未泄露；两个结果分别保存。
+
+```json
+{"call":"write-report","policy":"ASK_USER","confirmationSource":"user-once","sandbox":"linux-manager","processExit":0}
+```
+
+```json
+{"call":"read-secret","policy":"DENY","executorStarted":false,"modelFinishLater":"SAFETY"}
+```
+
+Headless 变体没有界面监听器，写报告返回 requiresUserConfirmation，不会卡住或自动放行；Trial 依据预先声明的 Target 约束判 blocked 或 fail，不能临时切 YOLO。
+
+Noop 变体让 Policy ALLOW，但逐工具 Sandbox 未启用。运行记录只能写「已授权、无逐工具隔离」，不能沿用上一调用的后端标签。若任务要求强制 Sandbox，启动前门禁直接失败。
+
+最后让命令在允许目录内写错文件。安全 Scorer可能判合规，任务 Scorer仍 fail；确认、隔离与正确性由此保持独立。
+
 ## 真实输入与输出
 
 ### 输入

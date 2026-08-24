@@ -19,6 +19,96 @@ sources: [{"repo":"gemini-cli","path":"packages/core/src/agent/legacy-agent-sess
 
 先固定证据边界。
 
+## 核心概念
+
+Gemini CLI 主线由配置上下文、模型路由、Turn 事件、Scheduler 工具状态、安全控制、会话记录、扩展编排、产品投影和独立 Eval 组成。它们通过 Agent Session 串联，但每层拥有自己的身份和终态。
+
+| 边界 | 核心对象 | 主要问题 | 直接证据 |
+|---|---|---|---|
+| 配置 | LoadedSettings、Core Config、Folder Trust | 本轮什么值生效 | 来源快照与最终 Config |
+| Prompt | GEMINI.md、PromptProvider、ToolRegistry | 模型真正看见什么 | 最终请求与声明 |
+| 路由 / Turn | ModelRouter、GeminiEvent、FinishReason | 选哪个模型、响应如何结束 | 路由元数据与原始事件 |
+| Scheduler | batch、callId、ToolCall state | 工具怎样验证和结算 | 状态序列与 responseParts |
+| 安全 | Policy、MessageBus、Sandbox | 谁授权、平台如何强制 | 决策 Trace 与包装命令 |
+| 状态 | Recording、History、Compression、Memory | 什么可恢复、什么有损 | JSONL、逻辑视图、摘要 |
+| 扩展 | Extension、Hook、Skill、MCP、Agent | 能力怎样动态装配 | 来源、Registry、子运行 |
+| 表面 / Eval | TUI、JSON、A2A、Trial、Scorer | 怎样输出与独立评分 | 协议 Artifact 与 Score |
+
+Agent Session 是主循环协调者。Turn 翻译一次模型响应流，Scheduler 结算其中的工具调用；响应中即使出现 STOP，只要还有 ToolCallRequest，Session 就继续。最终 agent_end 只在无待处理工具时产生。
+
+工具有 known、active、declared 和 executing 四种可见性。模型请求仍要用当前 Registry 查找并 build，随后经过 Policy、Confirmation、Hook 和 Sandbox。Success 只属于 callId，Cancelled 不保证回滚。
+
+安全中有两个容易混淆的「Safety」：模型 FinishReason.SAFETY 属于生成终止，Policy 与 Sandbox 属于工具执行路径。用户确认、策略允许和平台隔离分别留证，任何一个都不能替另一个签字。
+
+状态同样分物理记录、逻辑回放、活动 History、模型 Content、压缩替代、Checkpoint 和长期记忆。模型 Context 有损，Checkpoint 不含工作区；恢复不能默认重放工具副作用。
+
+## 为什么这样设计
+
+第一，CLI 设置与 Core Config 分离，让信任、文件和终端选项在 CLI 处理，Agent、模型与工具使用稳定 Core 服务。按字段合并保留组织、用户与项目的不同权力范围。
+
+第二，Turn 与 Scheduler 分离，使模型协议结束不会跳过工具状态。Turn 只产出事件，Scheduler 负责验证、确认、执行和取消，Agent Session 决定是否再次采样。
+
+第三，Policy、MessageBus 和多平台 Sandbox 分层，允许同一规则服务交互与 Headless，并由不同平台后端兑现权限。模型 SAFETY 保持独立，避免内容保护冒充主机安全。
+
+第四，记录与模型 Context 分离，兼顾可恢复证据和令牌预算。压缩能缩小输入，但摘要仍有损；长期记忆按项目和个人作用域管理，不覆盖会话事实。
+
+第五，产品表面共享 Core 又保留协议差异。text、json、stream-json、IDE 与 A2A 各自服务不同消费者，独立 Eval 通过统一 Artifact 和 Scorer比较，不用某个表面 success 代替任务结果。
+
+第六，课程沿一次工具闭环组织而非沿目录罗列，是为了让读者掌握可迁移的身份、提交点和证据方法。上游模块会演进，具体结论仍回到锁定源码；责任边界则帮助定位新实现放在哪一层复核。
+
+## 实现思路
+
+学习时以一次带工具调用的固定任务建立证据包，让九篇围绕同一 run 深入，而不是按 TypeScript 文件名记忆。
+
+1. **冻结输入。** 保存提交、surface、模型、Settings 来源、Folder Trust、审批模式、Sandbox 与工具表。
+2. **捕获请求。** 导出 merged、Core Config、系统提示、首条项目上下文和 Function Declarations。
+3. **关联事件。** 为 Session、sample、Turn event、batch 和 callId 分配身份，保存原始 FinishReason。
+4. **追踪工具。** 从 active Registry、build、Policy、Confirmation、Hook 到 Executor，保存 responseParts 与外部工件。
+5. **验证状态。** 检查 JSONL 重放、AgentChatHistory、压缩替代、Checkpoint 和记忆作用域，不重放副作用。
+6. **冻结扩展。** 保存 Extension / Skill / MCP / Agent 来源和 surface hash，本地与远程子 Agent 分别记录终态。
+7. **比较表面。** 建立 AgentEvent 到 TUI、JSONL、IDE 与 A2A 的映射，标出 ignored 和 merged。
+8. **独立评分。** Trial 分母固定，Artifact 保存回答、文件、副作用和协议，Scorer 不读取内部 success 作为答案。
+
+```text
+core = compile_settings_and_context(layers, trust)
+route = select_model(core, request)
+events = turn.stream(route.model)
+while events 包含工具请求:
+    completed = scheduler.schedule(active_registry, policy, confirmation, sandbox)
+    events = turn.stream(function_responses(completed))
+record(session_events, logical_history, surface_projection)
+score = independent_scorer(frozen_trial, artifacts)
+```
+
+教学原型保留边界接口，不声称复制全部 Gemini CLI 类型。配置编译不决定工具结果，Turn 不判断任务成功，Scheduler 不修改 Trial 分母，Telemetry 不产生 Score。接口用稳定 ID 和版本化 Artifact 连接。
+
+故障矩阵覆盖未受信工作区、路由 fallback、中间 STOP、工具不存在、无界面 ASK_USER、Noop Sandbox、记录磁盘满、压缩遗漏、MCP 撤权、EPIPE 与 A2A input-required。每个失败都按责任层归因。
+
+## 贯穿案例
+
+贯穿任务沿用上游夹具：「读取一个文件并根据内容回复」。教学版加入真实 Artifact 检查：读取路径固定、callId 关联、没有越界读取，最终回答引用文件内容。
+
+1. **配置请求。** 受信项目的 Settings 与 GEMINI.md 进入 Core Config 和 Prompt，active Registry 声明 `read_file`；审批模式 DEFAULT。
+2. **首个模型响应。** ModelRouter 保存选择，Turn 产生 `call-1 read_file` 与 STOP；Agent Session 因工具请求非空保持 active。
+3. **调度工具。** Scheduler 查找当前活动工具、build 参数，经 Policy ALLOW 与 Sandbox 只读包装后执行；结果成为 CompletedToolCall。
+4. **回送模型。** responseParts 带 `call-1` 进入第二次采样，模型返回 `Done!` 与 STOP；这次无工具，产生唯一 agent_end。
+5. **表面投影。** stream-json 发 tool_use、tool_result 和 result，TUI 更新工具卡；两者不是无损等价。
+6. **独立评分。** Scorer 检查读取路径、返回内容和最终答案，agent_end completed 只是运行证据。
+
+```json
+{"session":"sess-1","samples":2,"callId":"call-1","tool":"read_file","firstFinish":"STOP","agentEndAfterFirst":false}
+```
+
+```json
+{"toolStatus":"success","secondFinish":"STOP","agentEnd":"completed","artifactScore":"pass"}
+```
+
+安全反例让项目未受信，工作区设置尝试启用 YOLO。模式被压回 DEFAULT，危险工具 ASK_USER；Headless 无监听器时返回 requiresUserConfirmation，不自动放行。Trial 按固定 Target 判定。
+
+恢复反例在读取副作用后记录服务磁盘满。模型仍可完成回答，但可恢复证据不完整；若实验要求完整 Trace，Harness Gate fail，任务内容分数单独保留。
+
+协议反例让 JSONL 消费者提前关闭产生 EPIPE 退出 0。缺少 result 的协议 Gate 判 incomplete，不能用退出码签字。整条主线由此把配置、循环、安全、状态、扩展、表面和 Eval 串成一条可核对链。
+
 ## 系统全景
 
 ![Gemini CLI 从产品表面、配置与上下文，经智能体会话、轮次和工具调度器到安全执行、状态与评测出口的中文系统架构图](../../../assets/diagrams/gemini-cli/system-architecture.svg)

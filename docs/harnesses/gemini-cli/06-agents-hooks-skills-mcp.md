@@ -15,6 +15,95 @@ Gemini CLI 的扩展能力不是一个插件开关。Extension 可以贡献上�
 
 本篇建立两张地图。第一张说明扩展内容如何经过多层门禁形成当次会话的提示、工具、钩子和策略；第二张说明父智能体调用 AgentTool 后，本地子智能体与远程 A2A 智能体如何分别拥有工具集合、消息流、取消、认证和终止状态。读完后，你可以解释「安装了」「启用了」「模型可见」「已授权」「已执行」和「任务完成」之间的差别。
 
+## 核心概念
+
+扩展是能力来源容器，Hook、Skill、MCP 与 Agent 是不同运行机制。它们共享发现、信任和来源审计，却拥有各自的模型可见性、授权和生命周期。Extension `isActive` 只表示当前路径允许装配，不代表所有子能力成功加载。
+
+| 能力 | 模型怎样接触 | 执行主体 | 特有终态 / 风险 |
+|---|---|---|---|
+| Extension | 通过上下文、工具、Hook 等间接体现 | ExtensionLoader 与各 Registry | 部分加载、来源变化 |
+| Hook | 通常不作为普通工具 | HookPlanner / Runner | 阻断、修改、超时、聚合错误 |
+| Skill | 先元数据，激活后正文与资源 | ActivateSkillTool | 同名覆盖、提示注入 |
+| MCP | 发现后注册工具、Prompt、Resource | McpClientManager / 远端 Server | 连接、撤权、Schema 漂移 |
+| 本地 Agent | AgentTool 目标枚举 | LocalAgentExecutor | GOAL、超时、无 complete_task、取消 |
+| 远程 Agent | AgentCard 与 A2A 流 | 远程 Session | contextId、taskId、agent_end |
+| Policy / Checker | 不一定直接可见 | 运行时控制面 | 允许、拒绝、询问、校验失败 |
+
+能力状态至少分 declared、discovered、active、registered、visible、authorized、terminal。一个 Skill 名称出现在系统提示中只到 visible metadata；激活后正文才进入 Context。MCP CONNECTED 只说明连接，工具还要发现、过滤、注册与单次授权。
+
+Hook 具有事件和时间语义。BeforeModel、BeforeToolSelection、BeforeTool 可改写或阻断尚未发生的动作，AfterTool 与 Session 事件只能观察或补充。Planner 处理 matcher、去重和顺序；Runner 处理信任、环境清洗、超时与结果聚合。
+
+本地 Agent 和远程 Agent 不共享终止协议。本地执行器拥有隔离 Registry、派生 MessageBus 和强制 `complete_task`，没有有效完成工具即使模型停了也不是 GOAL。远程执行器依据 A2A 流、AgentCard、contextId、taskId 和终态任务解释结果。
+
+父 Agent 看到的是 AgentTool 的 ToolResult。子进度、agent_end(completed) 和父工具 Success 都不等于目标 Artifact 正确；Eval 将整个父任务作为固定 Trial，子运行只是 Trace 子树。
+
+## 为什么这样设计
+
+第一，Extension 作为容器、子能力独立装配，可以隔离部分失败。一个 Hook 文件损坏不必伪装 MCP 已连接，MCP 启动失败也不应删除合法 Skill；来源仍统一关联到扩展身份。
+
+第二，批量刷新 Registry 与提示，减少每个子能力变化都破坏上下文缓存。启停扩展完成后再统一重载 Hook、Agent、Skill 和项目上下文，使模型工具表拥有清晰版本边界。
+
+第三，Skill 延迟激活降低常驻上下文，并让非内建内容有确认机会。元数据帮助模型选择，正文和资源只在需要时加载；工作区同名优先级提供本地定制，也带来供应链审计要求。
+
+第四，本地子 Agent 使用隔离 Registry 并禁止递归 AgentTool，限制能力扩张和无限委派。父工具可以按定义显式分配工具与内联 MCP，子上下文和终态独立记录。
+
+第五，远程 A2A 保留 contextId 与 taskId，使多次发送可继续同一远端上下文；独立 Session 不共享状态，避免跨调用污染。其认证与网络失败无法套用本地完成工具语义。
+
+第六，所有子路径最终回到父 Scheduler，保持 Policy、确认、ToolResult 与 callId 闭环。统一入口复用控制面，却不抹平本地和远程生命周期差异。
+
+## 实现思路
+
+教学原型使用 `CapabilityGraph` 记录来源、状态和运行边。它是课程蓝图，不表示 Gemini CLI 内部存在同名总图。
+
+1. **发现与校验。** 读取 Extension manifest、hooks、skills、agents 和 MCP 配置，记录来源哈希、作用域和解析错误。
+2. **应用门禁。** 依次检查管理员开关、允许来源、完整性、路径作用域、Folder Trust、禁用列表与用户确认。
+3. **批量装配。** 活动 Extension 连接 MCP、注册 Policy / Checker，完成后统一刷新 Context、HookRegistry、AgentRegistry 与 SkillManager。
+4. **生成模型表面。** Skill 先列元数据，MCP 注册过滤后的工具，AgentTool 枚举活动 Agent；保存 surface hash。
+5. **执行 Hook。** Planner 决定匹配、去重、顺序或并行，Runner 在超时和清洗环境中执行，保存前后输入。
+6. **调用本地 Agent。** 派生 MessageBus 与隔离 Registry，克隆显式允许工具，强制 complete_task，限制轮数、超时和递归。
+7. **调用远程 Agent。** 加载 AgentCard 与认证，管理 contextId / taskId，流式重组 message、artifact 和唯一 agent_end。
+8. **父端结算与评分。** 子结果携带来源、终态和 Artifact refs 回到父 callId，独立 Scorer 检查父任务。
+
+```text
+graph = discover(extension_roots, project, user)
+active = apply_admin_trust_consent_and_scope(graph)
+registries = reload_as_one_batch(active)
+surface = project_skills_mcp_agents(registries)
+invocation = agent_tool.resolve(name, prompt)
+result = invocation.local ? run_isolated_local(invocation) : run_a2a(invocation)
+return parent_scheduler.complete(call_id, result, child_trace_refs)
+```
+
+Graph 节点保存 capability id、kind、source、hash、active reason、registered version 和 visible name；执行边保存 parent callId、子 Session、Policy、确认和终态。重载生成新版本，不无痕覆盖正在运行的 Turn。
+
+本地与远程测试使用同一输入 Schema，却分别注入 no-complete-task、最大轮数、硬取消、AgentCard 失败、认证缺失、空流和网络中断。统一 Scorer只比较目标 Artifact，协议错误按各自责任层记录。
+
+## 贯穿案例
+
+一个审查扩展贡献项目 Skill、BeforeTool Hook、MCP 代码搜索和本地 `codebase_investigator` Agent；另有远程 A2A reviewer。用户要求核对配置加载顺序并提交带源码证据的报告。
+
+1. **装配扩展。** 目录受信、manifest 完整，Extension active；Skill 元数据进入提示，MCP 连接并注册过滤工具，Hook 与两个 Agent 进入 Registry。
+2. **激活 Skill。** 模型选择审查 Skill，用户确认后正文和资源树进入 Context；这一步没有自动调用 MCP 或 Agent。
+3. **启动本地 Agent。** AgentTool 为其创建隔离 Registry，只提供读文件和代码搜索，禁止递归 Agent；父 callId 与子运行关联。
+4. **执行 Hook 与 MCP。** BeforeTool 检查路径并允许只读查询；MCP 调用时再次经过 Policy，结果进入子 Context。
+5. **完成本地任务。** 子模型必须有效调用 complete_task 才得到 GOAL；只输出「完成」会触发无完成工具错误。
+6. **调用远程 reviewer。** A2A Session 建立 contextId，流式接收消息和 Artifact；网络结束前保存 taskId，终态后清理。
+7. **父端汇总。** 父 Agent 消费两个子结果并生成报告，Scorer 核对源码证据和缺口，不按 Agent 数量计分。
+
+```json
+{"extension":"review-extension","active":true,"surface":{"skill":"metadata","mcp":"registered","agents":["local-investigator","remote-reviewer"]}}
+```
+
+```json
+{"local":{"terminateReason":"GOAL","completeTask":true},"remote":{"agentEnd":"completed","contextId":"ctx-1"},"parentArtifact":"report-ref"}
+```
+
+供应链反例在激活前修改工作区同名 Skill。哈希与来源变化触发新确认或审计告警，不能沿用用户级 Skill 的信任。恶意说明要求扩大权限，真实工具仍由隔离 Registry、Policy 与确认拒绝。
+
+本地失败变体让模型达到最大轮数却未调用 complete_task；它可以返回部分观察，但 terminateReason 不是 GOAL，父端不能标成功。远程失败变体在已有部分 Artifact 后断流，结果按协议失败并保留部分证据。
+
+MCP 撤权变体保留目录缓存但调用失败。这个失败属于连接或认证，不应归因给 Agent 推理；Trial 是否允许基础设施 Attempt 必须预先规定，不能重试到拿到一份好报告后改写第一次失败。
+
 ## 真实输入与输出
 
 ### 输入
