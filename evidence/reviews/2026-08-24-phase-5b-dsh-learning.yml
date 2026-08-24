@@ -1,0 +1,38 @@
+{
+  "stage": "phase-5b-dsh-learning",
+  "date": "2026-08-24",
+  "commit": "3c01478bd115c400587e2c7aff03784dace4777d",
+  "promises": [
+    {"id":"p-learning-depth","statement":"DSH 入口与八篇正文均按内容契约 2.0 讲清核心概念、设计理由、实现思路和贯穿案例，形成从组合启动到独立评测的连续教学链。"},
+    {"id":"p-evidence-boundary","statement":"上游源码事实、录制夹具、跨模块架构推断、教学实现蓝图和独立 Eval 结论分别标注，不用内部完成状态替代任务评分。"},
+    {"id":"p-adversarial-review","statement":"逐篇反查候选能力与有效组合、模型意图与真实副作用、原始 Session 与派生视图、协议结束与任务通过、内部测试与发布证据等高风险混淆。"}
+  ],
+  "evidence": [
+    {"id":"e-nine-articles","promise":"p-learning-depth","type":"file","reference":"docs/harnesses/deepseek-harness/","summary":"九篇均包含概念表、分层理由、教学实现步骤、四步以上案例及可核对输入输出。"},
+    {"id":"e-contract-v2","promise":"p-learning-depth","type":"test","reference":"scripts/check-content-contract.mjs","summary":"DSH 九篇定向执行内容契约 2.0，全部无失败项。"},
+    {"id":"e-session-eval-boundary","promise":"p-evidence-boundary","type":"file","reference":"docs/harnesses/deepseek-harness/07-surfaces-feedback-eval.md","summary":"协议投影、反馈、遥测、RewardAdapter 与独立 Eval 分层，内部终态和评分结果保留各自身份。"},
+    {"id":"e-analysis-anchors","promise":"p-evidence-boundary","type":"test","reference":"scripts/verify-analysis.mjs","summary":"八十篇来源绑定与一百三十二处源码行号抽查通过。"},
+    {"id":"e-claims-tests","promise":"p-adversarial-review","type":"test","reference":"scripts/verify-claims.mjs","summary":"一百一十九条关键结论无重复；一百一十二项仓库测试全部通过。"},
+    {"id":"e-links-visuals-style","promise":"p-adversarial-review","type":"test","reference":"scripts/check-visuals.mjs","summary":"一百一十二个 Markdown 本地链接和八十一张正式中文 SVG 通过；文风门禁无阻断错误。"}
+  ],
+  "findings": [
+    {"id":"f-state-conflation","priority":"high","status":"resolved","summary":"入口及表面篇若只写 completed、end_turn 或退出码，容易让读者误判任务已通过。"},
+    {"id":"f-blueprint-inference","priority":"high","status":"resolved","summary":"统一编排信封、证据清单和多表面适配伪代码容易被误读为上游内部类结构。"},
+    {"id":"f-platform-overreach","priority":"high","status":"resolved","summary":"安全、恢复与验证案例若不限定平台和夹具来源，会把录制证据外推为生产能力。"},
+    {"id":"f-style-rhythm","priority":"low","status":"open","summary":"DSH 多篇仍有句长节奏非阻断提醒，留到全仓总编辑统一润色。"}
+  ],
+  "resolutions": [
+    {"id":"f-state-conflation","action":"在入口、循环、表面和验证案例中分别保存工具结算、循环终态、协议响应与独立评分，并加入反例。","evidence":["e-nine-articles","e-session-eval-boundary","e-contract-v2"]},
+    {"id":"f-blueprint-inference","action":"新增实现章节使用教学实现、最小原型或接入建议措辞，源码证据继续引用锁定上游路径。","evidence":["e-nine-articles","e-analysis-anchors"]},
+    {"id":"f-platform-overreach","action":"明确 danger-full-access 夹具、Windows 或未知平台范围，以及未运行供应商、沙箱和生产负载时的 partial 或 unavailable 边界。","evidence":["e-nine-articles","e-claims-tests"]}
+  ],
+  "commands": [
+    {"command":"DSH 九篇 contentContractFailures 定向检查","exit_code":0,"summary":"入口与八篇正文全部通过内容契约 2.0。"},
+    {"command":"node scripts/verify-analysis.mjs && node scripts/verify-anchors.mjs","exit_code":0,"summary":"来源绑定与源码锚点保持有效。"},
+    {"command":"node scripts/verify-claims.mjs && node scripts/run-tests.mjs","exit_code":0,"summary":"一百一十九条 Claim 校验和一百一十二项测试通过。"},
+    {"command":"node scripts/check-links.mjs && node scripts/check-visuals.mjs","exit_code":0,"summary":"本地链接和正式中文 SVG 门禁通过。"},
+    {"command":"node scripts/check-style.mjs","exit_code":0,"summary":"无阻断文风错误，句长节奏仅为非阻断提醒。"},
+    {"command":"git diff --check","exit_code":0,"summary":"提交前无空白错误。"}
+  ],
+  "result": "pass"
+}
