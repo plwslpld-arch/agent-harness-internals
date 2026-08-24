@@ -1,0 +1,23 @@
+{
+  "id": "gemini-cli.security.safety-is-not-tool-authorization",
+  "harness": "gemini-cli",
+  "dimension": "security.safety-is-not-tool-authorization",
+  "statement": "锁定 Gemini CLI 把模型响应的 SAFETY 作为 FinishReason 映射为 Turn Finished 事件；工具策略拒绝则由 Scheduler 结算为 POLICY_VIOLATION。模型安全结束、工具授权和平台隔离不能互相替代。",
+  "capability": "default",
+  "version": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+  "surface": "core-turn-and-scheduler",
+  "platform": "upstream-vitest-fixture",
+  "mode": "model-finish-versus-tool-policy",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/core/turn.ts","lines":"393-413","excerpt":"type: GeminiEventType.Finished"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/core/turn.test.ts","lines":"357-415","excerpt":"should yield finished event for SAFETY finish reason"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/scheduler/scheduler.test.ts","lines":"664-680","excerpt":"ToolErrorType.POLICY_VIOLATION"}
+  ],
+  "limitations": [
+    "测试使用合成模型流，不代表线上模型供应方在所有安全类别下都返回相同内容。",
+    "SAFETY 只描述该模型候选的结束原因，不能证明此前工具没有产生副作用。",
+    "POLICY_VIOLATION 证明 Scheduler 跳过该次执行，不证明其他并发调用或外部进程没有副作用。"
+  ],
+  "last_verified": "2026-08-24"
+}

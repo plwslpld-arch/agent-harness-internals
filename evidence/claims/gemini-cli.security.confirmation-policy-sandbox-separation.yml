@@ -1,0 +1,26 @@
+{
+  "id": "gemini-cli.security.confirmation-policy-sandbox-separation",
+  "harness": "gemini-cli",
+  "dimension": "security.confirmation-policy-sandbox-separation",
+  "statement": "锁定 Gemini CLI 先由 PolicyEngine 产生允许、拒绝或询问用户，再由 MessageBus 关联确认请求与响应；只有启用 sandbox 时，Factory 才选择平台 SandboxManager，否则使用 Noop。确认、策略和隔离是相连但不同的控制面。",
+  "capability": "default",
+  "version": "5411f113cafae26161b4969b0237b8e1e024e2c2",
+  "surface": "core-policy-confirmation-sandbox",
+  "platform": "cross-platform-source-and-upstream-tests",
+  "mode": "interactive-and-non-interactive",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/confirmation-bus/message-bus.ts","lines":"104-153","excerpt":"case PolicyDecision.ASK_USER:"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/policy/policy-engine.ts","lines":"290-298","excerpt":"this.nonInteractive ? PolicyDecision.DENY : PolicyDecision.ASK_USER"},
+    {"type":"source","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/services/sandboxManagerFactory.ts","lines":"31-42","excerpt":"if (sandbox?.enabled)"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/config/sandbox-integration.test.ts","lines":"53-65","excerpt":"should have a NoopSandboxManager by default in Config"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/policy/policy-engine.test.ts","lines":"340-376","excerpt":"ASK_USER should become DENY in non-interactive mode"},
+    {"type":"upstream-test","source":"gemini-cli","commit":"5411f113cafae26161b4969b0237b8e1e024e2c2","path":"packages/core/src/confirmation-bus/message-bus.test.ts","lines":"56-140","excerpt":"should pass through to UI when policy says ASK_USER"}
+  ],
+  "limitations": [
+    "源码和上游测试证明控制流与默认值，不证明当前机器已安装或成功运行平台隔离后端。",
+    "允许或用户确认只授予执行资格，不证明命令安全、隔离完整或任务结果正确。",
+    "外层容器或系统沙箱配置与逐工具 SandboxManager 共享配置但并非同一个状态面。"
+  ],
+  "last_verified": "2026-08-24"
+}

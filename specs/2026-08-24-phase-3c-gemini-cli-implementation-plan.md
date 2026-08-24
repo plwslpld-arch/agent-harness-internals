@@ -77,10 +77,10 @@
 
 ### Task 6：Confirmation、Policy、Safety 与 Sandbox
 
-- [ ] 完成 `04-confirmation-policy-safety-sandbox.md`、中文安全边界图和策略/隔离 Claim。
-- [ ] 覆盖 Message Bus、ASK_USER/ALLOW/DENY、交互与非交互默认策略、审批模式、受信目录、Safety 结束原因、Linux Bubblewrap、macOS profile 与容器边界。
-- [ ] 明确确认结果、策略判断、模型 Safety、工具校验和平台隔离不是同一机制；记录未验证平台与降级路径。
-- [ ] 提交：`docs(gemini-cli): 发布确认策略与沙箱课程`。
+- [x] 完成 `04-confirmation-policy-safety-sandbox.md`、中文安全边界图和策略/隔离 Claim。
+- [x] 覆盖 Message Bus、ASK_USER/ALLOW/DENY、交互与非交互默认策略、审批模式、受信目录、Safety 结束原因、Linux Bubblewrap、macOS profile 与容器边界。
+- [x] 明确确认结果、策略判断、模型 Safety、工具校验和平台隔离不是同一机制；记录未验证平台与降级路径。
+- [x] 提交：`docs(gemini-cli): 发布确认策略与沙箱课程`。
 
 ### Task 7：Session、History、Compression、Checkpoint 与 Memory
 

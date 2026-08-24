@@ -62,8 +62,13 @@
         {"path":"packages/core/src/confirmation-bus/message-bus.ts","type":"source","reason":"确认消息总线。"},
         {"path":"packages/core/src/policy/policy-engine.ts","type":"source","reason":"ALLOW、DENY 与 ASK_USER 决策。"},
         {"path":"packages/core/src/policy/policy-engine.test.ts","type":"upstream-test","reason":"交互与非交互默认策略测试。"},
+        {"path":"packages/core/src/services/sandboxManagerFactory.ts","type":"source","reason":"按启用状态和平台选择逐工具沙箱管理器。"},
+        {"path":"packages/core/src/config/sandbox-integration.test.ts","type":"upstream-test","reason":"未启用沙箱时默认使用 Noop 管理器。"},
         {"path":"packages/core/src/sandbox/linux/LinuxSandboxManager.ts","type":"source","reason":"Linux Bubblewrap 命令变换。"},
         {"path":"packages/core/src/sandbox/linux/LinuxSandboxManager.test.ts","type":"upstream-test","reason":"Linux 沙箱包装测试。"},
+        {"path":"packages/core/src/sandbox/macos/MacOsSandboxManager.ts","type":"source","reason":"macOS Seatbelt profile 与命令包装。"},
+        {"path":"packages/core/src/sandbox/windows/WindowsSandboxManager.ts","type":"source","reason":"Windows 受限令牌、作业对象与低完整性实现。"},
+        {"path":"packages/cli/src/config/sandboxConfig.ts","type":"source","reason":"容器与系统外层沙箱命令选择。"},
         {"path":"packages/core/src/core/turn.test.ts","type":"upstream-test","reason":"SAFETY FinishReason 行为。"}
       ],
       "plannedClaims": ["gemini-cli.security.confirmation-policy-sandbox-separation", "gemini-cli.security.safety-is-not-tool-authorization"]

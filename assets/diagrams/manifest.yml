@@ -280,6 +280,14 @@
       "scope": "docs/harnesses/gemini-cli/03-tools-lifecycle.md",
       "alt": "Gemini CLI 工具从已知目录、活动过滤、模型请求、策略确认和执行到函数响应回送的中文生命周期图",
       "claims": ["gemini-cli.tools.registration-is-not-execution", "gemini-cli.tools.responses-are-scheduler-settlements"]
+    },
+    {
+      "id": "gemini-cli-confirmation-policy-safety-sandbox",
+      "path": "assets/diagrams/gemini-cli/04-confirmation-policy-safety-sandbox.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/gemini-cli/04-confirmation-policy-safety-sandbox.md",
+      "alt": "Gemini CLI 从审批模式、策略三态、消息确认到平台沙箱，并与模型安全结束原因保持分离的中文边界图",
+      "claims": ["gemini-cli.security.confirmation-policy-sandbox-separation", "gemini-cli.security.safety-is-not-tool-authorization"]
     }
   ]
 }
