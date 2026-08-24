@@ -496,6 +496,14 @@
       "scope": "docs/harnesses/opencode/README.md",
       "alt": "OpenCode 一次真实编码任务从项目上下文、配置和模型选择进入会话循环，经模型流、工具权限和执行结果回送，最终保存消息与文件产物并交给独立评测的中文流程图",
       "claims": ["opencode.task.session-processor-closes-loop"]
+    },
+    {
+      "id": "opencode-runtime-project-config-provider",
+      "path": "assets/diagrams/opencode/01-runtime-project-config-provider.svg",
+      "type": "data-flow",
+      "scope": "docs/harnesses/opencode/01-runtime-project-config-provider.md",
+      "alt": "OpenCode 从命令入口、项目实例、分层配置、模型目录、服务筛选和认证到运行模型对象的中文数据流图",
+      "claims": ["opencode.config.layers-build-instance", "opencode.provider.catalog-is-not-runtime-availability"]
     }
   ]
 }

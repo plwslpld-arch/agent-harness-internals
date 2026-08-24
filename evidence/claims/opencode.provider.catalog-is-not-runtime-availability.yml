@@ -1,0 +1,6 @@
+{
+  "id":"opencode.provider.catalog-is-not-runtime-availability","harness":"opencode","dimension":"provider.catalog-is-not-runtime-availability","statement":"锁定 OpenCode 把目录、当前实例 Provider、模型信息和 Language Model 运行对象分成不同阶段；启用/禁用筛选、认证、SDK 解析与真实请求仍可失败，因此目录命中不证明模型当前可调用。","capability":"default","version":"3a31c4ea801915c0b050df4b3842997ea62b6e93","surface":"provider-runtime","platform":"cross-platform","mode":"catalog-filter-lazy-language","evidence_level":"B",
+  "evidence":[{"type":"source","source":"opencode","commit":"3a31c4ea801915c0b050df4b3842997ea62b6e93","path":"packages/opencode/src/provider/provider.ts","lines":"1420-1427","excerpt":"if (disabled.has(providerID)) return false"},{"type":"source","source":"opencode","commit":"3a31c4ea801915c0b050df4b3842997ea62b6e93","path":"packages/opencode/src/provider/provider.ts","lines":"1843-1900","excerpt":"const sdk = await resolveSDK(model, s, envs)"},{"type":"upstream-test","source":"opencode","commit":"3a31c4ea801915c0b050df4b3842997ea62b6e93","path":"packages/opencode/test/provider/provider.test.ts","lines":"304-334","excerpt":"getModel throws ModelNotFoundError for invalid provider"}],
+  "limitations":["测试 Provider 与假 Key 不代表真实服务。","模型能力字段是目录声明，仍需请求实验。","区域、配额、网络与服务下线不由目录校验。"],"last_verified":"2026-08-24"
+}
+

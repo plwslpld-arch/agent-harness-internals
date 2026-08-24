@@ -52,8 +52,8 @@
 
 ### Task 3：入口、项目、配置与 Provider
 
-- [ ] 创建课程、图和 Claim；覆盖 CLI、Project/Instance、配置合并、认证、Provider、模型目录与运行可用条件。
-- [ ] 提交：`docs(opencode): 发布入口配置与模型服务课程`。
+- [x] 创建课程、图和 Claim；覆盖 CLI、Project/Instance、配置合并、认证、Provider、模型目录与运行可用条件。
+- [x] 提交：`docs(opencode): 发布入口配置与模型服务课程`。
 
 ### Task 4：Session Prompt、LLM 与 Processor
 
