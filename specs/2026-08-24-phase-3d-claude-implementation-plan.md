@@ -67,11 +67,11 @@
 - 创建：`evidence/claims/claude.task.transport-control-loop.yml`
 - 修改：`assets/diagrams/manifest.yml`
 
-- [ ] 用官方产品契约、Python SDK query/client 和 TypeScript 公开包入口解释真实调用链。
-- [ ] 图示分开应用进程、SDK、捆绑或指定 Claude Code CLI、模型服务、工具/文件系统、Session Store 与 Eval 出口。
-- [ ] 渲染两图，检查中文、箭头、截断、专名和闭源边界。
-- [ ] 运行内容、Claim、视觉、链接和聚合检查。
-- [ ] 提交：`docs(claude): 发布双边界源码主线入口`。
+- [x] 用官方产品契约、Python SDK query/client 和 TypeScript 公开包入口解释真实调用链。
+- [x] 图示分开应用进程、SDK、捆绑或指定 Claude Code CLI、模型服务、工具/文件系统、Session Store 与 Eval 出口。
+- [x] 渲染两图，检查中文、箭头、截断、专名和闭源边界。
+- [x] 运行内容、Claim、视觉、链接和聚合检查。
+- [x] 提交：`docs(claude): 发布双边界源码主线入口`。
 
 ### Task 3：产品、SDK 与许可证证据边界
 

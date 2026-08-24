@@ -320,6 +320,22 @@
       "scope": "docs/harnesses/gemini-cli/08-telemetry-errors-eval-design.md",
       "alt": "Gemini CLI 执行、错误与遥测证据进入独立评测和训练适配器，但观察信号不直接充当评分的中文证据流图",
       "claims": ["gemini-cli.telemetry.tool-decisions-are-not-eval", "gemini-cli.eval.requires-independent-scorer", "gemini-cli.architecture.policy-layering-has-tradeoffs"]
+    },
+    {
+      "id": "claude-system-architecture",
+      "path": "assets/diagrams/claude/system-architecture.svg",
+      "type": "architecture",
+      "scope": "docs/harnesses/claude/README.md",
+      "alt": "Claude 应用通过双 SDK 公开表面连接 Claude Code 闭源产品边界，并把工具副作用、会话存储和独立评测分开的中文系统架构图",
+      "claims": ["claude.architecture.product-sdk-boundaries"]
+    },
+    {
+      "id": "claude-end-to-end-task",
+      "path": "assets/diagrams/claude/end-to-end-task.svg",
+      "type": "flow",
+      "scope": "docs/harnesses/claude/README.md",
+      "alt": "Claude Python SDK 从应用输入、会话材料化、Transport 连接、初始化、双向协议、消息产出到清理和独立评测的中文端到端任务流程图",
+      "claims": ["claude.task.transport-control-loop"]
     }
   ]
 }

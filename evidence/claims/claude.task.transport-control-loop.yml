@@ -1,0 +1,22 @@
+{
+  "id": "claude.task.transport-control-loop",
+  "harness": "claude",
+  "dimension": "task.transport-control-loop",
+  "statement": "在锁定 Python Agent SDK 的默认 query 路径中，InternalClient 连接 Claude Code CLI Transport，启动并初始化 Query，写入用户 NDJSON，在保持控制响应能力的同时产出解析消息，最后按顺序关闭 Query、子进程和会话材料化目录。",
+  "capability": "default",
+  "version": "542fefb3b94be87760b2513fff889b91bb5b6672",
+  "surface": "python-query-default-transport",
+  "platform": "python-anyio-subprocess",
+  "mode": "string-prompt",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"src/claude_agent_sdk/_internal/client.py","lines":"165-195","excerpt":"await query.start()"},
+    {"type":"upstream-test","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"tests/test_client.py","lines":"204-257","excerpt":"mock_query.spawn_task.assert_called_once()"}
+  ],
+  "limitations": [
+    "该 Claim 仅覆盖默认 Python 字符串 query 路径；自定义 Transport 和交互 Client 具有不同生命周期。",
+    "上游测试 Mock 了 Transport 与 Query，不证明真实 CLI、网络模型或工具副作用。",
+    "协议 Result 和资源清理均不证明用户目标正确或独立 Eval 通过。"
+  ],
+  "last_verified": "2026-08-24"
+}

@@ -1,0 +1,24 @@
+{
+  "id": "claude.architecture.product-sdk-boundaries",
+  "harness": "claude",
+  "dimension": "architecture.product-sdk-boundaries",
+  "statement": "Claude Agent Harness 的公开证据必须分为 Claude Code 产品契约、Python Agent SDK 可见实现、TypeScript Agent SDK 公开分发材料和课程架构投影；Python SDK 类不能被画成 Claude Code 内部类，TypeScript 文档也不能冒充 Runtime 主体源码。",
+  "capability": "default",
+  "version": "python@542fefb3b94be87760b2513fff889b91bb5b6672;typescript@48275071e804139579fabada9bb8d90cfe02b062",
+  "surface": "agent-sdk-product-boundary",
+  "platform": "public-contract-and-locked-source",
+  "mode": "architecture-projection",
+  "evidence_level": "D",
+  "inference": "官方总览证明 Agent SDK、Claude Code CLI、Client SDK 与 Managed Agents 是不同产品表面；Python 源码证明默认 SDK 到 CLI 的 Transport 与控制协议；TypeScript 锁定树只证明其可见分发材料。课程把三类证据组合成责任图，但不推断闭源 CLI 内部模块。",
+  "evidence": [
+    {"type":"official-doc","title":"Agent SDK 总览","url":"https://code.claude.com/docs/en/agent-sdk/overview","accessed":"2026-08-24"},
+    {"type":"source","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"src/claude_agent_sdk/_internal/client.py","lines":"88-98","excerpt":"chosen_transport = SubprocessCLITransport("},
+    {"type":"source","source":"claude-agent-sdk-typescript","commit":"48275071e804139579fabada9bb8d90cfe02b062","path":"README.md","lines":"1-13","excerpt":"The Claude Agent SDK enables you to programmatically build AI agents with Claude Code's capabilities."}
+  ],
+  "limitations": [
+    "架构图是跨来源责任投影，不是 Anthropic 发布的 Claude Code 内部模块图。",
+    "官方相同能力描述不证明双 SDK、CLI 与产品内部共享相同代码。",
+    "锁定源码和文档不证明线上模型、认证、平台沙箱或生产部署已验证。"
+  ],
+  "last_verified": "2026-08-24"
+}
