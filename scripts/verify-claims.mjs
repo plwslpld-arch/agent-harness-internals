@@ -192,8 +192,13 @@ export function validateClaim(claim, context) {
 function claimFiles(directory) {
   if (!existsSync(directory)) return [];
   return readdirSync(directory, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && /\.(?:json|ya?ml)$/u.test(entry.name) && entry.name !== 'schema.example.yml')
-    .map((entry) => join(directory, entry.name))
+    .flatMap((entry) => {
+      const path = join(directory, entry.name);
+      if (entry.isDirectory()) return claimFiles(path);
+      return entry.isFile() && /\.(?:json|ya?ml)$/u.test(entry.name) && !['schema.example.yml', 'evidence-map.yml'].includes(entry.name)
+        ? [path]
+        : [];
+    })
     .sort();
 }
 
