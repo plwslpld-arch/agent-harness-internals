@@ -1,0 +1,43 @@
+{
+  "stage": "phase-5b-comparisons-learning",
+  "date": "2026-08-24",
+  "commit": "d60d09d3c328a15953f23266c483cab66470c60b",
+  "promises": [
+    {"id":"p-learning-depth","statement":"五篇横向比较先定义可迁移共同抽象，再给六条主线独立证据、差异条件与迁移练习。"},
+    {"id":"p-no-ranking","statement":"比较不生成总分、排名或赢家，闭源未知、平台限定与部署条件不被换算成能力高低。"},
+    {"id":"p-adversarial-review","statement":"逐篇反查配置成功与在线可用、循环停止与任务通过、批准与隔离、扩展配置与执行、遥测与独立评测是否被混写。"}
+  ],
+  "evidence": [
+    {"id":"e-five-comparisons","promise":"p-learning-depth","type":"file","reference":"docs/comparisons/","summary":"五篇分别新增主题专属共同抽象和带交付物、故障注入与验收标准的迁移练习。"},
+    {"id":"e-contract","promise":"p-learning-depth","type":"test","reference":"scripts/check-content-contract.mjs","summary":"五篇定向内容契约全部通过，对照证据均保留六条主线独立行。"},
+    {"id":"e-matrices","promise":"p-no-ranking","type":"test","reference":"scripts/verify-comparison-matrices.mjs","summary":"五份矩阵、三十个六方证据单元通过，无总分或赢家字段。"},
+    {"id":"e-evidence","promise":"p-no-ranking","type":"test","reference":"scripts/verify-anchors.mjs","summary":"一百三十二处源码锚点、一百一十九条 Claim、本地链接和八十一张中文 SVG 通过。"},
+    {"id":"e-tests-style","promise":"p-adversarial-review","type":"test","reference":"scripts/run-tests.mjs","summary":"一百一十三项测试通过；文风无阻断错误。"}
+  ],
+  "findings": [
+    {"id":"f-config-availability","priority":"high","status":"resolved","summary":"配置解析、模型目录、Provider 构造和真实 Stream 容易被折叠为同一可用状态。"},
+    {"id":"f-loop-verdict","priority":"high","status":"resolved","summary":"响应结束、工具结算、会话空闲和独立任务 Verdict 容易合并。"},
+    {"id":"f-security-recovery","priority":"high","status":"resolved","summary":"应用权限、OS 隔离、Session、Context、Snapshot 与外部副作用恢复容易互相替代。"},
+    {"id":"f-extension-state","priority":"high","status":"resolved","summary":"Skill、Plugin、MCP、Subagent 和客户端协议容易共用误导性的已启用状态。"},
+    {"id":"f-observation-eval","priority":"high","status":"resolved","summary":"Telemetry、Trace、Feedback、Reward、候选选择和发布 Holdout 容易形成证据越权。"},
+    {"id":"f-ranking-pressure","priority":"high","status":"resolved","summary":"不同证据可见度和部署形态容易被转成综合排名。"},
+    {"id":"f-style-rhythm","priority":"low","status":"open","summary":"比较篇仍有句长节奏非阻断提醒，留到总编辑统一处理。"}
+  ],
+  "resolutions": [
+    {"id":"f-config-availability","action":"引入配置 Provenance 与 Catalog、Provider、Client、Stream 四级状态，并要求迁移对象制造逐级失败。","evidence":["e-five-comparisons","e-contract"]},
+    {"id":"f-loop-verdict","action":"以 Call、Settlement、ControlOutcome 和独立 Scorer 分层完成语义，并加入反序工具与自然停止负例。","evidence":["e-five-comparisons","e-tests-style"]},
+    {"id":"f-security-recovery","action":"使用决策链和状态链二维表，验证策略拒绝、隔离拒绝、摘要遗漏和已提交副作用零重复。","evidence":["e-five-comparisons","e-evidence"]},
+    {"id":"f-extension-state","action":"按发现、启用、连接、可见、获批和执行六级状态区分五类扩展与客户端投影。","evidence":["e-five-comparisons","e-contract"]},
+    {"id":"f-observation-eval","action":"建立 Trial、Attempt、Trace、Artifact、Score、Feedback 血缘，并分离 RewardAdapter、选点和发布 Holdout。","evidence":["e-five-comparisons","e-tests-style"]},
+    {"id":"f-ranking-pressure","action":"保持六方独立证据行、条件与未知状态，矩阵门禁拒绝总分、排名和赢家。","evidence":["e-matrices","e-evidence"]}
+  ],
+  "commands": [
+    {"command":"横向比较五篇 contentContractFailures 相对路径定向检查","exit_code":0,"summary":"五篇全部通过比较课程专属教学契约。"},
+    {"command":"node scripts/verify-comparison-matrices.mjs","exit_code":0,"summary":"五份矩阵三十个证据单元通过，无总分或赢家字段。"},
+    {"command":"node scripts/verify-anchors.mjs && node scripts/verify-claims.mjs","exit_code":0,"summary":"源码锚点与一百一十九条 Claim 通过。"},
+    {"command":"node scripts/check-links.mjs && node scripts/check-visuals.mjs","exit_code":0,"summary":"本地链接与正式中文 SVG 通过。"},
+    {"command":"node scripts/run-tests.mjs","exit_code":0,"summary":"一百一十三项测试通过。"},
+    {"command":"node scripts/check-style.mjs","exit_code":0,"summary":"无阻断文风错误。"}
+  ],
+  "result": "pass"
+}
