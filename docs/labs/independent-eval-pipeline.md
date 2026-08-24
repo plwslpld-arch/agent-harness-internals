@@ -26,6 +26,16 @@ Scorer `exact-result-scorer` 的版本固定为 `1.0.0`。第一个 Artifact 内
 
 RewardAdapter 接收第一个 Score。部分语义只声明 higher-is-better；完整语义再声明 `[0,1]` 范围、drop 缺失值策略、mean 聚合、`[0,1]` 裁剪和 `1.0.0` 版本。机器结果位于 [独立评测机器记录](../../evidence/experiments/independent-eval-pipeline-v1.json)。
 
+## 变量控制
+
+Scorer 的自变量是 Artifact 内容：`PASS\n` 与 `UNKNOWN\n`。Scorer ID、版本、匹配规则、证据引用格式和执行环境保持固定，因此两个状态差异只能归到输入是否包含可判定标记。若同时修改 Scorer 提示或版本，必须生成新的评分血缘，不能与本轮结果直接比较。
+
+RewardAdapter 的自变量是语义声明完整度。输入 Score 固定为同一个 scored 结果；部分配置只声明方向，完整配置再补范围、缺失值、聚合、裁剪与版本。这样可以证明能力状态来自显式契约，而不是输入分数或隐藏默认值。不可判定 Score 的额外负例固定使用完整语义，用来确认输入证据不足时仍返回 unavailable。
+
+控制项还包括 Artifact ID、媒体类型、执行次序和无网络环境。时间、平台与 Node 补丁版本作为环境记录，不参与 Score。实验没有模型裁判，所以温度、重试和裁判提示不适用；未来接入模型 Scorer 时，这些字段必须被冻结并加入校准集，不能沿用本实验的确定性声明。
+
+训练、选点和发布均不在本实验执行范围内。Reward 数值只是 Adapter 输出夹具，不会调用优化器，也不构成 Checkpoint 改善证据。发布 Holdout 未运行，因此即使 Scorer 与 Adapter 通过，也不能写成模型已提升或候选可发布。
+
 ## 操作步骤
 
 1. 运行专用测试，观察 Scorer 对可判定和不可判定 Artifact 的分支，以及 RewardAdapter 对部分和完整语义的能力状态。
@@ -52,6 +62,42 @@ node scripts/verify-eval-labs.mjs
 若部分语义仍生成 Reward，检查 Adapter 是否暗中假设范围、缺失值或聚合。删除隐式默认，返回 partial 与缺失列表。若 Score 本身是 indeterminate，即使语义字段完整也应返回 unavailable，不能生成训练信号。
 
 若门禁报告版本不匹配，确认机器记录由当前脚本重建，Scorer 代码、夹具和版本应作为一个发布单元。单独修改版本字符串不会证明评分行为兼容；真实迁移需要对锁定校准集双跑并比较差异。
+
+## 失败判定
+
+实验通过要求两个 Score 顺序、状态和引用全部正确：`artifact-pass` 得到 scored、1 和明确理由；`artifact-unknown` 得到 indeterminate、null 和证据不足理由。任何 Score 缺少 Scorer ID、版本或 Artifact 引用都判失败，因为后续无法重放或审计。不可判定被补零、丢弃或加入平均同样判失败。
+
+Adapter 侧要求部分配置返回 partial、null Reward 与五个缺失项，完整配置返回 available、Reward 1 和版本，indeterminate 输入返回 unavailable。只要某个缺失语义被默认补齐，或不可判定输入生成数值 Reward，实验失败。这里不评价 Reward 1 是否适合真实训练，只评价能力声明是否诚实。
+
+脚本无法执行、记录无法写入或版本不符时标为 blocked；Score 引用的 Artifact 缺失或散列无法核对时标为 inconclusive。两种状态都不得复用历史成功记录。规则本身若对新输入没有定义，应扩展 Scorer 契约并升级版本，而不是把 UNKNOWN 强行归到零分。
+
+对抗复核至少做三次修改：删除 Score 版本、让 partial Adapter 输出 Reward、把 indeterminate 分数改成零。门禁应分别指出血缘、能力和评分语义错误。再把 Scorer 版本从 `1.0.0` 改为 `1.0.1` 而不重建记录，确认版本门禁拒绝旧结果。
+
+## 原始记录
+
+下面展示机器记录的最小字段关系。实际理由、环境和失败列表以已提交 JSON 为准：
+
+```json
+{
+  "scorer": {"id": "exact-result-scorer", "version": "1.0.0"},
+  "scores": [
+    {"artifact_id": "artifact-pass", "status": "scored", "value": 1},
+    {"artifact_id": "artifact-unknown", "status": "indeterminate", "value": null}
+  ],
+  "reward_adapters": [
+    {"semantics": "partial", "capability": "partial", "reward": null},
+    {"semantics": "complete", "capability": "available", "reward": 1}
+  ]
+}
+```
+
+原始 JSON 同时保存 `failures`，把不可判定和语义缺失作为预期分支。报告不能只抽取 scored 与 available 两行，否则读者看不到防止伪造分数和训练信号的关键证据。复核时先核对 Artifact ID，再检查 Score 版本与理由，最后检查 Adapter 是否仅消费允许状态。
+
+重复执行应得到相同 Score、缺失字段列表和能力状态。若 Scorer 实现或夹具变化，必须更新版本、重建 JSON 并解释差异；只要一个环节的血缘不一致，旧 Reward 就不能继续用于训练数据。此规则将来同样适用于模型 Scorer 和人工标签，只是它们还需要校准与复核记录。
+
+报告还应并列展示 Scorer 输出与 Adapter 输出，避免 Reward 反向覆盖原 Score。每条记录保存生成时间、代码 Commit、输入 Artifact 散列和命令退出码；复核者能够在不运行训练的前提下重放评分与能力判断。若机器文件只剩 Reward 1，却找不到原始理由和证据引用，本实验判为血缘断裂。
+
+增加一项人工复核练习：让复核者在不知道 Adapter 状态的情况下只读两个 Artifact 和 Scorer 契约，独立判断 scored 或 indeterminate。人与规则不一致时，先登记分歧并升级 Scorer 版本，不允许直接修改机器结果。这个步骤不把单人判断变成金标准，只验证理由是否足以支持复核。
 
 ## 证据记录
 

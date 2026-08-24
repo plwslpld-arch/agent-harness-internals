@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "experiment_id": "independent-eval-pipeline-v1",
-  "executed_at": "2026-08-24T04:55:53.449Z",
+  "executed_at": "2026-08-24T07:41:10.962Z",
   "command": "node scripts/run-eval-labs.mjs --output evidence/experiments",
   "environment": {
     "node": "v24.19.0",
