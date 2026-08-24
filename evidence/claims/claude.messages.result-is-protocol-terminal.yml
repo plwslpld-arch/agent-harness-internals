@@ -1,0 +1,22 @@
+{
+  "id": "claude.messages.result-is-protocol-terminal",
+  "harness": "claude",
+  "dimension": "messages.result-is-protocol-terminal",
+  "statement": "ResultMessage 是 Claude Agent SDK 对 CLI Result 帧的类型化协议记录；它可结束一个回合并携带错误或终止原因，但后台任务在途时不结束整个运行，也不证明用户目标或独立 Eval 通过。",
+  "capability": "default",
+  "version": "542fefb3b94be87760b2513fff889b91bb5b6672",
+  "surface": "python-message-stream",
+  "platform": "typed-ndjson-projection",
+  "mode": "result-with-background-tasks",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"src/claude_agent_sdk/_internal/query.py","lines":"362-399","excerpt":"if self._inflight_tasks:"},
+    {"type":"upstream-test","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"tests/test_query.py","lines":"503-566","excerpt":"assert len(results) == 2"}
+  ],
+  "limitations": [
+    "多 Result 测试使用 Mock Transport 与测试 MCP Server，不证明真实后台任务执行。",
+    "不同 CLI 版本可能增加 Result 字段或改变 terminal reason 值。",
+    "该 Claim 不把协议 Result 等同于进程退出、任务正确或发布门禁。"
+  ],
+  "last_verified": "2026-08-24"
+}

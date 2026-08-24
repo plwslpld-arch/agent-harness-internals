@@ -105,9 +105,9 @@
 - 创建：`evidence/claims/claude.messages.result-is-protocol-terminal.yml`
 - 创建：`evidence/claims/claude.lifecycle.close-and-cancel-are-distinct.yml`
 
-- [ ] 覆盖 SystemMessage、UserMessage、AssistantMessage、StreamEvent、ResultMessage、RateLimitEvent 和未知消息过滤。
-- [ ] 分开一条响应、输入流结束、Result、SDK 迭代器结束、进程退出、取消和 Eval 通过。
-- [ ] 渲染复核，运行门禁并提交：`docs(claude): 发布消息流与生命周期课程`。
+- [x] 覆盖 SystemMessage、UserMessage、AssistantMessage、StreamEvent、ResultMessage、RateLimitEvent 和未知消息过滤。
+- [x] 分开一条响应、输入流结束、Result、SDK 迭代器结束、进程退出、取消和 Eval 通过。
+- [x] 渲染复核，运行门禁并提交：`docs(claude): 发布消息流与生命周期课程`。
 
 ### Task 6：工具、权限与 Hook
 

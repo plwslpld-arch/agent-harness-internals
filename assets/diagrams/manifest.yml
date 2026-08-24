@@ -352,6 +352,14 @@
       "scope": "docs/harnesses/claude/02-python-entry-transport-control.md",
       "alt": "Claude Python SDK 从入口、CLI 查找、子进程连接、双向控制、消息路由到取消屏蔽与进程回收的中文协议时序图",
       "claims": ["claude.python.transport-owns-cli-process", "claude.python.control-protocol-is-bidirectional"]
+    },
+    {
+      "id": "claude-messages-stream-lifecycle",
+      "path": "assets/diagrams/claude/03-messages-stream-lifecycle.svg",
+      "type": "state",
+      "scope": "docs/harnesses/claude/03-messages-stream-lifecycle.md",
+      "alt": "Claude CLI 原始帧经过内部路由、消息解析、回合 Result、后台任务、输入关闭、迭代结束和资源关闭的中文生命周期状态图",
+      "claims": ["claude.messages.result-is-protocol-terminal", "claude.lifecycle.close-and-cancel-are-distinct"]
     }
   ]
 }

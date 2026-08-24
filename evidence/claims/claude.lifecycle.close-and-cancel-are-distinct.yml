@@ -1,0 +1,23 @@
+{
+  "id": "claude.lifecycle.close-and-cancel-are-distinct",
+  "harness": "claude",
+  "dimension": "lifecycle.close-and-cancel-are-distinct",
+  "statement": "ClaudeSDKClient.interrupt 通过控制协议请求取消当前运行，而 disconnect 和 Query.close 负责取消内部任务、停止桥接器、关闭 Transport 与接收流；取消运行和释放连接资源是不同生命周期动作。",
+  "capability": "default",
+  "version": "542fefb3b94be87760b2513fff889b91bb5b6672",
+  "surface": "python-streaming-client",
+  "platform": "control-protocol-and-resource-lifecycle",
+  "mode": "interactive-client",
+  "evidence_level": "B",
+  "evidence": [
+    {"type":"source","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"src/claude_agent_sdk/client.py","lines":"278-282","excerpt":"await self._query.interrupt()"},
+    {"type":"source","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"src/claude_agent_sdk/client.py","lines":"573-587","excerpt":"await self._query.close()"},
+    {"type":"upstream-test","source":"claude-agent-sdk-python","commit":"542fefb3b94be87760b2513fff889b91bb5b6672","path":"tests/test_streaming_client.py","lines":"492-519","excerpt":"assert interrupt_found"}
+  ],
+  "limitations": [
+    "Interrupt 测试检查控制请求写出，未证明所有工具子进程和副作用均被撤销。",
+    "自定义 Transport 的 close 是调用方代码，必须自行限制等待时间。",
+    "取消后的具体 Result terminal reason 取决于 CLI 版本和取消发生阶段。"
+  ],
+  "last_verified": "2026-08-24"
+}
