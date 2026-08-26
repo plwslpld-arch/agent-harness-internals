@@ -77,7 +77,9 @@ def measure(text):
         "句长标准差": statistics.pstdev(lengths),
         "短句占比":   sum(1 for n in lengths if n <= 15) / len(lengths) * 100,
         "破折号":     len(re.findall("——", body)) / cn * 10000,
-        "分号":       body.count("；") / cn * 10000,
+        # 只数行内分号。行尾的「；」是中文列举的正常收尾（「- 甲怎样做；」），
+        # 换行本来就把两句分开了；焊句子只会发生在行内的「A；B」。
+        "分号":       len(re.findall(r"；(?!\s*$)", body, re.M)) / cn * 10000,
         # 只算「X：说明」这类定义式短行。「会产生三个问题：」后面跟列表，
         # 那是正常的引导句，不是词典条目，不该算进来。
         "冒号定义句": len(re.findall(r"：\n(?!\s*(?:[-*]|\d+\.))", body)) / cn * 10000,
