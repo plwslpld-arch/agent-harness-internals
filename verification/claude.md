@@ -1,0 +1,54 @@
+# Claude 课程：论断与上游证据台账
+
+这条课程的处境和其余五条不同：Claude Code 本身闭源，公开的是 Agent SDK。所以台账里
+的每一条只能证明 SDK 侧的行为，产品内部的规则求值只能依据公开契约描述边界。正文里
+凡是越过这条线的说法，都应当写成机制解释而不是源码事实。
+
+「第 N 站」的标题本身就是一条可独立核对的论断，这张表把它们连同锚点抽出来。
+
+两道检查分工：`npm run check:anchors` 保证锚点行区间在锁定 Checkout 里存在且非空；
+`npm run check:claims` 进一步要求期望片段声明的符号出现在区间内。
+
+## 锁定来源
+
+提交 `542fefb3b94be87760b2513fff889b91bb5b6672`（Claude Agent SDK）。
+
+| 编号 | 课程论断 | 正文位置 | 上游锚点 | 期望片段 | 状态 |
+| --- | --- | --- | --- | --- | --- |
+| cl-01 | `query()` 只做入口委托 | [02-python-entry-transport-control](../docs/harnesses/claude/02-python-entry-transport-control.md) | [query.py#L11-L26](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/query.py#L11-L26) | `query` | passed |
+| cl-02 | InternalClient 先配置，再连接 Transport | [02-python-entry-transport-control](../docs/harnesses/claude/02-python-entry-transport-control.md) | [client.py#L73-L98](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/_internal/client.py#L73-L98) | — | passed |
+| cl-03 | 默认 Transport 在 `connect()` 才启动进程 | [02-python-entry-transport-control](../docs/harnesses/claude/02-python-entry-transport-control.md) | [subprocess_cli.py#L787-L879](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/_internal/transport/subprocess_cli.py#L787-L879) | — | passed |
+| cl-04 | Client 先启动读取，再初始化 | [02-python-entry-transport-control](../docs/harnesses/claude/02-python-entry-transport-control.md) | [client.py#L132-L170](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/_internal/client.py#L132-L170) | — | passed |
+| cl-05 | 读循环按请求 ID 配对控制响应 | [02-python-entry-transport-control](../docs/harnesses/claude/02-python-entry-transport-control.md) | [query.py#L308-L340](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/_internal/query.py#L308-L340) | — | passed |
+| cl-06 | 原始字典先经过统一解析器 | [03-messages-stream-lifecycle](../docs/harnesses/claude/03-messages-stream-lifecycle.md) | [message_parser.py#L50-L76](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/_internal/message_parser.py#L50-L76) | — | passed |
+| cl-07 | 解析器保留消息关联字段 | [03-messages-stream-lifecycle](../docs/harnesses/claude/03-messages-stream-lifecycle.md) | [message_parser.py#L210-L224](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/_internal/message_parser.py#L210-L224) | — | passed |
+| cl-08 | Result 保留协议终态信息 | [03-messages-stream-lifecycle](../docs/harnesses/claude/03-messages-stream-lifecycle.md) | [message_parser.py#L308-L337](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/_internal/message_parser.py#L308-L337) | — | passed |
+| cl-09 | 便利方法在第一个 Result 后返回 | [03-messages-stream-lifecycle](../docs/harnesses/claude/03-messages-stream-lifecycle.md) | [client.py#L532-L571](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/client.py#L532-L571) | `receive_response` | passed |
+| cl-10 | 公开 Options 先把两个概念写成两个字段 | [04-tool-visibility](../docs/harnesses/claude/04-tool-visibility.md) | [types.py#L1940-L1965](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/types.py#L1940-L1965) | `ClaudeAgentOptions` | passed |
+| cl-11 | Transport 把基础集合写成 `--tools` | [04-tool-visibility](../docs/harnesses/claude/04-tool-visibility.md) | [subprocess_cli.py#L562-L598](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/_internal/transport/subprocess_cli.py#L562-L598) | — | passed |
+| cl-12 | 允许和拒绝规则走独立参数 | [04-tool-visibility](../docs/harnesses/claude/04-tool-visibility.md) | [subprocess_cli.py#L593-L607](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/_internal/transport/subprocess_cli.py#L593-L607) | — | passed |
+| cl-13 | 配置阶段把询问通道切到标准输入输出 | [05-permission-decisions](../docs/harnesses/claude/05-permission-decisions.md) | [types.py#L1896-L1919](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/types.py#L1896-L1919) | `_configure_can_use_tool` | passed |
+| cl-14 | Client 把回调交给 Query 控制层 | [05-permission-decisions](../docs/harnesses/claude/05-permission-decisions.md) | [client.py#L73-L148](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/_internal/client.py#L73-L148) | — | passed |
+| cl-15 | 真正收到请求后构造上下文 | [05-permission-decisions](../docs/harnesses/claude/05-permission-decisions.md) | [query.py#L469-L506](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/_internal/query.py#L469-L506) | `can_use_tool` | passed |
+| cl-16 | 允许可能改写输入，拒绝可能中断 | [05-permission-decisions](../docs/harnesses/claude/05-permission-decisions.md) | [query.py#L508-L530](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/_internal/query.py#L508-L530) | — | passed |
+| cl-17 | 事件类型定义了可观察的生命周期 | [06-hooks-lifecycle](../docs/harnesses/claude/06-hooks-lifecycle.md) | [types.py#L262-L339](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/types.py#L262-L339) | — | passed |
+| cl-18 | 公开配置先转换成 Query 可消费的形状 | [06-hooks-lifecycle](../docs/harnesses/claude/06-hooks-lifecycle.md) | [types.py#L1922-L1937](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/types.py#L1922-L1937) | — | passed |
+| cl-19 | 初始化时把函数换成回调 ID | [06-hooks-lifecycle](../docs/harnesses/claude/06-hooks-lifecycle.md) | [query.py#L231-L280](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/_internal/query.py#L231-L280) | — | passed |
+| cl-20 | 收到 `hook_callback` 后执行并编码结果 | [06-hooks-lifecycle](../docs/harnesses/claude/06-hooks-lifecycle.md) | [query.py#L532-L546](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/_internal/query.py#L532-L546) | — | passed |
+| cl-21 | Store 契约要求可往返，不要求字节完全相同 | [07-sessions-resume-store](../docs/harnesses/claude/07-sessions-resume-store.md) | [types.py#L1515-L1645](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/types.py#L1515-L1645) | — | passed |
+| cl-22 | Client 在启动 CLI 前决定是否材料化 | [07-sessions-resume-store](../docs/harnesses/claude/07-sessions-resume-store.md) | [client.py#L81-L119](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/client.py#L81-L119) | — | passed |
+| cl-23 | 恢复先从 Store 取回，再生成临时本地结构 | [07-sessions-resume-store](../docs/harnesses/claude/07-sessions-resume-store.md) | [session_resume.py#L130-L200](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/_internal/session_resume.py#L130-L200) | — | passed |
+| cl-24 | 恢复时验证 subpath | [07-sessions-resume-store](../docs/harnesses/claude/07-sessions-resume-store.md) | [session_resume.py#L591-L623](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/_internal/session_resume.py#L591-L623) | — | passed |
+| cl-25 | `@tool` 把 Python 函数变成 SDK MCP 工具 | [08-mcp-agents-skills](../docs/harnesses/claude/08-mcp-agents-skills.md) | [__init__.py#L251-L283](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/__init__.py#L251-L283) | — | passed |
+| cl-26 | 进程内 Server 仍通过 MCP 协议连接 | [08-mcp-agents-skills](../docs/harnesses/claude/08-mcp-agents-skills.md) | [__init__.py#L491-L516](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/__init__.py#L491-L516) | — | passed |
+| cl-27 | Client 将不同配置送往不同路径 | [08-mcp-agents-skills](../docs/harnesses/claude/08-mcp-agents-skills.md) | [client.py#L100-L147](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/_internal/client.py#L100-L147) | — | passed |
+| cl-28 | MCP 请求通过控制协议回到 Python | [08-mcp-agents-skills](../docs/harnesses/claude/08-mcp-agents-skills.md) | [query.py#L548-L566](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/_internal/query.py#L548-L566) | — | passed |
+| cl-29 | 示例把 Store 交给 `query()`，并用 Session ID 恢复 | [09-typescript-contract-parity](../docs/harnesses/claude/09-typescript-contract-parity.md) | [demo.ts#L23-L44](https://github.com/anthropics/claude-agent-sdk-typescript/blob/48275071e804139579fabada9bb8d90cfe02b062/examples/session-stores/postgres/demo.ts#L23-L44) | — | passed |
+| cl-30 | Adapter 用递增 ID 保存顺序 | [09-typescript-contract-parity](../docs/harnesses/claude/09-typescript-contract-parity.md) | [PostgresSessionStore.ts#L15-L77](https://github.com/anthropics/claude-agent-sdk-typescript/blob/48275071e804139579fabada9bb8d90cfe02b062/examples/session-stores/postgres/src/PostgresSessionStore.ts#L15-L77) | — | passed |
+| cl-31 | 共享测试明确最小行为 | [09-typescript-contract-parity](../docs/harnesses/claude/09-typescript-contract-parity.md) | [conformance.ts#L20-L87](https://github.com/anthropics/claude-agent-sdk-typescript/blob/48275071e804139579fabada9bb8d90cfe02b062/examples/session-stores/shared/conformance.ts#L20-L87) | — | passed |
+
+## 这张表不能证明什么
+
+锚点成立只说明 SDK 在锁定提交里是这样写的。它不证明 Claude Code 产品内部按同样方式
+求值权限，不证明其他版本行为一致，也不证明这些位置覆盖了对应机制的全部分支。
+闭源部分的行为，本课程一律按公开契约描述，不做推断。
