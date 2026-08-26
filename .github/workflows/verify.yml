@@ -28,3 +28,5 @@ jobs:
         run: npm run bootstrap -- --profile all
       - name: 运行仓库检查
         run: npm run check
+      - name: 正文节奏门禁（仅本次改动的文档）
+        run: python3 scripts/check_prose.py --changed

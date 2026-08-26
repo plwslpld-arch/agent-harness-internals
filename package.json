@@ -22,6 +22,7 @@
     "check:secrets": "node scripts/scan-secrets.mjs",
     "test": "node scripts/run-tests.mjs",
     "check": "node scripts/check-all.mjs",
+    "check:prose": "python3 scripts/check_prose.py 'docs/**/*.md'",
     "check:style": "node scripts/check-style.mjs",
     "style:report": "node scripts/check-style.mjs --report"
   }
