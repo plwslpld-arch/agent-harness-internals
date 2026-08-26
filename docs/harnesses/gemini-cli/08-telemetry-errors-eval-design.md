@@ -2,7 +2,7 @@
 
 [返回 Gemini CLI 课程地图](README.md)
 
-Gemini CLI 可以记录模型请求、API 错误、Tool Call、Confirmation、Hook、Compression、Retry、路由回退和运行指标。这些数据回答「发生了什么」，却没有任务答案、评分准则和发布阈值。
+上一节沿 stream-json 的公共事件集合、非交互消费者的忽略列表、三种消息输出路径、IDE Diff 请求/响应和 A2A 任务状态机，区分了各表面的事件与停止语义，并要求评测固定表面与版本。在此前提下，Gemini CLI 可以记录模型请求、API 错误、Tool Call、Confirmation、Hook、Compression、Retry、路由回退和运行指标，而这些数据只能回答「发生了什么」，却没有任务答案、评分准则和发布阈值——运行观测和任务评分在这里分开。
 
 ```text
 执行链：Prompt → Model → Tool → Artifact
@@ -46,7 +46,7 @@ recordToolCallMetrics(config, event.duration_ms, {
 })
 ```
 
-Decision=ACCEPT 且 success=false 是完全合法的组合：用户允许执行，但工具失败。Decision=AUTO_ACCEPT 且 success=true 也只说明工具协议成功，不说明任务完成。
+Decision=ACCEPT 且 success=false 是完全合法的组合，因为用户允许了执行，但工具仍可能失败，而 Decision=AUTO_ACCEPT 且 success=true 也只说明工具协议成功，不说明任务已经完成。
 
 ## 批量编辑的聚合会丢掉单项细节
 
@@ -64,7 +64,7 @@ Decision=ACCEPT 且 success=false 是完全合法的组合：用户允许执行�
 - **返回**：面向指标系统的聚合 Event。
 - **下一站**：Dashboard 或产品分析。
 
-聚合适合统计，不适合重建哪个文件失败。Eval 应保留单个 Call 与实际 Diff。
+聚合适合统计，却不适合重建哪个文件失败，因此 Eval 应保留单个 Call 与实际 Diff。
 
 ## 模型错误分类只覆盖响应层
 
@@ -76,7 +76,7 @@ Decision=ACCEPT 且 success=false 是完全合法的组合：用户允许执行�
 // STOP / MAX_TOKENS 之外的 FinishReason -> error
 ```
 
-这能区分传输取消、空响应和模型拒绝，却看不到目标仓库测试是否通过。任务错误分类还要加入 Tool、Policy、Sandbox、Hook、表面序列化和 Artifact 验证。
+这能区分传输取消、空响应和模型拒绝，却看不到目标仓库测试是否通过，因此任务错误分类还要加入 Tool、Policy、Sandbox、Hook、表面序列化和 Artifact 验证。
 
 ## Telemetry 本身受配置和脱敏影响
 
@@ -96,7 +96,7 @@ Decision=ACCEPT 且 success=false 是完全合法的组合：用户允许执行�
 - **返回**：Logger/Meter/Tracer 使用的有效配置。
 - **下一站**：各运行点按配置发 Event 和 Metric。
 
-关闭 Prompt 记录时，Trace 仍可有时长和错误码，但不能用于复原输入；Exporter 故障也会造成缺口。没有事件不是没有执行。
+关闭 Prompt 记录时，Trace 仍可有时长和错误码，但不能用于复原输入，而 Exporter 故障也会造成缺口。没有事件不是没有执行。
 
 ## 一个可复核的 Eval Artifact
 
@@ -107,6 +107,8 @@ Decision=ACCEPT 且 success=false 是完全合法的组合：用户允许执行�
 - Sandbox 类型与执行规格、文件 Diff、完整测试输出；
 - 表面输出、进程 Exit Code、Token、时长和 Telemetry 可用性。
 
-Evaluator 在 Agent 之外重新运行测试、检查 Diff 范围和任务约束，然后给出 Score。若把 Score 用于训练，应通过版本化 Reward Adapter 明确如何处理拒绝、基础设施失败和部分通过；Checkpoint 选择与最终发布仍使用隔离任务集。
+Evaluator 在 Agent 之外重新运行测试、检查 Diff 范围和任务约束，然后才给出 Score。若把 Score 用于训练，就应通过版本化 Reward Adapter 明确如何处理拒绝、基础设施失败和部分通过，而 Checkpoint 选择与最终发布仍使用隔离任务集。
+
+课程走到这里，已经从 Config、Prompt 与 Context 出发，沿 Turn、Tool、Policy、Session 和 Extension 的运行链，一路追到表面协议、Telemetry 与独立 Eval 的边界。本篇又分别拆开了 Confirmation Decision 与工具 Success、批量编辑聚合与单项 Diff、响应错误与任务错误、Telemetry 配置与事件缺口，还要求保存实际 Diff、完整测试输出、表面输出、进程 Exit Code 与任务约束，最后再把 Artifact 交给 Agent 之外的 Evaluator。回到课程地图时，读者便可按同一条调用链，重新核对各层的输入、状态与证据。
 
 到这里可以回到 [Gemini CLI 课程地图](README.md)，或进入 [Claude 课程](../claude/README.md) 比较公开 SDK 中 Tool Permission 与 Hook 的契约边界。

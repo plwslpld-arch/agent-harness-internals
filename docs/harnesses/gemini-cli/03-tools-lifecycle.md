@@ -2,7 +2,9 @@
 
 [返回 Gemini CLI 课程地图](README.md)
 
-Gemini CLI 的工具系统至少有三张表：Registry 保存所有已知定义，活动视图决定本轮模型可见哪些工具，Scheduler 再保存每个实际调用的状态。仓库里存在一个 Tool Class，只能证明它是候选实现。
+上一章把一次交互拆进 Model Router、Turn 与 Scheduler，其中 Model Router 选择模型，Turn 消费 Gemini 流并发出事件，而工具请求会交给 Scheduler，让会话保持活动。沿 Scheduler 的验证、审批、执行与结算继续向下看，会发现 Gemini CLI 的工具系统至少维护着三张表：Registry 保存所有已知定义，活动视图决定本轮模型能看见哪些工具，Scheduler 再记录每个实际调用的状态。
+
+仓库里的 Tool Class 只证明候选实现存在。
 
 ```text
 已知工具定义
@@ -31,7 +33,7 @@ private allKnownTools: Map<string, AnyDeclarativeTool> = new Map()
 - **返回**：可重算活动视图的 Registry。
 - **下一站**：Prompt Provider 查询 Function Declarations，Scheduler 按名查活动工具。
 
-保留已知但不活动的工具，允许模式切换后重新启用，而不用重启整个进程；风险是诊断代码必须明确自己展示的是「已知」还是「当前可用」。
+因为 Registry 保留了已知但不活动的工具，所以模式切换后可以重新启用它们，不必为此重启整个进程。不过，诊断代码必须说清自己展示的是「已知」还是「当前可用」，不能把候选定义直接当成本轮模型能够调用的工具。
 
 ## 第 2 站：所有公开查询经过活动过滤
 
@@ -50,7 +52,7 @@ getTool(name)
 - **返回**：模型 Schema、活动工具数组或按名定义。
 - **下一站**：模型生成 Function Call，Scheduler 再按同一活动视图查找。
 
-模型看到 Schema 后配置仍可能刷新，所以 Scheduler 执行时要再次查 Registry，而不能持有一个永久 Handler 引用。
+模型看到 Schema 以后，配置仍然可能刷新，所以 Scheduler 到了执行阶段必须再次查询 Registry，并按照执行当时的活动视图寻找工具，不能一直握着一个永久的 Handler 引用。
 
 ## 第 3 站：不存在与参数无效在副作用之前失败
 
@@ -72,7 +74,7 @@ const invocation = tool.build(request.args)
 - **返回**：类型化 Invocation 或无副作用失败。
 - **下一站**：Policy/Confirmation 检查 Invocation 的具体动作。
 
-参数构造是安全边界的一部分：Policy 应评估规范化后的路径、命令和资源，而不是只看模型原始 JSON 文本。
+参数构造本身就是安全边界的一部分，因此 Policy 应该评估规范化后的路径、命令和资源，而不能只盯着模型给出的原始 JSON 文本。
 
 ## 第 4 站：Executor 把实现结果归约为统一终态
 
@@ -90,7 +92,7 @@ return createErrorResult(...)
 - **返回**：Completed Tool Call。
 - **下一站**：Scheduler 通知 UI，Agent Session 构造 Function Response。
 
-`Success` 表示工具实现没有返回 Tool Error，不表示用户目标已经满足。例如 Shell 成功执行 `npm test` 但进程退出码为 1 时，工具协议可能正常返回包含失败输出的结果，任务仍需继续修复。
+`Success` 只能说明工具实现没有返回 Tool Error，并不能证明用户目标已经满足。例如 Shell 顺利执行了 `npm test`，但进程退出码仍是 1，此时工具协议可能正常返回一份带有失败输出的结果，而任务还得继续修复。
 
 ## 一份结果为何要拆成三种内容
 
@@ -109,10 +111,12 @@ return createErrorResult(...)
 - `resultDisplay` 面向终端 UI，可以有颜色、摘要或进度；
 - `outputFile` 保存过大的完整输出，避免把全部日志塞进 Context。
 
-三者不应互相冒充。Evaluator 需要完整测试日志时，应读取明确的 Artifact，而不是 UI 截断摘要。
+三者不能互相冒充，因为回到模型的内容、终端展示的内容以及保存到文件的完整输出各有用途。当 Evaluator 需要完整测试日志时，它应该读取明确的 Artifact，而不能拿 UI 里的截断摘要代替。
 
 ## 一个 Tool Call 的核对清单
 
-从 Trace 中依次找：活动 Schema、模型原始请求、规范化 Invocation、Policy Decision、Confirmation、Execution Start、Tool Result、Function Response。缺少中间任一项，都不能只凭最终卡片重建完整控制链。
+核对 Trace 时，要依次找到活动 Schema、模型原始请求、规范化 Invocation、Policy Decision、Confirmation、Execution Start、Tool Result 与 Function Response。中间少了任何一项，都不能只凭最终卡片重建完整控制链。
+
+工具调用走到 Policy Decision 与 Confirmation 时，问题便从定义、过滤和执行的生命周期转向授权。下一篇会继续区分 PolicyEngine 给出的允许、拒绝或询问，Confirmation Bus 关联的用户决定，模型 `SAFETY` 的生成结束原因，以及 SandboxManager 生成的平台执行规格——这些信号看似都在谈安全，所属层次却并不相同。
 
 下一篇：[Confirmation、Policy 与 Sandbox](04-confirmation-policy-safety-sandbox.md)。
