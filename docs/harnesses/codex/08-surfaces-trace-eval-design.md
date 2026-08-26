@@ -2,7 +2,9 @@
 
 [返回 Codex 课程地图](README.md)
 
-Codex 核心可以被交互 CLI、无头 Exec、App Server、IDE、MCP Server 或 Cloud 入口驱动。它们共享 Thread、Turn、模型和工具实现，但传输、错误格式、停止语义和对外事件并不完全相同。
+上一篇沿着 Thread 树，读到了子任务的身份、状态与控制。现在把视线从树内移到树外，看同一套核心面对不同产品表面。
+
+Codex 核心可以被交互 CLI、无头 Exec、App Server、IDE、MCP Server 或 Cloud 入口驱动。它们共享 Thread、Turn、模型和工具实现——但传输、错误格式、停止语义和对外事件并不完全相同。
 
 ```text
 交互 CLI ─┐
@@ -116,6 +118,8 @@ Feedback 可以携带日志或附件帮助定位问题，但受选择偏差和�
 4. 在 Codex 运行之外执行目标测试与静态检查。
 5. Evaluator 依据测试、Diff 范围和任务约束给出 Score 与失败原因。
 
-Assistant 最终文本、Exec Exit Code、OTel、Trace 与 Feedback 都是证据来源，但评分权属于显式 Evaluator。若要用这些数据训练，还应通过单独的 Reward Adapter 定义样本选择和标签语义，并保留独立发布集。
+Assistant 最终文本、Exec Exit Code、OTel、Trace 与 Feedback 都是证据来源——但评分权属于显式 Evaluator。若要用这些数据训练，还应通过单独的 Reward Adapter 定义样本选择和标签语义，并保留独立发布集。
+
+沿着这八篇文章，读者手里已经有了从配置、Thread/Turn、工具与执行边界，到 Rollout、子代理和多表面证据的源码阅读路径。还缺的是另一套 Harness 的对应证据；完成另一条课程后，再按课程地图进入横向比较。
 
 到这里可以回到 [Codex 课程地图](README.md) 自己复核永久链接，或进入 [Gemini CLI 课程](../gemini-cli/README.md) 比较它的 Config、Scheduler 与 Tool Confirmation 设计。

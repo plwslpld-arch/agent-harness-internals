@@ -2,6 +2,8 @@
 
 [返回 Codex 课程地图](README.md)
 
+上一篇讲到 Code Mode 把多次工具往返收进一个程序，并通过绑定调度当前可见工具。任务需要独立 Context、持久身份和单独控制时，接下来就不能只看工具调用，还要看子 Agent 如何组成 Thread 树。
+
 Codex 的子 Agent 拥有独立 ThreadId、Session、Turn、Context 和 Rollout。根线程树共享一个 `AgentControl`，用它限制容量、保存父子关系、传递消息、等待、打断和回收节点。
 
 ```text
@@ -16,7 +18,7 @@ Codex 的子 Agent 拥有独立 ThreadId、Session、Turn、Context 和 Rollout�
 
 ## 为什么不直接 `join_all()` 几个模型 Future
 
-普通 Future 只解决并发等待，无法回答：子任务历史写到哪里、父 Agent 如何在下一个 Turn 继续它、取消父任务是否中断全部子树、完成通知如何关联原始委派。Thread 树把这些问题变成持久身份和控制操作。
+普通 Future 只解决并发等待，无法回答——子任务历史写到哪里、父 Agent 如何在下一个 Turn 继续它、取消父任务是否中断全部子树、完成通知如何关联原始委派。Thread 树把这些问题变成持久身份和控制操作。
 
 ## 第 1 站：一棵根线程树只共享一个控制面
 
@@ -59,7 +61,7 @@ pub(crate) struct ListedAgent {
 - **返回**：面向调用者的路径与状态快照。
 - **下一站**：父 Agent 可以 Wait、Follow-up、Interrupt 或读取结果。
 
-`agent_path` 表达树位置，`thread_id` 表达持久身份，`status` 只是某一时刻的状态。界面不能用列表序号替代 ThreadId。
+`agent_path` 表达树位置，`thread_id` 表达持久身份——`status` 只是某一时刻的状态。界面不能用列表序号替代 ThreadId。
 
 ## Spawn 先预留容量，再开始昂贵创建
 
@@ -118,6 +120,8 @@ assert_ne!(parent_transcript_path, agent_transcript_path);
 
 ## 何时应该创建子 Agent
 
-适合：子任务需要独立长上下文、不同工具范围、可并行探索或需要以后单独恢复。不适合：只读取两个小文件、结果必须共享当前细节、创建开销超过任务本身。多 Agent 是上下文与控制结构选择，不是自动质量增益。
+适合：子任务需要独立长上下文、不同工具范围、可并行探索或需要以后单独恢复。不适合：只读取两个小文件、结果必须共享当前细节、创建开销超过任务本身。多 Agent 是上下文与控制结构选择——不是自动质量增益。
+
+Thread 树解决了子任务的身份、状态与控制；当同一套核心还要面对 CLI、Exec、App Server 等产品入口，下一步要核对的是各表面怎样投影事件，又怎样留下 Trace 与 Eval 可用的证据。
 
 下一篇：[产品表面、Trace 与 Eval 接缝](08-surfaces-trace-eval-design.md)。

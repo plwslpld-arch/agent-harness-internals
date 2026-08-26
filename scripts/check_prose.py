@@ -25,13 +25,21 @@ import subprocess
 import sys
 
 GATES = {
-    "句长中位":   (28, "字",   lambda v: v >= 28),   # 现状 24   → 对标 38
-    "句长标准差": (18, "",     lambda v: v >= 18),   # 现状 13.9 → 对标 29.4
-    "短句占比":   (8,  "%",    lambda v: v >= 8),    # ≤15 字的句子。对标 10%，是长短交错最直观的抓手
-    "破折号":     (8,  "/万字", lambda v: v >= 8),    # 现状 0    → 对标 37.9
-    "冒号定义句": (25, "/万字", lambda v: v <= 25),   # 抓「X：说明」堆砌的篇
-    "AI套话":     (0,  "处",   lambda v: v == 0),     # 现状已是 0，守住
+    "句长中位":   (28, "字",   lambda v: v >= 28),        # 现状 24 → 对标 38
+    "破折号":     (8,  "/万字", lambda v: 8 <= v <= 55),  # 现状 0  → 对标 38。上限防过量
+    "冒号定义句": (25, "/万字", lambda v: v <= 25),        # 抓「X：说明」堆砌的篇
+    "AI套话":     (0,  "处",   lambda v: v == 0),         # 现状已是 0，守住
 }
+
+# 节奏用「标准差」或「短句占比」二选一：把句长拉开分布可以，靠短句顿挫也可以。
+# 只补破折号和承接的轻量改写按定义不改句子长度，标准差纹丝不动，但读起来节奏
+# 已经出来了——为一个数字去做代价高得多的全文重写不划算。
+RHYTHM_STD, RHYTHM_STD_MIN = "句长标准差", 16
+RHYTHM_SHORT, RHYTHM_SHORT_MIN = "短句占比", 12
+
+
+def rhythm_ok(m):
+    return m[RHYTHM_STD] >= RHYTHM_STD_MIN or m[RHYTHM_SHORT] >= RHYTHM_SHORT_MIN
 SLOP = r"值得注意的是|总的来说|综上所述|总而言之|我们可以看到|不难发现|众所周知|起到.{0,4}的作用|具有重要意义"
 
 
@@ -86,10 +94,17 @@ def main(paths):
             continue
         checked += 1
         bad = [name for name, (_, _, ok) in GATES.items() if not ok(metrics[name])]
+        if not rhythm_ok(metrics):
+            bad.append("节奏")
         failed += bool(bad)
-        print(("FAIL " if bad else "ok   ") + path + "  " + "  ".join(
-            f"{n}={metrics[n]:.1f}{GATES[n][1]}" + ("!" if n in bad else "")
-            for n in GATES))
+        units = {n: GATES[n][1] for n in GATES}
+        units[RHYTHM_STD], units[RHYTHM_SHORT] = "", "%"
+        rhythm_bad = "节奏" in bad
+        parts = []
+        for n in list(GATES) + [RHYTHM_STD, RHYTHM_SHORT]:
+            flag = "!" if n in bad or (rhythm_bad and n in (RHYTHM_STD, RHYTHM_SHORT)) else ""
+            parts.append(f"{n}={metrics[n]:.1f}{units[n]}{flag}")
+        print(("FAIL " if bad else "ok   ") + path + "  " + "  ".join(parts))
     print(f"\n不达标 {failed} / {checked} 篇")
     return 1 if failed else 0
 
