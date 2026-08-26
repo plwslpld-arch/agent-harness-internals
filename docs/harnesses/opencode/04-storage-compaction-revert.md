@@ -2,7 +2,7 @@
 
 [返回 OpenCode 课程地图](README.md)
 
-OpenCode 数据库保存 Session、Message 和 Part 的完整记录；Prompt Loop 使用的是经过 Compaction 过滤和重排的有效历史；Provider 又接收转换后的 Model Messages。Revert 则同时操作工作树 Snapshot/Patch 和 Session 消息后缀。
+OpenCode 数据库会保存 Session、Message 和 Part 的完整记录，但 Prompt Loop 读取的是经过 Compaction 过滤、重排后的有效历史，而 Provider 最终接收的又是转换后的 Model Messages。Revert 处理的范围不同，它会同时操作工作树里的 Snapshot/Patch 和 Session 消息后缀。
 
 ```text
 数据库 Session / Message / Part
@@ -31,11 +31,11 @@ return [
 - **返回**：供 Context 转换的有效历史。
 - **下一站**：Message Converter 生成 Provider Model Messages。
 
-数组最后一项不再可靠表示最新 Session 状态。需要「最新消息」时应使用源码提供的时间/ID 规则，而不是对投影数组取尾元素。
+经过语义重排以后，数组最后一项已经不能可靠代表最新 Session 状态，所以需要查找「最新消息」时，应该使用源码提供的时间或 ID 规则，而不能直接取投影数组的尾元素。尾部不等于最新。
 
 ### 三种历史视图分别服务什么
 
-数据库记录用于审计和恢复，Compaction 投影用于控制模型窗口，Provider Messages 用于适配具体 API。三者可能在顺序、字段和粒度上不同。调试模型行为要保存第三种实际输入，解释 Session 演化要回到第一种完整记录；只截取 UI 展示通常两边都不够。
+数据库记录负责审计与恢复，Compaction 投影负责控制模型窗口，而 Provider Messages 负责适配具体 API，因此三种视图的顺序、字段和粒度都可能不同。调试模型行为时要保存第三种实际输入，解释 Session 如何演化时则要回到第一种完整记录，因为只截取 UI 展示，通常不足以回答其中任何一个问题。视图不能混用。
 
 ## 第 2 站：保留尾部按 Token 预算倒推
 
@@ -54,7 +54,7 @@ if (total + size <= budget) {
 - **返回**：Compaction 切分点。
 - **下一站**：模型摘要旧前缀，写 Summary Message/Part。
 
-按 Turn 切分可避免拆断 Tool Call/Result；Token 估算仍可能与 Provider 实际口径不同，所以要留安全余量。
+按 Turn 切分能够避免把 Tool Call 和 Result 拆开，但 Token 估算仍可能与 Provider 的实际口径不同，所以预算必须留出安全余量。
 
 ## 第 3 站：Revert 同时恢复文件和 Session 控制状态
 
@@ -76,15 +76,15 @@ yield* sessions.setRevert({
 - **返回**：恢复后的 Session 状态。
 - **下一站**：UI 重新同步；后续 Prompt 从新尾部继续。
 
-Revert 应在 Session 非 Busy 时执行，避免模型流仍写文件。它也不是通用事务：Git Ignore 文件、项目外路径和网络副作用可能保持不变。
+Revert 应该等到 Session 不再 Busy 后再执行，否则模型流仍可能在恢复过程中继续写文件。它也不是通用事务，因为 Git Ignore 文件、项目外路径和网络副作用都可能保持不变——恢复有明确边界。
 
 ## 如何核对压缩没有把任务带偏
 
-保存压缩前完整 Messages/Parts、摘要输入、Summary、保留 Tail 和压缩后 Model Messages。用确定性问题检查目标、未完成步骤、文件路径和最近 Tool Error 是否仍可恢复；不能只看请求不再溢出。
+核对压缩结果时，需要保存压缩前的完整 Messages/Parts、摘要输入、Summary、保留 Tail 以及压缩后的 Model Messages，再用确定性问题检查目标、未完成步骤、文件路径和最近 Tool Error 能否恢复。请求不再溢出，只能说明窗口问题暂时消失，不能证明任务语义仍然完整。
 
 ## 回到运费任务
 
-长会话压缩后，Summary 应保留「金额 100 的目标测试仍未运行」，近期 Tail 保留最近的编辑结果。若摘要误写成「测试已通过」，下一轮可能过早结束。Revert 到编辑前消息时，文件 Patch 与 Session 后缀需要一起回退，否则模型历史会说「尚未编辑」，工作树却已经变化。
+长会话压缩后，Summary 应该保留「金额 100 的目标测试仍未运行」，而近期 Tail 则保留最近的编辑结果。如果摘要误写成「测试已通过」，下一轮就可能在真正验证之前过早结束。Revert 到编辑前消息时，文件 Patch 与 Session 后缀必须一起回退，否则模型历史会说「尚未编辑」，工作树却已经变化。
 
 ## 练习：发现历史与工作树分裂
 
@@ -93,7 +93,7 @@ Revert 后 Session 已删掉编辑结果，但 `git diff` 仍显示修改。应�
 <details>
 <summary>查看核对要点</summary>
 
-文件系统和 `git diff` 是当前工作树真值，Session 只是 Harness 记录。应记录 Revert 部分失败，停止继续采样并修复工作树与 Session 的一致性；不能让模型依据已回退的历史继续修改一个未回退环境。
+文件系统和 `git diff` 才是当前工作树的真值，Session 只是 Harness 留下的记录。如果两者发生分裂，就应记录 Revert 部分失败，停止继续采样并修复工作树与 Session 的一致性，不能让模型依据已经回退的历史继续修改一个尚未回退的环境。
 
 </details>
 

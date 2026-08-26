@@ -2,7 +2,7 @@
 
 [返回 OpenCode 课程地图](README.md)
 
-OpenCode 先从内建、Plugin 和 MCP 来源建立 Tool Registry，再按模型和功能开关投影本轮工具；真正执行时，工具调用 `Permission.ask()` 计算规则并可能向客户端发出 Question。Patch/Snapshot 能帮助撤销工作区修改，但不是外部副作用事务。
+OpenCode 会先汇集内建、Plugin 和 MCP 提供的工具，再按照模型能力与功能开关投影出本轮 Tool Registry。只有模型发出 Tool Call 后，执行路径才会进入 `Permission.ask()` 计算规则，并在需要用户确认时向客户端发出 Question。Patch/Snapshot 能帮你撤销工作区修改，却管不到已经发生的外部副作用——文件能回退，外部世界不能。
 
 ```text
 Tool Registry → 模型可见 Schemas
@@ -33,7 +33,7 @@ const filtered = (yield* all()).filter((tool) => {
 - **返回**：AI SDK Tool Map。
 - **下一站**：模型生成 Tool Call，Processor 建 Running Part。
 
-可见性降低误调用概率，但不是权限决定。一个工具从模型面隐藏，不代表 Plugin 代码不能直接产生副作用；模型看见它也不代表执行时会获准。
+把工具从模型面隐藏，确实能降低误调用概率，但这一步并没有作出权限决定。Plugin 代码仍可能绕过模型直接产生副作用，而模型即使看见某个工具，也要等执行阶段的规则判定通过后才能调用。隐藏不是授权。
 
 ## 第 2 站：Permission 使用最后匹配规则
 
@@ -53,11 +53,11 @@ ruleset
 - **返回**：Allow、Deny 或 Ask。
 - **下一站**：立即执行/拒绝，或发布 Question Event。
 
-审计不能只搜索有没有 `deny`。后面的宽通配 Allow 可能覆盖前面的具体 Deny，必须按真实合并顺序计算。
+审计权限配置时，如果只搜索有没有 `deny`，就会漏掉规则顺序带来的覆盖，因为排在后面的宽通配 Allow 仍可能压过前面的具体 Deny。必须按真实合并顺序计算。顺序就是语义。
 
 ### 「最后匹配」带来的可组合性与风险
 
-最后匹配允许全局默认、项目例外和管理员收口逐层组合，规则表达力很强；同时也让文件顺序成为安全语义。配置合并若改变数组顺序，就可能改变最终动作。测试应覆盖完整有效 Ruleset，而不是单独测试某一条规则存在。
+因为最后匹配允许全局默认、项目例外和管理员收口逐层叠加，所以它能表达相当灵活的权限策略，但代价是文件顺序也成了安全语义。一旦配置合并改变数组顺序，最终动作就可能跟着改变，因此测试必须覆盖合并后的完整有效 Ruleset，而不能只确认某一条规则存在。顺序一变，权限就变。
 
 ## 第 3 站：Ask 会等待 Deferred，不会隐式允许
 
@@ -78,19 +78,19 @@ return yield* Deferred.await(deferred)
 - **返回**：Once/Always 后继续，Reject/关闭时失败。
 - **下一站**：Tool Body 或 Processor Error Part。
 
-`always` 是应用实例内规则，不是 OS ACL。工具若绕过 `ask()`，应用层 Permission 无法约束它。
+`always` 写入的是当前应用实例里的批准规则，并不会变成 OS ACL，所以工具一旦绕过 `ask()`，应用层 Permission 就无从约束它。边界不能混淆。
 
 ## Question 与 Permission 不完全相同
 
-Question Tool 也能向用户询问业务选择，但它不一定授权副作用。Permission Question 必须与 Tool Call 和 Pattern 关联；普通问题的答案只回到模型 Context。表面应显示两者不同风险。
+Question Tool 也能向用户询问业务选择，但这种回答并不天然授权副作用，因为 Permission Question 必须与具体的 Tool Call 和 Pattern 关联，而普通问题的答案只会回到模型 Context。客户端需要把两者的风险差异明确显示出来。
 
 ## Patch 与 Revert 能覆盖什么
 
-文件工具可以生成 Snapshot/Patch，为 Session Revert 提供工作树逆向修改。它无法撤销网络请求、数据库写入、项目外删除、包发布或后台进程。高风险操作仍需最小权限和外部幂等设计。
+文件工具生成 Snapshot/Patch 后，Session Revert 才有材料对工作树做逆向修改，但这套机制无法撤销网络请求、数据库写入、项目外删除、包发布或后台进程。只要操作可能越过工作树边界，就仍要依靠最小权限和外部幂等设计。Patch 不是事务。
 
 ## 回到运费任务
 
-`read` 可以按规则直接允许，`edit` 可能匹配 Ask，`bash` 的测试命令还要按命令 Pattern 判断。用户选择 Once 只授权这次 Call；选择 Always 才在当前实例增加匹配模式。写入完成后的 Patch 支持回退文件，但若 Bash 同时启动了后台服务，Revert 不会替你关闭进程。
+在运费任务里，`read` 可以按规则直接放行，`edit` 可能落到 Ask，而 `bash` 的测试命令还要继续按命令 Pattern 判断。用户选择 Once 时只授权当前 Call，只有选择 Always 才会把匹配模式加入当前实例。写入完成后虽然能靠 Patch 回退文件，但如果 Bash 同时启动了后台服务，Revert 并不会替你关闭进程。
 
 ## 练习：计算最终规则
 
@@ -99,7 +99,7 @@ Ruleset 依次包含：`edit:* → ask`、`edit:tests/** → deny`、`edit:** �
 <details>
 <summary>查看核对要点</summary>
 
-若三个 Pattern 都匹配，最后一条宽泛 Allow 会覆盖前面的 Deny。这个结果通常违背维护者直觉，因此管理员收口规则必须位于真实合并顺序的后部，检查器也应报告被后续规则遮蔽的敏感 Deny。
+如果三个 Pattern 全部匹配，最后一条宽泛 Allow 就会覆盖前面的 Deny。因为这个结果往往违背维护者直觉，所以管理员收口规则必须放在真实合并顺序的后部，检查器也应报告那些被后续规则遮蔽的敏感 Deny。
 
 </details>
 
