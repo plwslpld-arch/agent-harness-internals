@@ -4,7 +4,7 @@
 
 从仓库根目录运行：
 
-```powershell
+```bash
 node --test examples/minimal-harness/harness.test.mjs
 ```
 
