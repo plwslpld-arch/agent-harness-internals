@@ -2,7 +2,7 @@
 
 [返回 Gemini CLI 课程地图](README.md)
 
-Gemini CLI 中四个名字都与「安全」有关，但位置不同：PolicyEngine 判断工具动作允许、拒绝还是询问；Confirmation Bus 关联一次用户决定；模型 `SAFETY` 是生成结束原因；SandboxManager 才把文件、网络、环境和进程限制转换为平台执行规格。
+上一章沿着一个 Tool Call 走过 Registry、活动视图与 Scheduler，经过规范化 Invocation 和执行终态，最后停在 Policy Decision 与 Confirmation。到了这条授权链，Gemini CLI 中四个名字都与「安全」有关，位置却完全不同——PolicyEngine 判断工具动作是允许、拒绝还是询问，Confirmation Bus 负责关联一次用户决定，而模型 `SAFETY` 表示生成结束原因，只有 SandboxManager 会把文件、网络、环境和进程限制转换为平台执行规格。
 
 ```text
 Tool Invocation
@@ -39,7 +39,7 @@ this.sandboxManager =
 - **返回**：后续 `check()` 使用的 PolicyEngine。
 - **下一站**：Confirmation Bus 对具体 Invocation 查询决定。
 
-非交互任务没有人能点击确认，默认 ASK_USER 会永久等待，所以选择 DENY。`NoopSandboxManager` 的存在也说明 Policy 与 Sandbox 是可独立配置的组件。
+非交互任务没有人能点击确认，如果默认 ASK_USER 就会永久等待，所以系统选择 DENY。`NoopSandboxManager` 的存在也说明 Policy 与 Sandbox 可以独立配置，因为前者决定没有规则命中时怎样处理，后者则允许明确使用 Noop 实现。
 
 ## 第 2 站：Message Bus 不自己发明授权
 
@@ -61,7 +61,7 @@ switch (decision) {
 - **返回**：本次调用的确认结果。
 - **下一站**：Executor 或取消路径。
 
-Confirmation ID 必须与 Call ID 关联。用户批准另一条命令，不能被正在等待的调用误消费。
+Confirmation ID 必须与 Call ID 关联，使一次请求和一次响应按具体调用配对，因为用户批准另一条命令，不能被正在等待的调用误消费。
 
 ## 第 3 站：只有启用 Sandbox 才选择平台后端
 
@@ -82,7 +82,7 @@ return new NoopSandboxManager(options)
 - **返回**：Policy/Executor 使用的 SandboxManager。
 - **下一站**：具体工具请求调用 Manager 生成执行规格。
 
-Policy ALLOW 加 Noop Sandbox 是一种明确配置状态，不应在日志里写成「已隔离」。反过来，Sandbox 启用也不会绕过 Policy。
+Policy ALLOW 加 Noop Sandbox 是一种明确的配置状态，日志不能把它写成「已隔离」，因为这时 Policy 虽然允许了动作，Sandbox Manager 却还是 Noop 实现。反过来，启用 Sandbox 也不会绕过 Policy。
 
 ## 平台后端必须产生真实执行变化
 
@@ -114,10 +114,12 @@ return {
 - **返回**：真正交给 Process Host 的程序和参数。
 - **下一站**：进程启动；初始化失败进入 Tool Error。
 
-核对 Sandbox 不能只看 Config 开关，应查看最终 Program/Args、临时 Profile、网络/挂载参数和启动错误。
+核对 Sandbox 不能只看 Config 开关，还应沿着平台 Manager 生成的执行规格，查看最终 Program/Args、临时 Profile、网络/挂载参数和启动错误，确认包装确实进入了 Process Host。
 
 ## 模型 Safety 属于另一条链
 
-模型可能以 `SAFETY` FinishReason 拒绝生成，这发生在 Tool Invocation 出现之前。它反映 Provider 的内容安全决定，不说明本地命令是否受 Policy/Sandbox 控制。评测中应把模型拒绝、用户拒绝工具和 Sandbox 初始化失败分成不同错误类别。
+模型可能以 `SAFETY` FinishReason 拒绝生成，而这个结果发生在 Tool Invocation 出现之前。它反映的是 Provider 的内容安全决定，属于上游生成响应，所以既不能说明本地命令是否受 Policy/Sandbox 控制，也不能代替执行授权链的核对。
+
+评测中应把模型拒绝、用户拒绝工具和 Sandbox 初始化失败分成不同错误类别。分清这些发生在不同位置的结果之后，还要继续追问运行时历史、模型投影与 JSONL 记录分别保留了什么，Compression 如何用摘要替换旧 Context，以及 GEMINI.md/Memory Service 如何保存跨会话知识。下一篇就从这五种「过去信息」继续。
 
 下一篇：[Session、记录、压缩与 Memory](05-session-history-compression-memory.md)。

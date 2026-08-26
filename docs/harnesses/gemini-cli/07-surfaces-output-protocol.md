@@ -2,7 +2,7 @@
 
 [返回 Gemini CLI 课程地图](README.md)
 
-Gemini CLI 的交互终端、非交互命令、IDE 集成和 A2A Server 会复用部分 Core，但它们不是同一事件流换个皮肤。每个表面都会选择、转换或忽略 Core Events，并定义自己的身份与停止语义。
+上一节已经看到，当 Extension 被启用、停用或重载时，MCP Client Manager、Tool Registry、Hook System、Agent Registry 和 Skill Manager 都会随之刷新，而刷新后的运行时能力在到达使用者之前，还要经过具体表面对 Core Events 的取舍。Gemini CLI 的交互终端、非交互命令、IDE 集成和 A2A Server 虽然会复用部分 Core，却不能被理解成同一事件流换了层皮肤——每个表面都会选择、转换或忽略 Core Events，并定义自己的身份与停止语义。
 
 ```text
 Core Agent Events
@@ -35,7 +35,7 @@ enum JsonStreamEventType {
 - **返回**：JSON Lines。
 - **下一站**：Shell、CI 或 SDK 客户端按类型解析。
 
-公共协议不暴露所有内部生命周期，有利于兼容，但无法单独重建完整 Scheduler 状态。
+公共协议有意不暴露所有内部生命周期，这让兼容性更容易维持，却也让它无法单独重建完整的 Scheduler 状态。
 
 ## 第 2 站：非交互消费者显式忽略部分事件
 
@@ -59,7 +59,7 @@ case 'custom':
 - **返回**：只包含该表面契约允许的信息。
 - **下一站**：Formatter 生成 Text、JSON 或 Stream JSON。
 
-因此交互 UI 能显示工具进度，而非交互 JSON 可能只有开始和最终结果。自动化不能等待一个协议明确不会发送的 `tool_update`。
+因此交互 UI 能显示工具进度，而非交互 JSON 可能只有开始和最终结果，自动化不能等待一个协议明确不会发送的 `tool_update`。
 
 ## 同一消息在三种格式中走不同路径
 
@@ -81,7 +81,7 @@ if (streamFormatter) {
 - **返回**：不同序列化时机的同一模型内容。
 - **下一站**：进程结束时输出 RESULT/最终 JSON 与 Exit Code。
 
-使用者选择 JSON 时不应期待实时 Token；选择 Stream JSON 时则必须处理多行事件和中途 Error。
+使用者选择 JSON 时不应期待实时 Token，而选择 Stream JSON 时则必须处理多行事件和中途 Error。
 
 ## IDE Diff 是一次独立请求/响应协议
 
@@ -101,13 +101,13 @@ promise.finally(release)
 - **返回**：接受、拒绝或连接/取消错误。
 - **下一站**：Tool Executor 根据决定提交或撤销修改。
 
-IDE 接受 Diff 是用户对这次变更的操作决定，不是代码正确性评分。
+IDE 接受 Diff 只是用户对这次变更的操作决定，并不是代码正确性评分。
 
 ## A2A 拥有自己的任务状态机
 
-A2A Server 对外使用 Task ID、Context ID、Message、Artifact 和 Status Update。远程客户端可能看到 `input-required`、`completed` 或 `failed`；这些是 A2A Task 的终态映射，不等于内部 Tool Call 状态。
+A2A Server 对外使用 Task ID、Context ID、Message、Artifact 和 Status Update，而远程客户端可能看到 `input-required`、`completed` 或 `failed`。这些值是 A2A Task 的终态映射，并不等于内部 Tool Call 状态。两者不能混为一谈。
 
-调用远程 Agent 时应同时保存协议 Task ID 和本地父 Session/Call ID，才能从父工具请求追到远程 Artifact。网络请求成功只表示协议交换完成，业务结果还要检查 Task State 与 Artifact。
+调用远程 Agent 时应同时保存协议 Task ID 和本地父 Session/Call ID，因为只有这样才能从父工具请求追到远程 Artifact。网络请求成功只表示协议交换完成，业务结果仍要检查 Task State 与 Artifact。
 
 ## 自动化应选择哪种表面
 
@@ -117,6 +117,6 @@ A2A Server 对外使用 Task ID、Context ID、Message、Artifact 和 Status Upd
 - 需要编辑器上下文和人工 Diff：IDE。
 - 需要跨进程 Agent 互操作：A2A。
 
-不同表面可以运行同一任务，但评测 Target 必须固定表面与版本，不能把 UI 文本和 A2A Artifact 当作完全等价输入。
+到这里，stream-json 的公共事件集合、非交互消费者的忽略列表、三种消息输出路径、IDE Diff 请求/响应和 A2A 任务状态机已经分别核对。Stream JSON 逐行发送事件，JSON 聚合到最终对象，Text 写标准输出，IDE Diff 等待接受或拒绝，A2A 则检查 Task State 与 Artifact，因此不能只看网络请求成功。这几条路径不能直接互换。虽然不同表面可以运行同一任务，但评测 Target 必须固定表面与版本，不能把 UI 文本和 A2A Artifact 当作完全等价的输入。固定表面与版本之后，下一步便是分清 Telemetry 对模型请求、Tool Call 与运行指标所能解释的失败，以及哪些任务答案、评分准则和发布阈值仍须交给独立 Eval 判断。
 
 下一篇：[Telemetry、错误分类与 Eval 接缝](08-telemetry-errors-eval-design.md)。
