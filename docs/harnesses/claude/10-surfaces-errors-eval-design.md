@@ -2,6 +2,8 @@
 
 [返回 Claude 课程地图](README.md)
 
+上一篇把 TypeScript 对照停在 README、CHANGELOG、SessionStore 示例和契约测试能支持的边界内；可见契约说明运行表面，任务是否正确还要另外判断——这两层不能混在一起。
+
 到了课程最后，最重要的问题不是「Claude 有没有输出」，而是：运行在哪一层失败、留下了什么证据、能否安全重试、最终产物是否满足目标。把所有失败都归为「模型答错」会让 Harness 无法改进，也会让重试掩盖真实产品失败。
 
 ## 先把失败分层
@@ -15,7 +17,7 @@
 | Agent 运行 | 最大轮数、预算、Interrupt、API 错误 | Runtime / 调用方 |
 | 任务质量 | 修改不正确、测试失败、违反约束 | 独立 Eval |
 
-同一次运行可能同时产生多层事实。例如 CLI 先发一个 `is_error=true` 的 Result，再以非零状态退出。Artifact 应保留两条原始证据，但根因统计不能把它们算成两个独立任务失败。
+同一次运行可能同时产生多层事实。例如 CLI 先发一个 `is_error=true` 的 Result，再以非零状态退出。Artifact 应保留两条原始证据——根因统计不能把它们算成两个独立任务失败。
 
 ### 第 1 站：SDK 错误类型保留不同责任层
 
@@ -97,7 +99,7 @@ class ResultMessage:
 
 ## 可观测性要围绕一次 Trial 组织
 
-建议把一次业务任务定义为 Trial，把基础设施恢复尝试定义为 Attempt：
+建议把一次业务任务定义为 Trial，把基础设施恢复尝试定义为 Attempt。
 
 ```text
 Trial
@@ -173,5 +175,7 @@ def evaluate(artifact):
 | Artifact 缺关键轨迹 | `inconclusive`，不能宣称通过 |
 
 到这里，Claude 课程形成了完整外部链路：证据边界 → 入口与 Transport → 消息 → 工具可见性 → 权限 → Hooks → Session → 扩展 → 跨语言契约 → Eval。它没有越过公开 SDK 去虚构 Claude Code 内部实现。
+
+回到课程地图时，可以沿这条外部链路重新定位每个机制，并用错误层次、Artifact 和独立 Eval 检查它们怎样共同支撑一次 Trial。证据链到此闭合。
 
 [返回 Claude 课程地图](README.md)

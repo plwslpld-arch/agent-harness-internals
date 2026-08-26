@@ -2,7 +2,7 @@
 
 [返回 Codex 课程地图](README.md)
 
-前一篇分清了 Rollout、模型可见 History、Compaction 与跨线程 Memory。历史接续之后，下一步要看当前任务还能获得哪些扩展能力——这正是 Skill、Hook、Plugin、MCP/Connector 与 Code Mode 分别介入的地方。
+前一篇分清了 Rollout、模型可见 History、Compaction 与跨线程 Memory。历史接续之后，下一步要看当前任务还能获得哪些扩展能力，这正是 Skill、Hook、Plugin、MCP/Connector 与 Code Mode 分别介入的地方。
 
 Codex 的「扩展」并不是一个统一插件回调。Skill 主要提供按需加载的任务指令，Hook 订阅生命周期，Plugin 汇集一组能力来源，MCP/Connector 提供外部工具，Code Mode 则改变模型调用工具的方式。
 
@@ -103,7 +103,7 @@ pub use tool_catalog_cache::McpToolCatalogCache;
 
 ## Code Mode：把多次工具往返收进一个程序
 
-Code Mode 向模型暴露一个代码执行入口，程序内部通过绑定调用现有工具。它适合读取多文件、聚合结果和带条件的批处理——不应被理解为绕过 Tool Router 的宿主后门。
+Code Mode 向模型暴露一个代码执行入口，程序内部通过绑定调用现有工具。它适合读取多文件、聚合结果和带条件的批处理；它不应被理解为绕过 Tool Router 的宿主后门。
 
 ### 第 4 站：宿主缺失时的回退取决于配置模式
 

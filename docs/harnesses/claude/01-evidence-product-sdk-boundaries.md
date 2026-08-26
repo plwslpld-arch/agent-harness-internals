@@ -2,6 +2,8 @@
 
 [返回 Claude 课程地图](README.md)
 
+课程地图已经把追踪路线停在公开 SDK 与 CLI 的交界处——现在先把这条边界拆成可以逐句核对的证据规则。
+
 学习 Claude Agent Harness 的第一个难点不是代码，而是「别把不同对象写成一个东西」。日常交流里，人们常把 Claude 模型、Claude Code、Agent SDK 和自己的 Python 应用统称为 Claude；做源码分析时，这种简称会直接制造错误结论。
 
 ## 四个对象分别是谁
@@ -34,7 +36,7 @@ TypeScript Agent SDK 锁定在提交 `48275071e804139579fabada9bb8d90cfe02b062`�
 
 ## 怎样判断一句话能不能写进源码课程
 
-先问一句话的主语，再选择证据：
+先问一句话的主语，再根据证据类型选择对应材料。
 
 | 句子想说明什么 | 首选证据 | 合理写法 |
 | --- | --- | --- |
@@ -44,17 +46,17 @@ TypeScript Agent SDK 锁定在提交 `48275071e804139579fabada9bb8d90cfe02b062`�
 | TypeScript 内部怎样实现 | 当前证据不足 | 明确未知和所需证据 |
 | Claude Code 内部怎样调度 | 当前证据不足 | 保留产品边界，不补想象图 |
 
-例如下面这句话不能直接发布：
+例如，下面这句话不能直接发布。
 
 > Python 与 TypeScript SDK 内部都由同一个 Query 控制器驱动 Claude Code。
 
-它一次跨了三个对象。锁定 Python 源码只能证明 Python 入口委托给内部 Client；TypeScript 锁定树没有主体实现；Claude Code 内部又是产品边界。可以改成：
+它一次跨了三个对象。锁定 Python 源码只能证明 Python 入口委托给内部 Client；TypeScript 锁定树没有主体实现；Claude Code 内部又是产品边界。可以把它改成下面这样。
 
 > 两套 SDK 都公开查询表面。Python 锁定源码可以核对其 Client、Transport 与控制协议链路；当前 TypeScript 锁定树无法证明内部实现与 Python 同构，也不能据此推断 Claude Code 内部对象图。
 
 ## 从最小入口练习边界判断
 
-Python 的公开 `query()` 最后几行非常简单：
+Python 的公开 `query()` 最后几行非常简单，代码如下。
 
 ```python
 if options is None:
@@ -71,7 +73,7 @@ async for message in client.process_query(
 
 这段代码可以支持三个结论：缺省 Options 在入口创建；入口实例化 `InternalClient`；消息从 `process_query()` 异步产出。它不能支持「这里已经实现了模型循环」「每条工具调用都由这个函数执行」或「CLI 内部也使用 `InternalClient`」。
 
-源码导读的价值不在于给每行代码配一段赞美，而在于知道这几行改变了什么、下一步该去哪、哪些问题到这里仍没有答案。
+源码导读的价值不在于给每行代码配一段赞美——而在于知道这几行改变了什么、下一步该去哪、哪些问题到这里仍没有答案。
 
 ## 官方文档与源码冲突时怎么办
 
@@ -91,5 +93,7 @@ async for message in client.process_query(
 - **源码事实**：给出锁定提交、文件和行号，追踪调用者、输入、状态变化、返回和下一站。
 - **机制解释**：用课程自己的图或伪代码帮助理解，并明确它是抽象，不伪装成上游类图。
 - **产品边界**：到公开 SDK 无法继续进入的地方停止，不用熟悉的设计模式填空。
+
+边界划清以后，下一步只沿 Python 锁定源码前进：从公开入口进入 `InternalClient`，再看 Transport 与控制协议怎样接上 CLI。
 
 下一篇开始走真实主链：[Python 入口、Transport 与双向控制](02-python-entry-transport-control.md)。

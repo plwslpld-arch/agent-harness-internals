@@ -67,7 +67,9 @@ def measure(text):
         "句长标准差": statistics.pstdev(lengths),
         "短句占比":   sum(1 for n in lengths if n <= 15) / len(lengths) * 100,
         "破折号":     len(re.findall("——", body)) / cn * 10000,
-        "冒号定义句": len(re.findall("：$", body, re.M)) / cn * 10000,
+        # 只算「X：说明」这类定义式短行。「会产生三个问题：」后面跟列表，
+        # 那是正常的引导句，不是词典条目，不该算进来。
+        "冒号定义句": len(re.findall(r"：\n(?!\s*(?:[-*]|\d+\.))", body)) / cn * 10000,
         "AI套话":     len(re.findall(SLOP, body)),
     }, cn
 

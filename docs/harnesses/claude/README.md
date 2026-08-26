@@ -36,7 +36,7 @@ Python 应用
 
 ![Claude Agent SDK 端到端任务流程](../../../assets/diagrams/claude/end-to-end-task.svg)
 
-流程在 CLI 边界处有意停止。公开 SDK 能证明传输、消息和控制请求怎样工作，不能证明闭源产品内部采用了哪一种 Agent Loop。
+流程在 CLI 边界处有意停止——公开 SDK 能证明传输、消息和控制请求怎样工作，不能证明闭源产品内部采用了哪一种 Agent Loop。
 
 图中产品边界不是一个可以继续展开的开源模块。课程只在公开协议和 SDK 代码能够到达的地方继续追踪。
 
@@ -62,22 +62,22 @@ Python 应用
 
 ## 阅读顺序
 
-1. [产品、文档与 SDK 的证据边界](01-evidence-product-sdk-boundaries.md)
-2. [Python 入口、Transport 与控制连接](02-python-entry-transport-control.md)
-3. [消息流与生命周期](03-messages-stream-lifecycle.md)
-4. [工具可见性：模型能看到什么](04-tool-visibility.md)
-5. [动态权限决策：`can_use_tool` 何时运行](05-permission-decisions.md)
-6. [Hooks 生命周期：注册、匹配与回调](06-hooks-lifecycle.md)
-7. [Session、Resume 与 Store](07-sessions-resume-store.md)
-8. [MCP、Agents 与 Skills](08-mcp-agents-skills.md)
-9. [TypeScript 契约与差异](09-typescript-contract-parity.md)
-10. [产品表面、错误与 Eval 接缝](10-surfaces-errors-eval-design.md)
+1. [产品、文档与 SDK 的证据边界](01-evidence-product-sdk-boundaries.md)先从边界开始。分清 Claude 模型、Claude Code、Agent SDK 和应用，确定哪些结论能由锁定来源支持；边界画清后，才能进入 Python 的真实入口而不把 SDK 调用链误写成闭源产品内部结构。
+2. [Python 入口、Transport 与控制连接](02-python-entry-transport-control.md)接住这条证据边界，沿 `query()`、InternalClient、Transport 和 Query 追踪公开链路。连接建立之后，下一步就要分辨其中流动的消息、控制帧与结束信号。
+3. [消息流与生命周期](03-messages-stream-lifecycle.md)再看数据面。从双向连接继续读取类型化消息，区分 Assistant 停止、Result、响应结束、断开和 Eval；消息中的 ToolUse 只是请求，要判断它能否出现和执行，还得回到配置层。
+4. [工具可见性：模型能看到什么](04-tool-visibility.md)承接 ToolUse，把工具集合、静态权限、动态权限、Hooks 与系统能力拆成不同层。分层之后，才能准确追问静态规则没有直接决定时，`can_use_tool` 处理什么。
+5. [动态权限决策：`can_use_tool` 何时运行](05-permission-decisions.md)动态询问由此展开。沿这条路径核对回调，避免把它当成每次工具调用的总开关；需要覆盖每次匹配调用的策略时，问题会自然转向 `PreToolUse` Hook。
+6. [Hooks 生命周期：注册、匹配与回调](06-hooks-lifecycle.md)接着追踪 Hook 的注册、回调 ID、控制请求和返回结果，厘清它与权限回调的分工。单次运行中的策略点明确后，课程再把视野移到跨轮次状态。
+7. [Session、Resume 与 Store](07-sessions-resume-store.md)再进入跨轮次状态。从生命周期进入会话标识、恢复、分叉和外部 Store，区分本地 Transcript 与镜像适配层；状态怎样保存清楚之后，才能判断 MCP、Agent 与 Skill 分别扩展运行的哪一部分。
+8. [MCP、Agents 与 Skills](08-mcp-agents-skills.md)承接 Session 上下文，拆开协议能力、委派角色和按需说明三种扩展机制。它们的公开边界明确后，跨语言对照也必须继续服从同一套证据规则。
+9. [TypeScript 契约与差异](09-typescript-contract-parity.md)跨语言对照到这里。以 SessionStore 示例和测试为落点，对照 Python 源码与 TypeScript 锁定树能支持的不同结论；契约相符不等于实现同构，这项区分会成为最后设计错误分类和 Eval 的证据基础。
+10. [产品表面、错误与 Eval 接缝](10-surfaces-errors-eval-design.md)最后回到 Eval。接住跨语言证据边界，把启动、协议、权限、工具、运行与任务质量分层记录；至此，前九篇的外部链路才能汇入独立 Eval，而不会越过公开 SDK 虚构 Claude Code 内部实现。
 
 ## 用贯穿任务复盘
 
 让一个 Python 应用提交运费修复目标：`query()` 或 `ClaudeSDKClient` 怎样准备 Options，Transport 怎样连接 CLI，消息和控制请求怎样流动，`can_use_tool`、Hooks、MCP 与 Session Store 在 SDK 边界哪里出现。每走一步都标注「源码事实、官方文档契约或当前不可核对」。
 
-复盘的正确终点不是画出 Claude Code 内部 Agent Loop，而是准确停在公开边界：SDK 可以观察和控制哪些外显行为，哪些产品内部决策没有公开源码证据。
+复盘的正确终点不是画出 Claude Code 内部 Agent Loop，而是准确停在公开边界——SDK 可以观察和控制哪些外显行为，哪些产品内部决策没有公开源码证据。
 
 ## 完成课程后应该能回答
 
