@@ -6,7 +6,7 @@ goose 这个样本的独特之处，是把可复用的工作流输入与外部�
 
 本文把扩展能力拆成五个阶段，依次观察配置是否被发现和解析、扩展能否连接成功、工具是否对模型可见，以及工具有没有获准并真实执行。只有把这些阶段完整记录下来，才能判断失败究竟发生在配方、依赖、协议、模型选择还是权限层。Recipe 不是评测结果。工具清单也不是完成证据。
 
-![goose Recipe 与 Extension 装配链](../../assets/diagrams/samples/goose-recipe-extension.svg)
+![goose Recipe 与 Extension 装配链](../assets/diagrams/samples/goose-recipe-extension.svg)
 
 ## Recipe 如何变成会话中的真实工具
 

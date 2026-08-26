@@ -4,7 +4,7 @@
 
 模型不会直接读取整个仓库，因为每一次采样之前，Harness 都要先把用户目标、系统指令、项目规则、历史消息、工具定义和运行状态投影成一个有界请求。本篇关心的不是谁的「提示词更强」，而是六套实现如何回答三个具体问题：输入从哪里来，最终顺序由谁决定，以及哪些状态根本没有进入模型。
 
-![六套 Harness 的模型输入路径](../../assets/diagrams/comparisons/01-runtime-config-model-input.svg)
+![六套 Harness 的模型输入路径](../assets/diagrams/comparisons/01-runtime-config-model-input.svg)
 
 ## 先用运费任务建立问题
 

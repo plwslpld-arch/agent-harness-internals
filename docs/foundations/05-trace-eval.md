@@ -2,7 +2,7 @@
 
 [上一篇：Session、Context、Memory 与恢复](04-session-context-memory.md) · [返回学习入口](../00-start-here.md)
 
-![运行轨迹、环境产物与独立评测的关系](../../assets/diagrams/foundations/06-trace-feedback-eval.svg)
+![运行轨迹、环境产物与独立评测的关系](../assets/diagrams/foundations/06-trace-feedback-eval.svg)
 
 Harness 可以顺利结束一项任务，最终结果却依然可能是错的。结束只说明循环停了——Trace 把运行过程变得可观察，而 Eval 借助明确的任务定义和判定方法来解释结果。它们共同连接 Agent 运行与质量判断，但没有必要挤进每一篇讲工具或 Session 的文章。
 

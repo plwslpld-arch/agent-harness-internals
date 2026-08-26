@@ -6,7 +6,7 @@ mini-swe-agent 很适合作为「最小可读 Agent Harness」样本，因为它
 
 它与六条一级主线是补充关系，不能相互替代。一级主线负责系统讲清配置、会话、权限、扩展和产品表面，这个样本则像一个可以拆开的教学模型，让读者在较小的搜索空间里验证 Agent Loop 的必要组成。当重试、限额、轨迹保存和执行环境都明确出现在源码中时，读者也能顺势分清哪些事实可以直接核对，哪些仍然需要外部实验。
 
-![mini-swe-agent 最小循环与执行边界](../../assets/diagrams/samples/mini-swe-agent-loop.svg)
+![mini-swe-agent 最小循环与执行边界](../assets/diagrams/samples/mini-swe-agent-loop.svg)
 
 ## 最小循环保留了哪些必要状态
 

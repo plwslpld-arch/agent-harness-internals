@@ -4,7 +4,7 @@
 
 Codex 的公开仓库以 Rust 核心为中心，同时服务 CLI、无头执行、IDE 和应用协议。课程关注的不是某个界面怎样使用，而是 Thread、Turn、模型请求、工具路由、执行策略、Sandbox、事件和持久化怎样连接成同一项任务。
 
-![Codex 系统地图](../../../assets/diagrams/codex/system-architecture.svg)
+![Codex 系统地图](../../assets/diagrams/codex/system-architecture.svg)
 
 ## 这条课程适合谁
 
@@ -33,7 +33,7 @@ CLI / App / IDE
   → Event 与 Thread Store
 ```
 
-![Codex 端到端任务流程](../../../assets/diagrams/codex/end-to-end-task.svg)
+![Codex 端到端任务流程](../../assets/diagrams/codex/end-to-end-task.svg)
 
 图中把产品表面压缩成同一个入口，是为了突出共享核心，它并不表示 CLI、应用和 IDE 拥有完全相同的交互协议。
 

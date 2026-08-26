@@ -30,7 +30,7 @@ received 10
 
 Trace 记录三者之间发生过什么，而 Eval 使用冻结的任务和判定方法解释结果。两者都很重要，不过要等执行链看清以后再展开。
 
-![模型、Harness、环境、Trace 与评测的责任边界](../assets/diagrams/start/agent-harness-scope.svg)
+![模型、Harness、环境、Trace 与评测的责任边界](assets/diagrams/start/agent-harness-scope.svg)
 
 ## 一次任务的最小循环
 

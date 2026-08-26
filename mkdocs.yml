@@ -1,0 +1,151 @@
+site_name: Agent Harness 源码内核
+site_description: 面向开发者的中文 Agent Harness 源码教材：从一次工具调用开始，读懂六套编程智能体的运行系统
+site_url: https://plwslpld-arch.github.io/agent-harness-internals/
+repo_url: https://github.com/plwslpld-arch/agent-harness-internals
+repo_name: plwslpld-arch/agent-harness-internals
+edit_uri: ""
+copyright: 原创文档采用 CC BY 4.0；原创代码采用 MIT
+
+theme:
+  name: material
+  language: zh
+  logo: assets/brand/logo-mark.svg
+  favicon: assets/brand/logo-mark.svg
+  font: false
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: deep orange
+      toggle:
+        icon: material/weather-night
+        name: 切换到深色模式
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: deep orange
+      toggle:
+        icon: material/weather-sunny
+        name: 切换到浅色模式
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+    - search.highlight
+    - search.suggest
+
+not_in_nav: |
+  assets/diagrams/README.md
+
+plugins:
+  - search:
+      lang: [zh, en]
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+
+nav:
+  - "首页": README.md
+  - 开始学习:
+      - "学习入口：先跟完一次任务": 00-start-here.md
+      - "按经验选择阅读路线": learning-paths.md
+  - 基础导读:
+      - "Model、Harness 与 Environment：先分清谁在做什么": foundations/01-model-harness-environment.md
+      - "一次任务怎样形成 Agent Loop": foundations/02-one-agent-loop.md
+      - "工具、权限与执行边界：模型提出动作之后发生什么": foundations/03-tools-permissions-execution.md
+      - "Session、Context、Memory 与恢复：状态究竟保存在哪里": foundations/04-session-context-memory.md
+      - "Trace、Eval 与结果核对：运行结束不等于任务正确": foundations/05-trace-eval.md
+  - 源码课程:
+      - DeepSeek Harness:
+          - "课程地图": harnesses/deepseek-harness/README.md
+          - "启动、Profile、Bundle 与 Agent Preset": harnesses/deepseek-harness/01-boot-preset.md
+          - "Prompt、运行时 Context 与请求 Cache": harnesses/deepseek-harness/02-prompt-context-cache.md
+          - "Agent Loop：Turn、Step、模型流与工具结果怎样闭环": harnesses/deepseek-harness/03-loop-model-tool.md
+          - "工具、审批、Sandbox 与一次性提权": harnesses/deepseek-harness/04-tools-security.md
+          - "Session、模型可见 Surface、Compaction 与冷恢复": harnesses/deepseek-harness/05-session-compaction.md
+          - "子 Agent、Workflow 与 Code Mode：三种不同的编排跨度": harnesses/deepseek-harness/06-orchestration-extensions.md
+          - "同一 Agent 核心如何变成 Headless、ACP 与反馈数据": harnesses/deepseek-harness/07-surfaces-feedback-eval.md
+          - "如何阅读 DeepSeek Harness 的测试、不变量与证据边界": harnesses/deepseek-harness/08-verification-design-limits.md
+      - Codex:
+          - "课程地图": harnesses/codex/README.md
+          - "配置、项目指令与模型实际看到的输入": harnesses/codex/01-config-prompt-context.md
+          - "Thread、Session、Task 与 Turn 到底分别是什么": harnesses/codex/02-thread-task-turn.md
+          - "模型响应怎样变成工具调用，再回到下一次采样": harnesses/codex/03-model-tool-loop.md
+          - "执行策略、用户审批与 Sandbox 为什么必须分开": harnesses/codex/04-exec-policy-sandbox.md
+          - "Rollout、模型历史、Compaction 与 Memory 不是同一份数据": harnesses/codex/05-rollout-history-memory.md
+          - "Skills、Hooks、Plugins、MCP 与 Code Mode 各扩展哪一层": harnesses/codex/06-extensions-code-mode.md
+          - "子 Agent 为什么是一棵 Thread 树，而不是一组函数调用": harnesses/codex/07-subagents-orchestration.md
+          - "多种产品表面怎样共享核心，又怎样留下可评测证据": harnesses/codex/08-surfaces-trace-eval-design.md
+      - Gemini CLI:
+          - "课程地图": harnesses/gemini-cli/README.md
+          - "Settings 怎样变成一次模型请求的 Prompt 与 Context": harnesses/gemini-cli/01-config-prompt-context.md
+          - "Turn、Model Router 与 Scheduler 怎样分工": harnesses/gemini-cli/02-turn-scheduler-routing.md
+          - "工具从「已知定义」到「模型结果」的完整生命周期": harnesses/gemini-cli/03-tools-lifecycle.md
+          - "Confirmation、Policy、模型 Safety 与 Sandbox 是四条边界": harnesses/gemini-cli/04-confirmation-policy-safety-sandbox.md
+          - "Session 记录、模型历史、Compression 与 Memory 的边界": harnesses/gemini-cli/05-session-history-compression-memory.md
+          - "Extensions 怎样刷新 Agents、Hooks、Skills 与 MCP": harnesses/gemini-cli/06-agents-hooks-skills-mcp.md
+          - "交互 CLI、非交互输出、IDE 与 A2A 如何投影同一运行": harnesses/gemini-cli/07-surfaces-output-protocol.md
+          - "Telemetry 怎样解释失败，但不能替代独立 Eval": harnesses/gemini-cli/08-telemetry-errors-eval-design.md
+      - Claude:
+          - "课程地图": harnesses/claude/README.md
+          - "先画边界：我们能从 Claude Agent SDK 看见什么": harnesses/claude/01-evidence-product-sdk-boundaries.md
+          - "Python 入口、Transport 与双向控制": harnesses/claude/02-python-entry-transport-control.md
+          - "消息流、Result 与生命周期边界": harnesses/claude/03-messages-stream-lifecycle.md
+          - "工具可见性：模型能看到什么，不等于什么都能执行": harnesses/claude/04-tool-visibility.md
+          - "动态权限决策：`can_use_tool` 不是每次工具调用的总开关": harnesses/claude/05-permission-decisions.md
+          - "Hooks 生命周期：在工具调用前后插入可核对的策略点": harnesses/claude/06-hooks-lifecycle.md
+          - "Session、Resume 与外部 Store": harnesses/claude/07-sessions-resume-store.md
+          - "MCP、Agents 与 Skills：三种扩展机制不要混用": harnesses/claude/08-mcp-agents-skills.md
+          - "TypeScript SDK：公开契约能讲到哪里": harnesses/claude/09-typescript-contract-parity.md
+          - "错误分类、可观测性与独立 Eval 接缝": harnesses/claude/10-surfaces-errors-eval-design.md
+      - pi:
+          - "课程地图": harnesses/pi/README.md
+          - "从 AI 包到 Agent Core，再到 Coding Agent": harnesses/pi/01-layers-provider-stream.md
+          - "Agent Loop、Steering、Follow-up 与工具批次": harnesses/pi/02-agent-loop-tools.md
+          - "Coding Agent 怎样把 Prompt、Tools、Session 与 Extensions 装起来": harnesses/pi/03-coding-agent-extensions.md
+          - "Session Tree、Context 投影、Compaction 与 JSONL": harnesses/pi/04-session-compaction-storage.md
+          - "Protocol、Server 与 Client Lease 如何远程控制同一 Agent": harnesses/pi/05-protocol-server-client.md
+          - "CLI、TUI、JSON、RPC 与真实权限边界": harnesses/pi/06-surfaces-permissions-isolation.md
+          - "Telemetry、Eval Harness 与分数分别负责什么": harnesses/pi/07-telemetry-evals-boundaries.md
+      - OpenCode:
+          - "课程地图": harnesses/opencode/README.md
+          - "Runtime、Project、Config 与 Provider 的启动顺序": harnesses/opencode/01-runtime-config-provider.md
+          - "Session Prompt、LLM 与 Processor 如何形成主循环": harnesses/opencode/02-session-llm-processor.md
+          - "Tools、Permission、Question 与 Patch 的边界": harnesses/opencode/03-tools-permission-patch.md
+          - "Storage、有效历史、Compaction 与 Revert": harnesses/opencode/04-storage-compaction-revert.md
+          - "Agents、Skills、Plugins、MCP 与 LSP 扩展哪一层": harnesses/opencode/05-extensions-subagents.md
+          - "Server、Protocol 如何同时服务 TUI、Desktop、Web 与 ACP": harnesses/opencode/06-server-protocol-surfaces.md
+          - "Share、Telemetry、上游测试与独立 Eval 的边界": harnesses/opencode/07-share-telemetry-eval.md
+  - 横向比较:
+      - "六套 Harness 怎样形成一次模型输入": comparisons/01-runtime-config-model-input.md
+      - "六套 Harness 怎样完成模型—工具闭环": comparisons/02-loop-tools-execution.md
+      - "权限、Sandbox、Session 与恢复不能压成一个开关": comparisons/03-permissions-state-recovery.md
+      - "编排、Skills、Plugins、MCP 与产品表面如何分类": comparisons/04-orchestration-protocol-surfaces.md
+      - "运行证据怎样进入独立 Eval，而不是变成宣传结论": comparisons/05-observability-eval-deployment.md
+  - 动手实践:
+      - "实践一：复原一条源码调用链": labs/controlled-task-contract.md
+      - "实践二：运行最小 Agent Loop": labs/minimal-agent-loop.md
+      - "实践三：权限判断与崩溃恢复": labs/permissions-and-recovery.md
+      - "实践四：接一条独立 Eval 管线": labs/independent-eval-pipeline.md
+  - 机制样本:
+      - "Aider：Repository Map 与 Architect Editor 分工": samples/aider.md
+      - "Cline：工具批准与可恢复工作区": samples/cline.md
+      - "goose：Recipe 与 Extension 的分阶段装配": samples/goose.md
+      - "mini-swe-agent：用最小循环看清执行边界": samples/mini-swe-agent.md
+      - "OpenHands Agent Canvas：多后端控制平面与仓库边界": samples/openhands-agent-canvas.md
+      - "Qwen Code：Serve 回放与批准作用域": samples/qwen-code.md
+  - 附录:
+      - "术语表": appendix-a-glossary.md
+      - "怎样核回锁定源码": appendix-b-verification.md

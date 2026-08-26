@@ -42,11 +42,11 @@ test('公开树不再保留英文入口和旧定位视觉', () => {
     'docs/e2-tasks-and-envs.md',
     'docs/e3-run-and-score.md',
     'docs/e4-harness-decides-score.md',
-    'assets/harness-internals.svg',
-    'assets/harness-coupling.svg',
-    'assets/agent-harness-matrix.svg',
-    'assets/dsh-codex-subsystems.svg',
-    'assets/harness-model-cross.svg',
+    'docs/assets/harness-internals.svg',
+    'docs/assets/harness-coupling.svg',
+    'docs/assets/agent-harness-matrix.svg',
+    'docs/assets/dsh-codex-subsystems.svg',
+    'docs/assets/harness-model-cross.svg',
   ];
   for (const relativePath of legacyFiles) {
     assert.equal(existsSync(join(root, relativePath)), false, `旧文件仍存在：${relativePath}`);

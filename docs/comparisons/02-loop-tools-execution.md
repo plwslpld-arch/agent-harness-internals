@@ -4,7 +4,7 @@
 
 模型输出 Tool Call 时，只是表达了一个结构化意图，后面还需要 Harness 解析调用、找到实现、检查策略、执行副作用、保存结果，再把新的观察送回下一轮。本篇沿用同一个运费修复任务，看看六套实现把这条闭环放在哪里，以及为什么并发、失败和停止条件无法缩成一个 `while`。
 
-![六套 Harness 的模型工具闭环](../../assets/diagrams/comparisons/02-loop-tools-execution.svg)
+![六套 Harness 的模型工具闭环](../assets/diagrams/comparisons/02-loop-tools-execution.svg)
 
 ## 最小闭环不是「模型调用一次工具」
 

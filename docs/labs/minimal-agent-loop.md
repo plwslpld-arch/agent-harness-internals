@@ -28,7 +28,7 @@ ok 5 - 恢复未结算编辑时先观察环境，不盲目重放
 
 ## 先看四个对象
 
-打开 [`examples/minimal-harness/harness.mjs`](../../examples/minimal-harness/harness.mjs)：
+打开 [`examples/minimal-harness/harness.mjs`](https://github.com/plwslpld-arch/agent-harness-internals/blob/main/examples/minimal-harness/harness.mjs)：
 
 | 对象 | 扮演什么角色 |
 | --- | --- |

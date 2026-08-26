@@ -231,13 +231,13 @@ function svgFiles(directory) {
 }
 
 function main() {
-  const manifestPath = join(root, 'assets', 'diagrams', 'manifest.yml');
+  const manifestPath = join(root, 'docs', 'assets', 'diagrams', 'manifest.yml');
   const manifest = readDocument(manifestPath);
   const errors = manifestFailures(manifest);
   const entriesByPath = new Map((manifest.diagrams ?? []).map((entry) => [entry.path, entry]));
   const files = [
-    ...svgFiles(join(root, 'assets', 'brand')),
-    ...svgFiles(join(root, 'assets', 'diagrams')),
+    ...svgFiles(join(root, 'docs', 'assets', 'brand')),
+    ...svgFiles(join(root, 'docs', 'assets', 'diagrams')),
   ];
   const scanned = new Set(files.map((path) => posixPath(relative(root, path))));
 

@@ -2,7 +2,7 @@
 
 [上一篇：一次任务怎样形成 Agent Loop](02-one-agent-loop.md) · [返回学习入口](../00-start-here.md) · [下一篇：Session、Context、Memory 与恢复](04-session-context-memory.md)
 
-![工具可见、策略、批准与隔离的分层](../../assets/diagrams/foundations/04-tools-permissions-sandbox.svg)
+![工具可见、策略、批准与隔离的分层](../assets/diagrams/foundations/04-tools-permissions-sandbox.svg)
 
 工具让模型能够读取或改变外部世界，也把它的不确定输出连到了真实副作用上。因为「工具出现在请求里」「策略允许」「用户批准」和「操作系统执行成功」分属不同责任层，所以读源码时不能把它们压成一个布尔值，更不能把各层失败当成同一件事。
 

@@ -4,7 +4,7 @@
 
 Harness 结束、工具成功、测试进程退出 0 和任务通过，分别是四种不同强度的结论。本篇会把六套课程里的 Event、Telemetry、Session、测试与 Eval 接缝连成一条证据链，看清系统怎样从「发生过什么」走向「用户目标是否满足」，同时避免把仓库检查误写成生产就绪证明。
 
-![运行证据进入独立评测的流程](../../assets/diagrams/comparisons/05-observability-eval-deployment.svg)
+![运行证据进入独立评测的流程](../assets/diagrams/comparisons/05-observability-eval-deployment.svg)
 
 ## 四层结论
 

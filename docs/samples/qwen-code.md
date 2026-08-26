@@ -6,7 +6,7 @@ Qwen Code 与 Gemini CLI 共享一些容易辨认的结构和概念，但当前�
 
 这两个机制说明，当 Agent Harness 扩展到长驻服务和多个客户端后，就会遇到单进程 CLI 中并不突出的新问题，流式事件需要在内存占用与可恢复性之间取舍，而会话批准模式可能被远端工具改变，因此必须限制它的作用域和持久化范围。它们补充的是六条一级主线中的协议与会话视角，并不会把 Qwen Code 升为新的综合主线。
 
-![Qwen Code Serve 回放与批准边界](../../assets/diagrams/samples/qwen-code-serve-boundary.svg)
+![Qwen Code Serve 回放与批准边界](../assets/diagrams/samples/qwen-code-serve-boundary.svg)
 
 ## 轮次回放压缩与批准作用域
 

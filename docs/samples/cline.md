@@ -6,7 +6,7 @@ Cline 这个扩展样本聚焦两个经常被混在一起的控制问题，一�
 
 当前锁定源码同时包含 SDK 化的 Agent Runtime、Core、Shared 类型与多种宿主表面，但本文只总结能够从锁定路径核对的公共机制，不会把编辑器 UI 里的按钮、模型提供商列表或能力描述外推成每个宿主的默认行为。批准策略和 Checkpoint 尤其依赖有效配置，所以必须一直追到运行时值。
 
-![Cline 工具批准与 Checkpoint 恢复链](../../assets/diagrams/samples/cline-approval-checkpoint.svg)
+![Cline 工具批准与 Checkpoint 恢复链](../assets/diagrams/samples/cline-approval-checkpoint.svg)
 
 ## 两条不能混用的链：批准与 Checkpoint
 
