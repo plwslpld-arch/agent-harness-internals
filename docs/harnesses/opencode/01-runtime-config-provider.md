@@ -2,7 +2,7 @@
 
 [返回 OpenCode 课程地图](README.md)
 
-OpenCode 不是每个界面各自创建一套 Agent。它先根据 Directory 建立 Project/Instance，加载全局、项目、托管与系统配置，再按有效配置构造 Provider Map。Session 只引用这套实例服务。
+OpenCode 不会让每个界面各自创建一套 Agent，而是先根据 Directory 建立 Project/Instance，接着加载全局、项目、托管与系统配置，最后按有效配置构造 Provider Map。Session 只引用这套实例服务。
 
 ```text
 Directory → Project / Instance
@@ -30,11 +30,11 @@ const merge = (source: string, next: Info, kind?: ConfigPlugin.Scope) => {
 - **返回**：当前 Project 的有效 Config。
 - **下一站**：Agent、Provider、Permission、Plugin 与 Server 初始化。
 
-所以「项目配置最后写了 deny」不一定是最终规则：系统管理配置可能随后覆盖；Instructions、Plugins 等数组也不等同于普通标量覆盖。排查时应输出字段 Provenance。
+所以「项目配置最后写了 deny」不一定是最终规则，因为系统管理配置可能在它之后继续覆盖，而 Instructions、Plugins 等数组也不遵循普通标量的覆盖语义。排查时要输出字段 Provenance。
 
 ### 为什么配置来源必须保留身份
 
-合并后的最终值只能告诉你「现在是什么」，不能回答「谁有权覆盖谁」。在个人配置、仓库配置和组织管理配置同时存在时，来源身份也是安全边界：恶意仓库不应覆盖管理员禁止的 Provider 或 Permission。一个可调试的 Loader 应能为关键字段展示来源和合并顺序，而不是只打印最终 JSON。
+合并后的最终值只能告诉你「现在是什么」，却不能回答「谁有权覆盖谁」。当个人配置、仓库配置和组织管理配置同时存在时，来源身份也就成了安全边界——恶意仓库不应覆盖管理员禁止的 Provider 或 Permission。调试 Loader 时，应该让关键字段显示自己的来源和合并顺序，否则只打印最终 JSON 很难追到真正的覆盖者。
 
 ## 第 2 站：Provider 先受白名单和黑名单过滤
 
@@ -51,7 +51,7 @@ if (disabled.has(providerID)) return false
 - **返回**：Session 可使用的 Provider Map。
 - **下一站**：Agent/Session 按 `providerID/modelID` 查实际 Model。
 
-模型目录里有一个名字，不代表该 Provider 已加载。禁用、认证缺失、Plugin 未启动或 SDK 解析失败都可能让它不在实例 Map 中。
+模型目录里出现某个名字，并不代表对应的 Provider 已经加载，因为禁用、认证缺失、Plugin 未启动或 SDK 解析失败，都可能让它无法进入实例 Map。有这个名字，不等于实例可用。
 
 ## 第 3 站：查到 Model 后还要解析具体 SDK
 
@@ -70,15 +70,15 @@ const sdk = await resolveSDK(model, s, envs)
 - **返回**：可交给 LLM 层的 Model Language 实现。
 - **下一站**：Session LLM 构造 System、Messages 与 Tools。
 
-`ModelNotFound` 与底层 SDK 的 `NoSuchModelError` 处在不同阶段：前者是实例目录没有，后者是具体 Adapter 无法兑现。
+`ModelNotFound` 与底层 SDK 的 `NoSuchModelError` 出现在不同阶段：前者表示实例目录里没有这个模型，而后者表示具体 Adapter 无法兑现已经找到的模型。
 
 ## Project Identity 为什么重要
 
-OpenCode 的配置、数据库、事件和 UI 同时按 Server、Directory、Project、Session 多层分区。远程 Attach 时，Directory 是服务端路径；客户端本机出现同名目录不代表同一个工作区。任何 Artifact 都应保存 Server Identity 与 Project/Directory。
+OpenCode 的配置、数据库、事件和 UI 会同时按 Server、Directory、Project、Session 多层分区，而远程 Attach 时的 Directory 指的是服务端路径。同名目录不能证明工作区相同。为了让后续操作能够找回原来的运行边界，任何 Artifact 都应保存 Server Identity 与 Project/Directory。
 
 ## 回到运费任务
 
-用户在客户端选择一个目录，服务端据此建立 Project/Instance，并加载项目里的 Instructions 和权限规则。Session 随后选择 Provider/Model。若远端服务的目录不是用户以为的仓库，即使模型和工具都正常，最终修改也会落到错误环境；因此 Directory 与 Server Identity 必须在任务开始时可见。
+用户在客户端选择目录后，服务端会据此建立 Project/Instance，加载项目里的 Instructions 和权限规则，然后由 Session 选择 Provider/Model。如果远端服务所在的目录并非用户以为的仓库，那么即使模型和工具都正常，最终修改也会落到错误环境。因此，任务开始时就必须显示 Directory 与 Server Identity。
 
 ## 练习：为什么模型存在却仍然不可用
 
