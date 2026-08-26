@@ -2,7 +2,7 @@
 
 [返回 Claude 课程地图](README.md)
 
-上一篇把 TypeScript 对照停在 README、CHANGELOG、SessionStore 示例和契约测试能支持的边界内；可见契约说明运行表面，任务是否正确还要另外判断——这两层不能混在一起。
+上一篇把 TypeScript 对照停在 README、CHANGELOG、SessionStore 示例和契约测试能支持的边界内，而可见契约只能说明运行表面，任务是否正确还要另外判断——这两层不能混在一起。
 
 到了课程最后，最重要的问题不是「Claude 有没有输出」，而是：运行在哪一层失败、留下了什么证据、能否安全重试、最终产物是否满足目标。把所有失败都归为「模型答错」会让 Harness 无法改进，也会让重试掩盖真实产品失败。
 
@@ -40,7 +40,7 @@ class ProcessError(ClaudeSDKError):
 - **返回**：异常沿调用栈传播，调用方按类型决定重试、降级或停止。
 - **下一站**：若 CLI 已先发布错误 Result，SDK 可以提供更具体的 `ResultError`。
 
-`CLINotFoundError` 通常不该通过重试模型解决；它要求修复部署。协议解析错误也不等于用户任务错误，重试前要判断输入是否会再次触发相同确定性故障。
+`CLINotFoundError` 通常不该通过重试模型解决，因为这类错误要求修复部署。协议解析错误同样不等于用户任务错误，所以重试之前要先判断输入是否会再次触发相同的确定性故障。
 
 ### 第 2 站：ResultError 把终态负载带进异常
 
@@ -62,15 +62,15 @@ class ResultError(ProcessError):
 - **返回**：兼容 `ProcessError` 的更具体异常。
 - **下一站**：调用方按 `terminal_reason` 和状态判断是否可重试，并把原始 Result 与异常归为同一根事件。
 
-例如 API 暂时过载可能允许有退避的基础设施重试；达到最大轮数则应检查任务拆分和停止条件；权限拒绝应回到策略，而不是偷偷切换成绕过模式。
+例如 API 暂时过载可能允许带退避的基础设施重试，但达到最大轮数时应检查任务拆分和停止条件，而遇到权限拒绝时则要回到策略，不能偷偷切换成绕过模式。
 
 ## 非致命错误也要进入 Artifact
 
-SessionStore 镜像失败不会终止本地会话，因为本地 Transcript 已经写入；它会产生 `MirrorErrorMessage`。如果只看最终 Result，运行可能显示成功，但外部审计副本存在缺口。
+SessionStore 镜像失败不会终止本地会话，因为本地 Transcript 已经写入，但它会产生 `MirrorErrorMessage`。如果只看最终 Result，运行可能显示成功，外部审计副本却依然存在缺口。
 
 源码：[查看 MirrorErrorMessage 语义](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/types.py#L1262-L1276)
 
-类似地，RateLimitEvent 可以在到达硬限制前发出 warning。可观测系统应区分「运行继续但证据或容量降级」和「运行已经终止」。
+类似地，RateLimitEvent 可以在到达硬限制前发出 warning，因此可观测系统必须区分「运行继续但证据或容量降级」和「运行已经终止」。
 
 ### 第 3 站：Result 暴露运行指标，但不是评分器
 
@@ -95,7 +95,7 @@ class ResultMessage:
 - **返回**：应用可记录成本、性能和运行结果。
 - **下一站**：独立 Eval 读取完整 Artifact 与执行环境，判断任务正确性。
 
-`duration_ms`、`num_turns` 和成本适合做效率指标；`permission_denials` 适合解释为什么动作未执行；`terminal_reason` 适合区分完成、中断和预算终止。任何字段都不能替代对目标文件和测试的检查。
+`duration_ms`、`num_turns` 和成本适合做效率指标，`permission_denials` 可以解释动作为什么没有执行，而 `terminal_reason` 则用来区分完成、中断和预算终止。这些字段都不能替代对目标文件和测试结果的检查。
 
 ## 可观测性要围绕一次 Trial 组织
 
@@ -110,7 +110,7 @@ Trial
   └─ 独立 Eval 结果
 ```
 
-产品失败不能通过反复重试「刷成通过」。例如 Agent 第一遍错误删除文件，第二遍碰巧修好，Trial 仍要保留第一次副作用；只有明确属于可恢复基础设施故障且未产生业务副作用的 Attempt，才适合自动恢复。
+产品失败不能通过反复重试「刷成通过」。例如 Agent 第一遍错误删除文件，第二遍碰巧修好，Trial 仍要保留第一次副作用，因为只有明确属于可恢复基础设施故障且未产生业务副作用的 Attempt，才适合自动恢复。
 
 每条事件至少关联：
 
@@ -143,7 +143,7 @@ Trial
 - **效率指标**：轮数、时延、成本和重试次数；
 - **证据完整性**：Result、Diff、测试输出和错误均可关联。
 
-评分器应独立于模型自述。Assistant 说「已经修好」只是一条消息，不是检查结果。
+评分器应独立于模型自述，因为 Assistant 说「已经修好」只是一条消息，不能当成检查结果。
 
 ## 一套可执行的判定顺序
 
@@ -160,7 +160,7 @@ def evaluate(artifact):
     return "pass"
 ```
 
-这段是教学伪实现，不是 Claude SDK 上游源码。它表达一个重要顺序：证据不完整不能直接算成功；明确违反约束不能靠测试通过抵消；完成正确性判断后，再单独报告效率。
+这段是教学伪实现，并非 Claude SDK 上游源码。它表达的顺序很明确：证据不完整时不能直接判为成功，而明确违反约束时也不能拿测试通过来抵消，只有完成正确性判断之后，才能单独报告效率。
 
 ## 重试决策表
 

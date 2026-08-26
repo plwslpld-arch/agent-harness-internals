@@ -19,11 +19,11 @@ Python Agent SDK 锁定在提交 `542fefb3b94be87760b2513fff889b91bb5b6672`：
 
 TypeScript Agent SDK 锁定在提交 `48275071e804139579fabada9bb8d90cfe02b062`。该来源可以核对 README、CHANGELOG、公开类型说明和 Session Store 示例，但锁定仓库不包含 SDK 主体运行时源码：[查看公开 README](https://github.com/anthropics/claude-agent-sdk-typescript/blob/48275071e804139579fabada9bb8d90cfe02b062/README.md)。
 
-官方文档用于解释产品承诺和 API 语义：[Agent SDK 总览](https://code.claude.com/docs/en/agent-sdk/overview)。文档能够说明公开行为，不能展示闭源实现的内部调用图。
+官方文档用于解释产品承诺和 API 语义：[Agent SDK 总览](https://code.claude.com/docs/en/agent-sdk/overview)。文档能够说明公开行为和语义边界，却不能展示闭源实现的内部调用图。
 
 ## 先看一项任务
 
-Python 应用调用 `query()` 或创建 `ClaudeSDKClient`，SDK 准备 Options 并通过 Transport 启动或连接 CLI 进程。消息以异步流返回；需要双向控制时，Query 控制层还会处理初始化、权限回调、Hook、MCP 和中断等请求。
+Python 应用调用 `query()` 或创建 `ClaudeSDKClient` 后，SDK 会准备 Options，再通过 Transport 启动或连接 CLI 进程。消息会以异步流返回，而一旦需要双向控制，Query 控制层还要处理初始化、权限回调、Hook、MCP 和中断等请求。
 
 ```text
 Python 应用
@@ -38,7 +38,7 @@ Python 应用
 
 流程在 CLI 边界处有意停止——公开 SDK 能证明传输、消息和控制请求怎样工作，不能证明闭源产品内部采用了哪一种 Agent Loop。
 
-图中产品边界不是一个可以继续展开的开源模块。课程只在公开协议和 SDK 代码能够到达的地方继续追踪。
+图中的产品边界无法像开源模块那样继续展开，所以课程只能在公开协议和 SDK 代码能够到达的地方继续追踪。
 
 ## 仓库地图
 

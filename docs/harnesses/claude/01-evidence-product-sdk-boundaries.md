@@ -4,7 +4,7 @@
 
 课程地图已经把追踪路线停在公开 SDK 与 CLI 的交界处——现在先把这条边界拆成可以逐句核对的证据规则。
 
-学习 Claude Agent Harness 的第一个难点不是代码，而是「别把不同对象写成一个东西」。日常交流里，人们常把 Claude 模型、Claude Code、Agent SDK 和自己的 Python 应用统称为 Claude；做源码分析时，这种简称会直接制造错误结论。
+学习 Claude Agent Harness 的第一个难点不在代码本身，而在于「别把不同对象写成一个东西」。日常交流里，人们常把 Claude 模型、Claude Code、Agent SDK 和自己的 Python 应用统称为 Claude，而一旦沿用这种简称去分析源码，不同对象之间的证据就会被混在一起，错误结论也会跟着出现。
 
 ## 四个对象分别是谁
 
@@ -20,7 +20,7 @@
 - **Claude Agent SDK**让应用启动或连接 CLI，发送消息，接收类型化事件，并处理公开控制协议。
 - **你的应用**决定怎样配置 SDK、实现权限回调和 Hooks、保存产物以及独立评测结果。
 
-所以，「Python SDK 中有一个 `Query` 类」只能证明 Python SDK 的协议路由设计，不能证明 Claude Code 内部也有同名类；「官方文档说 SDK 提供 Agent Loop」也不能自动变成闭源循环的源码调用图。
+所以，「Python SDK 中有一个 `Query` 类」只能证明 Python SDK 的协议路由设计，并不能证明 Claude Code 内部也有同名类。同样，即使官方文档说 SDK 提供 Agent Loop，这项公开契约也不会自动变成闭源循环的源码调用图。
 
 ## 两套 SDK 的证据并不对称
 
@@ -50,9 +50,9 @@ TypeScript Agent SDK 锁定在提交 `48275071e804139579fabada9bb8d90cfe02b062`�
 
 > Python 与 TypeScript SDK 内部都由同一个 Query 控制器驱动 Claude Code。
 
-它一次跨了三个对象。锁定 Python 源码只能证明 Python 入口委托给内部 Client；TypeScript 锁定树没有主体实现；Claude Code 内部又是产品边界。可以把它改成下面这样。
+这句话一次跨过了三个证据能力并不相同的对象：锁定的 Python 源码只能证明 Python 入口委托给内部 Client，TypeScript 锁定树又没有主体实现，而 Claude Code 内部依然属于产品边界。把这些限制都写进句子后，表达可以改成下面这样。
 
-> 两套 SDK 都公开查询表面。Python 锁定源码可以核对其 Client、Transport 与控制协议链路；当前 TypeScript 锁定树无法证明内部实现与 Python 同构，也不能据此推断 Claude Code 内部对象图。
+> 两套 SDK 都公开了查询表面，但只有 Python 锁定源码可以核对其 Client、Transport 与控制协议链路。当前 TypeScript 锁定树无法证明内部实现与 Python 同构，因此也不能据此推断 Claude Code 内部对象图。
 
 ## 从最小入口练习边界判断
 
@@ -71,7 +71,7 @@ async for message in client.process_query(
 
 源码：[查看完整入口](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/query.py#L117-L126)
 
-这段代码可以支持三个结论：缺省 Options 在入口创建；入口实例化 `InternalClient`；消息从 `process_query()` 异步产出。它不能支持「这里已经实现了模型循环」「每条工具调用都由这个函数执行」或「CLI 内部也使用 `InternalClient`」。
+这段代码可以支持三个结论：缺省 Options 在入口创建，入口实例化 `InternalClient`，然后消息从 `process_query()` 异步产出。但这几行代码没有展示后面的模型循环和工具执行，所以它无法支持「这里已经实现了模型循环」「每条工具调用都由这个函数执行」或「CLI 内部也使用 `InternalClient`」。
 
 源码导读的价值不在于给每行代码配一段赞美——而在于知道这几行改变了什么、下一步该去哪、哪些问题到这里仍没有答案。
 
@@ -84,7 +84,7 @@ async for message in client.process_query(
 3. 判断差异是版本漂移、语言 SDK 差异，还是理解错误；
 4. 在没有同版本证据前并列描述。
 
-许可证也要按仓库分别处理。Python 仓库的 MIT 许可不能自动扩展到 TypeScript 仓库或 Claude Code 产品；技术接口相似，不代表材料授权相同。
+许可证也要按仓库分别处理，因为 Python 仓库的 MIT 许可不会自动扩展到 TypeScript 仓库或 Claude Code 产品。即使几份材料里的技术接口看起来相似，它们的授权范围仍然可能完全不同。
 
 ## 本课程之后怎样标注边界
 

@@ -2,7 +2,7 @@
 
 [返回 Claude 课程地图](README.md)
 
-前一篇已经把 MCP、Agent Definition 和 Skill 的装配与执行路径分开——换到 TypeScript 后，不能据此假定三条路径仍然同构。边界必须停在证据处。
+前一篇已经把 MCP、Agent Definition 和 Skill 的装配与执行路径分开——换到 TypeScript 后，不能据此假定三条路径仍然同构，因此阅读的边界必须停在证据处。
 
 跨语言 SDK 课程最危险的写法，是在 Python 中找到一个内部实现，然后把它复制成 TypeScript 的「同构架构」。当前锁定的 TypeScript 仓库并没有公开 SDK 主体运行时源码，所以本篇只分析真实可见的 README、CHANGELOG、SessionStore 示例与测试。
 
@@ -29,7 +29,7 @@
 
 Python 和 TypeScript 都可以公开 `query`、权限、Hooks、MCP 和 SessionStore 概念。这叫契约家族相似。只有同时拿到两个同版本 Runtime 的实现证据——才能比较类、状态机、并发与资源清理是否对齐。
 
-CHANGELOG 可以帮助发现版本迁移风险。例如它记录过 `canUseTool` 遮蔽警告、Tools 可见集合、SessionStore 重试和 stdin 过早关闭等变化：[查看锁定 CHANGELOG 中的权限回调变化](https://github.com/anthropics/claude-agent-sdk-typescript/blob/48275071e804139579fabada9bb8d90cfe02b062/CHANGELOG.md#L227-L255)。这些是版本声明，不等于课程已经看到了相应函数实现。
+CHANGELOG 可以帮助发现版本迁移风险，例如它记录过 `canUseTool` 遮蔽警告、Tools 可见集合、SessionStore 重试和 stdin 过早关闭等变化：[查看锁定 CHANGELOG 中的权限回调变化](https://github.com/anthropics/claude-agent-sdk-typescript/blob/48275071e804139579fabada9bb8d90cfe02b062/CHANGELOG.md#L227-L255)。不过，这些材料只是版本声明，不能说明课程已经看到了相应函数的实现。
 
 ## 真实可读案例：PostgreSQL SessionStore
 
@@ -116,7 +116,7 @@ type SessionStore = {
 | SessionStore 示例 | 有 Protocol 与材料化源码 | 有三种 Adapter 和测试 | Store 数据契约可对照 |
 | 关闭与子进程回收 | 有 Transport 源码 | 无主体 Runtime | 不写 TypeScript 内部顺序 |
 
-以后若锁定树增加 Runtime 源码，先更新来源提交，再重新做调用链；不要用新版本实现倒填旧版本结论。
+以后若锁定树增加 Runtime 源码，应先更新来源提交，然后重新梳理调用链，否则就可能拿新版本的实现倒填旧版本结论。
 
 ## 选择语言 SDK 时看什么
 
