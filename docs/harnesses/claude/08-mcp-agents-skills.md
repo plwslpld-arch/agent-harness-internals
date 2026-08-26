@@ -2,9 +2,9 @@
 
 [返回 Claude 课程地图](README.md)
 
-SessionStore 已经把外部记录材料化为 CLI 能恢复的 JSONL，并用 subpath 校验守住临时目录。恢复链路解决了历史怎样回来——接下来还要看能力怎样进入同一次运行。
+SessionStore 已经把外部记录材料化为 CLI 能恢复的 JSONL，并用 subpath 校验守住临时目录。恢复链路解决了历史怎样回来——现在该看能力怎样进入同一次运行了。
 
-MCP、Agents 和 Skills 都能扩展一次 Claude 运行，但扩展的对象不同：MCP 增加协议化能力，Agent 增加可委派的角色与上下文，Skill 增加可发现的操作说明和资源；把三者都叫「插件」会掩盖权限、进程和生命周期差异。
+MCP、Agents 和 Skills 都能扩展一次 Claude 运行，但扩展的对象不同：MCP 增加协议化能力，Agent 增加可委派的角色与上下文，而 Skill 增加可发现的操作说明和资源。如果把三者都叫「插件」，权限、进程和生命周期差异就会被掩盖。
 
 | 机制 | 主要增加什么 | 典型问题 |
 | --- | --- | --- |
@@ -14,7 +14,7 @@ MCP、Agents 和 Skills 都能扩展一次 Claude 运行，但扩展的对象不
 
 ## MCP 有外部 Server 与进程内 Server
 
-外部 MCP Server 可以通过 stdio、HTTP 或其他公开配置连接；SDK MCP Server 则直接运行在 Python 应用进程中。后者省去额外进程和 IPC，但也意味着工具函数能直接访问应用内存，崩溃、阻塞和敏感状态暴露都与宿主进程同域。
+外部 MCP Server 可以通过 stdio、HTTP 或其他公开配置连接，而 SDK MCP Server 则直接运行在 Python 应用进程中。后者省去了额外进程和 IPC，但工具函数也因此能直接访问应用内存，它的崩溃、阻塞和敏感状态暴露都与宿主进程同域。
 
 ### 第 1 站：`@tool` 把 Python 函数变成 SDK MCP 工具
 
@@ -35,7 +35,7 @@ def tool(
 - **返回**：可加入 SDK MCP Server 的工具对象。
 - **下一站**：`create_sdk_mcp_server()` 把一个或多个 Tool 注册到进程内 Server。
 
-描述和 Schema 都属于模型输入面：描述含糊会导致选择错误，Schema 过宽会增加危险参数空间；`readOnlyHint`、`destructiveHint` 等注解是提示，不应替代实际权限和输入校验。
+描述和 Schema 都属于模型输入面，因为描述含糊会导致选择错误，Schema 过宽也会增加危险参数空间。`readOnlyHint`、`destructiveHint` 等注解只能用作提示，不应替代实际权限和输入校验。
 
 ### 第 2 站：进程内 Server 仍通过 MCP 协议连接
 
@@ -108,11 +108,11 @@ elif subtype == "mcp_message":
 - **返回**：MCP 响应被包装到 `control_response`。
 - **下一站**：CLI 将 Tool 结果继续送入 Agent 运行；应用还应记录执行结果和副作用。
 
-若 Python Tool 执行阻塞，控制协议也会等待。高风险或不可信实现更适合隔离在外部 MCP Server 中，使用进程、容器、网络和资源限额建立边界。
+一旦 Python Tool 执行阻塞，控制协议也会跟着等待，所以高风险或不可信实现更适合隔离在外部 MCP Server 中，再使用进程、容器、网络和资源限额建立边界。
 
 ## Agent Definition 增加委派角色
 
-`ClaudeAgentOptions.agents` 是名称到 Agent Definition 的映射，主运行可以通过 Agent 工具调用它；一个定义通常包含描述、Prompt、工具限制和模型等配置。关键风险不是「多一个 Prompt」，而是产生新的调用主体：
+`ClaudeAgentOptions.agents` 是名称到 Agent Definition 的映射，主运行可以通过 Agent 工具调用它，而一个定义通常包含描述、Prompt、工具限制和模型等配置。真正的风险来自新的调用主体，不只是多了一个 Prompt：
 
 - 子 Agent 的 ToolUse 要用 `agent_id` 与主线程分开归因；
 - 工具权限不能因为「来自内部子 Agent」就默认可信；
@@ -131,7 +131,7 @@ Agent 定义在 initialize 中发送，但这只能证明公开配置交付路�
 
 源码：[查看 Skills 语义](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/types.py#L2230-L2244)
 
-设置 Skills 时，SDK 还会补足对应的允许规则和 Settings 来源，这会影响前面工具可见性课程已经看到的有效 `allowed_tools`，进而可能遮蔽 `can_use_tool`；所以 Skill 不是纯 Prompt 文件：启用行为会跨到发现与权限配置。
+设置 Skills 时，SDK 还会补足对应的允许规则和 Settings 来源，这会影响前面工具可见性课程已经看到的有效 `allowed_tools`，进而可能遮蔽 `can_use_tool`。Skill 的启用行为会跨到发现与权限配置，它并非纯 Prompt 文件。
 
 ## 一项需求该选哪种机制
 
@@ -147,7 +147,7 @@ Agent 定义在 initialize 中发送，但这只能证明公开配置交付路�
 
 考虑 Skill，把说明、脚本与模板组织成可发现资源，但脚本本身仍需工具权限和系统隔离。
 
-同一功能可以组合三者：Skill 教 Agent 何时执行发布，子 Agent 负责审查，MCP Tool 调用发布系统；组合后更要逐层记录权限和失败，不能用一个「插件执行失败」概括全部。
+同一功能可以组合三者：Skill 教 Agent 何时执行发布，子 Agent 负责审查，而 MCP Tool 调用发布系统。组合后更要逐层记录权限和失败，不能用一个「插件执行失败」概括全部。
 
 ## 扩展安全清单
 

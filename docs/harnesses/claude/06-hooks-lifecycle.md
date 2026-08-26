@@ -2,7 +2,7 @@
 
 [返回 Claude 课程地图](README.md)
 
-`can_use_tool` 只会接到权限规则留下的询问，无法承担每次调用都要执行的策略。要覆盖更广的事件范围，需要把视线转到 Hook 的注册、分派和结果编码。
+由于 `can_use_tool` 只会接到权限规则留下的询问，无法承担每次调用都要执行的策略，所以要覆盖更广的事件范围，需要把视线转到 Hook 的注册、分派和结果编码。
 
 权限回调只处理需要询问的调用，Hooks 则覆盖更广的生命周期事件。你可以在工具调用前做策略检查，在成功后改写返回给模型的结果，在失败后补充上下文，也可以观察 Prompt 提交、压缩和子 Agent 等事件。
 
@@ -72,7 +72,7 @@ class PreToolUseHookInput(BaseHookInput, _SubagentContextMixin):
 - **返回**：强类型的 Hook 输入联合类型供回调消费。
 - **下一站**：`HookMatcher` 把事件下的匹配条件与 Python 回调组合起来。
 
-`tool_use_id` 用于关联同一次工具调用的前置、成功或失败事件。子 Agent 场景中还可能出现 `agent_id` 和 `agent_type`；并发执行时，它们比「消息出现顺序」更可靠。
+`tool_use_id` 用于关联同一次工具调用的前置、成功或失败事件，而子 Agent 场景中还可能出现 `agent_id` 和 `agent_type`。并发执行时，这些标识比「消息出现顺序」更可靠。
 
 ## 不同时间点能做的事情不同
 
@@ -134,7 +134,7 @@ hook_matcher_config = {
 - **返回**：初始化请求只携带 matcher、回调 ID 和超时，不携带 Python 函数本身。
 - **下一站**：CLI 在事件发生时，通过控制协议带着某个回调 ID 请求 Python 执行。
 
-这是理解跨进程边界的关键：Claude Code CLI 不会直接「调用 Python 函数」。CLI 发协议消息，Query 按 ID 找回函数，再写回结果。
+理解跨进程边界的关键在于，Claude Code CLI 不会直接「调用 Python 函数」，它会发出协议消息，再由 Query 按 ID 找回函数并写回结果。
 
 ### 第 4 站：收到 `hook_callback` 后执行并编码结果
 
@@ -164,7 +164,7 @@ Python 类型使用 `async_`、`continue_`，线上协议使用 `async`、`conti
 
 ## 并发不是注册顺序
 
-公开 Options 注释说明，同一事件上的多个匹配器由 CLI 并发分派，不能依赖「先注册的 Hook 先修改状态，后注册的 Hook 再读取」；正确设计是让每个 Hook 独立、幂等，并通过 `tool_use_id` 或 `agent_id` 关联记录。
+公开 Options 注释说明，同一事件上的多个匹配器由 CLI 并发分派，因此不能依赖「先注册的 Hook 先修改状态，后注册的 Hook 再读取」这种顺序。每个 Hook 应当保持独立和幂等，再通过 `tool_use_id` 或 `agent_id` 关联记录。
 
 反例：
 
@@ -204,7 +204,7 @@ hooks = {
 
 ## 证据边界
 
-本文能够从 Python Agent SDK 证明：Hook 类型如何公开、配置怎样转换、回调 ID 怎样注册、控制请求怎样分派和响应。本文不能从该仓库证明 Claude Code 内部何时构建每个事件、内部权限求值函数的实现，或闭源 Sandbox 的调用图。对这些部分，只使用官方契约描述，不伪造源码站点。
+从 Python Agent SDK 可以核对 Hook 类型如何公开、配置怎样转换、回调 ID 怎样注册，以及控制请求怎样分派和响应。至于 Claude Code 内部何时构建每个事件、内部权限求值函数如何实现，以及闭源 Sandbox 的调用图，这个仓库都无法提供证明，因此这些部分只能使用官方契约描述，不伪造源码站点。
 
 Hook 已经把单次运行中的事件与工具调用关联起来。下一步要解决的是跨轮次状态：Session 怎样恢复，Transcript 又怎样镜像到外部 Store。
 
