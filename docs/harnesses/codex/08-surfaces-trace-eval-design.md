@@ -37,7 +37,7 @@ enum Subcommand {
 - **返回**：对应表面的退出码和输出。
 - **下一站**：表面创建 Thread/Session，或连接既有 Thread。
 
-同一个 Turn Error 在 Exec 中可能成为非零 Exit Code，在 App Server 中则是 JSON-RPC Error/Event；测试一个映射不能替代另一个。
+同一个 Turn Error 在 Exec 中可能成为非零 Exit Code，在 App Server 中却会变成 JSON-RPC Error/Event，因此测试其中一个映射不能替代对另一个映射的核对。
 
 ## App Server 把核心变成多传输服务
 
@@ -62,7 +62,7 @@ enum Subcommand {
 - **返回**：协议响应、通知和连接终态。
 - **下一站**：客户端更新自己的任务视图或提交下一项操作。
 
-传输连接成功不代表 Thread 创建成功；请求被接受也不代表 Turn 已完成。客户端需要用请求 ID、ThreadId 和 TurnId 分别关联三个层次。
+即使传输连接成功，也不能说明 Thread 已经创建，而请求被接受同样不能说明 Turn 已经完成。客户端需要用请求 ID、ThreadId 和 TurnId 分别关联三个层次。
 
 ## Trace、Telemetry 与 Feedback 分别保存什么
 
@@ -83,7 +83,7 @@ pub use writer::TraceWriter;
 - **返回**：可重建调用链的事件集合或派生视图。
 - **下一站**：调试器、可视化或 Evaluator 消费。
 
-Reducer 输出是投影，不应覆盖 Raw Events；Writer 未启用或写入失败时，也不能用「没有 Trace」推断没有发生执行。
+Reducer 输出只是投影，所以不应覆盖 Raw Events，而当 Writer 未启用或写入失败时，也不能根据「没有 Trace」推断执行没有发生。
 
 ### OTel：观察性能与运行指标
 
@@ -120,6 +120,6 @@ Feedback 可以携带日志或附件帮助定位问题，但受选择偏差和�
 
 Assistant 最终文本、Exec Exit Code、OTel、Trace 与 Feedback 都是证据来源——但评分权属于显式 Evaluator。若要用这些数据训练，还应通过单独的 Reward Adapter 定义样本选择和标签语义，并保留独立发布集。
 
-沿着这八篇文章，读者手里已经有了从配置、Thread/Turn、工具与执行边界，到 Rollout、子代理和多表面证据的源码阅读路径。还缺的是另一套 Harness 的对应证据；完成另一条课程后，再按课程地图进入横向比较。
+沿着这八篇文章，读者手里已经有了从配置、Thread/Turn、工具与执行边界，到 Rollout、子代理和多表面证据的源码阅读路径。手边还缺另一套 Harness 的对应证据，所以要先完成另一条课程，再按课程地图进入横向比较。
 
 到这里可以回到 [Codex 课程地图](README.md) 自己复核永久链接，或进入 [Gemini CLI 课程](../gemini-cli/README.md) 比较它的 Config、Scheduler 与 Tool Confirmation 设计。

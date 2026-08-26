@@ -2,9 +2,9 @@
 
 [返回 Codex 课程地图](README.md)
 
-上一讲已经把模型流、工具调用与结果回填串成闭环；一旦工具走到 Shell，问题便向前推进——这次命令究竟能以什么权限执行。权限问题就从这里开始。
+上一讲已经把模型流、工具调用与结果回填串成闭环，而一旦工具走到 Shell，问题便向前推进——这次命令究竟能以什么权限执行。权限问题就从这里开始。
 
-安全链最常见的误读是：「命令被允许，所以它在沙箱里安全执行了。」Codex 把至少三件事分开：Exec Policy 判断一条请求应允许、询问还是禁止；Approval Policy 决定能否向用户请求额外权限；Sandbox Manager 再根据平台和权限描述准备实际隔离。
+安全链最常见的误读是：「命令被允许，所以它在沙箱里安全执行了。」但 Codex 会把至少三件事依次分开处理，Exec Policy 先判断一条请求应当允许、询问还是禁止，Approval Policy 再决定能否向用户请求额外权限，最后才由 Sandbox Manager 根据平台和权限描述准备实际隔离。
 
 ```text
 模型提出命令
@@ -20,7 +20,7 @@ Exec Policy：Allow / Prompt / Forbidden
 启动进程并收集输出
 ```
 
-`Allow` 只表示策略层不再拦截；`Prompt` 只表示需要决策；用户点允许也只授权这次尝试。真正是否进入隔离环境，要看最后生成的执行请求。
+`Allow` 只表示策略层不再拦截，`Prompt` 只表示还需要一次决策，即使用户点了允许，也只是授权这次尝试。命令最终是否进入隔离环境，仍要看后面生成的执行请求。
 
 ## 第 1 站：Exec Policy 输出三值决定
 
@@ -40,7 +40,7 @@ pub enum Decision {
 - **返回**：允许继续、要求审批或立即拒绝。
 - **下一站**：Approval 流或 Sandbox 请求构造。
 
-三值而不是布尔值，保留了「目前没有授权，但可以询问用户」与「即使询问也不允许」的区别。把两者都折成 false，会让 UI 无法给出正确操作。
+这里使用三值而不是布尔值，是为了保留「目前没有授权，但可以询问用户」与「即使询问也不允许」之间的区别，因为一旦把两者都折成 false，UI 就无法给出与当前决策相符的操作。
 
 ## 第 2 站：需要 Sandbox 与平台能否提供 Sandbox 是两个问题
 
@@ -66,7 +66,7 @@ pub fn should_sandbox(...) -> bool {
 - **返回**：可选 Sandbox Type 与需求判断。
 - **下一站**：若需要且有后端，转换命令；不满足时按策略失败或走明确的无 Sandbox 路径。
 
-这两个函数分开，才能表达「请求要求拒绝网络，但当前平台后端不可用」。安全实现不能把后端缺失误写成「无需隔离」。
+只有把这两个函数分开，系统才能准确表达「请求要求拒绝网络，但当前平台后端不可用」这种状态。安全实现不能把后端缺失误写成「无需隔离」。
 
 ## 第 3 站：有效权限先合并，再生成平台命令
 
@@ -87,11 +87,11 @@ let (argv, arg0_override, pending_sandboxed_request) = match sandbox {
 - **返回**：可以交给 Process Host 的执行规格。
 - **下一站**：实际创建进程，并把 stdout、stderr、退出状态送回 Tool Result。
 
-Approval 的作用点在这里很清楚：它影响「这次请求允许增加哪些权限」，但不会替代平台后端，也不会保证后端初始化成功。
+从这里就能看清 Approval 的作用点，它只影响「这次请求允许增加哪些权限」，既不会替代平台后端，也不能保证后端一定初始化成功。
 
 ## Require Escalated 也受 Approval Policy 约束
 
-模型不能任意把每条命令升级到宿主权限。上游测试覆盖了关闭细粒度 Sandbox 审批后，`RequireEscalated` 请求直接失败的场景。
+模型不能任意把每条命令升级到宿主权限，而上游测试专门覆盖了关闭细粒度 Sandbox 审批后，`RequireEscalated` 请求直接失败的场景。
 
 源码：[查看提升权限拒绝测试](https://github.com/openai/codex/blob/c9b19deb09c1841ce7acc33ddb96276030936a29/codex-rs/core/tests/suite/approvals.rs#L1077-L1124)
 
@@ -101,13 +101,11 @@ sandbox_permissions: SandboxPermissions::RequireEscalated,
 output_contains: "you cannot ask for escalated permissions",
 ```
 
-这不是 Sandbox 拒绝命令，而是请求在进入 Sandbox 之前就违反了允许的审批契约。
-
-拒绝发生得更早，命令尚未进入 Sandbox。
+这不是 Sandbox 拒绝了命令，因为请求在进入 Sandbox 之前就已经违反允许的审批契约。拒绝发生得更早，命令尚未进入 Sandbox。
 
 ## Fail Closed 的具体含义
 
-Windows 受限令牌路径若无法兑现 Deny-Read 约束，测试要求返回错误，而不是悄悄裸跑。
+如果 Windows 受限令牌路径无法兑现 Deny-Read 约束，测试就要求直接返回错误，而不是让命令悄悄脱离限制裸跑。
 
 源码：[查看 Windows 拒绝读取测试](https://github.com/openai/codex/blob/c9b19deb09c1841ce7acc33ddb96276030936a29/codex-rs/core/tests/suite/windows_sandbox.rs#L176-L210)
 
@@ -115,7 +113,7 @@ Windows 受限令牌路径若无法兑现 Deny-Read 约束，测试要求返回�
 .expect_err("restricted-token sandbox should reject deny-read restrictions");
 ```
 
-Fail Closed 不是说所有命令都必须 Sandbox；它是说当策略承诺了某个限制，而当前路径无法兑现时，应拒绝这次执行，不能把约束静默降级。
+Fail Closed 并不是说所有命令都必须进入 Sandbox，而是说一旦策略承诺了某个限制，当前路径却无法兑现，系统就应拒绝这次执行，不能把约束静默降级。
 
 ## 排查一次「为什么弹出审批」
 
@@ -129,8 +127,8 @@ Fail Closed 不是说所有命令都必须 Sandbox；它是说当策略承诺了
 6. 选择了哪个平台后端；
 7. 子进程是否真的以该规格启动。
 
-只看最终命令输出，会丢掉前面每个安全决策的原因。
+如果只看最终的命令输出，前面每个安全决策为何产生、又在哪一层生效，就都会从排查证据里消失。
 
-执行结束，证据链还没结束。接下来要追踪这些安全决策与执行结果——它们如何分别进入 Rollout、模型历史、Compaction 与 Memory。
+进程执行结束以后，证据链还没有结束，因为这些安全决策与执行结果还会分别进入四种去向——Rollout、模型历史、Compaction 与 Memory，下一篇就沿着这条记录链继续追踪。
 
 下一篇：[Rollout、历史、压缩与恢复](05-rollout-history-memory.md)。
