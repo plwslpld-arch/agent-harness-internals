@@ -2,6 +2,8 @@
 
 [返回 Codex 课程地图](README.md)
 
+上一讲已经把模型流、工具调用与结果回填串成闭环；一旦工具走到 Shell，问题便向前推进——这次命令究竟能以什么权限执行。权限问题就从这里开始。
+
 安全链最常见的误读是：「命令被允许，所以它在沙箱里安全执行了。」Codex 把至少三件事分开：Exec Policy 判断一条请求应允许、询问还是禁止；Approval Policy 决定能否向用户请求额外权限；Sandbox Manager 再根据平台和权限描述准备实际隔离。
 
 ```text
@@ -101,6 +103,8 @@ output_contains: "you cannot ask for escalated permissions",
 
 这不是 Sandbox 拒绝命令，而是请求在进入 Sandbox 之前就违反了允许的审批契约。
 
+拒绝发生得更早，命令尚未进入 Sandbox。
+
 ## Fail Closed 的具体含义
 
 Windows 受限令牌路径若无法兑现 Deny-Read 约束，测试要求返回错误，而不是悄悄裸跑。
@@ -126,5 +130,7 @@ Fail Closed 不是说所有命令都必须 Sandbox；它是说当策略承诺了
 7. 子进程是否真的以该规格启动。
 
 只看最终命令输出，会丢掉前面每个安全决策的原因。
+
+执行结束，证据链还没结束。接下来要追踪这些安全决策与执行结果——它们如何分别进入 Rollout、模型历史、Compaction 与 Memory。
 
 下一篇：[Rollout、历史、压缩与恢复](05-rollout-history-memory.md)。

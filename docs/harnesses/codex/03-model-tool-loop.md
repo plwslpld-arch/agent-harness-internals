@@ -2,7 +2,7 @@
 
 [返回 Codex 课程地图](README.md)
 
-一个 Codex Turn 不是「调用一次模型然后打印文本」。模型流中可能出现普通文本、Reasoning、Function Call 或其他 Item；Function Call 被解析后交给 Tool Router，结果按原调用身份写回 Context，Turn 再决定是否继续采样。
+上一节已经沿 Thread、Task 和 Turn 分清了 Follow-up、Steer 与新 Turn 的归属边界。边界确定后，视线还要继续往里走——追踪当前 Turn 内的模型输出。一个 Codex Turn 不是「调用一次模型然后打印文本」。模型流中可能出现普通文本、Reasoning、Function Call 或其他 Item；Function Call 被解析后交给 Tool Router，结果按原调用身份写回 Context，Turn 再决定是否继续采样。
 
 ```text
 Prompt
@@ -19,6 +19,8 @@ Responses 流 ── 文本 → 对外事件
 ## 两个顺序必须同时成立
 
 如果一次模型响应提出 A、B、C 三个工具调用，Harness 可以并发执行支持并行的工具，但下一次模型请求仍需要稳定的 A→结果A、B→结果B、C→结果C 对应关系。执行完成顺序和写回顺序不是一回事。
+
+顺序在这里就固定了。
 
 ## 第 1 站：Router 按调用种类找到具体 Handler
 
@@ -93,9 +95,13 @@ assert!(*index < *output_index);
 assert_eq!(call.1.get("call_id"), output.1.get("call_id"));
 ```
 
+这还不够。
+
 这里核对的是请求体布局与 Call ID 对齐。要证明 Body 确实重叠，还要看测试是否使用屏障或时间窗口让多个 Handler 同时处于运行中。
 
 ## 模型流重试与工具重试不是一回事
+
+重试对象必须先分清。
 
 Provider 流可能在没有完成一次响应时断开。Codex 只对可重试错误按 Provider 配置的上限重连；已经落地的工具副作用不能因为模型流重试而无条件再执行。
 
@@ -124,5 +130,7 @@ handle_retryable_response_stream_error(..., max_retries, ...).await?;
 3. 模型调用 Patch 修改代码。
 4. 模型可能并发 Read 两个互不依赖文件，但 Patch 或某些执行工具串行。
 5. 第二次测试通过后，模型生成最终文本；外部仍可再次独立运行测试核对产物。
+
+到这里，Function Call 从模型流中被解析为 Tool Call，经 Router 找到具体 Handler，按工具元数据并行或独占执行，再由有序 Future 按原调用顺序把结果写回 Context 并进入下一次采样——下一篇将沿命令执行路径继续分清 Exec Policy 的三值判断、用户审批能否请求额外权限，以及 Sandbox 如何准备实际隔离。
 
 下一篇：[执行策略、审批与 Sandbox](04-exec-policy-sandbox.md)。
