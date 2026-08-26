@@ -21,3 +21,6 @@ coverage/
 research/working-notes/private/
 research/benchmarks/runs/
 research/runtime-evidence/private/
+
+# 质量脚本用 Python，本地运行会产生字节码缓存。
+__pycache__/
