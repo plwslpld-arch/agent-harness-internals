@@ -4,7 +4,7 @@
 
 DeepSeek Harness 是一套 TypeScript 多包 Agent Harness，它把 Preset、Prompt、模型调用、工具、Session、Code Mode、扩展和评测接缝组合成可装配运行时。装配只是起点。课程会沿着一次任务，追踪配置怎样变成运行对象，以及模型输出怎样进入工具循环。状态还要跨轮保存。目录名称，不会被直接当成架构结论。
 
-![DeepSeek Harness 系统地图](../../../assets/diagrams/deepseek-harness/system-architecture.svg)
+![DeepSeek Harness 系统地图](../../assets/diagrams/deepseek-harness/system-architecture.svg)
 
 ## 这条课程适合谁
 
@@ -33,7 +33,7 @@ CLI / ACP 输入
   → Session 与输出表面
 ```
 
-![DeepSeek Harness 端到端任务流程](../../../assets/diagrams/deepseek-harness/end-to-end-task.svg)
+![DeepSeek Harness 端到端任务流程](../../assets/diagrams/deepseek-harness/end-to-end-task.svg)
 
 这张图是按锁定源码重建的阅读路线，并非运行时自动生成的 Trace。因此进入各章后，每个箭头还会继续落到具体文件、对象和上游测试。
 

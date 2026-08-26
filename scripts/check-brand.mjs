@@ -6,10 +6,10 @@ import { fail, readDocument, root } from './lib.mjs';
 
 const han = /[\u3400-\u9fff]/u;
 const requiredAssets = {
-  mark: 'assets/brand/logo-mark.svg',
-  lockup: 'assets/brand/logo-lockup.svg',
-  socialSvg: 'assets/brand/social-preview.svg',
-  socialPng: 'assets/brand/social-preview.png',
+  mark: 'docs/assets/brand/logo-mark.svg',
+  lockup: 'docs/assets/brand/logo-lockup.svg',
+  socialSvg: 'docs/assets/brand/social-preview.svg',
+  socialPng: 'docs/assets/brand/social-preview.png',
 };
 const requiredTopics = [
   'agent-harness', 'source-code-analysis', 'deepseek-harness', 'openai-codex',
@@ -122,8 +122,8 @@ export function validateBrandPublication(manifest, diagramManifest, options = {}
 export function validateReadme(content) {
   const errors = [];
   if (typeof content !== 'string') return ['README 必须是文本'];
-  if (!/<img\b[^>]*src=["']assets\/brand\/logo-lockup\.svg["'][^>]*alt=["'][^"']*[\u3400-\u9fff][^"']*["']/iu.test(content)
-    && !/<img\b[^>]*alt=["'][^"']*[\u3400-\u9fff][^"']*["'][^>]*src=["']assets\/brand\/logo-lockup\.svg["']/iu.test(content)) {
+  if (!/<img\b[^>]*src=["']docs\/assets\/brand\/logo-lockup\.svg["'][^>]*alt=["'][^"']*[\u3400-\u9fff][^"']*["']/iu.test(content)
+    && !/<img\b[^>]*alt=["'][^"']*[\u3400-\u9fff][^"']*["'][^>]*src=["']docs\/assets\/brand\/logo-lockup\.svg["']/iu.test(content)) {
     errors.push('README 顶部必须使用带中文替代文本的正式中文组合标');
   }
   for (const phrase of ['Agent Harness 源码内核', '中文 Agent Harness 源码教材', 'DeepSeek Harness', 'Codex', 'Gemini CLI', 'Claude', 'pi', 'OpenCode', '锁定提交']) {
@@ -146,13 +146,13 @@ export function validateReadme(content) {
 }
 
 function main() {
-  const brand = readDocument(join(root, 'assets', 'brand', 'brand.yml'));
+  const brand = readDocument(join(root, 'docs', 'assets', 'brand', 'brand.yml'));
   const metadata = readDocument(join(root, '.github', 'repository-metadata.yml'));
   const readme = readFileSync(join(root, 'README.md'), 'utf8');
   const packageJson = readDocument(join(root, 'package.json'));
   const workflow = ['verify.yml', 'drift.yml'].map((name) => readFileSync(join(root, '.github', 'workflows', name), 'utf8')).join('\n');
   const errors = [
-    ...validateBrandPublication(brand, readDocument(join(root, 'assets', 'diagrams', 'manifest.yml')), { root }),
+    ...validateBrandPublication(brand, readDocument(join(root, 'docs', 'assets', 'diagrams', 'manifest.yml')), { root }),
     ...validateRepositoryMetadata(metadata),
     ...validateReadme(readme),
     ...validateRepositoryIdentity({ packageJson, workflow, readme, nvmrcExists: existsSync(join(root, '.nvmrc')) }),

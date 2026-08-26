@@ -2,7 +2,7 @@
 
 [上一篇：Model、Harness 与 Environment](01-model-harness-environment.md) · [返回学习入口](../00-start-here.md) · [下一篇：工具、权限与执行边界](03-tools-permissions-execution.md)
 
-![一次 Agent 轮次和完整任务的关系](../../assets/diagrams/foundations/02-agent-turn.svg)
+![一次 Agent 轮次和完整任务的关系](../assets/diagrams/foundations/02-agent-turn.svg)
 
 Agent Loop 并不只是「反复调用模型」，因为每一轮都要确定输入、消费模型输出、处理工具或文本分支、保存新状态，然后依据可观察条件决定下一步——一旦某个环节含糊，任务就可能无限循环、过早结束，或者在恢复后重复副作用。
 
@@ -70,7 +70,7 @@ Harness 必须把这些形态转换成内部事件或状态，而当工具参数
 
 ## 工具结果怎样进入下一轮
 
-![模型请求工具与工具结果回填的时序](../../assets/diagrams/foundations/03-model-tool-io.svg)
+![模型请求工具与工具结果回填的时序](../assets/diagrams/foundations/03-model-tool-io.svg)
 
 文件工具执行后，Harness 通常会生成一条与原调用关联的结果消息：
 

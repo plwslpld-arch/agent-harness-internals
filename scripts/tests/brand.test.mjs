@@ -19,10 +19,10 @@ const brand = {
   subtitle: '六套 Coding Agent 运行系统的中文源码教材',
   concept: '用代码边界、调用链和三个状态节点表达模型输入、工具执行与环境反馈。',
   assets: {
-    mark: 'assets/brand/logo-mark.svg',
-    lockup: 'assets/brand/logo-lockup.svg',
-    socialSvg: 'assets/brand/social-preview.svg',
-    socialPng: 'assets/brand/social-preview.png',
+    mark: 'docs/assets/brand/logo-mark.svg',
+    lockup: 'docs/assets/brand/logo-lockup.svg',
+    socialSvg: 'docs/assets/brand/social-preview.svg',
+    socialPng: 'docs/assets/brand/social-preview.png',
   },
   socialPreview: { width: 1280, height: 640 },
 };
@@ -38,7 +38,7 @@ const metadata = {
     'deepseek-harness', 'openai-codex', 'gemini-cli', 'claude-code',
     'pi-coding-agent', 'opencode', 'chinese',
   ],
-  socialPreview: 'assets/brand/social-preview.png',
+  socialPreview: 'docs/assets/brand/social-preview.png',
   branchProtection: { requiredStatusChecks: ['verify'] },
 };
 
@@ -66,8 +66,8 @@ test('GitHub 元数据要求中文 About、核心 Topics 且不含部署阶段',
 });
 
 test('正式品牌资产已登记且社交预览尺寸正确', () => {
-  const actualBrand = readDocument(join(root, 'assets', 'brand', 'brand.yml'));
-  const diagrams = readDocument(join(root, 'assets', 'diagrams', 'manifest.yml'));
+  const actualBrand = readDocument(join(root, 'docs', 'assets', 'brand', 'brand.yml'));
+  const diagrams = readDocument(join(root, 'docs', 'assets', 'diagrams', 'manifest.yml'));
   const preview = readFileSync(join(root, actualBrand.assets.socialPng));
 
   assert.deepEqual(pngDimensions(preview), { width: 1280, height: 640 });
@@ -80,7 +80,7 @@ test('README 使用正式组合标并只呈现读者定位', () => {
 });
 
 test('README 契约拒绝旧定位、内部状态、英文入口和过度承诺', () => {
-  const bad = `<img src="assets/harness-internals.svg" alt="Harness Internals">
+  const bad = `<img src="docs/assets/harness-internals.svg" alt="Harness Internals">
 # Harness Internals
 当前状态：verified
 [English](README.en.md)

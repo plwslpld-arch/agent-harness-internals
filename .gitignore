@@ -24,3 +24,6 @@ research/runtime-evidence/private/
 
 # 质量脚本用 Python，本地运行会产生字节码缓存。
 __pycache__/
+
+# mkdocs 构建产物，由 CI 发布，不进主干。
+site/

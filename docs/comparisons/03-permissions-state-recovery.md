@@ -4,7 +4,7 @@
 
 问「这个 Agent 有权限吗」时，其实至少在问五件事：工具是否可见，策略是否允许，用户是否批准，执行环境能否做到，以及中断后能否安全恢复。本篇把六套 Harness 放到同一条动作链上，由此看清界面上的 Allow 为什么既不能证明操作系统已经隔离，也不能承诺副作用随时可以撤销。
 
-![权限、执行与恢复的分层](../../assets/diagrams/comparisons/03-permissions-state-recovery.svg)
+![权限、执行与恢复的分层](../assets/diagrams/comparisons/03-permissions-state-recovery.svg)
 
 ## 五层边界
 

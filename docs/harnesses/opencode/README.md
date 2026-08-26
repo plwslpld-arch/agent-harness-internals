@@ -4,7 +4,7 @@
 
 OpenCode 以服务化 Session 为核心，其中 Project 和 Config 负责选择运行上下文，Provider 建立模型接口，Session Prompt 驱动主循环，Processor 消费模型流和工具结果，最后再由 Server 与 Protocol 把同一核心暴露给多个客户端。
 
-![OpenCode 系统地图](../../../assets/diagrams/opencode/system-architecture.svg)
+![OpenCode 系统地图](../../assets/diagrams/opencode/system-architecture.svg)
 
 ## 这条课程适合谁
 
@@ -34,7 +34,7 @@ TUI / Desktop / Web / ACP
   → Message Store 与下一轮
 ```
 
-![OpenCode 端到端任务流程](../../../assets/diagrams/opencode/end-to-end-task.svg)
+![OpenCode 端到端任务流程](../../assets/diagrams/opencode/end-to-end-task.svg)
 
 图中客户端只负责展示询问和结果，真正的 Session 状态仍由服务核心维护——接入多个客户端并不等于复制多份 Agent Loop。
 

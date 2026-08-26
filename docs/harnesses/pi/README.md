@@ -4,7 +4,7 @@
 
 先看清三层。pi 的价值在于分层清楚，底层 AI 包负责 Provider 与流式消息，Agent 包提供最小循环，而 Coding Agent 再把工具、Session 和交互表面组合起来。课程会沿着这条组合关系向上阅读，同时分清核心运行时代码、设计文档、扩展示例和外部环境。
 
-![pi 系统地图](../../../assets/diagrams/pi/system-architecture.svg)
+![pi 系统地图](../../assets/diagrams/pi/system-architecture.svg)
 
 ## 这条课程适合谁
 
@@ -32,7 +32,7 @@ Coding Agent / Protocol / TUI
   → Message 与 Session
 ```
 
-![pi 端到端任务流程](../../../assets/diagrams/pi/end-to-end-task.svg)
+![pi 端到端任务流程](../../assets/diagrams/pi/end-to-end-task.svg)
 
 图中的 Coding Agent 组合了 Agent Core，并没有另起一套平行循环，而 Protocol 和 TUI 也只是面向不同场景的控制表面。
 

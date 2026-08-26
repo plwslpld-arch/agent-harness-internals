@@ -4,7 +4,7 @@
 
 Gemini CLI 把交互表面、Core、Turn、Scheduler、工具、Policy、Confirmation 和 Session 组织成一条可追踪的 TypeScript 调用链——当模型产生工具请求时，读者可以沿着这条链继续往下追，看清 Harness 如何调度、确认和执行请求，又如何把结果送入下一轮。阅读时不必急着记住每个类型，而应先盯住一次请求携带的数据，看它怎样从配置与上下文出发，经过模型路由和事件流变成需要授权的工具调用，最后带着结果回到历史。只要这条数据流没有断，后面的 Registry、Hook 或 A2A 即使暂时陌生，也能放回正确位置。
 
-![Gemini CLI 系统地图](../../../assets/diagrams/gemini-cli/system-architecture.svg)
+![Gemini CLI 系统地图](../../assets/diagrams/gemini-cli/system-architecture.svg)
 
 ## 这条课程适合谁
 
@@ -33,7 +33,7 @@ CLI 输入
   → Session 历史与下一轮
 ```
 
-![Gemini CLI 端到端任务流程](../../../assets/diagrams/gemini-cli/end-to-end-task.svg)
+![Gemini CLI 端到端任务流程](../../assets/diagrams/gemini-cli/end-to-end-task.svg)
 
 课程会分别标注当前 Turn/Scheduler 主链与 Legacy Agent Session 证据，读到不同实现时先确认它们各自所属的路径，就能避免把两个时期的对象拼成一条实际上不存在的流程。
 

@@ -6,7 +6,7 @@ Aider 有两个很适合拆开观察的机制，其中 Repository Map 会在有�
 
 这两个机制都能让大型代码库更容易操作，但它们没有消除证据缺口，因为压缩后的 Map 仍可能省略关键文件，Architect 也可能在上下文不完整时提出方案，Editor 随后还可能把正确建议应用错。本文只讲锁定源码里可以核对的选择与交接逻辑，不会因为模型表现不错、生成了提交或测试碰巧一次通过，就把它们当成任务正确的证明。
 
-![Aider Repository Map 与 Architect Editor 分工](../../assets/diagrams/samples/aider-map-architect-editor.svg)
+![Aider Repository Map 与 Architect Editor 分工](../assets/diagrams/samples/aider-map-architect-editor.svg)
 
 ## 机制一：Repository Map；机制二：Architect 与 Editor
 

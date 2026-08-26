@@ -17,7 +17,7 @@
     "opencode",
     "chinese"
   ],
-  "socialPreview": "assets/brand/social-preview.png",
+  "socialPreview": "docs/assets/brand/social-preview.png",
   "features": {
     "issues": true,
     "wiki": false,

@@ -4,7 +4,7 @@
 
 Agent 生态经常把 Agent、Sub-Agent、Skill、Plugin、Hook、MCP、Protocol、Server 和 UI 统称为「扩展能力」，但它们实际介入的层次并不相同。有的机制会改变模型输入，有的会增加工具，有的会创建一条新循环，还有的只是把同一 Session 暴露给另一个客户端。为了避免把这些边界混在一起，本篇会先按责任分类，再比较六套 Harness 的代表机制。
 
-![编排、协议与产品表面的层次](../../assets/diagrams/comparisons/04-orchestration-protocol-surfaces.svg)
+![编排、协议与产品表面的层次](../assets/diagrams/comparisons/04-orchestration-protocol-surfaces.svg)
 
 ## 先按责任分类
 

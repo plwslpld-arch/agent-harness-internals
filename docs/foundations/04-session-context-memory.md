@@ -2,7 +2,7 @@
 
 [上一篇：工具、权限与执行边界](03-tools-permissions-execution.md) · [返回学习入口](../00-start-here.md) · [下一篇：Trace、Eval 与结果核对](05-trace-eval.md)
 
-![会话、上下文、记忆与压缩的关系](../../assets/diagrams/foundations/05-session-context-memory.svg)
+![会话、上下文、记忆与压缩的关系](../assets/diagrams/foundations/05-session-context-memory.svg)
 
 Session、Context 和 Memory 经常被当作同义词，但阅读实现时必须把它们分开，它们不是同一层状态。Context 是某次模型请求实际能看见的输入，Session 记录一项任务怎样跨过多轮运行，Memory 保留的则是未来任务还可能用到的信息。Compaction 处理的是另一个问题：当历史过长时，它怎样把原始记录换成更短的表示。
 

@@ -6,7 +6,7 @@ Claude 课程首先教你处理一条特殊证据边界：Claude Code 是闭源�
 
 课程会把「官方公开契约」「Python Agent SDK 源码」「TypeScript Agent SDK 可见内容」和「无法由当前来源核对的产品内部机制」分开书写。
 
-![Claude 公开证据与系统边界](../../../assets/diagrams/claude/system-architecture.svg)
+![Claude 公开证据与系统边界](../../assets/diagrams/claude/system-architecture.svg)
 
 ## 锁定来源与可见范围
 
@@ -34,7 +34,7 @@ Python 应用
   → SDK 类型、回调和 Session Store
 ```
 
-![Claude Agent SDK 端到端任务流程](../../../assets/diagrams/claude/end-to-end-task.svg)
+![Claude Agent SDK 端到端任务流程](../../assets/diagrams/claude/end-to-end-task.svg)
 
 流程在 CLI 边界处有意停止——公开 SDK 能证明传输、消息和控制请求怎样工作，不能证明闭源产品内部采用了哪一种 Agent Loop。
 

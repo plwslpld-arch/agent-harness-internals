@@ -2,7 +2,7 @@
 
 [返回学习入口](../00-start-here.md) · [下一篇：一次任务怎样形成 Agent Loop](02-one-agent-loop.md)
 
-![模型、Harness 与环境的边界](../../assets/diagrams/foundations/01-boundaries.svg)
+![模型、Harness 与环境的边界](../assets/diagrams/foundations/01-boundaries.svg)
 
 第一次阅读 Agent 源码时，最容易犯的错误是把所有行为都归到模型上——模型说「我读取了文件」，并不代表文件真的被读取，而终端返回成功，也不代表用户的任务已经完成。因此在读实现之前，必须先把 Model、Harness 和 Environment 分开。
 

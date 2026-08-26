@@ -3,231 +3,231 @@
   "diagrams": [
     {
       "id": "brand-mark",
-      "path": "assets/brand/logo-mark.svg",
+      "path": "docs/assets/brand/logo-mark.svg",
       "type": "brand",
       "scope": "repository",
       "alt": "Agent Harness 源码内核标记"
     },
     {
       "id": "brand-lockup",
-      "path": "assets/brand/logo-lockup.svg",
+      "path": "docs/assets/brand/logo-lockup.svg",
       "type": "brand",
       "scope": "repository",
       "alt": "Agent Harness 源码内核中文组合标"
     },
     {
       "id": "brand-social-preview",
-      "path": "assets/brand/social-preview.svg",
+      "path": "docs/assets/brand/social-preview.svg",
       "type": "brand",
       "scope": "repository",
       "alt": "Agent Harness 源码内核社交预览"
     },
     {
       "id": "start-agent-harness-scope",
-      "path": "assets/diagrams/start/agent-harness-scope.svg",
+      "path": "docs/assets/diagrams/start/agent-harness-scope.svg",
       "type": "architecture",
       "scope": "docs/00-start-here.md",
       "alt": "模型、Harness、环境、Trace 与评测的责任边界"
     },
     {
       "id": "foundation-boundaries",
-      "path": "assets/diagrams/foundations/01-boundaries.svg",
+      "path": "docs/assets/diagrams/foundations/01-boundaries.svg",
       "type": "architecture",
       "scope": "docs/foundations/01-model-harness-environment.md",
       "alt": "模型、Harness 与环境的边界"
     },
     {
       "id": "foundation-agent-turn",
-      "path": "assets/diagrams/foundations/02-agent-turn.svg",
+      "path": "docs/assets/diagrams/foundations/02-agent-turn.svg",
       "type": "flow",
       "scope": "docs/foundations/02-one-agent-loop.md",
       "alt": "一次 Agent 轮次和完整任务的关系"
     },
     {
       "id": "foundation-model-tool-io",
-      "path": "assets/diagrams/foundations/03-model-tool-io.svg",
+      "path": "docs/assets/diagrams/foundations/03-model-tool-io.svg",
       "type": "sequence",
       "scope": "docs/foundations/02-one-agent-loop.md",
       "alt": "模型请求工具与工具结果回填的时序"
     },
     {
       "id": "foundation-tools-permissions",
-      "path": "assets/diagrams/foundations/04-tools-permissions-sandbox.svg",
+      "path": "docs/assets/diagrams/foundations/04-tools-permissions-sandbox.svg",
       "type": "flow",
       "scope": "docs/foundations/03-tools-permissions-execution.md",
       "alt": "工具可见、策略、批准与隔离的分层"
     },
     {
       "id": "foundation-session-context",
-      "path": "assets/diagrams/foundations/05-session-context-memory.svg",
+      "path": "docs/assets/diagrams/foundations/05-session-context-memory.svg",
       "type": "data-flow",
       "scope": "docs/foundations/04-session-context-memory.md",
       "alt": "会话、上下文、记忆与压缩的关系"
     },
     {
       "id": "foundation-trace-eval",
-      "path": "assets/diagrams/foundations/06-trace-feedback-eval.svg",
+      "path": "docs/assets/diagrams/foundations/06-trace-feedback-eval.svg",
       "type": "data-flow",
       "scope": "docs/foundations/05-trace-eval.md",
       "alt": "运行轨迹、环境产物与独立评测的关系"
     },
     {
       "id": "deepseek-harness-system",
-      "path": "assets/diagrams/deepseek-harness/system-architecture.svg",
+      "path": "docs/assets/diagrams/deepseek-harness/system-architecture.svg",
       "type": "architecture",
       "scope": "docs/harnesses/deepseek-harness/README.md",
       "alt": "DeepSeek Harness 系统地图"
     },
     {
       "id": "deepseek-harness-task",
-      "path": "assets/diagrams/deepseek-harness/end-to-end-task.svg",
+      "path": "docs/assets/diagrams/deepseek-harness/end-to-end-task.svg",
       "type": "flow",
       "scope": "docs/harnesses/deepseek-harness/README.md",
       "alt": "DeepSeek Harness 端到端任务流程"
     },
     {
       "id": "codex-system",
-      "path": "assets/diagrams/codex/system-architecture.svg",
+      "path": "docs/assets/diagrams/codex/system-architecture.svg",
       "type": "architecture",
       "scope": "docs/harnesses/codex/README.md",
       "alt": "Codex 系统地图"
     },
     {
       "id": "codex-task",
-      "path": "assets/diagrams/codex/end-to-end-task.svg",
+      "path": "docs/assets/diagrams/codex/end-to-end-task.svg",
       "type": "flow",
       "scope": "docs/harnesses/codex/README.md",
       "alt": "Codex 端到端任务流程"
     },
     {
       "id": "gemini-cli-system",
-      "path": "assets/diagrams/gemini-cli/system-architecture.svg",
+      "path": "docs/assets/diagrams/gemini-cli/system-architecture.svg",
       "type": "architecture",
       "scope": "docs/harnesses/gemini-cli/README.md",
       "alt": "Gemini CLI 系统地图"
     },
     {
       "id": "gemini-cli-task",
-      "path": "assets/diagrams/gemini-cli/end-to-end-task.svg",
+      "path": "docs/assets/diagrams/gemini-cli/end-to-end-task.svg",
       "type": "flow",
       "scope": "docs/harnesses/gemini-cli/README.md",
       "alt": "Gemini CLI 端到端任务流程"
     },
     {
       "id": "claude-system",
-      "path": "assets/diagrams/claude/system-architecture.svg",
+      "path": "docs/assets/diagrams/claude/system-architecture.svg",
       "type": "architecture",
       "scope": "docs/harnesses/claude/README.md",
       "alt": "Claude 系统地图"
     },
     {
       "id": "claude-task",
-      "path": "assets/diagrams/claude/end-to-end-task.svg",
+      "path": "docs/assets/diagrams/claude/end-to-end-task.svg",
       "type": "flow",
       "scope": "docs/harnesses/claude/README.md",
       "alt": "Claude 端到端任务流程"
     },
     {
       "id": "pi-system",
-      "path": "assets/diagrams/pi/system-architecture.svg",
+      "path": "docs/assets/diagrams/pi/system-architecture.svg",
       "type": "architecture",
       "scope": "docs/harnesses/pi/README.md",
       "alt": "pi 系统地图"
     },
     {
       "id": "pi-task",
-      "path": "assets/diagrams/pi/end-to-end-task.svg",
+      "path": "docs/assets/diagrams/pi/end-to-end-task.svg",
       "type": "flow",
       "scope": "docs/harnesses/pi/README.md",
       "alt": "pi 端到端任务流程"
     },
     {
       "id": "opencode-system",
-      "path": "assets/diagrams/opencode/system-architecture.svg",
+      "path": "docs/assets/diagrams/opencode/system-architecture.svg",
       "type": "architecture",
       "scope": "docs/harnesses/opencode/README.md",
       "alt": "OpenCode 系统地图"
     },
     {
       "id": "opencode-task",
-      "path": "assets/diagrams/opencode/end-to-end-task.svg",
+      "path": "docs/assets/diagrams/opencode/end-to-end-task.svg",
       "type": "flow",
       "scope": "docs/harnesses/opencode/README.md",
       "alt": "OpenCode 端到端任务流程"
     },
     {
       "id": "comparison-01-runtime-config-model-input",
-      "path": "assets/diagrams/comparisons/01-runtime-config-model-input.svg",
+      "path": "docs/assets/diagrams/comparisons/01-runtime-config-model-input.svg",
       "type": "architecture",
       "scope": "docs/comparisons/01-runtime-config-model-input.md",
       "alt": "六套 Harness 的运行时配置与模型输入"
     },
     {
       "id": "comparison-02-loop-tools-execution",
-      "path": "assets/diagrams/comparisons/02-loop-tools-execution.svg",
+      "path": "docs/assets/diagrams/comparisons/02-loop-tools-execution.svg",
       "type": "architecture",
       "scope": "docs/comparisons/02-loop-tools-execution.md",
       "alt": "六套 Harness 的模型工具闭环"
     },
     {
       "id": "comparison-03-permissions-state-recovery",
-      "path": "assets/diagrams/comparisons/03-permissions-state-recovery.svg",
+      "path": "docs/assets/diagrams/comparisons/03-permissions-state-recovery.svg",
       "type": "flow",
       "scope": "docs/comparisons/03-permissions-state-recovery.md",
       "alt": "六套 Harness 的权限、状态与恢复"
     },
     {
       "id": "comparison-04-orchestration-protocol-surfaces",
-      "path": "assets/diagrams/comparisons/04-orchestration-protocol-surfaces.svg",
+      "path": "docs/assets/diagrams/comparisons/04-orchestration-protocol-surfaces.svg",
       "type": "architecture",
       "scope": "docs/comparisons/04-orchestration-protocol-surfaces.md",
       "alt": "六套 Harness 的编排、协议与产品表面"
     },
     {
       "id": "comparison-05-observability-eval-deployment",
-      "path": "assets/diagrams/comparisons/05-observability-eval-deployment.svg",
+      "path": "docs/assets/diagrams/comparisons/05-observability-eval-deployment.svg",
       "type": "architecture",
       "scope": "docs/comparisons/05-observability-eval-deployment.md",
       "alt": "六套 Harness 的可观测性与独立评测"
     },
     {
       "id": "sample-aider-map-architect-editor",
-      "path": "assets/diagrams/samples/aider-map-architect-editor.svg",
+      "path": "docs/assets/diagrams/samples/aider-map-architect-editor.svg",
       "type": "architecture",
       "scope": "docs/samples/aider.md",
       "alt": "Aider 仓库地图与方案编辑分工"
     },
     {
       "id": "sample-cline-approval-checkpoint",
-      "path": "assets/diagrams/samples/cline-approval-checkpoint.svg",
+      "path": "docs/assets/diagrams/samples/cline-approval-checkpoint.svg",
       "type": "architecture",
       "scope": "docs/samples/cline.md",
       "alt": "Cline 工具批准与工作区恢复"
     },
     {
       "id": "sample-goose-recipe-extension",
-      "path": "assets/diagrams/samples/goose-recipe-extension.svg",
+      "path": "docs/assets/diagrams/samples/goose-recipe-extension.svg",
       "type": "architecture",
       "scope": "docs/samples/goose.md",
       "alt": "goose 配方与扩展装配"
     },
     {
       "id": "sample-mini-swe-agent-loop",
-      "path": "assets/diagrams/samples/mini-swe-agent-loop.svg",
+      "path": "docs/assets/diagrams/samples/mini-swe-agent-loop.svg",
       "type": "architecture",
       "scope": "docs/samples/mini-swe-agent.md",
       "alt": "mini-swe-agent 最小循环与执行边界"
     },
     {
       "id": "sample-openhands-agent-canvas",
-      "path": "assets/diagrams/samples/openhands-agent-canvas.svg",
+      "path": "docs/assets/diagrams/samples/openhands-agent-canvas.svg",
       "type": "architecture",
       "scope": "docs/samples/openhands-agent-canvas.md",
       "alt": "OpenHands 智能体画布多后端控制平面"
     },
     {
       "id": "sample-qwen-code-serve-boundary",
-      "path": "assets/diagrams/samples/qwen-code-serve-boundary.svg",
+      "path": "docs/assets/diagrams/samples/qwen-code-serve-boundary.svg",
       "type": "architecture",
       "scope": "docs/samples/qwen-code.md",
       "alt": "Qwen Code 回放压缩与批准作用域"

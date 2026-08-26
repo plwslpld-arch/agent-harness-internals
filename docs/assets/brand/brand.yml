@@ -5,10 +5,10 @@
   "subtitle": "六套编程智能体运行系统的中文源码教材",
   "concept": "用代码边界、调用链和三个状态节点表达模型输入、工具执行与环境反馈。",
   "assets": {
-    "mark": "assets/brand/logo-mark.svg",
-    "lockup": "assets/brand/logo-lockup.svg",
-    "socialSvg": "assets/brand/social-preview.svg",
-    "socialPng": "assets/brand/social-preview.png"
+    "mark": "docs/assets/brand/logo-mark.svg",
+    "lockup": "docs/assets/brand/logo-lockup.svg",
+    "socialSvg": "docs/assets/brand/social-preview.svg",
+    "socialPng": "docs/assets/brand/social-preview.png"
   },
   "socialPreview": {
     "width": 1280,

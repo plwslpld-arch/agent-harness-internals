@@ -6,7 +6,7 @@
 
 Agent Canvas 的独特价值，在于它展示了控制平面如何把多个 Agent 后端组织成可操作的产品。它虽然可以连接本地、远端、云端或 ACP 兼容 Agent，但这些名称只能说明连接类别，不能证明真实后端已经存在。要判断它运行在哪里，又具有何种隔离和版本能力，还得从有效配置、网络探测、服务信息与部署证据中逐层确认。
 
-![OpenHands Agent Canvas 多后端控制平面](../../assets/diagrams/samples/openhands-agent-canvas.svg)
+![OpenHands Agent Canvas 多后端控制平面](../assets/diagrams/samples/openhands-agent-canvas.svg)
 
 ## 控制平面怎样选择并连接真实后端
 
