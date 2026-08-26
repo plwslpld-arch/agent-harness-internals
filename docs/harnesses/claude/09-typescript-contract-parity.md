@@ -2,6 +2,8 @@
 
 [返回 Claude 课程地图](README.md)
 
+前一篇已经把 MCP、Agent Definition 和 Skill 的装配与执行路径分开——换到 TypeScript 后，不能据此假定三条路径仍然同构。边界必须停在证据处。
+
 跨语言 SDK 课程最危险的写法，是在 Python 中找到一个内部实现，然后把它复制成 TypeScript 的「同构架构」。当前锁定的 TypeScript 仓库并没有公开 SDK 主体运行时源码，所以本篇只分析真实可见的 README、CHANGELOG、SessionStore 示例与测试。
 
 ## 当前锁定树里实际有什么
@@ -25,7 +27,7 @@
 
 ## 契约对齐与实现对齐不是一回事
 
-Python 和 TypeScript 都可以公开 `query`、权限、Hooks、MCP 和 SessionStore 概念。这叫契约家族相似。只有同时拿到两个同版本 Runtime 的实现证据，才能比较类、状态机、并发与资源清理是否对齐。
+Python 和 TypeScript 都可以公开 `query`、权限、Hooks、MCP 和 SessionStore 概念。这叫契约家族相似。只有同时拿到两个同版本 Runtime 的实现证据——才能比较类、状态机、并发与资源清理是否对齐。
 
 CHANGELOG 可以帮助发现版本迁移风险。例如它记录过 `canUseTool` 遮蔽警告、Tools 可见集合、SessionStore 重试和 stdin 过早关闭等变化：[查看锁定 CHANGELOG 中的权限回调变化](https://github.com/anthropics/claude-agent-sdk-typescript/blob/48275071e804139579fabada9bb8d90cfe02b062/CHANGELOG.md#L227-L255)。这些是版本声明，不等于课程已经看到了相应函数实现。
 
@@ -127,5 +129,7 @@ type SessionStore = {
 - 是否需要自定义 Store、MCP 或浏览器表面。
 
 证据透明度是风险因子之一，不替代需求评估。
+
+跨语言对照停在可见契约之后，课程最后要回到一次真实运行：分清错误发生的层次，保留可观测证据，再让独立 Eval 判断任务质量。
 
 下一篇收束 Claude 课程：[错误分类、可观测性与独立 Eval 接缝](10-surfaces-errors-eval-design.md)。

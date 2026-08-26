@@ -2,6 +2,8 @@
 
 [返回 Claude 课程地图](README.md)
 
+`can_use_tool` 只会接到权限规则留下的询问，无法承担每次调用都要执行的策略。要覆盖更广的事件范围，需要把视线转到 Hook 的注册、分派和结果编码。
+
 权限回调只处理需要询问的调用，Hooks 则覆盖更广的生命周期事件。你可以在工具调用前做策略检查，在成功后改写返回给模型的结果，在失败后补充上下文，也可以观察 Prompt 提交、压缩和子 Agent 等事件。
 
 先看一个调用前 Hook：
@@ -38,7 +40,7 @@ hooks = {
 | 通用输出 | 控制是否继续、停止原因、展示信息 |
 | 特定输出 | 按事件允许决策、改写输入、补充上下文或替换结果 |
 
-Hook 不是随意返回任意对象的插件点。输入和输出都由公开类型约束，事件不同，可用字段也不同。
+Hook 不是随意返回任意对象的插件点——输入和输出都由公开类型约束，事件不同，可用字段也不同。
 
 ### 第 1 站：事件类型定义了可观察的生命周期
 
@@ -82,7 +84,7 @@ class PreToolUseHookInput(BaseHookInput, _SubagentContextMixin):
 
 源码：[查看 Hook 特定输出](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/types.py#L415-L495)
 
-`PostToolUse` 的输出改写尤其要谨慎：内置工具的替代值必须符合该工具输出 Schema，形状不匹配时会被拒绝并保留原结果。Hook 不是绕过数据契约的万能转换器。
+`PostToolUse` 的输出改写尤其要谨慎：内置工具的替代值必须符合该工具输出 Schema，形状不匹配时会被拒绝并保留原结果——Hook 不是绕过数据契约的万能转换器。
 
 ### 第 2 站：公开配置先转换成 Query 可消费的形状
 
@@ -132,7 +134,7 @@ hook_matcher_config = {
 - **返回**：初始化请求只携带 matcher、回调 ID 和超时，不携带 Python 函数本身。
 - **下一站**：CLI 在事件发生时，通过控制协议带着某个回调 ID 请求 Python 执行。
 
-这是理解跨进程边界的关键：Claude Code CLI 不会直接「调用 Python 函数」。它发协议消息，Python Query 根据 ID 找回函数，再把结果写回去。
+这是理解跨进程边界的关键：Claude Code CLI 不会直接「调用 Python 函数」。CLI 发协议消息，Query 按 ID 找回函数，再写回结果。
 
 ### 第 4 站：收到 `hook_callback` 后执行并编码结果
 
@@ -162,7 +164,7 @@ Python 类型使用 `async_`、`continue_`，线上协议使用 `async`、`conti
 
 ## 并发不是注册顺序
 
-公开 Options 注释说明，同一事件上的多个匹配器由 CLI 并发分派，不能依赖「先注册的 Hook 先修改状态，后注册的 Hook 再读取」。正确设计是让每个 Hook 独立、幂等，并通过 `tool_use_id` 或 `agent_id` 关联记录。
+公开 Options 注释说明，同一事件上的多个匹配器由 CLI 并发分派，不能依赖「先注册的 Hook 先修改状态，后注册的 Hook 再读取」；正确设计是让每个 Hook 独立、幂等，并通过 `tool_use_id` 或 `agent_id` 关联记录。
 
 反例：
 
@@ -185,7 +187,7 @@ hooks = {
 1. `PreToolUse` 负责每次匹配调用的通用策略、审计和输入检查。
 2. 若前置 Hook 没有直接形成允许决定，权限规则仍可能让调用进入 `can_use_tool` 询问。
 
-公开类型注释还指出，`PreToolUse` 返回允许决定时会跳过 `can_use_tool`。因此不要在两个机制里各写一套互相矛盾的策略。推荐明确职责：前置 Hook 做全覆盖硬策略，动态权限回调处理剩余的交互式决定。
+公开类型注释指出，`PreToolUse` 允许时会跳过 `can_use_tool`。因此不要在两个机制里各写一套互相矛盾的策略。推荐明确职责：前置 Hook 做全覆盖硬策略，动态权限回调处理剩余的交互式决定。
 
 ## 可观测性应记录什么
 
@@ -203,5 +205,7 @@ hooks = {
 ## 证据边界
 
 本文能够从 Python Agent SDK 证明：Hook 类型如何公开、配置怎样转换、回调 ID 怎样注册、控制请求怎样分派和响应。本文不能从该仓库证明 Claude Code 内部何时构建每个事件、内部权限求值函数的实现，或闭源 Sandbox 的调用图。对这些部分，只使用官方契约描述，不伪造源码站点。
+
+Hook 已经把单次运行中的事件与工具调用关联起来。下一步要解决的是跨轮次状态：Session 怎样恢复，Transcript 又怎样镜像到外部 Store。
 
 下一篇进入跨轮次状态：[Session、Resume 与 Store](07-sessions-resume-store.md)。

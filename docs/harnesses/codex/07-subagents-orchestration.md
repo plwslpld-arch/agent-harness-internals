@@ -18,7 +18,7 @@ Codex 的子 Agent 拥有独立 ThreadId、Session、Turn、Context 和 Rollout�
 
 ## 为什么不直接 `join_all()` 几个模型 Future
 
-普通 Future 只解决并发等待，无法回答——子任务历史写到哪里、父 Agent 如何在下一个 Turn 继续它、取消父任务是否中断全部子树、完成通知如何关联原始委派。Thread 树把这些问题变成持久身份和控制操作。
+普通 Future 只解决并发等待，回答不了这些问题：子任务历史写到哪里、父 Agent 如何在下一个 Turn 继续它、取消父任务是否中断全部子树、完成通知如何关联原始委派。Thread 树把这些问题变成持久身份和控制操作。
 
 ## 第 1 站：一棵根线程树只共享一个控制面
 
@@ -61,7 +61,7 @@ pub(crate) struct ListedAgent {
 - **返回**：面向调用者的路径与状态快照。
 - **下一站**：父 Agent 可以 Wait、Follow-up、Interrupt 或读取结果。
 
-`agent_path` 表达树位置，`thread_id` 表达持久身份——`status` 只是某一时刻的状态。界面不能用列表序号替代 ThreadId。
+`agent_path` 表达树位置，`thread_id` 表达持久身份，而 `status` 只是某一时刻的状态。界面不能用列表序号替代 ThreadId。
 
 ## Spawn 先预留容量，再开始昂贵创建
 

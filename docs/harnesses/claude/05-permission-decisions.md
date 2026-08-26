@@ -2,6 +2,8 @@
 
 [返回 Claude 课程地图](README.md)
 
+工具集合与静态规则已经分开，剩下的是上一章五层框架里的动态询问：一项调用何时才会交给业务代码决定。这个问题要沿 `can_use_tool` 的控制协议路径回答。
+
 业务代码常常希望在运行时判断：「这条 Bash 命令可以执行吗？」Claude Agent SDK 为此提供 `can_use_tool` 回调，但它的语义很容易被误解。这个回调替代的是一次本来需要交互询问的权限决定，并不会天然接管每一次工具调用。
 
 ```python
@@ -13,7 +15,7 @@ async def decide(tool_name, tool_input, context):
     return PermissionResultDeny(message="这里只允许运行测试")
 ```
 
-如果静态规则已经自动允许 `Bash`，上面的回调可能根本收不到该调用。理解这一点，是写对权限策略的起点。
+如果静态规则已经自动允许 `Bash`，上面的回调可能根本收不到该调用——理解这一点，是写对权限策略的起点。
 
 ## 权限决策不是单个布尔值
 
@@ -70,7 +72,7 @@ return replace(options, permission_prompt_tool_name="stdio")
 - **返回**：配置后的 Options，或在两种互斥提示机制同时存在时抛错。
 - **下一站**：Client 用新 Options 创建 Transport 和 Query 控制层。
 
-这里解决的是「权限询问怎样回到 Python 进程」，而不是「哪些工具应该询问」。后者仍由 CLI 的权限规则决定。
+这里解决的是「权限询问怎样回到 Python 进程」，而不是「哪些工具应该询问」——后者仍由 CLI 的权限规则决定。
 
 ### 第 2 站：Client 把回调交给 Query 控制层
 
@@ -127,7 +129,7 @@ if subtype == "can_use_tool":
 - **返回**：业务回调返回 `PermissionResultAllow` 或 `PermissionResultDeny`。
 - **下一站**：Query 把 Python 类型编码为 CLI 认识的控制响应。
 
-`tool_use_id` 很重要：并发工具调用时，不能只按工具名关联审计记录。`agent_id` 也让主 Agent 与子 Agent 的权限请求可以分开归因。
+`tool_use_id` 很重要：并发工具调用时，不能只按工具名关联审计记录。`agent_id` 让主 Agent 与子 Agent 的权限请求可以分开归因。
 
 ### 第 4 站：允许可能改写输入，拒绝可能中断
 
@@ -176,7 +178,7 @@ SDK 专门检查两类明显的遮蔽配置：
 | 彻底限制模型看见的工具集合 | `tools` |
 | 约束文件、网络和子进程能力 | Sandbox 与操作系统策略 |
 
-`PreToolUse` 也不是权限回调的同义词。它属于更通用的生命周期机制，能返回 `allow`、`deny`、`ask` 或 `defer` 等特定输出。下一篇会单独追踪它的注册、回调 ID 和响应路径。
+`PreToolUse` 也不是权限回调的同义词。它属于更通用的生命周期机制，能返回 `allow`、`deny`、`ask` 或 `defer` 等特定输出。下一篇追踪注册、回调 ID 和响应路径。
 
 ## 最小验证实验
 
@@ -187,5 +189,7 @@ SDK 专门检查两类明显的遮蔽配置：
 3. 移除裸允许规则，改加 `PreToolUse` Hook；预期每次匹配的 `Read` 都进入 Hook。
 
 这个实验验证的是公开回调语义，不是 Claude Code 内部实现。测试证据应该记录 Options、工具输入、回调次数、决定与最终工具结果，避免只看终端上「好像执行了」。
+
+`can_use_tool` 的边界至此明确：它只接住需要询问的调用。要覆盖每次匹配调用，还得继续追踪 Hook 的注册与响应路径。
 
 下一篇：[Hooks 生命周期：注册、匹配、并发回调与结果改写](06-hooks-lifecycle.md)。
