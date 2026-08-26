@@ -2,13 +2,13 @@
 
 [返回学习入口](../../00-start-here.md)
 
-pi 的价值在于分层清楚：底层 AI 包负责 Provider 与流式消息，Agent 包提供最小循环，Coding Agent 再组合工具、Session 和交互表面。课程沿这条组合关系阅读，区分核心运行时代码、设计文档、扩展示例和外部环境。
+先看清三层。pi 的价值在于分层清楚，底层 AI 包负责 Provider 与流式消息，Agent 包提供最小循环，而 Coding Agent 再把工具、Session 和交互表面组合起来。课程会沿着这条组合关系向上阅读，同时分清核心运行时代码、设计文档、扩展示例和外部环境。
 
 ![pi 系统地图](../../../assets/diagrams/pi/system-architecture.svg)
 
 ## 这条课程适合谁
 
-如果你想从较小的核心开始，而不是立刻进入大型产品代码，pi 是很好的第一条源码课程。Starter 可以先读 AI、Agent 和 Coding Agent 三层；Builder 再进入队列、工具批次、Session Tree 和 Protocol；Maintainer 最后检查 Lease、权限与宿主隔离边界。
+如果你想从较小的核心开始，而不是立刻钻进大型产品代码，pi 很适合作为第一条源码课程。Starter 可以先读 AI、Agent 和 Coding Agent 三层，Builder 再进入队列、工具批次、Session Tree 和 Protocol，而 Maintainer 最后检查 Lease、权限与宿主隔离边界。
 
 ## 锁定来源
 
@@ -21,7 +21,7 @@ pi 的价值在于分层清楚：底层 AI 包负责 Provider 与流式消息，
 
 ## 先看一项任务
 
-Coding Agent 接收任务后组合 AI Provider、Agent Core 和工具。Agent Loop 消费流式响应，遇到工具调用就交给注册工具执行，再把结果加入消息。Session 和协议表面围绕核心循环提供持久化与外部控制。
+循环从这里启动。Coding Agent 接收任务后，会先组合 AI Provider、Agent Core 和工具，而 Agent Loop 消费流式响应时，一旦遇到工具调用，就把它交给注册工具执行，再将结果加入消息。Session 和协议表面围绕这条核心循环工作，为它补上持久化与外部控制能力。
 
 ```text
 Coding Agent / Protocol / TUI
@@ -34,7 +34,7 @@ Coding Agent / Protocol / TUI
 
 ![pi 端到端任务流程](../../../assets/diagrams/pi/end-to-end-task.svg)
 
-图中 Coding Agent 是对 Agent Core 的组合，不是另一套平行循环；Protocol 和 TUI 也只是不同控制表面。
+图中的 Coding Agent 组合了 Agent Core，并没有另起一套平行循环，而 Protocol 和 TUI 也只是面向不同场景的控制表面。
 
 ## 仓库地图
 
@@ -47,7 +47,7 @@ Coding Agent / Protocol / TUI
 | CLI/TUI | 用户交互和权限提示 |
 | Telemetry 与 Evals | 可观察信息和外部验证接缝 |
 
-pi 默认运行在启动它的宿主权限中。权限提示和工具接口不能自动证明文件、进程、网络或凭据已经隔离；需要结合外部容器或 Sandbox 说明真实边界。
+pi 默认沿用启动它的宿主权限，而权限提示和工具接口本身不能证明文件、进程、网络或凭据已经隔离，所以要说明真实边界，还需要把外部容器或 Sandbox 一并纳入判断。
 
 ## 三层读法
 
@@ -67,9 +67,9 @@ pi 默认运行在启动它的宿主权限中。权限提示和工具接口不�
 
 ## 用贯穿任务复盘
 
-从 Coding Agent 组合 AI Provider、Agent Core 和工具开始，跟随 `read/edit/test` 经过流归一化、双层 Loop、工具批次和 Session Tree。再假设客户端通过 Protocol 远程控制同一 Session，说明 Attach、Event、Response 和 Lease 怎样保持身份。最后区分宿主权限、交互批准、Telemetry 和 Eval Score。
+复盘可以从 Coding Agent 组合 AI Provider、Agent Core 和工具开始，跟着 `read/edit/test` 依次经过流归一化、双层 Loop、工具批次和 Session Tree，再假设客户端通过 Protocol 远程控制同一 Session，说明 Attach、Event、Response 和 Lease 怎样共同保持身份。走完这条链路后，再区分宿主权限、交互批准、Telemetry 和 Eval Score 各自说明了什么。
 
-复盘时不要把 AI Stream 的 `done`、Agent Run 收敛、TUI 显示完成和任务通过写成同一个终态。
+复盘时必须分清 AI Stream 的 `done`、Agent Run 收敛、TUI 显示完成和任务通过——它们描述的是不同层次的终态。
 
 ## 完成课程后应该能回答
 

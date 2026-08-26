@@ -2,7 +2,7 @@
 
 [返回 pi 课程地图](README.md)
 
-pi 同时有通用 Telemetry 接口和 Eval 相关包。Telemetry 记录运行生命周期；Eval Harness 负责在受控目录运行 Coding Agent 并保存 Artifact；Summary 再消费已有 Score。三者不是一个「自动判断任务正确」的模块。
+pi 同时提供通用 Telemetry 接口和 Eval 相关包，其中 Telemetry 记录运行生命周期，Eval Harness 在受控目录运行 Coding Agent 并保存 Artifact，而 Summary 只消费已有 Score。它们不会自动判断任务对错。
 
 ```text
 Agent 运行 ─→ Span / Events / Metrics
@@ -31,11 +31,11 @@ setStatus(status)
 - **返回**：Span 结果或原业务函数返回值。
 - **下一站**：Exporter、Trace Viewer 或 Eval Artifact Collector。
 
-Agent Telemetry 可以记录 Provider、Model、StopReason、Token、Cost 和首块延迟，但这些字段没有 Rubric 或 Pass Threshold。
+Agent Telemetry 虽然可以记录 Provider、Model、StopReason、Token、Cost 和首块延迟，却不会因此给这些字段附加 Rubric 或 Pass Threshold。
 
 ### 可观测性为什么不能顺便充当评分器
 
-Telemetry 的首要职责是忠实记录运行，不应因为某个指标「看起来不好」就改写事实。Eval 则必须依据冻结任务和判定规则，把多个事实解释成通过、失败或无法判断。把两者合并后，观察字段的变化可能无意中改变评分口径，评分逻辑也可能为了报表便利丢失原始事件。
+Telemetry 的首要职责是忠实记录运行——它不能因为某个指标「看起来不好」就改写事实。Eval 做的是另一件事，它必须依据冻结任务和判定规则，把多个事实解释成通过、失败或无法判断。一旦把两者合并，观察字段的变化就可能无意中改变评分口径，评分逻辑也可能为了报表便利而丢失原始事件。
 
 源码：[查看 Agent Harness Telemetry 字段](https://github.com/earendil-works/pi/blob/c1279a65b3ef6b0b19950ed1771d5933241c240f/packages/agent/src/harness/telemetry.ts#L42-L115)
 
@@ -63,7 +63,7 @@ setArtifact(
 - **返回**：Session JSONL、Source 和 Run ID 等 Artifacts。
 - **下一站**：确定性或模型 Scorer 读取产物。
 
-关闭 Extensions 是为了减少未锁定变量，不代表真实产品只能这样评测。若目标是评估某个 Extension，必须把它的版本和配置写进 Target。
+关闭 Extensions 是为了减少未锁定变量，并不意味着真实产品只能用这种方式评测。如果目标就是评估某个 Extension，就必须把它的版本和配置一并写进 Target。
 
 ## Summary 不会凭 Transcript 自动创造分数
 
@@ -80,11 +80,11 @@ setArtifact(
 - **返回**：报告数据。
 - **下一站**：人或发布流程解释结果。
 
-一个可信任务评分还要明确：测试命令、Diff 约束、基础设施失败处理和重复运行规则。Assistant StopReason、工具 Success、TUI Done 或 Telemetry Status 都不能单独替代它。
+任务评分要想可信，还必须明确测试命令、Diff 约束、基础设施失败处理和重复运行规则，而 Assistant StopReason、工具 Success、TUI Done 或 Telemetry Status 无论哪一项都不能单独替代这些规则。
 
 ## 回到运费任务
 
-Telemetry 可以说明模型调用两次、执行 `edit` 和 `bash`、总耗时多少；Eval 必须在独立工作区检查金额 100 的断言、回归测试和测试文件是否被篡改。若模型 API 超时且没有形成可判定补丁，应记录基础设施失败或无法判断，而不是把它重试成一次「通过」后删除早先事实。
+Telemetry 可以说明模型调用了两次、执行过 `edit` 和 `bash`，以及整个过程耗时多少，而 Eval 必须进入独立工作区，检查金额 100 的断言、回归测试和测试文件是否被篡改。如果模型 API 超时，并且没有形成可判定的补丁，就应把这次运行记录为基础设施失败或无法判断，不能等到某次重试「通过」后再删除早先事实。早先事实仍要保留。
 
 ## 练习：为一个分数列出最小证据
 
@@ -93,7 +93,7 @@ Telemetry 可以说明模型调用两次、执行 `edit` 和 `bash`、总耗时�
 <details>
 <summary>查看核对要点</summary>
 
-至少需要冻结任务标识、输入源码版本、本次补丁或最终工作区哈希、目标测试与回归测试命令、退出码和输出、测试文件未被修改的检查，以及这些产物与同一 Run ID 的关联。Transcript 有助于解释过程，但不能替代最终环境验证。
+至少要留下冻结任务标识、输入源码版本、本次补丁或最终工作区哈希、目标测试与回归测试命令、退出码和输出、测试文件未被修改的检查，并把这些产物关联到同一个 Run ID。Transcript 能帮助人理解运行过程，但它不能替代对最终环境的验证。
 
 </details>
 

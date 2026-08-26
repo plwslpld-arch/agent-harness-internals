@@ -2,7 +2,7 @@
 
 [返回 pi 课程地图](README.md)
 
-pi Coding Agent 可以运行在 Interactive TUI、Print、JSON 和 RPC 模式。它们共享 Agent Session，却拥有不同 I/O 契约。更重要的是，pi 默认继承启动进程的文件、网络、子进程与凭据权限；项目 Trust 和工具提示不是 OS Sandbox。
+pi Coding Agent 可以运行在 Interactive TUI、Print、JSON 和 RPC 模式，这些产品表面虽然共享同一个 Agent Session，却各自遵守不同的 I/O 契约。pi 默认会继承启动进程拥有的文件、网络、子进程与凭据权限。项目 Trust 和工具提示仍不是 OS Sandbox。
 
 ## 第 1 站：产品模式由参数和 TTY 条件选择
 
@@ -21,15 +21,15 @@ return 'interactive'
 - **返回**：对应 Surface Runner。
 - **下一站**：Runner 创建 Agent Session 并连接输入输出。
 
-JSON 和 RPC 都可能逐行输出 JSON，但语义不同：JSON 是单向 Agent Events，RPC 是双向 Command/Response/Event 协议，消费者不能混用 Parser。
+JSON 和 RPC 都可能逐行输出 JSON，不过前者承载的是单向 Agent Events，后者使用的却是双向 Command/Response/Event 协议，所以消费者不能因为外观相似就混用 Parser。
 
 ### 产品表面改变交互，不改变环境事实
 
-Interactive 模式可以弹出确认，Print 模式可能需要预设策略，RPC 模式可以把问题交给远端客户端。这些差异决定「谁回答批准请求」，却不会自动改变 Bash 最终运行在哪台机器、以哪个用户身份运行。权限模型必须跨表面保持同一语义，否则同一工具从 TUI 和 RPC 调用会获得不同的安全边界。
+Interactive 模式可以在终端里弹出确认，Print 模式可能需要预设策略，RPC 模式则能把问题交给远端客户端回答，而这些差异决定的只是「谁回答批准请求」，不会自动改变 Bash 最终在哪台机器上运行，也不会改变执行它的用户身份。权限模型必须跨产品表面保持同一语义，否则同一个工具从 TUI 和 RPC 发起调用时，就会落入不同的安全边界。
 
 ## TUI Render 不是 Agent Event 计数器
 
-TUI 每次先渲染 Components 与 Overlays，再决定全量重绘或差分写入。终端行数、Spinner 停止和「Done」卡片都是 UI 投影，不等于模型采样次数或任务验收。
+TUI 每次更新时会先渲染 Components 与 Overlays，然后再根据屏幕状态选择全量重绘或差分写入，因此终端行数、Spinner 停止和「Done」卡片都只是 UI 投影，既不代表模型采样次数，也不能充当任务验收结果。
 
 源码：[查看 TUI Main Screen](https://github.com/earendil-works/pi/blob/c1279a65b3ef6b0b19950ed1771d5933241c240f/packages/tui/src/tui-main-screen.ts#L180-L273)
 
@@ -50,9 +50,9 @@ if (widthChanged) {
 
 ## Project Trust 与 OS Sandbox 的区别
 
-Project Trust 控制是否自动加载仓库提供的 Context、Extension 或其他资源，减少打开恶意项目即执行代码的风险。它不会限制用户主动调用 Bash/Write 后进程能访问的路径。
+Project Trust 控制的是要不要自动加载仓库提供的 Context、Extension 或其他资源，从而降低一打开恶意项目就执行代码的风险，但它不会限制用户主动调用 Bash/Write 以后，进程究竟能访问哪些路径。
 
-默认情况下，工具以 pi 进程权限运行。真实隔离需要外部容器或 Sandbox Extension，并明确哪些工具被重定向、哪些仍在宿主执行。
+默认情况下，工具会直接使用 pi 进程的权限运行，如果需要真实隔离，就要引入外部容器或 Sandbox Extension，并明确区分哪些工具已经重定向到隔离环境，哪些工具仍然留在宿主执行。
 
 ## 第 2 站：Sandbox Extension 存在明确本地回退
 
@@ -69,15 +69,15 @@ Project Trust 控制是否自动加载仓库提供的 Context、Extension 或其
 - **返回**：命令输出。
 - **下一站**：Agent Core 接收 Tool Result。
 
-Example 展示了扩展能力，不代表默认启用。平台不支持、依赖缺失、初始化失败或用户关闭时都可能回到宿主执行；日志必须把实际路径写清楚。
+Example 只是展示 Extension 能做到什么，并不代表 Sandbox 默认启用，而当平台不支持、依赖缺失、初始化失败或用户主动关闭时，工具都可能回到宿主执行。日志必须写清实际路径。
 
 ## 容器化也要说明挂载和网络
 
-Plain Docker、Gondolin、OpenShell 等方案的威胁模型不同。宿主工作区若以读写方式挂载，容器仍能改文件；只重定向 Bash 不能约束 Extension 自己的 Node API；网络网关能限制出站，却不自动保护挂载的凭据。
+Plain Docker、Gondolin、OpenShell 等方案面对的威胁模型并不相同，如果宿主工作区以读写方式挂载，容器里的进程仍然能够修改文件，而只重定向 Bash 也约束不了 Extension 自己调用的 Node API。网络网关可以限制出站访问，却不会自动保护已经挂载进去的凭据。
 
 ## 回到运费任务
 
-TUI 中的「允许编辑」表示产品批准本次 Tool Call；真正的写入可能仍由宿主 Node 进程完成。若启用 Sandbox Extension，还要确认 `edit` 与 `bash` 是否都被重定向、工作区如何挂载，以及初始化失败时是否回退本地。只有 Trace 记录实际执行路径，用户才能知道这次修改究竟发生在哪里。
+TUI 中的「允许编辑」只表示产品批准了这次 Tool Call，真正的写入仍然可能由宿主 Node 进程完成。即使启用了 Sandbox Extension，也要确认三件事——`edit` 与 `bash` 是否都被重定向、工作区采用什么挂载方式，以及初始化失败后会不会回退到本地，因为只有 Trace 记录了实际执行路径，用户才能判断这次修改究竟发生在哪里。
 
 ## 练习：识别危险回退
 
@@ -86,7 +86,7 @@ TUI 中的「允许编辑」表示产品批准本次 Tool Call；真正的写入
 <details>
 <summary>查看核对要点</summary>
 
-因为继续执行可能已经切换到拥有更大权限的本地 Bash。安全系统应让回退策略显式可配置，并在事件中标出实际执行器、挂载和网络边界；高风险场景通常应失败关闭，而不是静默获得宿主权限。
+因为「继续执行」可能意味着工具已经切换到权限更大的本地 Bash，所以安全系统应该让回退策略显式可配置，并在事件中标明实际执行器、挂载方式和网络边界。高风险场景通常应当失败关闭，不能静默获得宿主权限。
 
 </details>
 

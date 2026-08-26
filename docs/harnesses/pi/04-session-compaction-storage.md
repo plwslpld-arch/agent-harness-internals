@@ -2,7 +2,7 @@
 
 [返回 pi 课程地图](README.md)
 
-pi Coding Agent 的 Session 不是单一消息数组。Session Entries 形成可分支树，当前 Leaf 决定活动路径；其中只有 Message、Custom Message、Branch Summary 和 Compaction 等 Entry 会投影为模型 Context。JSONL Repo 则负责持久保存整个 Entry 序列。
+pi Coding Agent 的 Session 并不是一条从头排到尾的消息数组，而是由 Session Entries 组成的可分支树，当前 Leaf 会从树中选出正在使用的路径。只有 Message、Custom Message、Branch Summary 和 Compaction 等 Entry 才会沿这条路径投影成模型 Context，而 JSONL Repo 保存的则是完整 Entry 序列。两者不是同一份数据。
 
 ```text
 Session Entry Tree
@@ -32,11 +32,11 @@ return { messages, thinkingLevel, model }
 - **返回**：Messages、Thinking Level 与 Model。
 - **下一站**：Agent Core 用这些消息继续 Prompt。
 
-Label、普通 Custom Entry 和部分 UI 状态不会进入模型。调试「为何模型忘了」时，应看 `buildContextEntries()` 结果，而不是只看 Session 文件中有无该行。
+Label、普通 Custom Entry 和部分 UI 状态即使写进了 Session 文件，也不一定会进入模型，因此调试「为何模型忘了」时，应该检查 `buildContextEntries()` 的结果，而不能只凭文件里有没有那一行作判断。
 
 ## Compaction 选择最新 Summary 与后续尾部
 
-一次压缩会写 Summary Entry；多次压缩时，Context 从最新有效 Summary 开始，再接之后的消息。旧 Entry 仍在 Session Tree 中供审计和分支使用。
+每次压缩都会写入一个 Summary Entry，而同一条路径经过多次压缩以后，Context 会从最新的有效 Summary 开始，再接上它后面的消息。旧 Entry 并未消失，审计和创建分支时仍然可以回到 Session Tree 中找到它们。
 
 源码：[查看 Entry 到 Context Message 的转换](https://github.com/earendil-works/pi/blob/c1279a65b3ef6b0b19950ed1771d5933241c240f/packages/coding-agent/src/core/session-manager.ts#L400-L469)
 
@@ -51,11 +51,11 @@ Label、普通 Custom Entry 和部分 UI 状态不会进入模型。调试「为
 - **返回**：按角色排序的 Agent Messages。
 - **下一站**：模型请求；完整 JSONL 不被摘要覆盖。
 
-Summary 是有损模型产物。应保留精确路径、未完成事项和关键 Tool Result 引用，并在压缩后用确定性问题核对，而不是只看 Token 下降。
+Summary 是模型生成的有损结果，所以内容里应该保留精确路径、未完成事项以及关键 Tool Result 的引用，并在压缩完成后用确定性问题核对关键信息是否还在。不要只看 Token 是否下降。
 
 ### 为什么保留树，而不是把旧消息直接删除
 
-Compaction 解决的是当前模型窗口大小，不是审计存储大小。完整 Entry Tree 仍需要支持回看、Fork、比较分支和解释摘要来源。把旧前缀物理删除会让「模型为什么得出这个摘要」无法追溯，也会破坏从较早节点创建新分支的能力。
+Compaction 要解决的是当前模型窗口装不下历史的问题，而不是替审计存储腾出空间。完整的 Entry Tree 还要承担多种职责——回看记录、Fork、比较分支和解释摘要来源。一旦直接把旧前缀从存储中删除，不但无法再追溯「模型为什么得出这个摘要」，也会失去从较早节点创建新分支的能力。
 
 ## 第 2 站：JSONL Repo 处理尾部损坏和追加队列
 
@@ -73,17 +73,17 @@ Compaction 解决的是当前模型窗口大小，不是审计存储大小。完
 - **返回**：Open Session、Writer 或类型化损坏错误。
 - **下一站**：Session Tree 重建并选择 Leaf。
 
-尾行可修复不等于任意损坏可忽略。中间行损坏会破坏父子关系，应拒绝并保留原文件副本。
+尾行能够修复，并不意味着文件里的任何损坏都可以忽略，因为中间行一旦损坏，Entry 之间的父子关系也可能随之断裂。此时应拒绝打开，并保留原文件副本。
 
 ## Resume 不能恢复外部世界
 
-Session 能恢复消息、模型选择、Thinking Level 和分支信息；它无法还原已经退出的进程、远端请求、外部数据库或工作区后来发生的修改。Resume 后应重新检查 CWD、Git Diff、工具可用性和凭据。
+Session 可以恢复消息、模型选择、Thinking Level 和分支信息，却无法让已经退出的进程重新运行，也不能还原远端请求、外部数据库或工作区后来发生的修改。因此 Resume 完成以后，还要重新检查 CWD、Git Diff、工具可用性和凭据。
 
-同进程 Destination Reservation 也不是跨进程 Lease。若多个进程共享 Session 存储，还需要文件锁、Fencing 或其他后端事务。
+同一进程里的 Destination Reservation 也不能充当跨进程 Lease，如果多个进程会共享同一份 Session 存储，就还需要文件锁、Fencing 或其他后端事务来协调写入。
 
 ## 回到运费任务
 
-如果任务在编辑后中断，Session Tree 可能同时保留原始 Tool Call、工具开始事件、完成结果和之后的摘要。恢复不能只看摘要中的「已经修改」，而应核对活动分支上的工具完成记录与当前文件差异。若从编辑前 Fork，新分支不应继承编辑后的 Tool Result，即使它仍存在于同一个 JSONL 文件。
+如果任务在编辑文件以后中断，Session Tree 里可能同时留有原始 Tool Call、工具开始事件、完成结果以及后来生成的摘要。恢复时不能因为摘要写着「已经修改」就认定工作完成，而要把活动分支上的工具完成记录与当前文件差异对照起来。若新分支是从编辑前的节点 Fork 出来的，它就不该继承编辑后的 Tool Result，即使那条结果仍保存在同一个 JSONL 文件中。
 
 ## 练习：解释「文件里有，模型却不知道」
 
@@ -92,7 +92,7 @@ Session 能恢复消息、模型选择、Thinking Level 和分支信息；它无
 <details>
 <summary>查看核对要点</summary>
 
-先检查当前 Leaf、`buildSessionPath()` 和 `buildContextEntries()` 的投影结果。完整存储、UI 活动路径和模型 Context 是三种不同视图；Label 本来就可能不投影，旧分支消息也不在当前活动路径上。
+先检查当前 Leaf，并查看 `buildSessionPath()` 和 `buildContextEntries()` 各自投影出了什么。完整存储、UI 活动路径和模型 Context 本来就是三种不同视图，因此 Label 可能不会投影，旧分支上的消息也不会出现在当前活动路径中。
 
 </details>
 
