@@ -2,7 +2,7 @@
 
 [返回 Codex 课程地图](README.md)
 
-上一节已经沿 Thread、Task 和 Turn 分清了 Follow-up、Steer 与新 Turn 的归属边界。边界确定后，视线还要继续往里走——追踪当前 Turn 内的模型输出。一个 Codex Turn 不是「调用一次模型然后打印文本」。模型流中可能出现普通文本、Reasoning、Function Call 或其他 Item；Function Call 被解析后交给 Tool Router，结果按原调用身份写回 Context，Turn 再决定是否继续采样。
+上一节已经沿 Thread、Task 和 Turn 分清了 Follow-up、Steer 与新 Turn 的归属边界。边界确定后，视线还要继续往里走——追踪当前 Turn 内的模型输出。一个 Codex Turn 不是「调用一次模型然后打印文本」，因为模型流中可能出现普通文本、Reasoning、Function Call 或其他 Item，一旦 Function Call 被解析并交给 Tool Router，结果就会按原调用身份写回 Context，由 Turn 再决定是否继续采样。
 
 ```text
 Prompt
@@ -40,7 +40,7 @@ pub(crate) struct ToolRouter {
 - **返回**：可写回模型的 Tool Output 或类型化失败。
 - **下一站**：并行调度器决定本调用取得共享锁还是独占锁。
 
-Router 的职责是把模型协议对象翻译为 Harness 内部调用。Handler 才拥有 Shell、文件、MCP 等具体语义；审批与 Sandbox 又在更下游处理，不能把它们都称为「Router 允许了」。
+Router 的职责是把模型协议对象翻译为 Harness 内部调用，而 Shell、文件、MCP 等具体语义属于 Handler，审批与 Sandbox 则会在更下游处理，因此不能把它们都称为「Router 允许了」。
 
 ## 第 2 站：工具元数据决定是否允许并行
 
@@ -62,7 +62,7 @@ router.dispatch_tool_call_with_terminal_outcome(...).await
 - **返回**：单个调用的终态结果。
 - **下一站**：有序 Future 容器等待并按提交顺序取回结果。
 
-并行标志只表达 Harness 允许调用 Body 重叠，不能保证业务资源互不冲突。两个都允许并行的文件写入仍可能争用同一路径，Handler 需要自己的约束。
+并行标志只表达 Harness 允许调用 Body 重叠，却不能保证业务资源互不冲突，因为两个都允许并行的文件写入仍可能争用同一路径，这类冲突还需要 Handler 自己约束。
 
 ## 第 3 站：执行可乱序完成，历史按调用顺序提交
 
@@ -82,7 +82,7 @@ while let Some(res) = in_flight.next().await {
 - **返回**：稳定排序的 Function Call Outputs。
 - **下一站**：Context Manager 把调用和结果交给下一次模型请求。
 
-这也解释了为什么一个慢工具可能造成 Head-of-Line 等待：B 已完成，但 A 仍未完成时，B 的结果不会越过 A 提交。换来的是可重放与协议顺序稳定。
+这也解释了为什么一个慢工具可能造成 Head-of-Line 等待：B 已完成，但 A 仍未完成时，B 的结果不会越过 A 提交，而这样的等待换来了可重放与稳定的协议顺序。
 
 ### 用测试确认你理解的并行不是「看起来同时开始」
 
@@ -97,13 +97,13 @@ assert_eq!(call.1.get("call_id"), output.1.get("call_id"));
 
 这还不够。
 
-这里核对的是请求体布局与 Call ID 对齐。要证明 Body 确实重叠，还要看测试是否使用屏障或时间窗口让多个 Handler 同时处于运行中。
+这里核对的只是请求体布局与 Call ID 对齐，如果要证明 Body 确实重叠，还得看测试是否使用屏障或时间窗口，让多个 Handler 同时处于运行中。
 
 ## 模型流重试与工具重试不是一回事
 
 重试对象必须先分清。
 
-Provider 流可能在没有完成一次响应时断开。Codex 只对可重试错误按 Provider 配置的上限重连；已经落地的工具副作用不能因为模型流重试而无条件再执行。
+Provider 流可能在尚未完成一次响应时断开，因此 Codex 只会对可重试错误按 Provider 配置的上限重连，而已经落地的工具副作用不能因为模型流重试就无条件再执行。
 
 ### 第 4 站：重试受错误分类和次数上限控制
 

@@ -2,7 +2,7 @@
 
 [返回 Codex 课程地图](README.md)
 
-上一篇《配置、项目指令与模型输入》停在「模型返回 Tool Call，进入后续工具循环」，可真要沿着这条线追下去，还得先分清 Thread、Session、Task 和 Turn。为什么要先做这一步？Codex 源码里同时出现 Thread、Session、Task、Turn、Op 和 Event，如果先把它们都当成同一个「任务」的不同叫法，后面看到 Tool Call 究竟处在哪个运行边界里，就会在起点处判断错位；这些名称对应的是不同生命周期对象——Thread 是可持久引用的会话身份，Session 是活动运行容器，Task 驱动一种后台工作流，Turn 是一次逻辑用户交互，Op/Event 则是产品表面与核心之间的命令和通知。
+上一篇《配置、项目指令与模型输入》停在「模型返回 Tool Call，进入后续工具循环」，可真要沿着这条线追下去，还得先分清 Thread、Session、Task 和 Turn。为什么要先做这一步？Codex 源码里同时出现 Thread、Session、Task、Turn、Op 和 Event，如果先把它们都当成同一个「任务」的不同叫法，后面看到 Tool Call 究竟处在哪个运行边界里，就会在起点处判断错位，因为这些名称对应的是不同生命周期对象——Thread 是可持久引用的会话身份，Session 是活动运行容器，Task 驱动一种后台工作流，Turn 是一次逻辑用户交互，Op/Event 则是产品表面与核心之间的命令和通知。
 
 ```text
 ThreadId（持久身份）
@@ -14,7 +14,7 @@ ThreadId（持久身份）
 
 ## 一个 Turn 可以包含多次模型请求
 
-用户只提交一次「修复失败测试」，开启的便是一个 Turn；模型随后先读取文件，再运行测试、修改文件并重新测试，期间每次 Tool Result 都可能带来新的模型请求，却没有因此离开这个 Turn；这里最容易误读的是计数方式：如果眼里只有网络请求，一次任务就会被错拆成四个 Turn。先记住这个差别。
+用户只提交一次「修复失败测试」，开启的便是一个 Turn，而模型随后先读取文件，再运行测试、修改文件并重新测试，期间每次 Tool Result 都可能带来新的模型请求，却不会让这次交互离开当前 Turn。这里最容易误读的是计数方式：如果眼里只有网络请求，一次任务就会被错拆成四个 Turn。先记住这个差别。
 
 ## 第 1 站：Session 拥有唯一活动 Turn 和输入队列
 
@@ -61,7 +61,7 @@ pub(crate) struct RunningTask {
 - **返回**：可供中断、等待和追加输入使用的 ActiveTurn。
 - **下一站**：具体 Task 的 `run()` 驱动普通 Agent、Review 或 Compaction 工作流。
 
-读到这里，不妨问一句：界面上还显示着一个 Turn，是否就说明 Task 仍在运行？答案不能这样推，因为状态和控制分开以后，即使 Task Future 正在清理，TurnState 仍能保留已经发生的事件；反过来，界面显示一个 Turn 也不意味着 Task 仍在运行。先把两层分开。
+读到这里，不妨问一句：界面上还显示着一个 Turn，是否就说明 Task 仍在运行？答案不能这样推，因为状态和控制分开以后，即使 Task Future 正在清理，TurnState 仍能保留已经发生的事件，而界面显示一个 Turn 也不意味着 Task 仍在运行。先把两层分开。
 
 ## Task 是工作流接口，不等于普通 Agent Loop
 
@@ -95,7 +95,7 @@ pub(crate) trait SessionTask: Send + Sync + 'static {
 
 ## Op 是命令，Event 是观察结果
 
-产品表面会提交 `Op::Interrupt`、用户输入或配置变更，核心随后才发出 `TurnStarted`、Item 事件、错误和 `TurnComplete`；这里也要当心一个很顺手的误判：Op 被接收并不等于操作已经完成，描述后续事实的是 Event。
+产品表面会提交 `Op::Interrupt`、用户输入或配置变更，核心随后才发出 `TurnStarted`、Item 事件、错误和 `TurnComplete`。因为 Op 被接收并不等于操作已经完成，所以判断后续事实时要看的是 Event。
 
 ### 第 4 站：协议明确分开输入与输出
 
@@ -128,6 +128,6 @@ pub struct Event {
 - 普通 Follow-up 可以先进入队列，等当前工作收敛以后，它才会进入后续处理。
 - Interrupt 触发的是 Cancellation Token，但中断的边界要读准：Thread 和过去的 Rollout 都不会被删除。
 
-拿这些边界分析 Bug 时，先别急着追问模型为何没有响应；应当先确定「消息属于当前 Turn、下一个 Turn，还是只进入了队列」，然后再沿着它实际所在的边界往下查。
+拿这些边界分析 Bug 时，与其急着追问模型为何没有响应，不如先确定「消息属于当前 Turn、下一个 Turn，还是只进入了队列」，然后再沿着它实际所在的边界往下查。
 
 边界分清以后，下一个问题就自然浮出来了：模型流里的 Function Call 被解析后，如何交给 Tool Router，而工具结果又如何按原调用身份写回 Context？带着这个问题，继续读下一篇：[模型响应与工具循环](03-model-tool-loop.md)。

@@ -81,7 +81,7 @@ let inheritance = SpawnAgentThreadInheritance { ... };
 - **返回**：子 ThreadId 或类型化启动失败。
 - **下一站**：子 Session 接收初始 Prompt，父端获得可等待的节点。
 
-先预留防止两个并发 Spawn 都看到「还剩一个名额」并一起超限。创建失败要释放 Reservation；已经发布后则进入正常节点生命周期，不能再当作从未发生。
+先预留防止两个并发 Spawn 都看到「还剩一个名额」并一起超限，而创建失败时要释放 Reservation，一旦发布成功，子 Thread 就会进入正常节点生命周期，不能再当作从未发生。
 
 ## 发送消息与打断是不同控制动作
 
@@ -107,7 +107,7 @@ Op::Interrupt
 
 ## 完成通知是父端输入，不是子结果本身
 
-子 Agent 结束后，父 Rollout 会收到关联通知；子 Agent 自己的完整 transcript 在另一条 Rollout 中。
+子 Agent 结束后，父 Rollout 虽然会收到关联通知，但它自己的完整 transcript 仍留在另一条 Rollout 中。
 
 源码：[查看父子 Transcript 与通知测试](https://github.com/openai/codex/blob/c9b19deb09c1841ce7acc33ddb96276030936a29/codex-rs/core/tests/suite/subagent_notifications.rs#L492-L516)
 
@@ -122,6 +122,6 @@ assert_ne!(parent_transcript_path, agent_transcript_path);
 
 适合：子任务需要独立长上下文、不同工具范围、可并行探索或需要以后单独恢复。不适合：只读取两个小文件、结果必须共享当前细节、创建开销超过任务本身。多 Agent 是上下文与控制结构选择——不是自动质量增益。
 
-Thread 树解决了子任务的身份、状态与控制；当同一套核心还要面对 CLI、Exec、App Server 等产品入口，下一步要核对的是各表面怎样投影事件，又怎样留下 Trace 与 Eval 可用的证据。
+Thread 树解决了子任务的身份、状态与控制，而当同一套核心还要面对 CLI、Exec、App Server 等产品入口，下一步要核对的就是各表面怎样投影事件，又怎样留下 Trace 与 Eval 可用的证据。
 
 下一篇：[产品表面、Trace 与 Eval 接缝](08-surfaces-trace-eval-design.md)。
