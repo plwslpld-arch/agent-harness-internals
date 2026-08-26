@@ -9,8 +9,13 @@
 不超过 15 字，用来把长句之间的节奏顿开。只把句子拉长而丢掉短句，读起来会更闷，
 所以「短句占比」这一项和句长中位数同样重要。
 
-下面的阈值来自实测校准，右侧注释是本仓库现状与对标样本（bojieli/ai-agent-book）
-的差距。校准时验证过：对标样本能通过这套门禁，本仓库存量普遍通不过。
+下面的阈值来自实测校准，右侧注释是对标样本（bojieli/ai-agent-book）的实测值。
+校准时验证过：对标样本能通过这套门禁，本仓库存量普遍通不过。
+
+关于分号：中文的「；」就是停顿，所以它算句末。这不是细节——早期版本只按「。！？」
+断句，改写方立刻发现把两个句子焊成「A；B」就能让句长中位数翻倍，而读起来一个字
+没变。实测那一轮：分号密度冲到 171/万字（对标样本 21），句长中位数虚高到 30，
+按真值只有 19。所以这里同时封了分号密度的上限，堵掉这条路。
 
 用法：
     python3 scripts/check_prose.py 'docs/**/*.md'   # 指定文件
@@ -25,8 +30,9 @@ import subprocess
 import sys
 
 GATES = {
-    "句长中位":   (28, "字",   lambda v: v >= 28),        # 现状 24 → 对标 38
-    "破折号":     (8,  "/万字", lambda v: 8 <= v <= 55),  # 现状 0  → 对标 38。上限防过量
+    "句长中位":   (26, "字",   lambda v: v >= 26),        # 对标语料 35（分号计句末后的真值）
+    "破折号":     (8,  "/万字", lambda v: 8 <= v <= 55),  # 现状 0  → 对标 33。上限防过量
+    "分号":       (60, "/万字", lambda v: v <= 60),        # 对标 21。不封顶就会拿「；」焊句子刷中位数
     "冒号定义句": (25, "/万字", lambda v: v <= 25),        # 抓「X：说明」堆砌的篇
     "AI套话":     (0,  "处",   lambda v: v == 0),         # 现状已是 0，守住
 }
@@ -59,7 +65,9 @@ def strip_noise(text):
 def measure(text):
     body = strip_noise(text)
     cn = len(re.findall(r"[一-鿿]", body)) or 1
-    sentences = [s for s in re.split(r"[。！？]", body)
+    # 分号在中文里就是停顿。不把它算句末，写作方会用「；」把两个句子焊成一个，
+    # 句长中位数凭空翻倍而读起来一点没变——实测出现过，加「；」之前 67 字，之后 24 字。
+    sentences = [s for s in re.split(r"[。！？；]", body)
                  if len(re.findall(r"[一-鿿]", s)) > 3]
     lengths = [len(re.findall(r"[一-鿿]", s)) for s in sentences] or [0]
     return {
@@ -67,6 +75,7 @@ def measure(text):
         "句长标准差": statistics.pstdev(lengths),
         "短句占比":   sum(1 for n in lengths if n <= 15) / len(lengths) * 100,
         "破折号":     len(re.findall("——", body)) / cn * 10000,
+        "分号":       body.count("；") / cn * 10000,
         # 只算「X：说明」这类定义式短行。「会产生三个问题：」后面跟列表，
         # 那是正常的引导句，不是词典条目，不该算进来。
         "冒号定义句": len(re.findall(r"：\n(?!\s*(?:[-*]|\d+\.))", body)) / cn * 10000,
