@@ -2,7 +2,7 @@
 
 [上一篇：权限、状态与恢复](03-permissions-state-recovery.md) · [返回课程总目录](../README.md) · [下一篇：可观测性与独立 Eval](05-observability-eval-deployment.md)
 
-Agent 生态经常把 Agent、Sub-Agent、Skill、Plugin、Hook、MCP、Protocol、Server 和 UI 统称为「扩展能力」，但它们实际介入的层次并不相同。有的机制会改变模型输入，有的会增加工具，有的会创建一条新循环，还有的只是把同一 Session 暴露给另一个客户端。为了避免把这些边界混在一起，本篇会先按责任分类，再比较六套 Harness 的代表机制。
+Agent 生态经常把 Agent、Sub-Agent、Skill、Plugin、Hook、MCP、Protocol、Server 和 UI 都叫作「扩展能力」，可它们插手运行过程的位置并不一样。有的会改模型输入，有的会添工具，有的会另起一条循环，还有的只是让另一个客户端接入同一 Session。要分清这些边界，你得先看每种机制负责什么，再比较六套 Harness 怎样实现它们。
 
 ![编排、协议与产品表面的层次](../assets/diagrams/comparisons/04-orchestration-protocol-surfaces.svg)
 
@@ -18,7 +18,7 @@ Agent 生态经常把 Agent、Sub-Agent、Skill、Plugin、Hook、MCP、Protocol
 | Protocol/Server | 让外部 Client 控制 Session | 否 | 身份、重连、事件重复与版本错配 |
 | CLI/TUI/Web/Desktop/IDE | 展示和采集用户交互 | 否 | 把 UI 状态误当核心状态 |
 
-同一个项目名词可能跨越两类责任，例如一个 Plugin 既注册 Tool 又安装 Hook，所以分析时仍然要把这两个作用分开写清楚。
+同一个项目里的名词可能横跨两类责任，例如 Plugin 既能注册 Tool，也能安装 Hook，所以你分析它时要看清这两个动作各自改了什么。这两个作用不能混。
 
 ## 六条课程的代表机制
 
@@ -31,11 +31,11 @@ Agent 生态经常把 Agent、Sub-Agent、Skill、Plugin、Hook、MCP、Protocol
 | pi | Resource Loader、Extensions、Coding Agent | TUI、Print、JSON、RPC、Protocol Server/Client | 最小 Agent Core 如何被逐层组合而不是复制 |
 | OpenCode | Agent、Task、Skill、Plugin、MCP、LSP | Server、Protocol、TUI、Web、Desktop、ACP | 服务端 Session 是共享真值，客户端只持有投影 |
 
-详细证据还要回到六条课程各自的扩展和产品表面章节中查找，因为这个比较页只负责建立坐标——也就是各机制的责任位置——不能替代上游源码站点。
+详细证据还得回到六条课程里讲扩展和产品表面的章节逐项查，因为这个比较页只帮你判断各类机制负责哪一层，不能替代上游源码站点。
 
 ## 子 Agent 是另一条任务链
 
-子 Agent 一旦开始承担任务，就不再只是「调用另一个模型」，因为这条任务链至少还需要：
+子 Agent 一旦接下任务，系统做的就不只是「再调用一次模型」，还得为这条任务链处理下面这些事情：
 
 - 独立或可区分的 Session/Task 身份；
 - 明确的输入投影，而不是无边界复制父 Context；
@@ -44,13 +44,13 @@ Agent 生态经常把 Agent、Sub-Agent、Skill、Plugin、Hook、MCP、Protocol
 - 返回父 Agent 的结果投影；
 - 父子 Trace 关联。
 
-OpenCode 通过 Task Tool 创建子 Session，同时保留父端 Deny 与外部目录限制，Codex 课程展示了子代理与编排，而 DeepSeek Harness 会通过它的装配和任务机制扩展运行。pi 的 Follow-up 仍然在同一个 Agent Run 内处理追加消息，因此它不属于子 Agent。
+OpenCode 用 Task Tool 创建子 Session，同时沿用父端的 Deny 和外部目录限制。Codex 课程会带你看子代理怎样参与编排，DeepSeek Harness 则靠装配和任务机制扩展运行。pi 的 Follow-up 仍在同一个 Agent Run 里接收追加消息，所以不能把它算作子 Agent。
 
-运费任务可以把「检查回归测试范围」交给子 Agent，但父任务中禁止修改测试的约束，不能因为换了一个 Agent 名称就消失。子任务结束后，父端不应该只收到一句「完成」，还需要拿到 Child Session ID 和能够核对的结果。
+运费任务可以让子 Agent 去「检查回归测试范围」，但父任务明令禁止修改测试，这条约束不能因为执行者换了名字就失效。子任务结束以后，父端不能只收到一句「完成」，还要拿到 Child Session ID 和可供核对的结果。
 
 ## Skill 不是 Tool，MCP 也不是单一能力
 
-Skill 通常提供模型可读的流程和知识，因此加载与否会改变 Context，而 Tool 提供的是可调用接口，它在执行时会产生观察或副作用。MCP Server 还可以分别声明 Tools、Prompts、Resources 或 Templates，所以连接成功只是建立了通道，无法证明每种能力都已经存在。
+Skill 通常把流程和知识写给模型看，所以是否加载 Skill 会改变 Context。Tool 提供可调用的接口，执行以后会返回观察，也可能产生副作用。MCP Server 还能分别声明 Tools、Prompts、Resources 或 Templates，因此连上 Server 只说明通道已经建立。连接成功还不够。
 
 因此要分开检查：
 
@@ -61,17 +61,17 @@ Skill 通常提供模型可读的流程和知识，因此加载与否会改变 C
 5. 远端 Server 实际能否执行；
 6. 返回结果怎样关联到 Session。
 
-如果界面只把「已连接 MCP」显示成一个绿色状态，用户就很容易忽略后面至少五道门槛。
+如果界面只亮起一个绿色的「已连接 MCP」，用户很容易误以为能力已经可用，却看不到后面至少还有五道门槛。这个绿灯很会骗人。
 
 ## Plugin 与 Extension 是高信任代码
 
-Prompt、Skill 和 Tool Schema 主要影响模型能看到什么，但进程内 Plugin/Extension 可以直接读文件、发网络请求、注册 Provider、改写 Tool Result，甚至绕过正常权限入口。项目 Trust 只能决定要不要加载这段代码，一旦加载完成，它并不会自动降低这段代码的宿主权限。
+Prompt、Skill 和 Tool Schema 主要决定模型能看到什么，进程内的 Plugin/Extension 却可以直接读文件、发网络请求、注册 Provider、改写 Tool Result，甚至绕开正常的权限入口。项目 Trust 只能决定是否加载这段代码，一旦把它装进进程，宿主不会自动收窄它的权限。
 
-安全审计需要记下来源、版本、安装脚本、加载顺序和所有 Hook 介入点，而调用前阻断与调用后改写还必须分别留证。如果使用 Context Transform，最好再保存安全脱敏的转换前后摘要。
+做安全审计时，你需要记下代码从哪里来、用的是哪个版本、安装脚本做了什么、按什么顺序加载，以及每个 Hook 在哪里插手。调用前拦截和调用后改写要分别记录。两边都要留证。如果用了 Context Transform，最好再保存经过安全脱敏的转换前后摘要。
 
 ## 多客户端只共享核心事实
 
-同一个 Session 可以同时被 CLI、Web、Desktop、IDE 或 RPC Client 观察，但这些客户端应当共享服务端事件、消息和状态，不能把某个界面控件当成核心事实。要让这种共享可靠，协议至少需要：
+CLI、Web、Desktop、IDE 或 RPC（远程过程调用）Client 可以同时观察同一个 Session，但它们应该从服务端共享事件、消息和状态。界面控件不能当核心事实。协议想让多个客户端可靠地共享这些事实，至少要处理下面几项：
 
 - Server/Project/Session 身份；
 - 请求与响应关联；
@@ -80,26 +80,26 @@ Prompt、Skill 和 Tool Schema 主要影响模型能看到什么，但进程内 
 - 取消和权限问题的路由；
 - 版本或能力协商。
 
-pi Protocol 用 Frame/CBOR/Schema 和 Attach Lease 控制远程 Session，OpenCode 使用 HTTP/Event 服务和 History/Cursor，而 Codex 通过协议与 app-server 服务多个表面。界面上出现「Done」，只能说明这个投影收到了某种终态，要理解它的准确语义，仍然必须回到核心事件。
+pi Protocol 用 Frame（帧）、CBOR、Schema 和 Attach Lease 控制远程 Session，OpenCode 用 HTTP/Event 服务和 History/Cursor，Codex 则通过协议与 app-server 接入多个产品表面。界面显示「Done」，只说明这个客户端投影收到了某种终态。你要判断它究竟代表什么，仍得回到核心事件。
 
 ## 设计取舍：进程内组合还是服务化核心
 
-pi 展示了从轻量进程内 Agent Core 到 Protocol Server 的渐进组合，OpenCode 从服务化 Session 出发，让多个客户端天然共享核心，Codex 则使用 Rust Core 与协议支持多种产品表面。DeepSeek Harness 通过 Bundle 组合多包能力，这些形态各有侧重，没有一种能在所有场景里胜出：
+pi 从轻量的进程内 Agent Core 起步，再逐层组合到 Protocol Server。OpenCode 把 Session 放在服务端，让多个客户端直接共享核心，Codex 则用 Rust Core 和协议支撑多种产品表面。DeepSeek Harness 通过 Bundle 组合多个包的能力。这几种做法各有侧重，没有哪一种能适合所有场景：
 
 - 进程内组合部署简单、延迟低，但客户端与运行时耦合更紧；
 - 服务化核心便于共享 Session 和远程控制，但必须解决身份、并发和重连；
 - 闭源产品 + 公开 SDK 给出稳定契约，却限制了内部实现可核对深度。
 
-因此，比较时应该从任务需要出发，不能把「支持更多表面」直接当成 Harness 更强的证明。
+所以比较这些设计时，你要从任务真正需要什么出发，不能看到「支持更多表面」就断定 Harness 更强。
 
 ## 练习：给六个对象分类
 
-选择任意一条课程，从中找出一个 Agent/Preset、一个 Tool、一个 Skill/Context 来源、一个 Hook/Extension、一个 Session 协议对象和一个 UI 表面，然后分别说明它改变的是模型输入、控制流、环境还是展示层。
+你可以任选一条课程，从中找出一个 Agent/Preset、一个 Tool、一个 Skill/Context 来源、一个 Hook/Extension、一个 Session 协议对象和一个 UI 表面，再逐个说明它改动了模型输入、控制流、环境还是展示层。
 
 <details>
 <summary>查看核对标准</summary>
 
-一个对象可以同时跨越多层，但答案必须逐项说明，例如 Plugin 注册 Tool 时改变能力表，安装 Hook 时又改变控制流，只写「它扩展了 Agent」还不合格。如果所选项目没有某一类公开机制，如实写明不可用或当前来源不可核对就可以。
+一个对象可以同时跨越多层，但答案必须把每一层的动作说清楚。例如 Plugin 注册 Tool 时会改变能力表，安装 Hook 时又会改动控制流，只写「它扩展了 Agent」还不合格。如果所选项目没有公开某类机制，如实写明不可用或当前来源无法核对就可以。
 
 </details>
 
