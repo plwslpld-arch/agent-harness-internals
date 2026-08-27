@@ -2,7 +2,9 @@
 
 [返回 DeepSeek Harness 课程地图](README.md)
 
-DeepSeek Harness 的主循环不是简单的 `while (toolCall)`，它先把用户输入放进 Inbox，把一次外部任务推进划成 Turn，再把每次模型请求划成 Step。所有关键变化都会追加为 Session Event，因此插入输入、取消、并行工具和恢复都有明确边界。
+DeepSeek Harness 的 Agent Loop（智能体循环）比一个简单的 `while (toolCall)` 多了几层边界，它会先把用户输入放进 Inbox（收件箱）。
+
+系统再用 Turn（回合）表示一次外部任务的推进过程，并用 Step（步骤）标记其中的每次模型请求，同时把关键变化追加为 Session Event，为插入输入、取消、并行工具和恢复留下可核对的边界。
 
 ## 先理解 Turn 与 Step
 
@@ -43,11 +45,11 @@ inject(input: UserMessage): void {
 - **返回**：这些方法没有业务返回值。
 - **下一站**：Driver 调用 `turn()`，在合适边界 claim Inbox 消息。
 
-`followup` 会明确排到下一 Turn，而 `steer` 会进入下一 Step 并唤醒 Driver，`inject` 则只负责排队，不主动启动。取消后到达的唤醒输入还会被重新分类到下一 Turn，以免混入已经中止的活动。
+`followup` 会把消息明确排到下一 Turn，`steer` 会把消息送往下一 Step，并唤醒 Driver（驱动器），`inject` 则只把消息放进队列，不主动启动运行。三种入口不能混用。如果带唤醒语义的输入在取消后才到达，系统还会把它重新归入下一 Turn，避免它混入已经中止的活动。
 
 ## Driver 只负责把 Turn 推进到收敛
 
-`kick()` 的主体很短，只要 `turn()` 表示还要继续，它就开启下一 Turn，因为真正的复杂性被留在了 Turn 和 Step 边界，不需要塞进一个巨型循环。
+`kick()` 的主体很短：只要 `turn()` 返回「还要继续」，它就开启下一 Turn。Driver 只负责推进，代码把复杂逻辑分别放在 Turn 和 Step 的边界上，因此 Driver 无需自己承担一个难以追踪的巨型循环。
 
 源码：[查看 Driver 循环](https://github.com/deepseek-ai/deepseek-harness/blob/b150a551b8d465e31e418e1b2eaf5e79bbb7d28e/packages/core/agent-loop/src/agent.ts#L195-L220)
 
@@ -63,7 +65,7 @@ private async kick(): Promise<void> {
 }
 ```
 
-异常会先在更内层写成结构化事件，再由 Driver 边界收敛活动状态，因此 UI 能看见错误以及向 idle 的转换，不会留下一个永远处于 running 状态的 Agent。
+更内层的代码会先把异常写成结构化事件，Driver 再在自己的边界上收束活动状态。失败不会卡在 running，因此 UI 既能看到具体错误，也能看到状态转为 idle。
 
 ### 第 2 站：Turn 追加边界事件并逐 Step 推进
 
@@ -91,11 +93,11 @@ this.session.append('turn/end', { turn, reason: turnEnds! })
 - **返回**：布尔值表示 Inbox 是否还有输入，需要继续下一 Turn。
 - **下一站**：每个 Step 调用模型流，随后可能调度工具。
 
-`preStep()` 不只是取消息，它还会组装 System Prompt、投影运行时 Context，并通过 waterfall 事件允许扩展修改或拒绝当前 Step。如果决策为 reject，Turn 就以 blocked 结束，而初始消息被移除为空时，也不会浪费一次模型调用。
+`preStep()` 除了取出消息，还会组装 System Prompt、投影运行时 Context，并发出 waterfall 事件，让扩展有机会修改或拒绝当前 Step。当扩展返回 reject 时，Turn 会以 blocked 结束，如果初始消息在处理后已经为空，系统也不会再发起一次无意义的模型调用。
 
 ## Step 从 Session 重新派生完整请求
 
-每个请求都从 Session 历史重新派生，而不是只拿上一次的局部返回，因为 System Prompt Assembly、Tools、模型路由和历史消息需要共同形成一份冻结请求。
+每次请求都重新派生。系统会从 Session 历史出发，不会只沿用上一次模型返回的局部内容。构造新请求时，它需要把 System Prompt Assembly、Tools、模型路由和历史消息放在一起，然后冻结成本次请求。
 
 ### 第 3 站：流式 Chunk 先落事件，再合成 Assistant Message
 
@@ -123,9 +125,9 @@ this.session.append('assistant/message', { turn, step, message, ... })
 - **返回**：Step 结束原因，或工具执行后返回 `null` 表示还需下一 Step。
 - **下一站**：若 Assistant Message 含 ToolCall，调用 `executeToolCalls()`。
 
-如果模型流中途取消，Assembler 会尽量产出 `interruptedBlocks()`，并把不完整的 Assistant Message 标为 interrupted。这样比直接丢掉所有已收到内容更便于观察，但这些部分内容不能当作正常完成消息参与最终评分。
+如果模型流在中途取消，Assembler 会尽量用已收到的内容生成 `interruptedBlocks()`，并把这条不完整的 Assistant Message 标记为 interrupted。部分消息仍不算完成，保留它只是为了观察取消前发生了什么，评分时不能把它当成正常完成的消息。
 
-模型流报告 error 或 aborted 时，`agent/request-error` waterfall 可以返回 retry，而重试会留在同一个 Step 内重新构建请求，只有没有 retry 决策时才抛出 `LlmError`，因此 Attempt 统计不能只按 Step 数推算模型调用次数。
+模型流报告 error 或 aborted 后，`agent/request-error` waterfall 可以返回 retry，系统会留在同一个 Step 重新构建请求。只有没有获得 retry 决策时，它才抛出 `LlmError`，所以统计 Attempt（尝试）时不能根据 Step 数直接推算模型调用次数。
 
 ## 没有 ToolCall 才完成当前 Step 链
 
@@ -139,7 +141,7 @@ return concluded ? { kind: 'completed' } : null
 
 源码：[查看 Step 收敛判断](https://github.com/deepseek-ai/deepseek-harness/blob/b150a551b8d465e31e418e1b2eaf5e79bbb7d28e/packages/core/agent-loop/src/agent.ts#L410-L418)
 
-这段逻辑说明模型文本并不是唯一的完成信号，因为工具结果可能直接声明 `concluded`，否则它们就会形成新的上下文，让 Turn 再进入一个 Step，由模型观察执行结果。
+这段逻辑表明，模型输出文本并非当前 Step 链唯一的完成信号。工具结果可以直接声明 `concluded`，否则它们会进入新的上下文，Turn 随后再开启一个 Step，让模型读取工具的执行结果。
 
 ### 第 4 站：工具调用先解析，再按执行模式分组
 
@@ -167,7 +169,7 @@ const group = mode === 'parallel' ? planned.slice(next) : [first]
 - **返回**：是否有工具要求直接结束，以及已启动调用的上下文结果。
 - **下一站**：Scheduler 依次 prepare、dispatch、finish/finalize，并按模型顺序提交结果。
 
-并行执行不等于乱序提交，因为工具虽然可以同时运行，Policy、Result 和送给模型的 Context 却仍会保持模型给出的顺序。提交顺序不能乱。这样既能让重放与解释更稳定，也能避免较快完成的第二个工具抢先改变后续语义。
+工具可以并行运行，但 Scheduler 仍会按模型给出的顺序提交 Policy、Result 和送往模型的 Context。提交不能跟着完成速度走，因此运行顺序和提交顺序要分开看，稳定的提交顺序既方便重放和解释，也能避免第二个工具因为先跑完就抢先改变后续语义。
 
 ### 第 5 站：Call 与 Result 用事件序号建立因果关系
 
@@ -189,7 +191,7 @@ session.append('tool/result', {
 - **返回**：Call 辅助函数返回事件序号，Result 追加没有业务返回值。
 - **下一站**：Result Context 被放入 `next-step` Inbox，下一模型请求从 Session 派生它。
 
-取消发生后，已经开始的调用会被 drain 并有序提交，尚未开始的调用则会得到「调度前已取消」的合成错误结果。若内部 Scheduler 自身失败，它会停止新分派并排空已启动调用，但不会伪造未启动结果。这两条路径必须分开统计。
+取消发生后，Scheduler 会 drain 已经开始的调用，并按既定顺序提交结果，尚未开始的调用则会收到「调度前已取消」的合成错误。如果是 Scheduler 内部失败，它会停止分派新调用，并排空已启动的调用，却不会为未启动的调用伪造结果。两条路径留下的事件不同，统计时也要分开。
 
 ## 用失败测试任务走一遍
 
@@ -197,7 +199,7 @@ session.append('tool/result', {
 
 1. `followup()` 把任务放入下一 Turn 并唤醒 Driver。
 2. `preStep()` claim 消息，组装 Prompt、工具和运行时 Context。
-3. Step 1 请求模型；Assistant Message 产生 Read 与测试工具调用。
+3. Step 1 请求模型，Assistant Message 产生 Read 与测试工具调用。
 4. Scheduler 可以并行执行只读调用，但按模型顺序追加 Result。
 5. Result Context 进入下一 Step，模型再产生 Edit 和测试调用。
 6. 没有新 ToolCall 时，Step 返回 completed，Turn 写入结束事件。

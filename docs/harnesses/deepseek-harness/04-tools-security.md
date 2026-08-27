@@ -2,7 +2,7 @@
 
 [返回 DeepSeek Harness 课程地图](README.md)
 
-工具能被模型看到，不等于它能绕过策略执行，因为 DeepSeek Harness 把工具 Schema、Runtime Pipeline、Approval 和 Sandbox 拆成了不同层次。每一层都各管一关。Schema 负责告诉模型如何提出调用，Runtime 随后校验、调度并归一化结果，而 Approval 和 Sandbox 则分别决定是否授予一次性许可，以及文件与进程能力最终被限制在哪里。
+模型看得到某个工具，并不表示它能绕过策略直接执行。各层不能互相代替。DeepSeek Harness 把 Tool Schema、Runtime Pipeline、Approval（审批）和 Sandbox 分成几层，分别处理不同问题。Schema 告诉模型怎样提出调用，Runtime 随后校验参数、安排执行并统一结果格式，Approval 决定是否只放行这一次请求，Sandbox 则真正限制文件和进程能够触及的范围。
 
 ## 一次工具调用的安全链
 
@@ -16,7 +16,7 @@
   → Session 记录 tool/result
 ```
 
-任何一层放行都不能替代下一层，因此即使 Approval 允许某次调用使用更宽的 Sandbox，它也只能说明用户同意了这次请求，而真正执行时，内核、文件 ACL 或执行器仍然可以拒绝操作。
+前一层放行后，调用仍要接受后一层检查。即使 Approval 允许某次调用使用范围更宽的 Sandbox，也只能证明用户同意了这次请求，真正开始执行时，操作系统内核、文件 ACL 或执行器仍可拒绝操作。
 
 ### 第 1 站：工具定义同时声明输入、输出和执行体
 
@@ -38,7 +38,7 @@ export interface ToolDefinition extends ToolSchema {
 - **返回**：注册函数返回精确 disposer，用于卸载定义。
 - **下一站**：SystemPrompt 获取可见 Schema；模型提出调用后 Runtime 解析同一个 Scoped 定义。
 
-规范输出之所以要求工具先返回可验证的 JSON Value，再由纯 `render()` 投影成模型内容，是为了防止 UI、模型文本和结构化业务值被一个任意字符串混在一起。
+工具要先返回可验证的 JSON Value，再由纯函数 `render()` 转成模型内容。这样一来，UI 展示、模型文本和结构化业务值不会全被塞进一个任意字符串，调用方也能分别验证和使用它们。
 
 ### 第 2 站：注册与 Scope Restriction 是不同操作
 
@@ -66,15 +66,15 @@ restrict(filter: ToolRestriction): () => void {
 - **返回**：可撤销本次变更的 disposer。
 - **下一站**：Prompt Assembly 和执行解析都读取相同 Scoped 可见集合。
 
-Runtime 禁止在 Root Context 上调用 `restrict()`，因为这个操作会意外屏蔽所有 Agent，而当 Restriction 为空时也会直接失败，以免「配置材料化为空却被当成有效策略」。
+Runtime 禁止在 Root Context 上调用 `restrict()`，因为这会意外屏蔽所有 Agent。Restriction 为空时，调用同样会直接失败，避免系统把「配置最终展开为空」误认成一条有效策略。
 
 ## 并行默认是拒绝式选择
 
-工具只有在 `isConcurrencySafe(args)` 精确返回 `true` 时才能和兄弟调用重叠，否则无论是未声明、抛异常、返回非 true，还是工具隐藏或参数非法，都一律按 exclusive 处理。
+只有 `isConcurrencySafe(args)` 明确返回 `true`，工具才能与同批的其他调用重叠执行。如果工具没有声明该函数、函数抛出异常或返回的不是 true，又或者工具不可见、参数不合法，Runtime 都会把这次调用按 exclusive 处理。
 
 源码：[查看并发分类](https://github.com/deepseek-ai/deepseek-harness/blob/b150a551b8d465e31e418e1b2eaf5e79bbb7d28e/packages/core/tools/src/index.ts#L1270-L1284)
 
-这是一种 fail-closed 设计：读文件之类的工具可能适合并行，但只要工具会修改共享状态，它就默认形成屏障。并发不等于安全。并发安全声明只说明它能否与同批工具重叠执行，并不代表这个工具整体安全，更不代表它无需权限。
+这里采用 fail-closed 策略。读取文件一类工具可能适合并行，但工具只要会修改共享状态，就默认阻断同批调用与它重叠执行。并发不等于安全。并发安全声明只回答「能否与同批工具同时运行」，既不保证工具整体安全，也不会免除权限检查。
 
 ### 第 3 站：Approval 每次询问都写成一对 Session Event
 
@@ -96,9 +96,9 @@ return outcome
 - **返回**：`allowed-once`、`rejected`、`cancelled` 或 `unavailable`。
 - **下一站**：策略层只在 `allowed-once` 时继续本次执行。
 
-Approval 要求 Turn 仍处于开放状态，因为 Turn 是持久化提交与重放的边界，如果把询问事件写在两个 Turn 之间，它在崩溃恢复时就可能被当成无主尾部丢弃。
+两条记录必须配对。Approval 要求当前 Turn 仍处于开放状态，因为系统以 Turn 划分持久化提交和重放范围。如果询问事件落在两个 Turn 之间，崩溃恢复时就可能把它当作不属于任何 Turn 的尾部记录并丢弃。
 
-`ask` 策略会把问题交给已组合的 Answerer，如果没有 Answerer 则返回 unavailable，而 `never` 会在服务内部直接拒绝，后注册的 Listener 也无法绕过这一决定。因此 Headless/CI 应该使用结果确定的 `never`，不要期待无人回答的 Prompt 自动安全结束。
+`ask` 策略会把问题交给已经接入的 Answerer，没有 Answerer 时便返回 unavailable。`never` 则由服务内部直接拒绝，之后注册的 Listener 也无法改变这个决定。因此，Headless/CI 环境应该采用结果确定的 `never`，不要指望无人回答的 Prompt 会自动安全收尾。
 
 ## Sandbox Mode 与 Approval Policy 不是同一个轴
 
@@ -127,7 +127,7 @@ if (sandboxPermissions !== undefined && justification === undefined) {
 - **返回**：合法时无返回；缺字段、空理由或错误配对直接抛错。
 - **下一站**：`approveEscalation()` 对照本次调用的有效 Mode 并发起 Approval。
 
-目标枚举不能只按部署时的默认 Mode 缩减，因为 Session 在运行期间可能切换到更窄的 Mode，所以真正的「是否更宽」必须在执行时用本次调用的有效 Mode 判断。
+系统不能只根据部署时的默认 Mode 缩减目标枚举，因为 Session 运行期间可能切换到范围更窄的 Mode。执行每次调用时，都要拿它当时生效的 Mode 作比较，才能判断申请的目标是否确实更宽。
 
 ### 第 5 站：授权发生在任何执行之前
 
@@ -153,19 +153,19 @@ switch (outcome) {
 - **返回**：只在 allowed-once 时返回本调用使用的 Mode。
 - **下一站**：执行器以该 Mode 运行这一次操作。
 
-申请同级或更窄的 Mode 时不会打扰用户，而只要缺少 Approval Service、缺少 Agent，或者结果是拒绝、取消与无通道，执行就会失败关闭，授权只管这一次。
+授权不会永久生效。申请同级或范围更窄的 Mode 时，系统不会询问用户。只要 Approval Service 或 Agent 缺失，或者用户拒绝、取消、没有可用回答通道，本次执行就会按失败处理。即使获得授权，也只对当前调用生效。
 
 ## ToolRuntime 如何保证取消后不遗留活动
 
-Runtime 的 `dispatchToolBody()` 会融合调用方信号与 Wrapper 替换信号，而一旦工具体已经开始运行，取消就不会直接遗弃它的 Promise，Runtime 会等工具达到静止状态，再把结果规范化为 aborted。
+取消仍需工具配合。Runtime 的 `dispatchToolBody()` 会合并调用方传入的信号与 Wrapper 替换后的信号。工具体一旦开始运行，收到取消请求后，Runtime 不会丢下仍在执行的 Promise，而会等待工具停止活动，再把结果统一标记为 aborted。
 
 源码：[查看 Tool Body 分派](https://github.com/deepseek-ai/deepseek-harness/blob/b150a551b8d465e31e418e1b2eaf5e79bbb7d28e/packages/core/tools/src/index.ts#L1527-L1559)
 
-由于同进程的 JavaScript 无法被 Runtime 强行杀死，Tool 必须主动观察 `exec.signal`，并把它继续传给子进程、网络或文件操作。即使声明了 timeout，也只有在相应 Policy Wrapper 已组合且 Tool 愿意配合取消时才真正有效。
+同一进程内运行的 JavaScript 无法由 Runtime 强行终止，因此 Tool 必须主动检查 `exec.signal`，并继续把信号传给子进程、网络请求或文件操作。即使 Tool 声明了 timeout，也要等相应的 Policy Wrapper 接入，而且 Tool 本身配合取消，超时限制才真正生效。
 
 ## 三个平台的 Sandbox 不能假设完全同构
 
-Linux 可以使用 Bubblewrap/Landlock 等 Provider，macOS 常用 Seatbelt，Windows 则可能依赖 ACL 或受限进程链，所以统一 Mode 只是 Harness 对外给出的契约，不代表各平台的内核能力完全一致。部署验收时至少要测试：
+Linux 可以使用 Bubblewrap/Landlock 等 Provider，macOS 常用 Seatbelt，Windows 则可能依赖 ACL 或受限进程链。统一 Mode 只是 Harness 对外提供的行为契约，各平台未必具备完全一致的内核能力，因此部署验收至少要测试：
 
 1. read-only 下工作区写入确实失败；
 2. workspace-write 不能越过工作区边界；
