@@ -9,21 +9,21 @@ copyright: 原创文档采用 CC BY 4.0；原创代码采用 MIT
 theme:
   name: material
   language: zh
-  logo: assets/brand/logo-mark.svg
-  favicon: assets/brand/logo-mark.svg
+  logo: assets/brand/favicon.svg
+  favicon: assets/brand/favicon.svg
   font: false
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: teal
-      accent: deep orange
+      accent: amber
       toggle:
         icon: material/weather-night
         name: 切换到深色模式
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       primary: teal
-      accent: deep orange
+      accent: amber
       toggle:
         icon: material/weather-sunny
         name: 切换到浅色模式
@@ -33,6 +33,7 @@ theme:
     - navigation.top
     - navigation.footer
     - content.code.copy
+    - content.tooltips
     - search.highlight
     - search.suggest
 
@@ -54,7 +55,11 @@ markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
+  - pymdownx.snippets
   - pymdownx.superfences
+
+extra_css:
+  - stylesheets/extra.css
 
 nav:
   - "首页": README.md

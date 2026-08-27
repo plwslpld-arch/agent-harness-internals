@@ -9,6 +9,13 @@
       "alt": "Agent Harness 源码内核标记"
     },
     {
+      "id": "brand-favicon",
+      "path": "docs/assets/brand/favicon.svg",
+      "type": "brand",
+      "scope": "repository",
+      "alt": "Agent Harness 源码内核站点图标"
+    },
+    {
       "id": "brand-lockup",
       "path": "docs/assets/brand/logo-lockup.svg",
       "type": "brand",
