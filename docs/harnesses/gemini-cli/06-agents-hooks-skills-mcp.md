@@ -2,7 +2,7 @@
 
 [返回 Gemini CLI 课程地图](README.md)
 
-上一节收在 Compression 替换活动 Chat History，以及 GEMINI.md/Memory Service 保存跨会话知识的边界。Gemini CLI Extension 则从运行时能力这一侧继续展开：它可以贡献 MCP Server、Tool 排除项、Policy、Hook、Skill 和 Agent，而安装目录只是来源。只有在启用或停用 Extension 后刷新多个运行时 Registry，模型能力才真正改变。
+上一节看到 Compression 怎样替换正在使用的 Chat History，也分清了 GEMINI.md 和 Memory Service 该保存哪些跨会话知识。现在从运行时能力继续往下看：Gemini CLI 的 Extension 可以带来 MCP Server、Tool 排除项、Policy、Hook、Skill 和 Agent，安装目录只说明这些能力来自哪里，只有启用或停用 Extension 时同步刷新多个运行时 Registry（注册表），模型实际能用的能力才会跟着改变。
 
 ```text
 Extension Manifest / 目录
@@ -33,7 +33,7 @@ await this.config.reloadSkills()
 - **返回**：刷新后的运行时能力集合。
 - **下一站**：后续 Turn 构造新的 Prompt 与 Function Declarations。
 
-任一步失败都可能留下「部分能力已刷新」的状态，所以实现不仅要说明更新顺序，还要交代回滚或再次初始化的策略。能力刷新不是一次原子替换。
+只要其中一步失败，运行时就可能停在「一部分能力已经刷新、另一部分还是旧的」这种状态，因此实现既要写清更新顺序，也要处理怎么回滚或重新初始化。整轮刷新并不是一次原子替换。
 
 ## Hook：先匹配和去重，再决定整批执行方式
 
@@ -52,7 +52,7 @@ const sequential = deduplicatedEntries
 - **返回**：Hook Plan 与后续结果集合。
 - **下一站**：Executor 按事件契约合并允许、阻断或附加上下文。
 
-「整批串行」可以避免有顺序依赖的 Hook 与其他 Hook 交错，但它也会让慢 Hook 阻塞后续项，所以核对时不能只看单个 Hook 的配置，还要按具体事件检查整批执行的超时与错误策略。
+「整批串行」能避免有先后依赖的 Hook（钩子）和其他 Hook 交错执行，可只要其中一个 Hook 很慢，后面的所有项都会被它堵住。因此你不能只核对单个 Hook 的配置，还要针对具体事件检查整批任务怎样超时、出错后又怎样收场。
 
 ## Skill：同名覆盖顺序和激活是两步
 
@@ -82,7 +82,7 @@ this.config.getWorkspaceContext()
 llmContent: `<activated_skill ...>${skill.body}...`
 ```
 
-只有激活才会把正文送回模型，并把 Skill 目录加入可读取资源范围，所以目录中可列出与正文已进入 Context 是两个状态。
+只有激活 Skill（技能）以后，系统才会把正文送回模型，同时把 Skill 目录加入可读取的资源范围。因此，目录里能够列出某个 Skill，只能说明系统发现了它，不能说明它的正文已经进入 Context。发现不等于激活。
 
 ## MCP：发现前有信任与用户配置短路
 
@@ -108,10 +108,10 @@ await client.discoverInto(this.cliConfig, targetRegistries)
 
 ## Agent：本地与远程不是同一个执行器
 
-Agent Registry 可以发现 Agent Definition，而 Local Executor 会在本进程创建子会话与工具集合，Remote A2A 路径则通过协议交换 Message、Artifact、状态和取消。两条路径虽然可以共享 Agent Tool 的外观，身份、认证、超时和结果边界却各不相同。
+Agent Registry 能发现 Agent Definition（智能体定义），Local Executor 则会在当前进程里创建子会话并配好工具，Remote A2A 路径通过协议交换 Message、Artifact、状态和取消请求。两条路径看起来都可以通过 Agent Tool 调用，可它们的身份归属、认证方式、超时处理和结果边界各不相同。
 
-创建子 Agent 适合独立 Context 和长子任务，而如果只是批量读取文件，普通工具会更直接。父 Agent 收到子结果后仍要核对 Stop Reason 与 Artifact，不能用通知文本覆盖子运行错误。
+需要隔离 Context 或者把一段长任务单独跑起来时，创建子 Agent 很合适。如果只是批量读取文件，直接调用普通工具反而省事。父 Agent 收到结果以后，还得核对 Stop Reason 和 Artifact，不能看到一条完成通知就把子运行里的错误盖过去。通知不是结论。
 
-前面依次核对了 Extension 的刷新顺序、Hook 的整批执行方式、Skill 的覆盖与激活、MCP 的连接前置门，以及 Agent 的本地与远程执行边界。这些能力怎样呈现给使用者，还取决于交互 CLI、非交互输出、IDE 与 A2A 各自选择的事件和停止语义——下一篇会逐一固定这些表面的输出边界。
+到这里，你已经看过 Extension 按什么顺序刷新各项能力，Hook 怎样整批执行，同名 Skill 怎样覆盖又怎样激活，MCP 连接前要过哪些门，以及 Agent 在本地和远程分别怎么跑。不过，使用者最后能看到什么，还取决于交互 CLI、非交互输出、IDE 与 A2A 各自暴露哪些事件、怎样表示停止，下一篇就来逐项划清这些输出边界。
 
 下一篇：[CLI、非交互输出、IDE 与 A2A](07-surfaces-output-protocol.md)。

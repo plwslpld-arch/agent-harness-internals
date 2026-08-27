@@ -2,7 +2,7 @@
 
 [返回 Gemini CLI 课程地图](README.md)
 
-上一章沿着一个 Tool Call 走过 Registry、活动视图与 Scheduler，经过规范化 Invocation 和执行终态，最后停在 Policy Decision 与 Confirmation。到了这条授权链，Gemini CLI 中四个名字都与「安全」有关，位置却完全不同——PolicyEngine 判断工具动作是允许、拒绝还是询问，Confirmation Bus 负责关联一次用户决定，而模型 `SAFETY` 表示生成结束原因，只有 SandboxManager 会把文件、网络、环境和进程限制转换为平台执行规格。
+上一章跟着一个 Tool Call 走过 Registry（注册表）、活动视图和 Scheduler，又看了系统怎样规范化 Invocation（调用实例）并收拢执行结果，最后停在 Policy Decision 与 Confirmation。走到授权这一步，你会碰到四个都像是在管「安全」的名字，可它们各管一段：PolicyEngine 判断工具动作该允许、拒绝还是询问，Confirmation Bus 把用户决定配回这次调用，模型用 `SAFETY` 说明为什么停止生成，只有 SandboxManager 才会把文件、网络、环境和进程限制写成平台真正执行的规格。
 
 ```text
 Tool Invocation
@@ -39,7 +39,7 @@ this.sandboxManager =
 - **返回**：后续 `check()` 使用的 PolicyEngine。
 - **下一站**：Confirmation Bus 对具体 Invocation 查询决定。
 
-非交互任务没有人能点击确认，如果默认 ASK_USER 就会永久等待，所以系统选择 DENY。`NoopSandboxManager` 的存在也说明 Policy 与 Sandbox 可以独立配置，因为前者决定没有规则命中时怎样处理，后者则允许明确使用 Noop 实现。
+非交互任务里没人能点击确认，如果默认走 ASK_USER，任务就会一直等下去，因此系统直接选择 DENY。这里还要看懂 `NoopSandboxManager` 这个名字：Policy（策略）和 Sandbox 可以分开配置，前者决定没有规则命中时该怎么办，后者则可能明确选用 Noop 实现，完全不加隔离。
 
 ## 第 2 站：Message Bus 不自己发明授权
 
@@ -61,7 +61,7 @@ switch (decision) {
 - **返回**：本次调用的确认结果。
 - **下一站**：Executor 或取消路径。
 
-Confirmation ID 必须与 Call ID 关联，使一次请求和一次响应按具体调用配对，因为用户批准另一条命令，不能被正在等待的调用误消费。
+Confirmation ID 必须关联 Call ID，这样系统才能把用户的每次响应配回那一条具体调用。用户批准的是另一条命令时，当前正在等待的调用绝不能把这个决定拿走。调用身份不能串。
 
 ## 第 3 站：只有启用 Sandbox 才选择平台后端
 
@@ -82,7 +82,7 @@ return new NoopSandboxManager(options)
 - **返回**：Policy/Executor 使用的 SandboxManager。
 - **下一站**：具体工具请求调用 Manager 生成执行规格。
 
-Policy ALLOW 加 Noop Sandbox 是一种明确的配置状态，日志不能把它写成「已隔离」，因为这时 Policy 虽然允许了动作，Sandbox Manager 却还是 Noop 实现。反过来，启用 Sandbox 也不会绕过 Policy。
+Policy 给出 ALLOW、Sandbox Manager 却选了 Noop，这是一种明确存在的配置组合，日志不能把它记成「已隔离」，因为动作虽然获准执行，进程实际上没有套上任何 Sandbox 后端。反过来也一样，即使启用了 Sandbox，工具动作仍要先过 Policy。这两层不能混。
 
 ## 平台后端必须产生真实执行变化
 
@@ -114,12 +114,12 @@ return {
 - **返回**：真正交给 Process Host 的程序和参数。
 - **下一站**：进程启动；初始化失败进入 Tool Error。
 
-核对 Sandbox 不能只看 Config 开关，还应沿着平台 Manager 生成的执行规格，查看最终 Program/Args、临时 Profile、网络/挂载参数和启动错误，确认包装确实进入了 Process Host。
+核对 Sandbox 时别只看 Config 开关，你还得跟着平台 Manager 生成的执行规格往下查，看看最终的 Program/Args、临时 Profile（配置档）、网络和挂载参数，以及启动时抛出的错误，确认 Process Host 收到的确实是包装后的命令。
 
 ## 模型 Safety 属于另一条链
 
-模型可能以 `SAFETY` FinishReason 拒绝生成，而这个结果发生在 Tool Invocation 出现之前。它反映的是 Provider 的内容安全决定，属于上游生成响应，所以既不能说明本地命令是否受 Policy/Sandbox 控制，也不能代替执行授权链的核对。
+模型可能用 `SAFETY` FinishReason 拒绝继续生成，这件事发生在 Tool Invocation 出现以前，只能说明 Provider（模型提供商）拦下了这次内容。它既不能告诉你本地命令有没有经过 Policy 和 Sandbox，也不能替你核对后面的执行授权链。
 
-评测中应把模型拒绝、用户拒绝工具和 Sandbox 初始化失败分成不同错误类别。分清这些发生在不同位置的结果之后，还要继续追问运行时历史、模型投影与 JSONL 记录分别保留了什么，Compression 如何用摘要替换旧 Context，以及 GEMINI.md/Memory Service 如何保存跨会话知识。下一篇就从这五种「过去信息」继续。
+做评测时，模型拒绝、用户拒绝工具和 Sandbox 初始化失败必须分成三类错误，因为它们发生的位置不同，修复办法也不同。分清以后，你还得追问运行时历史、模型投影和 JSONL 记录各自留下了什么，Compression 怎样拿摘要换掉旧 Context，以及 GEMINI.md 和 Memory Service 怎样把知识带到下一次会话，这正是下一篇要拆开的五种「过去信息」。
 
 下一篇：[Session、记录、压缩与 Memory](05-session-history-compression-memory.md)。
