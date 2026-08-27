@@ -1,0 +1,8 @@
+:root { --md-primary-fg-color: #0a8f87; --md-accent-fg-color: #c77800; }
+body { font-family: "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", system-ui, sans-serif; }
+.md-header, .md-tabs { background: #16324f; }
+.md-typeset h1 { color: #16324f; font-weight: 750; }
+[data-md-color-scheme="slate"] .md-typeset h1 { color: #ecf5f7; }
+.md-typeset table:not([class]) th { background: color-mix(in srgb, var(--md-primary-fg-color) 12%, transparent); }
+.md-typeset img[src$=".svg"] { display: block; max-height: 34rem; margin: 1.5rem auto; }
+.md-typeset code { border-radius: 0.3rem; }

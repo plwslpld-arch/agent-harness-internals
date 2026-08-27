@@ -33,6 +33,13 @@ const metadata = {
   visibility: 'public',
   defaultBranch: 'main',
   about: '面向开发者的中文 Agent Harness 源码教材，解析六套实现。',
+  homepage: 'https://plwslpld-arch.github.io/agent-harness-internals/',
+  sibling: {
+    repo: 'plwslpld-arch/eval-harness-internals',
+    name: 'Eval Harness 源码内核',
+    url: 'https://github.com/plwslpld-arch/eval-harness-internals',
+    site: 'https://plwslpld-arch.github.io/eval-harness-internals/',
+  },
   topics: [
     'agent-harness', 'coding-agents', 'source-code-analysis', 'ai-evaluation',
     'deepseek-harness', 'openai-codex', 'gemini-cli', 'claude-code',
@@ -63,6 +70,19 @@ test('GitHub 元数据要求中文 About、核心 Topics 且不含部署阶段',
   assert.match(validateRepositoryMetadata({ ...metadata, about: 'Source code book.' }).join('\n'), /中文 About/u);
   assert.match(validateRepositoryMetadata({ ...metadata, topics: ['coding-agents'] }).join('\n'), /核心 Topic/u);
   assert.match(validateRepositoryMetadata({ ...metadata, applyAt: 'later' }).join('\n'), /内部部署阶段/u);
+});
+
+test('GitHub 元数据要求 Pages 地址与姊妹仓库', () => {
+  assert.match(validateRepositoryMetadata({ ...metadata, homepage: '' }).join('\n'), /Pages 地址/u);
+  assert.match(validateRepositoryMetadata({ ...metadata, sibling: undefined }).join('\n'), /姊妹仓库/u);
+  assert.match(
+    validateRepositoryMetadata({ ...metadata, sibling: { ...metadata.sibling, repo: 'x/y' } }).join('\n'),
+    /eval-harness-internals/u,
+  );
+  assert.match(
+    validateRepositoryMetadata({ ...metadata, sibling: { ...metadata.sibling, site: 'http://x' } }).join('\n'),
+    /site/u,
+  );
 });
 
 test('正式品牌资产已登记且社交预览尺寸正确', () => {
