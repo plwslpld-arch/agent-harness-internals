@@ -97,13 +97,20 @@ def changed_docs():
                           text=True).stdout.strip() or "HEAD"
     out = subprocess.run(["git", "diff", "--name-only", base, "HEAD"],
                          capture_output=True, text=True).stdout
-    return [p for p in out.split("\n") if p.endswith(".md") and p.startswith("docs/")]
+    return [p for p in out.split("\n") if p.endswith(".md") and p.startswith("docs/")
+            and not any(d in p for d in SKIP_DIRS)]
+
+
+# 资产目录里的 README 是 SVG 清单，不是给人读的正文，别按散文节奏体检。
+SKIP_DIRS = ("docs/assets/",)
 
 
 def main(paths):
     failed = 0
     checked = 0
     for path in paths:
+        if any(d in path.replace("\\", "/") for d in SKIP_DIRS):
+            continue
         try:
             text = open(path, encoding="utf-8").read()
         except OSError:
