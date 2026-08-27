@@ -34,6 +34,8 @@ for (const path of markdownFiles) {
     const absolute = resolve(dirname(path), target);
     const rel = posixPath(relative(root, absolute));
     if (rel.startsWith('sources/checkouts/') && !existsSync(absolute)) continue;
+    // docs/downloads/ 是 CI 现构的产物（离线 PDF），不进版本库，本步骤跑在它生成之前。
+    if (rel.startsWith('docs/downloads/')) continue;
     if (!existsSync(absolute)) errors.push(`${posixPath(relative(root, path))}: missing link target ${raw}`);
   }
 }
