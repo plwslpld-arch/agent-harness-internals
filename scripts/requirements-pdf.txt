@@ -1,0 +1,7 @@
+# 离线 PDF 构建依赖。与 mkdocs 站点共用同一套 Markdown 与导航。
+beautifulsoup4>=4.13,<5
+markdown>=3.8,<4
+pillow>=11,<13
+pyyaml>=6.0,<7
+reportlab>=4.4,<5
+svglib==1.5.1

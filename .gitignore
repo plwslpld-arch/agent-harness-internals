@@ -27,3 +27,6 @@ __pycache__/
 
 # mkdocs 构建产物，由 CI 发布，不进主干。
 site/
+
+# 离线 PDF 由 CI 现构，不进版本库。
+docs/downloads/
