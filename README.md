@@ -10,7 +10,13 @@
   <a href="https://plwslpld-arch.github.io/agent-harness-internals/">在线阅读</a> ·
   <a href="docs/00-start-here.md">开始学习</a> ·
   <a href="docs/README.md">完整课程目录</a> ·
-  <a href="docs/learning-paths.md">选择阅读路线</a>
+  <a href="docs/learning-paths.md">选择阅读路线</a> ·
+  <a href="https://plwslpld-arch.github.io/agent-harness-internals/downloads/agent-harness-internals-cn.pdf">下载 PDF</a>
+</p>
+
+<p align="center">
+  姊妹项目：<a href="https://github.com/plwslpld-arch/eval-harness-internals">Eval Harness 源码内核</a>
+  —— 智能体跑完之后，谁来判定它真的做对了
 </p>
 
 这个仓库是一套面向开发者的中文 Agent Harness 源码教材。它不比较模型排行榜，也不复述产品功能列表。你会先用一个失败测试建立共同语言，再沿 DeepSeek Harness、Codex、Gemini CLI、Claude、pi 与 OpenCode 的锁定源码，跟完模型输入、智能体循环、工具执行、权限、会话和结果核对的完整链路。

@@ -64,6 +64,20 @@ export function validateRepositoryMetadata(metadata) {
     }
     for (const topic of requiredTopics) if (!metadata.topics.includes(topic)) errors.push(`缺少核心 Topic：${topic}`);
   }
+  // 站点地址与姊妹仓库都进 About。两个仓库是一对，读者从任一侧都要能走到另一侧。
+  if (metadata.homepage !== 'https://plwslpld-arch.github.io/agent-harness-internals/') {
+    errors.push('About 必须填本仓库的 Pages 地址');
+  }
+  const sibling = metadata.sibling;
+  if (!sibling || typeof sibling !== 'object' || Array.isArray(sibling)) {
+    errors.push('必须声明姊妹仓库');
+  } else {
+    if (sibling.repo !== 'plwslpld-arch/eval-harness-internals') errors.push('姊妹仓库必须是 eval-harness-internals');
+    if (typeof sibling.name !== 'string' || !han.test(sibling.name)) errors.push('姊妹仓库必须有中文名称');
+    for (const key of ['url', 'site']) {
+      if (typeof sibling[key] !== 'string' || !/^https:\/\//u.test(sibling[key])) errors.push(`姊妹仓库缺少 ${key}`);
+    }
+  }
   if (!safeRelativePath(metadata.socialPreview) || metadata.socialPreview !== requiredAssets.socialPng) {
     errors.push('Social preview 必须使用正式 PNG 的仓库相对路径');
   }
@@ -90,6 +104,8 @@ export function validateRepositoryIdentity({ packageJson, workflow, readme, nvmr
     errors.push('仓库不得依赖 NVM 或 .nvmrc');
   }
   if (/github\.com\/plwslpld-arch\/harness-internals/u.test(readme ?? '')) errors.push('README 仍含旧远端地址');
+  // 元数据里声明了姊妹仓库，README 就必须真的指过去，否则声明只是摆设。
+  if (!/plwslpld-arch\/eval-harness-internals/u.test(readme ?? '')) errors.push('README 必须链接姊妹仓库');
   return errors;
 }
 
