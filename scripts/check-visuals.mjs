@@ -154,7 +154,7 @@ function manifestEntryFailures(entry, index) {
   }
   if (!/^[a-z0-9][a-z0-9-]*$/u.test(entry.id ?? '')) errors.push(`${label}: id 非法`);
   if (!diagramTypes.has(entry.type)) errors.push(`${label}: type 非法：${entry.type}`);
-  if (!/^assets\/(?:brand|diagrams)\/[a-z0-9][a-z0-9/_.-]*\.svg$/u.test(entry.path ?? '')
+  if (!/^docs\/assets\/(?:brand|diagrams)\/[a-z0-9][a-z0-9/_.-]*\.svg$/u.test(entry.path ?? '')
     || entry.path?.includes('..')
     || entry.path?.includes('\\')) {
     errors.push(`${label}: path 必须指向正式品牌或图示目录中的 SVG`);

@@ -4,7 +4,7 @@ import { manifestFailures, visualFailures } from '../check-visuals.mjs';
 
 const entry = {
   id: 'codex-tool-flow',
-  path: 'assets/diagrams/codex-tool-flow.svg',
+  path: 'docs/assets/diagrams/codex-tool-flow.svg',
   type: 'flow',
   scope: 'docs/harnesses/codex/README.md',
   alt: 'Codex 工具调用流程图',
