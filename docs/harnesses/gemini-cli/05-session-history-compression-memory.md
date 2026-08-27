@@ -2,7 +2,7 @@
 
 [返回 Gemini CLI 课程地图](README.md)
 
-上一章分清了模型 `SAFETY`、用户拒绝与 Sandbox 初始化失败，说明三者来自不同位置，但这些结果能否用于回放和恢复，还取决于它们进入哪种记录。Gemini CLI 里至少有五种「过去信息」——`AgentChatHistory` 是进程内回合的强所有者，模型接收 `Content[]` 投影，`ChatRecordingService` 追加 JSONL，Compression 用摘要替换旧 Context，而 GEMINI.md/Memory Service 保存跨会话知识。
+上一章已经分清模型 `SAFETY`、用户拒绝和 Sandbox 初始化失败各自发生在哪里，可这些结果以后能不能拿来回放或恢复，还得看系统把它们写进了哪一种记录。Gemini CLI 至少保留五种「过去信息」：`AgentChatHistory` 掌管进程内的回合，模型只接收投影出来的 `Content[]`，`ChatRecordingService` 逐行追加 JSONL（逐行 JSON），Compression（压缩）拿摘要替换旧 Context，而 GEMINI.md 和 Memory Service 保存能跨会话复用的知识。
 
 ```text
 AgentChatHistory ─→ Content[] ─→ 下一次模型请求
@@ -30,7 +30,7 @@ getContents(): Content[] {
 - **返回**：模型 SDK 使用的不带内部 Turn ID 的 `Content[]`。
 - **下一站**：Gemini Client 发请求，或 Recording Service 保存表面消息。
 
-内部身份用于去重和关联，而 Provider Content 只关心角色与 Parts，所以两者承载的信息并不相同。如果只保存 Provider Content，恢复时就可能无法重建原来的内部 Turn 引用。
+系统靠内部身份去重并关联前后事件，Provider Content 却只关心角色和 Parts，因此两边留下的信息并不一样。如果你只保存 Provider Content，恢复时就可能找不回原来的内部 Turn 引用。内部身份不能丢。
 
 ## Resume 只选可重新进入聊天的消息
 
@@ -53,7 +53,7 @@ if (history.length > 0) {
 - **返回**：AgentChatHistory 的初始 Turns。
 - **下一站**：Prompt Context 与新用户输入继续追加。
 
-Tool、Info、Error 等 Recording Message 可能服务回放界面，却不一定能原样进入 Provider 历史，因此恢复需要从完整记录里筛选聊天消息，是一次投影，不是把 JSONL 每行直接发给模型。
+Tool、Info、Error 等 Recording Message 可以留给界面回放，却未必适合原样塞进 Provider 历史，因此恢复时要从完整记录里挑出聊天消息，再投影成模型认识的格式，不能把 JSONL 一行不漏地发给模型。
 
 ## Recording 失败不一定终止正在运行的 Agent
 
@@ -74,11 +74,11 @@ fs.appendFileSync(this.conversationFile, line)
 - **返回**：通常不改变 Agent 的业务结果。
 - **下一站**：回放/恢复只能读取故障前成功落盘的前缀。
 
-因此，Agent 最终输出完整并不代表 Session 记录完整，故障前成功落盘的前缀也不能证明此后的事件已经保存。如果评测依赖 Trace，就应把 Recording 可用性单独列为基础设施字段，不能与 Agent 的业务结果混在一起判断。
+所以，即使 Agent 最后给出了完整结果，也不能说明 Session 记录同样完整，磁盘上能读到故障前的那一段，更不能证明后面的事件已经写入。如果评测要靠 Trace（执行轨迹）判定结果，就得单独记录 Recording 是否可用，别把基础设施故障和 Agent 的业务结果混在一起。这两种结果要分开。
 
 ## Compression 先摘要，再让模型检查摘要是否遗漏
 
-ChatCompressionService 找到安全切分点，把较旧 History 交给模型摘要并保留最近尾部，随后又发一次 Verification Prompt，要求检查重要细节是否丢失。
+ChatCompressionService 先找一个不会截断工具交互的切分点，把较旧的 History（历史记录）交给模型归纳，同时留下最近一段内容，随后再发一次 Verification Prompt，让模型检查摘要有没有漏掉重要细节。
 
 ### 第 4 站：切分、摘要与核对是分开的步骤
 
@@ -98,7 +98,7 @@ const verificationResponse =
 - **返回**：摘要文本、保留尾部与压缩元数据。
 - **下一站**：替换活动 Chat History。
 
-第二次模型核对要求检查重要细节是否丢失，因此能降低遗漏概率，但同一模型仍可能重复忽略同一细节。这不是无损证明。
+第二次请求会让模型专门检查重要细节有没有丢失，确实能减少遗漏，可同一个模型也可能再次忽略同一个地方，所以这套核对不能证明压缩过程没有损失。摘要仍然有损。
 
 ### 第 5 站：新历史由摘要握手和尾部组成
 
@@ -120,8 +120,8 @@ const newHistory: Content[] = [
 
 ## Memory 不应保存瞬态任务状态
 
-GEMINI.md 和 Memory Service 适合保存稳定的项目命令、目录约定和长期偏好，但 Memory 不是环境快照。「测试现在失败在第 42 行」这类信息应留在当前 Session/Artifact，因为文件很快就会改变，恢复后也必须重新核对工作区。
+GEMINI.md 和 Memory Service 适合记住稳定的项目命令、目录约定和长期偏好，却不该拿来充当环境快照。像「测试现在失败在第 42 行」这样的消息，应当留在当前 Session 或 Artifact（产物）里，因为文件很快会变，下次恢复时你仍要重新核对工作区。
 
-跨会话知识进入新会话之后，运行时能力还会受到 Extension 刷新的多个 Registry 影响。下一篇将沿着 MCP Client Manager、Tool Registry、Hook System、Agent Registry 与 Skill Manager 的更新链，区分 Agents、Hooks、Skills 与 MCP 怎样进入当前 Session 的 Prompt 与工具面。
+跨会话知识进入新会话以后，Extension 还会刷新多个 Registry，从而改变这次运行真正能用的能力。下一篇会跟着 MCP Client Manager、Tool Registry、Hook System、Agent Registry 和 Skill Manager 依次往下看，弄清 Agents、Hooks、Skills 与 MCP 各自怎样进入当前 Session 的 Prompt 和工具面。
 
 下一篇：[Agents、Hooks、Skills、MCP 与 Extensions](06-agents-hooks-skills-mcp.md)。

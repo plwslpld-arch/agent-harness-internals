@@ -2,17 +2,17 @@
 
 [返回学习入口](../../00-start-here.md)
 
-Gemini CLI 把交互表面、Core、Turn、Scheduler、工具、Policy、Confirmation 和 Session 组织成一条可追踪的 TypeScript 调用链——当模型产生工具请求时，读者可以沿着这条链继续往下追，看清 Harness 如何调度、确认和执行请求，又如何把结果送入下一轮。阅读时不必急着记住每个类型，而应先盯住一次请求携带的数据，看它怎样从配置与上下文出发，经过模型路由和事件流变成需要授权的工具调用，最后带着结果回到历史。只要这条数据流没有断，后面的 Registry、Hook 或 A2A 即使暂时陌生，也能放回正确位置。
+Gemini CLI 用交互表面、Core、Turn、Scheduler（调度器）、工具、Policy、Confirmation 和 Session 接起一条 TypeScript 调用链。模型发出工具请求后，你可以顺着这条链往下追，看 Agent Harness（智能体框架）怎样调度请求、确认权限并交给工具执行，再怎样把结果送入下一轮。阅读时不用急着记住每个类型，先盯紧一条请求携带的数据，看它如何从配置和上下文出发，经过模型路由与事件流变成需要授权的工具调用，最后带着执行结果写回历史。只要数据仍在链上流动，后面遇到 Registry、Hook 或 A2A，即使一时不熟，也能把它们放回正确的位置。
 
 ![Gemini CLI 系统地图](../../assets/diagrams/gemini-cli/system-architecture.svg)
 
 ## 这条课程适合谁
 
-如果你已经理解最小 Agent Loop，并且想继续阅读调度和确认机制，就可以选择这条路线，因为文章会把旧 Agent Session 与新的 Turn/Scheduler 路径分开讲解，避免把不同代际的实现拼成一条实际上不存在的主链。
+如果你已经理解最小 Agent Loop（智能体循环），想继续弄清调度器怎样接住请求、系统又在何处询问用户，就适合从这条路线往下读。两代实现不能混。课程会把旧 Agent Session 与新的 Turn/Scheduler 路径分开讲，免得你把它们硬接成一条源码里并不存在的主链。
 
 ## 锁定来源
 
-课程基于 Gemini CLI 提交 `5411f113cafae26161b4969b0237b8e1e024e2c2`，这样正文里的路径、类型和测试才能在同一个版本中互相核对。Gemini CLI 仍在演进，如果当前主链与 Legacy 证据来自不同版本，读者就可能拼出一条源码里从未存在的组合，因此遇到课程描述与本地新版不一致时，应先回到这个提交确认差异，再判断它来自版本变化还是阅读错误：
+这门课程锁定 Gemini CLI 提交 `5411f113cafae26161b4969b0237b8e1e024e2c2`，正文里的路径、类型和测试因此都能放在同一个版本里核对。Gemini CLI 还在演进，如果把当前主链与不同版本的 Legacy Agent 证据接在一起，你很容易拼出一条源码从未实现过的调用链。遇到课程描述和本地新版不一致时，先回到这个提交确认差异，再判断是版本变了，还是自己读错了：
 
 - [Turn 实现](https://github.com/google-gemini/gemini-cli/blob/5411f113cafae26161b4969b0237b8e1e024e2c2/packages/core/src/core/turn.ts)
 - [Scheduler 实现](https://github.com/google-gemini/gemini-cli/blob/5411f113cafae26161b4969b0237b8e1e024e2c2/packages/core/src/scheduler/scheduler.ts)
@@ -21,7 +21,7 @@ Gemini CLI 把交互表面、Core、Turn、Scheduler、工具、Policy、Confirm
 
 ## 先看一项任务
 
-用户输入进入 Core 后会形成 Turn，而模型流可能产生文本、工具请求或错误。一旦模型发出工具请求，Scheduler 就会接过它，并在 Policy 与 Confirmation 完成判断后调用工具实现，然后再把结果送回会话和后续模型输入。
+用户输入进入 Core 后会形成 Turn，模型流随后可能吐出文本、工具请求或错误。模型一旦发出工具请求，Scheduler 就会接过去，等 Policy 与 Confirmation 作出判断后再调用具体工具，执行结果则写回会话，并进入后续模型输入。
 
 ```text
 CLI 输入
@@ -35,7 +35,7 @@ CLI 输入
 
 ![Gemini CLI 端到端任务流程](../../assets/diagrams/gemini-cli/end-to-end-task.svg)
 
-课程会分别标注当前 Turn/Scheduler 主链与 Legacy Agent Session 证据，读到不同实现时先确认它们各自所属的路径，就能避免把两个时期的对象拼成一条实际上不存在的流程。
+课程会分别标出哪些证据属于当前 Turn/Scheduler 主链，哪些来自 Legacy Agent Session。先确认它走的是哪条路径。这样读到不同实现时，你就不会把两个时期的对象硬拼成一套源码里不存在的流程。
 
 ## 仓库地图
 
@@ -49,7 +49,7 @@ CLI 输入
 | Session 与压缩相关目录 | 历史怎样保存和缩短 |
 | Hooks、Agents、Skills、MCP | 核心之外的扩展接缝 |
 
-首次阅读时，不必追踪终端渲染、主题、认证提供商和所有遥测导出，因为这些分支虽然也很重要，却会在还没建立主链认识时分散注意力。先把一次 Turn 走完。
+第一次读时，可以先放下终端渲染、主题、认证提供商和所有遥测导出，这些分支固然重要，但你还没看清主链就钻进去，只会被细节带跑。先把一次 Turn 走完。
 
 ## 三层读法
 
@@ -70,9 +70,9 @@ CLI 输入
 
 ## 用贯穿任务复盘
 
-从 CLI 输入开始，先说明 Config/Prompt 怎样形成 Turn，再追踪模型流里的 Tool Call 怎样进入 Scheduler、Policy 与 Confirmation 何时介入、Tool Result 怎样回到 Session，以及压缩或 Memory 如何改变后续 Context。走完这条链之后，再分别写出 Tool Success、Turn 结束和任务通过需要什么证据，就不会把三种完成误认成同一件事。
+复盘时从 CLI 输入起步，先看 Config 和 Prompt 怎样拼出 Turn，再跟着模型流里的 Tool Call 进入 Scheduler，找出 Policy 与 Confirmation 在哪里插手，然后看 Tool Result 怎样写回 Session，以及压缩或 Memory 会如何改变后续 Context。把这条链走完以后，再分别列清 Tool Success、Turn 结束和任务通过各要什么证据，这三种「完成」就不会混在一起。
 
-若引用 Legacy Agent Session，必须明确它属于另一条可核对的路径，否则读者会误以为新旧对象在同一条运行链上共存。不要把它的对象无说明地接进当前 Turn/Scheduler 主链。
+引用 Legacy Agent Session 时，必须说明它走的是另一条可以单独核对的路径，否则读者会误以为新旧对象同时存在于一条运行链上。不要悄悄把它接进当前 Turn/Scheduler 主链。
 
 ## 完成课程后应该能回答
 

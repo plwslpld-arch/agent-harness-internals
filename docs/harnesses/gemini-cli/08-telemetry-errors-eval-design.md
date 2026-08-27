@@ -2,7 +2,7 @@
 
 [返回 Gemini CLI 课程地图](README.md)
 
-上一节沿 stream-json 的公共事件集合、非交互消费者的忽略列表、三种消息输出路径、IDE Diff 请求/响应和 A2A 任务状态机，区分了各表面的事件与停止语义，并要求评测固定表面与版本。在此前提下，Gemini CLI 可以记录模型请求、API 错误、Tool Call、Confirmation、Hook、Compression、Retry、路由回退和运行指标，而这些数据只能回答「发生了什么」，却没有任务答案、评分准则和发布阈值——运行观测和任务评分在这里分开。
+上一节先看 stream-json 公开哪些事件、非交互消费者忽略哪些事件，再追踪消息怎样走向三种输出格式，以及 IDE Diff 和 A2A Task 分别如何结束，由此把各个表面的事件与停止方式分开。做评测时还得锁定表面和版本。在这个前提下，Gemini CLI 会用 Telemetry（遥测）记录模型请求、API 错误、Tool Call、Confirmation、Hook、Compression、Retry、路由回退和运行指标，不过这些数据只能告诉你「发生了什么」，里面没有任务答案、评分准则和发布阈值。运行观测与任务评分必须分开。
 
 ```text
 执行链：Prompt → Model → Tool → Artifact
@@ -46,7 +46,7 @@ recordToolCallMetrics(config, event.duration_ms, {
 })
 ```
 
-Decision=ACCEPT 且 success=false 是完全合法的组合，因为用户允许了执行，但工具仍可能失败，而 Decision=AUTO_ACCEPT 且 success=true 也只说明工具协议成功，不说明任务已经完成。
+Decision=ACCEPT 与 success=false 完全可以同时出现，因为用户虽然放行了这次调用，工具执行时仍可能失败。Decision=AUTO_ACCEPT 与 success=true 也只说明系统自动放行，而且工具按协议顺利结束，不能据此断定整个任务已经完成。
 
 ## 批量编辑的聚合会丢掉单项细节
 
@@ -64,7 +64,7 @@ Decision=ACCEPT 且 success=false 是完全合法的组合，因为用户允许�
 - **返回**：面向指标系统的聚合 Event。
 - **下一站**：Dashboard 或产品分析。
 
-聚合适合统计，却不适合重建哪个文件失败，因此 Eval 应保留单个 Call 与实际 Diff。
+把一批动作折成一个状态很适合统计，却无法告诉你究竟哪个文件出了问题，所以 Eval 还要保留每个 Call 及其实际 Diff。
 
 ## 模型错误分类只覆盖响应层
 
@@ -76,7 +76,7 @@ Decision=ACCEPT 且 success=false 是完全合法的组合，因为用户允许�
 // STOP / MAX_TOKENS 之外的 FinishReason -> error
 ```
 
-这能区分传输取消、空响应和模型拒绝，却看不到目标仓库测试是否通过，因此任务错误分类还要加入 Tool、Policy、Sandbox、Hook、表面序列化和 Artifact 验证。
+这段映射能分清传输何时取消、模型何时返回空响应或拒绝继续，却看不到目标仓库的测试有没有通过，所以给任务错误分类时，还得核对 Tool、Policy、Sandbox、Hook 和表面序列化，并验证 Artifact（产物）。
 
 ## Telemetry 本身受配置和脱敏影响
 
@@ -96,7 +96,7 @@ Decision=ACCEPT 且 success=false 是完全合法的组合，因为用户允许�
 - **返回**：Logger/Meter/Tracer 使用的有效配置。
 - **下一站**：各运行点按配置发 Event 和 Metric。
 
-关闭 Prompt 记录时，Trace 仍可有时长和错误码，但不能用于复原输入，而 Exporter 故障也会造成缺口。没有事件不是没有执行。
+关掉 Prompt 记录以后，Trace（执行轨迹）里仍会留下时长和错误码，却无法据此还原输入。如果 Exporter 自己出了故障，记录还会断档。没有事件，不等于没有执行。
 
 ## 一个可复核的 Eval Artifact
 
@@ -107,8 +107,8 @@ Decision=ACCEPT 且 success=false 是完全合法的组合，因为用户允许�
 - Sandbox 类型与执行规格、文件 Diff、完整测试输出；
 - 表面输出、进程 Exit Code、Token、时长和 Telemetry 可用性。
 
-Evaluator 在 Agent 之外重新运行测试、检查 Diff 范围和任务约束，然后才给出 Score。若把 Score 用于训练，就应通过版本化 Reward Adapter 明确如何处理拒绝、基础设施失败和部分通过，而 Checkpoint 选择与最终发布仍使用隔离任务集。
+Evaluator（评估器）要在 Agent 之外重新跑测试，再检查 Diff 改了多大范围、有没有违反任务约束，确认以后才能给出 Score。如果这些 Score 还要拿去训练，就得用 Reward Adapter（把原始信号转换成训练奖励的版本化规则）写清楚如何处理拒绝、基础设施失败和部分通过，选择 Checkpoint 与决定最终发布时则继续使用隔离任务集。
 
-课程走到这里，已经从 Config、Prompt 与 Context 出发，沿 Turn、Tool、Policy、Session 和 Extension 的运行链，一路追到表面协议、Telemetry 与独立 Eval 的边界。本篇又分别拆开了 Confirmation Decision 与工具 Success、批量编辑聚合与单项 Diff、响应错误与任务错误、Telemetry 配置与事件缺口，还要求保存实际 Diff、完整测试输出、表面输出、进程 Exit Code 与任务约束，最后再把 Artifact 交给 Agent 之外的 Evaluator。回到课程地图时，读者便可按同一条调用链，重新核对各层的输入、状态与证据。
+课程从 Config、Prompt 和 Context 起步，顺着 Turn、Tool、Policy、Session 与 Extension 组成的运行链，已经追到了表面协议、Telemetry 和独立 Eval 之间的边界。这一篇又把几个容易混淆的结果逐一拆开：Confirmation Decision 只说是否放行，工具 Success 说明调用怎样结束。批量编辑可以聚合统计，单项 Diff 才能指出哪个文件出了问题。响应错误来自模型调用，任务错误还要结合仓库里的实际结果来判。你还得保存实际 Diff、完整测试输出、表面输出、进程 Exit Code 和任务约束，最后把这些 Artifact 交给 Agent 之外的 Evaluator。回到课程地图后，就可以沿同一条调用链重新核对每一层收到什么、改了什么状态，又留下了什么证据。
 
 到这里可以回到 [Gemini CLI 课程地图](README.md)，或进入 [Claude 课程](../claude/README.md) 比较公开 SDK 中 Tool Permission 与 Hook 的契约边界。
