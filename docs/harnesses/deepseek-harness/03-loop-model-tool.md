@@ -2,7 +2,7 @@
 
 [返回 DeepSeek Harness 课程地图](README.md)
 
-DeepSeek Harness 的主循环不是简单的 `while (toolCall)`。它把用户输入放进 Inbox，把一次外部任务推进划成 Turn，再把每次模型请求划成 Step；所有关键变化都追加为 Session Event。这个结构让插入输入、取消、并行工具和恢复有明确边界。
+DeepSeek Harness 的主循环不是简单的 `while (toolCall)`，它先把用户输入放进 Inbox，把一次外部任务推进划成 Turn，再把每次模型请求划成 Step。所有关键变化都会追加为 Session Event，因此插入输入、取消、并行工具和恢复都有明确边界。
 
 ## 先理解 Turn 与 Step
 
@@ -43,11 +43,11 @@ inject(input: UserMessage): void {
 - **返回**：这些方法没有业务返回值。
 - **下一站**：Driver 调用 `turn()`，在合适边界 claim Inbox 消息。
 
-`followup` 明确排到下一 Turn；`steer` 希望在下一 Step 进入，并唤醒 Driver；`inject` 只排队，不主动启动。取消后的唤醒输入还会被重新分类到下一 Turn，避免加入已经中止的活动。
+`followup` 会明确排到下一 Turn，而 `steer` 会进入下一 Step 并唤醒 Driver，`inject` 则只负责排队，不主动启动。取消后到达的唤醒输入还会被重新分类到下一 Turn，以免混入已经中止的活动。
 
 ## Driver 只负责把 Turn 推进到收敛
 
-`kick()` 的主体很短：只要 `turn()` 返回还要继续，就开启下一 Turn。复杂性留在 Turn 和 Step 边界，而不是塞进一个巨型循环。
+`kick()` 的主体很短，只要 `turn()` 表示还要继续，它就开启下一 Turn，因为真正的复杂性被留在了 Turn 和 Step 边界，不需要塞进一个巨型循环。
 
 源码：[查看 Driver 循环](https://github.com/deepseek-ai/deepseek-harness/blob/b150a551b8d465e31e418e1b2eaf5e79bbb7d28e/packages/core/agent-loop/src/agent.ts#L195-L220)
 
@@ -63,7 +63,7 @@ private async kick(): Promise<void> {
 }
 ```
 
-异常在更内层先写入结构化事件，再由 Driver 边界收敛活动状态。这样 UI 可以看到错误和 idle 转换，而不是留下一个永远 running 的 Agent。
+异常会先在更内层写成结构化事件，再由 Driver 边界收敛活动状态，因此 UI 能看见错误以及向 idle 的转换，不会留下一个永远处于 running 状态的 Agent。
 
 ### 第 2 站：Turn 追加边界事件并逐 Step 推进
 
@@ -91,11 +91,11 @@ this.session.append('turn/end', { turn, reason: turnEnds! })
 - **返回**：布尔值表示 Inbox 是否还有输入，需要继续下一 Turn。
 - **下一站**：每个 Step 调用模型流，随后可能调度工具。
 
-`preStep()` 不只是取消息，还组装 System Prompt、投影运行时 Context，并通过 waterfall 事件允许扩展修改或拒绝本 Step。若决策为 reject，Turn 以 blocked 结束；如果初始消息被移除为空，则不浪费模型调用。
+`preStep()` 不只是取消息，它还会组装 System Prompt、投影运行时 Context，并通过 waterfall 事件允许扩展修改或拒绝当前 Step。如果决策为 reject，Turn 就以 blocked 结束，而初始消息被移除为空时，也不会浪费一次模型调用。
 
 ## Step 从 Session 重新派生完整请求
 
-每个请求都由 Session 历史派生，而不是只拿上一次局部返回。System Prompt Assembly、Tools、模型路由和历史消息共同形成冻结请求。
+每个请求都从 Session 历史重新派生，而不是只拿上一次的局部返回，因为 System Prompt Assembly、Tools、模型路由和历史消息需要共同形成一份冻结请求。
 
 ### 第 3 站：流式 Chunk 先落事件，再合成 Assistant Message
 
@@ -123,9 +123,9 @@ this.session.append('assistant/message', { turn, step, message, ... })
 - **返回**：Step 结束原因，或工具执行后返回 `null` 表示还需下一 Step。
 - **下一站**：若 Assistant Message 含 ToolCall，调用 `executeToolCalls()`。
 
-中途取消时，Assembler 会尽量产出 `interruptedBlocks()`，并把部分 Assistant Message 标为 interrupted。这比直接丢掉所有已收到内容更可观察，但部分内容不能当成正常完成消息参与最终评分。
+如果模型流中途取消，Assembler 会尽量产出 `interruptedBlocks()`，并把不完整的 Assistant Message 标为 interrupted。这样比直接丢掉所有已收到内容更便于观察，但这些部分内容不能当作正常完成消息参与最终评分。
 
-模型流报告 error 或 aborted 时，`agent/request-error` waterfall 可以返回 retry。重试发生在同一 Step 内，并重新构建请求；没有 retry 决策时才抛 `LlmError`。因此 Attempt 统计不能仅按 Step 数推算模型调用次数。
+模型流报告 error 或 aborted 时，`agent/request-error` waterfall 可以返回 retry，而重试会留在同一个 Step 内重新构建请求，只有没有 retry 决策时才抛出 `LlmError`，因此 Attempt 统计不能只按 Step 数推算模型调用次数。
 
 ## 没有 ToolCall 才完成当前 Step 链
 
@@ -139,7 +139,7 @@ return concluded ? { kind: 'completed' } : null
 
 源码：[查看 Step 收敛判断](https://github.com/deepseek-ai/deepseek-harness/blob/b150a551b8d465e31e418e1b2eaf5e79bbb7d28e/packages/core/agent-loop/src/agent.ts#L410-L418)
 
-这段逻辑说明模型文本不是唯一完成信号。工具结果可能声明 `concluded`，否则它们形成新的上下文，Turn 再进入一个 Step，让模型观察执行结果。
+这段逻辑说明模型文本并不是唯一的完成信号，因为工具结果可能直接声明 `concluded`，否则它们就会形成新的上下文，让 Turn 再进入一个 Step，由模型观察执行结果。
 
 ### 第 4 站：工具调用先解析，再按执行模式分组
 
@@ -167,7 +167,7 @@ const group = mode === 'parallel' ? planned.slice(next) : [first]
 - **返回**：是否有工具要求直接结束，以及已启动调用的上下文结果。
 - **下一站**：Scheduler 依次 prepare、dispatch、finish/finalize，并按模型顺序提交结果。
 
-并行执行不等于乱序提交。工具可以同时运行，但 Policy、Result 和送给模型的 Context 保持模型顺序。这让重放与解释更稳定，也避免较快的第二个工具抢先改变后续语义。
+并行执行不等于乱序提交，因为工具虽然可以同时运行，Policy、Result 和送给模型的 Context 却仍会保持模型给出的顺序。提交顺序不能乱。这样既能让重放与解释更稳定，也能避免较快完成的第二个工具抢先改变后续语义。
 
 ### 第 5 站：Call 与 Result 用事件序号建立因果关系
 
@@ -189,7 +189,7 @@ session.append('tool/result', {
 - **返回**：Call 辅助函数返回事件序号，Result 追加没有业务返回值。
 - **下一站**：Result Context 被放入 `next-step` Inbox，下一模型请求从 Session 派生它。
 
-取消时，已开始调用会被 drain 并有序提交；未开始调用会得到「调度前已取消」的合成错误结果。内部 Scheduler 自身失败则停止新分派并排空已启动调用，但不会伪造未启动结果。这两个路径必须分开统计。
+取消发生后，已经开始的调用会被 drain 并有序提交，尚未开始的调用则会得到「调度前已取消」的合成错误结果。若内部 Scheduler 自身失败，它会停止新分派并排空已启动调用，但不会伪造未启动结果。这两条路径必须分开统计。
 
 ## 用失败测试任务走一遍
 
@@ -209,4 +209,4 @@ session.append('tool/result', {
 - ToolResult 是执行报告，不保证副作用完整或可信，仍需环境核验。
 - Session Event 能重放已记录事实，但不等于自动恢复所有外部进程状态。
 
-上一层配置怎样把 Prompt 和 Tools 送进循环，见[Prompt、Context 与 Cache](02-prompt-context-cache.md)；下一篇继续追踪执行边界：[工具、审批与 Sandbox](04-tools-security.md)。
+上一层配置怎样把 Prompt 和 Tools 送进循环，见[Prompt、Context 与 Cache](02-prompt-context-cache.md)，而下一篇会继续追踪执行边界：[工具、审批与 Sandbox](04-tools-security.md)。

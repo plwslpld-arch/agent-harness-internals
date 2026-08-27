@@ -2,7 +2,7 @@
 
 [返回 DeepSeek Harness 课程地图](README.md)
 
-工具能被模型看到，不等于能绕过策略执行。DeepSeek Harness 把工具 Schema、Runtime Pipeline、Approval 和 Sandbox 分开：Schema 告诉模型怎样提出调用；Runtime 校验、调度和归一化结果；Approval 决定是否授予一次性许可；Sandbox 最终约束文件和进程能力。
+工具能被模型看到，不等于它能绕过策略执行，因为 DeepSeek Harness 把工具 Schema、Runtime Pipeline、Approval 和 Sandbox 拆成了不同层次。每一层都各管一关。Schema 负责告诉模型如何提出调用，Runtime 随后校验、调度并归一化结果，而 Approval 和 Sandbox 则分别决定是否授予一次性许可，以及文件与进程能力最终被限制在哪里。
 
 ## 一次工具调用的安全链
 
@@ -16,7 +16,7 @@
   → Session 记录 tool/result
 ```
 
-任何一层放行都不能替代下一层。例如 Approval 允许一次更宽 Sandbox，只说明用户同意这次请求；内核、文件 ACL 或执行器仍可能拒绝实际操作。
+任何一层放行都不能替代下一层，因此即使 Approval 允许某次调用使用更宽的 Sandbox，它也只能说明用户同意了这次请求，而真正执行时，内核、文件 ACL 或执行器仍然可以拒绝操作。
 
 ### 第 1 站：工具定义同时声明输入、输出和执行体
 
@@ -38,7 +38,7 @@ export interface ToolDefinition extends ToolSchema {
 - **返回**：注册函数返回精确 disposer，用于卸载定义。
 - **下一站**：SystemPrompt 获取可见 Schema；模型提出调用后 Runtime 解析同一个 Scoped 定义。
 
-规范输出要求工具先返回可验证 JSON Value，再由纯 `render()` 投影成模型内容。这样 UI、模型文本和结构化业务值不会被一个任意字符串混为一谈。
+规范输出之所以要求工具先返回可验证的 JSON Value，再由纯 `render()` 投影成模型内容，是为了防止 UI、模型文本和结构化业务值被一个任意字符串混在一起。
 
 ### 第 2 站：注册与 Scope Restriction 是不同操作
 
@@ -66,15 +66,15 @@ restrict(filter: ToolRestriction): () => void {
 - **返回**：可撤销本次变更的 disposer。
 - **下一站**：Prompt Assembly 和执行解析都读取相同 Scoped 可见集合。
 
-Runtime 禁止在 Root Context 上调用 `restrict()`，因为那会意外屏蔽所有 Agent。空 Restriction 也会失败，避免「配置材料化为空却被当成有效策略」。
+Runtime 禁止在 Root Context 上调用 `restrict()`，因为这个操作会意外屏蔽所有 Agent，而当 Restriction 为空时也会直接失败，以免「配置材料化为空却被当成有效策略」。
 
 ## 并行默认是拒绝式选择
 
-工具只有在 `isConcurrencySafe(args)` 精确返回 `true` 时才能和兄弟调用重叠。未声明、抛异常、返回非 true、工具隐藏或参数非法时一律 exclusive。
+工具只有在 `isConcurrencySafe(args)` 精确返回 `true` 时才能和兄弟调用重叠，否则无论是未声明、抛异常、返回非 true，还是工具隐藏或参数非法，都一律按 exclusive 处理。
 
 源码：[查看并发分类](https://github.com/deepseek-ai/deepseek-harness/blob/b150a551b8d465e31e418e1b2eaf5e79bbb7d28e/packages/core/tools/src/index.ts#L1270-L1284)
 
-这是一种 fail-closed 设计：读文件可能安全并行，修改共享状态的工具默认形成屏障。并发安全声明只描述与同批工具重叠，不代表该工具整体安全或无需权限。
+这是一种 fail-closed 设计：读文件之类的工具可能适合并行，但只要工具会修改共享状态，它就默认形成屏障。并发不等于安全。并发安全声明只说明它能否与同批工具重叠执行，并不代表这个工具整体安全，更不代表它无需权限。
 
 ### 第 3 站：Approval 每次询问都写成一对 Session Event
 
@@ -96,9 +96,9 @@ return outcome
 - **返回**：`allowed-once`、`rejected`、`cancelled` 或 `unavailable`。
 - **下一站**：策略层只在 `allowed-once` 时继续本次执行。
 
-Approval 要求 Turn 仍开放，因为 Turn 是持久化提交与重放边界。把询问事件写在 Turn 之间，崩溃恢复时可能像无主尾部而被丢弃。
+Approval 要求 Turn 仍处于开放状态，因为 Turn 是持久化提交与重放的边界，如果把询问事件写在两个 Turn 之间，它在崩溃恢复时就可能被当成无主尾部丢弃。
 
-`ask` 策略把问题交给已组合 Answerer；没有 Answerer 时返回 unavailable。`never` 在服务内部直接拒绝，后注册 Listener 无法绕过。Headless/CI 应使用确定性 `never`，而不是期待无人回答的 Prompt 自动安全结束。
+`ask` 策略会把问题交给已组合的 Answerer，如果没有 Answerer 则返回 unavailable，而 `never` 会在服务内部直接拒绝，后注册的 Listener 也无法绕过这一决定。因此 Headless/CI 应该使用结果确定的 `never`，不要期待无人回答的 Prompt 自动安全结束。
 
 ## Sandbox Mode 与 Approval Policy 不是同一个轴
 
@@ -127,7 +127,7 @@ if (sandboxPermissions !== undefined && justification === undefined) {
 - **返回**：合法时无返回；缺字段、空理由或错误配对直接抛错。
 - **下一站**：`approveEscalation()` 对照本次调用的有效 Mode 并发起 Approval。
 
-目标枚举不能只根据部署默认 Mode 缩减，因为 Session 可能运行时切到更窄 Mode。真正「是否更宽」必须在执行时用本调用有效 Mode 判断。
+目标枚举不能只按部署时的默认 Mode 缩减，因为 Session 在运行期间可能切换到更窄的 Mode，所以真正的「是否更宽」必须在执行时用本次调用的有效 Mode 判断。
 
 ### 第 5 站：授权发生在任何执行之前
 
@@ -153,19 +153,19 @@ switch (outcome) {
 - **返回**：只在 allowed-once 时返回本调用使用的 Mode。
 - **下一站**：执行器以该 Mode 运行这一次操作。
 
-申请同级或更窄 Mode 不会打扰用户；缺少 Approval Service、缺 Agent、拒绝、取消和无通道都失败关闭。一次性授权也不能沉淀成永久白名单。
+申请同级或更窄的 Mode 时不会打扰用户，而只要缺少 Approval Service、缺少 Agent，或者结果是拒绝、取消与无通道，执行就会失败关闭，授权只管这一次。
 
 ## ToolRuntime 如何保证取消后不遗留活动
 
-Runtime 的 `dispatchToolBody()` 会融合调用方信号与 Wrapper 替换信号。工具体一旦开始，取消不会直接遗弃 Promise；Runtime 等它达到静止，再把结果规范化为 aborted。
+Runtime 的 `dispatchToolBody()` 会融合调用方信号与 Wrapper 替换信号，而一旦工具体已经开始运行，取消就不会直接遗弃它的 Promise，Runtime 会等工具达到静止状态，再把结果规范化为 aborted。
 
 源码：[查看 Tool Body 分派](https://github.com/deepseek-ai/deepseek-harness/blob/b150a551b8d465e31e418e1b2eaf5e79bbb7d28e/packages/core/tools/src/index.ts#L1527-L1559)
 
-同进程 JavaScript 不能被 Runtime 强行杀死，所以 Tool 必须合作观察 `exec.signal`，并把它传给子进程、网络或文件操作。声明 timeout 也只有在相应 Policy Wrapper 已组合且 Tool 合作取消时才真正有效。
+由于同进程的 JavaScript 无法被 Runtime 强行杀死，Tool 必须主动观察 `exec.signal`，并把它继续传给子进程、网络或文件操作。即使声明了 timeout，也只有在相应 Policy Wrapper 已组合且 Tool 愿意配合取消时才真正有效。
 
 ## 三个平台的 Sandbox 不能假设完全同构
 
-Linux 可以使用 Bubblewrap/Landlock 等 Provider，macOS 常用 Seatbelt，Windows 可能依赖 ACL 或受限进程链。统一 Mode 是 Harness 契约，不代表内核能力完全一致。部署验收至少测试：
+Linux 可以使用 Bubblewrap/Landlock 等 Provider，macOS 常用 Seatbelt，Windows 则可能依赖 ACL 或受限进程链，所以统一 Mode 只是 Harness 对外给出的契约，不代表各平台的内核能力完全一致。部署验收时至少要测试：
 
 1. read-only 下工作区写入确实失败；
 2. workspace-write 不能越过工作区边界；
