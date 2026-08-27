@@ -3,19 +3,26 @@
   "name": "agent-harness-internals",
   "visibility": "public",
   "defaultBranch": "main",
-  "about": "面向开发者的中文 Agent Harness 源码教材：解析 DeepSeek Harness、Codex、Gemini CLI、Claude、pi 与 OpenCode。",
+  "about": "面向开发者的中文 Agent Harness 源码教材：解析 Codex、Claude、Gemini CLI、DeepSeek Harness、pi 与 OpenCode，覆盖配置、工具循环、权限边界、状态恢复与编排。",
+  "homepage": "https://plwslpld-arch.github.io/agent-harness-internals/",
+  "sibling": {
+    "repo": "plwslpld-arch/eval-harness-internals",
+    "name": "Eval Harness 源码内核",
+    "url": "https://github.com/plwslpld-arch/eval-harness-internals",
+    "site": "https://plwslpld-arch.github.io/eval-harness-internals/"
+  },
   "topics": [
     "agent-harness",
     "coding-agents",
     "source-code-analysis",
-    "ai-evaluation",
+    "chinese",
+    "llm",
     "deepseek-harness",
     "openai-codex",
     "gemini-cli",
     "claude-code",
     "pi-coding-agent",
-    "opencode",
-    "chinese"
+    "opencode"
   ],
   "socialPreview": "docs/assets/brand/social-preview.png",
   "features": {
@@ -24,7 +31,9 @@
     "discussions": false
   },
   "branchProtection": {
-    "requiredStatusChecks": ["verify"],
+    "requiredStatusChecks": [
+      "verify"
+    ],
     "enforceAdmins": true,
     "requiredApprovingReviewCount": 0
   }
