@@ -2,27 +2,27 @@
 
 [返回学习入口](../../00-start-here.md)
 
-DeepSeek Harness 是一套 TypeScript 多包 Agent Harness，它把 Preset、Prompt、模型调用、工具、Session、Code Mode、扩展和评测接缝组合成可装配运行时。装配只是起点。课程会沿着一次任务，追踪配置怎样变成运行对象，以及模型输出怎样进入工具循环。状态还要跨轮保存。目录名称，不会被直接当成架构结论。
+DeepSeek Harness 是一套采用 TypeScript 多包结构的 Agent Harness。启动时，各个包会把 Preset（预设）、Prompt、模型调用、工具、Session、Code Mode（代码模式）、扩展和评测接缝接到同一套运行时。装配只是起点。课程会沿一次真实任务追踪配置怎样生成运行对象、模型输出怎样进入工具循环，以及状态怎样跨轮保存。源码目录只帮助定位模块，不能直接证明架构结论。
 
 ![DeepSeek Harness 系统地图](../../assets/diagrams/deepseek-harness/system-architecture.svg)
 
 ## 这条课程适合谁
 
-如果你想理解一个功能较完整的 Harness 怎样通过包和配置装配能力，可以从这里开始，因为课程只要求你能阅读基础 TypeScript。至于 Cordis、ACP、KV Cache 和 Code Mode，课程会等到实际源码出现时再解释，因此不要求你提前熟悉它们。
+如果你想了解一个功能较完整的 Harness 怎样通过包和配置获得不同能力，可以从这里开始。只要能读懂基础 TypeScript，就能跟上这条课程。Cordis、ACP、KV Cache 和 Code Mode 会在对应源码第一次出现时解释，你不必提前熟悉它们。
 
 ## 锁定来源
 
-为了让正文解释和源码位置保持一致，本课程的所有分析都基于 DeepSeek Harness 提交 `b150a551b8d465e31e418e1b2eaf5e79bbb7d28e` 这一锁定提交。建议先打开下面三个入口建立地图：
+为了让正文解释始终对应同一份源码，本课程把 DeepSeek Harness 固定在提交 `b150a551b8d465e31e418e1b2eaf5e79bbb7d28e`。开始阅读前，可以先打开下面三个入口，认清配置、主循环和测试分别位于哪里：
 
 - [标准 Agent Preset](https://github.com/deepseek-ai/deepseek-harness/blob/b150a551b8d465e31e418e1b2eaf5e79bbb7d28e/apps/cli/config/agent-presets/standard/agent.cordis.yml)
 - [Agent Loop 实现](https://github.com/deepseek-ai/deepseek-harness/blob/b150a551b8d465e31e418e1b2eaf5e79bbb7d28e/packages/core/agent-loop/src/agent.ts)
 - [Agent Loop 测试](https://github.com/deepseek-ai/deepseek-harness/blob/b150a551b8d465e31e418e1b2eaf5e79bbb7d28e/packages/core/agent-loop/tests/loop.spec.ts)
 
-源码链接固定到同一提交，避免默认分支变化后文章和实现错位。
+所有源码链接都指向这个提交，因此默认分支继续变化时，文章仍能与当时阅读的实现对应。
 
 ## 先看一项任务
 
-课程使用「修复失败测试」作为贯穿任务，进入源码后，这项任务会被映射到 DeepSeek Harness 自己的对象上。任务，先由 CLI 选择 Preset，再由配置装配 Prompt 和工具，然后 Agent Loop 发起模型请求，并让工具调用生成新的 Message。随后 Session 会保留这些事件，直到最终产物被 ACP 表面或评测适配器读取。
+课程始终围绕「修复失败测试」这项任务展开，并把任务推进过程逐步对应到 DeepSeek Harness 的真实对象。CLI 先选择 Preset，配置层据此装入 Prompt 和工具，随后 Agent Loop 请求模型，并把工具调用产生的结果写成新的 Message。Session 会继续保存这些事件，ACP 表面或评测适配器最终再从中读取运行产物。
 
 ```text
 CLI / ACP 输入
@@ -35,7 +35,7 @@ CLI / ACP 输入
 
 ![DeepSeek Harness 端到端任务流程](../../assets/diagrams/deepseek-harness/end-to-end-task.svg)
 
-这张图是按锁定源码重建的阅读路线，并非运行时自动生成的 Trace。因此进入各章后，每个箭头还会继续落到具体文件、对象和上游测试。
+这张图根据锁定源码重建阅读路线，并非运行时自动生成的 Trace。进入各章后，你还要沿每个箭头找到具体文件和对象，再用上游测试核对它们之间的调用关系。
 
 ## 仓库地图
 
@@ -48,7 +48,7 @@ CLI / ACP 输入
 | 工具与 Code Mode 相关包 | 普通工具和代码执行路径怎样连接 Environment |
 | Session 与协议表面 | 消息怎样持久化并暴露给 CLI、ACP 或其他宿主 |
 
-首次阅读可以跳过网站、构建脚本和与当前调用链无关的 Provider 兼容代码。
+第一次阅读时，可以先跳过网站、构建脚本和当前调用链没有经过的 Provider 兼容代码。
 
 ## 三层读法
 
@@ -67,13 +67,13 @@ CLI / ACP 输入
 7. [产品表面、Feedback 与 Eval 接缝](07-surfaces-feedback-eval.md)：运行事实怎样离开核心。
 8. [测试、核对与适用边界](08-verification-design-limits.md)：用上游测试回查课程结论。
 
-这些文章会在重构中合并重复概念，而编号只表达推荐顺序，不表示每个机制都属于独立层。
+课程会随着重构合并重复概念，编号只表示推荐阅读顺序，不能据此判断每个机制都属于独立层。
 
 ## 用贯穿任务复盘
 
-读完后，可以沿着前面的完整链路，从「CLI/ACP 收到运费修复目标」开始做一次真正的复盘。第一步先说清标准 Preset 选择了哪些能力，以及 Prompt 怎样带入项目上下文。接着说明 Agent Loop 怎样接收 `read/edit/test` 的 Tool Result，Code Mode 与普通工具路径如何分工，Session 在中断后保存什么，以及最后哪些 Feedback 或 Eval 接缝能观察结果。只有当复盘中的每一步都能回到课程里的某个锁定源码站点时，这条路线，才真正闭环。
+读完课程后，可以从「CLI/ACP 收到运费修复目标」开始，沿前面的调用链复盘一次。先说明标准 Preset 选择了哪些能力，以及 Prompt 怎样带入项目上下文，再解释 Agent Loop 怎样接收 `read/edit/test` 的 Tool Result、Code Mode 与普通工具路径如何分工、Session 在中断后保存了什么，最后指出哪些 Feedback 或 Eval 接缝能够观察结果。复盘中的每一步都应回到课程里的某个锁定源码站点，这样才能形成可核对的完整链路。
 
-若你只能说「Bundle 把它们组合起来」，就还没有完成复盘，因为你还需要进一步说明具体配置进入哪个对象、状态在哪里变化，以及下一站由谁消费。
+如果只能说「Bundle 把它们组合起来」，复盘还没有完成，因为你仍需指出具体配置进入哪个对象、状态在哪里变化，以及下一站由谁消费。
 
 ## 完成课程后应该能回答
 
