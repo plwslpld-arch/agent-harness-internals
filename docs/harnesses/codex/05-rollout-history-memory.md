@@ -2,9 +2,9 @@
 
 [返回 Codex 课程地图](README.md)
 
-上一讲沿 Exec Policy、Approval Policy 与 Sandbox 追到实际进程，而执行结束以后，安全决策与执行结果还要分别进入 Rollout、模型历史、Compaction 与 Memory。
+上一讲顺着 Exec Policy（执行策略）、Approval Policy（审批策略）和 Sandbox 一路追到进程启动。进程结束以后，安全决定和执行结果还会分别写进 Rollout、模型能看到的 History、Compaction 和 Memory。
 
-Codex 同时需要满足四类消费者，其中恢复器想要完整记录，模型只需要有界 Context，界面需要可以投影的事件，而跨线程 Memory 管线还要从中提炼长期有用的信息。如果把这些数据都称为「会话历史」，压缩时就很容易误删证据，恢复时也可能把摘要当成原文。
+这几份数据各有用处。恢复程序要读完整记录，模型只接收容量有限的 Context，界面要把事件整理成可显示的内容，跨线程 Memory 管线则从旧任务中挑出以后还用得上的信息。你要是把它们全叫作「会话历史」，做压缩时很可能删掉证据，恢复时也可能误把摘要当成原文。
 
 ```text
 追加式 Rollout ──→ Thread Store / 恢复
@@ -37,9 +37,9 @@ pub enum RolloutItem {
 - **返回**：可供恢复器、Trace 和界面读取的有序序列。
 - **下一站**：Thread Store 用 ThreadId 定位后端，恢复器重建 Initial History。
 
-`ResponseItem` 虽然最接近模型历史，但其他 Item 仍然保存着恢复和解释运行所需的事实，因此只导出聊天文本会丢失 Turn Context、Compaction 边界和部分控制事件。
+`ResponseItem` 和模型看到的历史最接近，可恢复程序还得依靠其他 Item（条目）解释当时发生了什么。只导出聊天文字，会把 Turn Context、Compaction 边界和一部分控制事件丢掉。
 
-这条边界不能省。
+这层区别不能省。
 
 ## ThreadId 是句柄，不是文件路径
 
@@ -59,7 +59,9 @@ pub enum RolloutItem {
 - **返回**：线程元数据和 Rollout 内容。
 - **下一站**：恢复器构造 Resumed 或 Forked History。
 
-如果应用层把某个本地 JSONL 路径保存成唯一身份，那么存储一旦换成远程后端，这个身份就会失效，而 ThreadId 可以让 API 在不同存储实现之间保持稳定。
+如果应用层拿本地 JSONL（逐行 JSON）路径当作唯一身份，存储后端一换到远端，这个身份立刻就失效。应用只认 ThreadId（线程 ID），API 才能在不同存储实现之间继续使用同一个稳定句柄。
+
+文件在哪并不重要。
 
 ## Resume 与 Fork 必须保留不同语义
 
@@ -86,11 +88,11 @@ pub enum InitialHistory {
 - **返回**：Session 初始化所需的 InitialHistory。
 - **下一站**：Context Manager 重放可见历史，Writer 继续写入正确目标。
 
-即使 Resume 与 Fork 最初看到的是同一批消息，它们也不能共享后续写入身份，否则 Fork 上的实验就会污染原 Thread。
+Resume（恢复）和 Fork（从已有历史建立新分支身份）起步时可以读到同一批消息，但后续写入必须各用各的身份。否则你在 Fork 上做一次实验，内容就会混进原来的 Thread。
 
 ## Compaction 改的是模型视图，不是假装旧记录没发生
 
-当 Context 接近窗口上限时，Codex 会生成摘要并构造一段替代模型历史，同时在 Rollout 中记录 `Compacted` Item，让恢复器知道后续 Context 是在什么时间、通过哪份摘要发生了改变。
+当 Context 快装不下时，Codex 会写出一份 Summary（摘要），再用它和保留下来的尾部重新组成模型历史。同时，Codex 还会在 Rollout 中追加 `Compacted` Item，恢复程序据此才能知道：后面的 Context 从什么时候开始改用哪份摘要。
 
 ### 第 3 站：压缩生成替代 History 和元数据
 
@@ -112,7 +114,9 @@ sess.replace_compacted_history(
 - **返回**：压缩后的可用 Context。
 - **下一站**：后续 Turn 用摘要与保留尾部继续采样；Rollout 保存 Compacted 事实。
 
-摘要会丢失一部分信息——所以验证时不能只看 Token 数是否下降，还要检查未完成任务、文件名、用户约束和关键 Tool Result 能否从新 Context 中恢复出来。
+摘要一定会损失信息。验证时别只看 Token 数量有没有下降，还要确认新 Context 能不能还原未完成的任务、文件名、用户约束和关键 Tool Result。
+
+少一个都可能误事。
 
 源码：[查看压缩后的请求与 Rollout 测试](https://github.com/openai/codex/blob/c9b19deb09c1841ce7acc33ddb96276030936a29/codex-rs/core/tests/suite/compact.rs#L635-L697)
 
@@ -121,11 +125,11 @@ assert_eq!(assistant_count, 0, "assistant history should be cleared");
 // Rollout 中仍能找到带期望摘要的 Compacted Item。
 ```
 
-测试会同时查看模型请求和持久记录，正好对应这里的「双视图」设计。两边都要核对。
+测试会同时查看模型请求和持久记录，因为压缩会改模型眼前的历史，也会在 Rollout 里留下记录。两边都得核对。
 
 ## Memory 是跨线程提炼工件
 
-Memory 写入 crate 拥有独立目录、Raw Memories 和 Rollout Summaries。它会从过去任务中提炼可复用的信息，而不是把所有 Thread 原样拼成一个超长 Prompt。
+负责写 Memory 的 crate 有自己的目录，还会分别保存 Raw Memories 和 Rollout Summaries。它从过去的任务里挑出可复用的信息，再写成独立文件，不会把所有 Thread 原封不动地拼进一个超长 Prompt。
 
 ### 第 4 站：Memory 有自己的文件布局和管线
 
@@ -144,8 +148,10 @@ pub const RAW_MEMORIES_FILENAME: &str = ...;
 - **返回**：后续任务可以检索的独立工件。
 - **下一站**：新 Session 根据需要选择性注入相关 Memory。
 
-Memory 可能已经过时，也可能在提炼时出错——所以注入时必须保留来源和时间语境。它可以帮助模型恢复背景，却不能覆盖当前仓库文件和用户的新指令。
+Memory 里的内容可能已经过时，提炼时也可能出了错。因此，把 Memory 注入新 Session 时，必须带上来源和时间背景。它能帮模型找回背景，但当前仓库里的文件和用户刚给的指令优先级更高。
 
-厘清 Memory 的边界以后，下一步还要区分另一组经常被混称的对象，也就是 Skill、Hook、Plugin、MCP 与 Code Mode 各自扩展哪一层，以及目录存在、被发现、模型可见和执行成功为什么不能算作同一状态。
+旧记忆不能盖过新事实。
+
+Memory 的边界清楚以后，下一篇再看 Skill、Hook、Plugin、MCP 和 Code Mode 分别改动哪一层。目录已经存在、系统发现了它、模型看得见它、最后执行成功，这几个状态也得拆开查。
 
 下一篇：[Skills、Hooks、Plugins、MCP 与 Code Mode](06-extensions-code-mode.md)。

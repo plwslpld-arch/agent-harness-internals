@@ -2,9 +2,9 @@
 
 [返回 Codex 课程地图](README.md)
 
-上一篇沿着 Thread 树，读到了子任务的身份、状态与控制。现在把视线从树内移到树外，看同一套核心面对不同产品表面。
+上一篇顺着 Thread 树，弄清了子任务是谁、处于什么状态，又该怎样控制。现在走出这棵树，看看同一套核心怎样接住不同产品入口。
 
-Codex 核心可以被交互 CLI、无头 Exec、App Server、IDE、MCP Server 或 Cloud 入口驱动。它们共享 Thread、Turn、模型和工具实现——但传输、错误格式、停止语义和对外事件并不完全相同。
+交互 CLI、无头 Exec、App Server、IDE（集成开发环境）、MCP Server 或 Cloud 入口都能驱动 Codex 核心。它们共用 Thread、Turn（回合）、模型和工具实现，可到了传输方式、错误格式、停止语义和对外事件这一层，各入口并不完全一样。
 
 ```text
 交互 CLI ─┐
@@ -37,7 +37,7 @@ enum Subcommand {
 - **返回**：对应表面的退出码和输出。
 - **下一站**：表面创建 Thread/Session，或连接既有 Thread。
 
-同一个 Turn Error 在 Exec 中可能成为非零 Exit Code，在 App Server 中却会变成 JSON-RPC Error/Event，因此测试其中一个映射不能替代对另一个映射的核对。
+同一个 Turn Error 到了 Exec，可能表现为非零 Exit Code，所以你测过这种映射，仍不能断定另一种也对。到了 App Server，它也可能变成 JSON-RPC Error 或 Event。两种映射要分开测。
 
 ## App Server 把核心变成多传输服务
 
@@ -62,7 +62,7 @@ enum Subcommand {
 - **返回**：协议响应、通知和连接终态。
 - **下一站**：客户端更新自己的任务视图或提交下一项操作。
 
-即使传输连接成功，也不能说明 Thread 已经创建，而请求被接受同样不能说明 Turn 已经完成。客户端需要用请求 ID、ThreadId 和 TurnId 分别关联三个层次。
+Transport（传输层）连上了，不代表 Thread 已经创建。服务端接受请求，也不代表 Turn 已经跑完，Client 必须分别拿请求 ID、ThreadId（线程 ID）和 TurnId 对上这三个层次。这几层不能混。
 
 ## Trace、Telemetry 与 Feedback 分别保存什么
 
@@ -83,7 +83,7 @@ pub use writer::TraceWriter;
 - **返回**：可重建调用链的事件集合或派生视图。
 - **下一站**：调试器、可视化或 Evaluator 消费。
 
-Reducer 输出只是投影，所以不应覆盖 Raw Events，而当 Writer 未启用或写入失败时，也不能根据「没有 Trace」推断执行没有发生。
+Reducer 给出的只是派生视图，不能拿它覆盖原始事件。Writer 没有启用或者写入时失败了，你都可能看不到 Trace（执行轨迹）。这不能反推执行没发生。
 
 ### OTel：观察性能与运行指标
 
@@ -95,7 +95,7 @@ pub use ... RuntimeMetricsSummary;
 pub use ... inject_span_w3c_trace_headers;
 ```
 
-OTel 适合回答延迟、错误率、调用关联和资源使用。采样、Exporter 故障与脱敏都会造成信息缺口，因此「没有 Error Span」不是任务成功判定。
+OTel 适合用来查延迟、错误率、调用关系和资源消耗，而采样会漏掉一部分信息，Exporter 故障和脱敏也会留下缺口。因此，看不到 Error Span，不能据此判定任务成功。
 
 ### Feedback：用户提交诊断与主观信号
 
@@ -106,7 +106,7 @@ pub struct CodexFeedback { ... }
 pub fn snapshot(...) -> FeedbackSnapshot { ... }
 ```
 
-Feedback 可以携带日志或附件帮助定位问题，但受选择偏差和用户语境影响，也可能包含敏感数据。它不是自动 Reward，更不是发布门禁。
+Feedback（反馈）可以带上日志和附件，帮你定位问题，不过谁愿意提交反馈、用户当时处在什么语境，都会影响这份材料，其中还可能混有敏感数据。它不能自动变成 Reward。也不能充当发布门禁。
 
 ## 一个独立 Eval 应怎样使用这些通道
 
@@ -118,8 +118,8 @@ Feedback 可以携带日志或附件帮助定位问题，但受选择偏差和�
 4. 在 Codex 运行之外执行目标测试与静态检查。
 5. Evaluator 依据测试、Diff 范围和任务约束给出 Score 与失败原因。
 
-Assistant 最终文本、Exec Exit Code、OTel、Trace 与 Feedback 都是证据来源——但评分权属于显式 Evaluator。若要用这些数据训练，还应通过单独的 Reward Adapter 定义样本选择和标签语义，并保留独立发布集。
+Assistant（助手）的最终文本、Exec Exit Code、OTel、Trace 和 Feedback 都能提供证据，真正给出评分的应是明确设置的 Evaluator。如果还想拿这些数据训练模型，就要另设 Reward Adapter（把原始信号转换成训练奖励的版本化规则），把样本怎么选、标签表示什么写清楚，并保留一份独立发布集。
 
-沿着这八篇文章，读者手里已经有了从配置、Thread/Turn、工具与执行边界，到 Rollout、子代理和多表面证据的源码阅读路径。手边还缺另一套 Harness 的对应证据，所以要先完成另一条课程，再按课程地图进入横向比较。
+读完这八篇，你已经能从配置出发，一路追过 Thread、Turn、工具和执行边界，再读到 Rollout、子 Agent 以及各个入口留下的证据。要做横向比较，手边还缺另一套 Agent Harness 的同类证据，先读完另一条课程，再回课程地图对照会更稳。
 
-到这里可以回到 [Codex 课程地图](README.md) 自己复核永久链接，或进入 [Gemini CLI 课程](../gemini-cli/README.md) 比较它的 Config、Scheduler 与 Tool Confirmation 设计。
+到这里可以回到 [Codex 课程地图](README.md) 自己复核永久链接，或进入 [Gemini CLI 课程](../gemini-cli/README.md) 比较 Config 和 Scheduler，再看 Tool 与 Confirmation 这两个概念在 Tool Confirmation 里怎样配合。
