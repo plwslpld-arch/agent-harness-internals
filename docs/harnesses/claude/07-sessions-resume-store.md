@@ -2,9 +2,9 @@
 
 [返回 Claude 课程地图](README.md)
 
-Hook 已经给出了单次运行内按事件关联记录的策略点，但跨轮次继续运行还需要历史所有权与恢复位置，因此这里要沿 Session 标识、Resume 和外部 Store 看状态怎样延续。
+Hook 已经能在一次运行里按事件串起记录，但要跨轮次继续，你还得知道历史归谁、该从哪里恢复。历史必须有归属。因此这一篇沿着 Session 标识、Resume（恢复）和外部 Store，看状态怎样接着走下去。
 
-如果只把上一轮回答再放进 Prompt，还不足以恢复 Session，因为这里同时涉及会话标识、CLI 本地 Transcript、恢复位置、分叉语义、子 Agent 记录和可选的外部持久化。Python SDK 的 `SessionStore` 也没有用外部数据库直接替换 Claude Code 的本地历史文件，它提供的是镜像与恢复适配层。
+只放回上一轮回答还不够。运行时还要认出原来的会话，找到 CLI 保存在本地的 Transcript，确定从哪里续接，并处理分叉、子 Agent 记录和可选的外部持久化。Python SDK 的 `SessionStore` 也不会拿外部数据库直接替掉 Claude Code 的本地历史文件，它只负责镜像记录，并在恢复时做适配。
 
 ## 先区分三个概念
 
@@ -14,11 +14,11 @@ Hook 已经给出了单次运行内按事件关联记录的策略点，但跨轮
 | `resume` / `continue_conversation` | 新进程从哪段已有历史继续 |
 | `SessionStore` | 怎样把 Transcript 副本写到外部存储，并在恢复前取回 |
 
-`continue_conversation=True` 表示选择最近会话，`resume=<id>` 用来指定会话，而 `fork_session=True` 会从旧历史出发并创建新的会话分支。这些选项会改变历史所有权，不能当成普通字符串标签。
+`continue_conversation=True` 会选择最近的会话，`resume=<id>` 会指定一条会话，`fork_session=True` 则沿用旧历史再开出新的会话分支。它们会改变后续历史写到哪里，不能只当成几个普通的字符串标签。
 
 ## SessionStore 保存的是不透明记录
 
-外部 Store 无须理解并重写每种 Transcript 行，因为公开类型故意只要求 `type`，其余字段都按 JSON 对象透传。
+外部 Store 不用读懂并改写每一种 Transcript 行，因为公开类型只强制要求 `type`，其余字段都会作为 JSON 对象原样传过去。
 
 ### 第 1 站：Store 契约要求可往返，不要求字节完全相同
 
@@ -41,11 +41,11 @@ class SessionStore(Protocol):
 - **返回**：`append()` 无业务结果；`load()` 返回记录列表或不存在。
 - **下一站**：镜像写入不会替代 CLI 本地写入；恢复时返回值会被写到临时 JSONL。
 
-Protocol 注释明确表示，子进程仍会写本地磁盘，Adapter 收到的是第二份副本。外部存储的 TTL、合规保留和删除由 Adapter 负责，SDK 不会跟随本地清理策略自动删除外部副本。
+Protocol 的注释说得很清楚：子进程仍把记录写到本地磁盘，Adapter（适配器）拿到的是另一份副本。至于外部存储保留多久、怎样满足合规要求、何时删除，都由 Adapter 自己负责，SDK 不会跟着本地清理策略自动删掉外部副本。
 
 ## 镜像为什么要批量写
 
-流式运行可能频繁产生 Transcript 帧，如果每帧都同步等待远程数据库，Store 延迟就会进入消息热路径。SDK 默认使用 `batched`，在 Result 出现或缓存超过阈值时刷新，而 `eager` 虽然会更快触发后台刷新，却仍不等于每条记录都已永久落盘。
+流式运行会频繁产生 Transcript 帧，如果每一帧都同步等待远程数据库，Store 的延迟就会卡住消息处理。落盘没有这么快。SDK 默认采用 `batched`，等 Result 出现或缓存超过阈值再刷新。`eager` 虽然更早触发后台刷新，也不能保证每条记录都已经永久落盘。
 
 源码：[查看镜像批处理构造](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/_internal/session_resume.py#L97-L127)
 
@@ -60,7 +60,7 @@ return TranscriptMirrorBatcher(
 )
 ```
 
-因此，看到模型输出不代表外部 Store 已追平——需要强一致审计时，应在 Result 和关闭路径上等待 flush 并记录镜像错误，否则就不能用「数据库里暂时没看到」直接判定本轮没有发生。
+所以看到模型已经输出，不等于外部 Store 也追到了同一位置。需要强一致审计时，要在 Result 出现和运行关闭的路径上等待 flush，同时记下镜像错误。否则数据库里暂时没有记录，只能说明镜像还没写到那里，不能断定本轮什么也没发生。
 
 ### 第 2 站：Client 在启动 CLI 前决定是否材料化
 
@@ -81,7 +81,7 @@ self._materialized = (
 - **返回**：材料化结果保存在 Client 上；自定义 Transport 跳过这一过程。
 - **下一站**：材料化 Options 指向临时 `CLAUDE_CONFIG_DIR`，Transport 再启动 CLI。
 
-自定义 Transport 会跳过这一步，因为它已经由调用方构造，SDK 改写的临时配置未必能传给对端。这个条件必须写进架构说明，不能笼统地声称「设置 SessionStore 就一定支持 Resume」。
+自定义 Transport 会跳过这一步，因为调用方已经把它构造好了，SDK 就算改写临时配置，也未必能把配置送到对端。架构说明必须写清这个条件，不能笼统地说「设置 SessionStore 就一定支持 Resume」。
 
 ### 第 3 站：恢复先从 Store 取回，再生成临时本地结构
 
@@ -104,11 +104,11 @@ _write_jsonl(project_dir / f"{session_id}.jsonl", entries)
 - **返回**：`MaterializedResume`，包含临时目录、实际恢复 ID 和清理协程；无可用历史时返回 `None`。
 - **下一站**：`apply_materialized_options()` 把 CLI 配置目录指向临时位置，运行结束后清理。
 
-这条链路解释了「外部 Store 不是 Runtime 数据库」——CLI 仍沿现有本地恢复机制读取 JSONL，只是 SDK 在启动前把外部记录重新铺成它认识的目录结构。
+这条链路解释了外部 Store 和 Runtime（运行时）数据库为什么不能画等号：CLI 仍按原来的本地恢复机制读取 JSONL，SDK 只是在启动前取回外部记录，并把它们重新写成 CLI 认识的目录结构。
 
 ## 外部 Key 不能直接当路径
 
-子 Agent 的 subpath 来自外部 Store。如果把它直接拼入临时目录，恶意或损坏数据可能使用绝对路径、`..`、Windows 盘符或空字符串逃逸目标目录。
+子 Agent 的 subpath 来自外部 Store，如果不做检查就直接拼到临时目录后面，恶意或损坏的数据便可能借助绝对路径、`..`、Windows 盘符或空字符串逃出目标目录。
 
 ### 第 4 站：恢复时验证 subpath
 
@@ -131,7 +131,7 @@ if any(p in (".", "..") for p in re.split(r"[\\/]", subpath)):
 - **返回**：安全布尔判断。
 - **下一站**：安全路径对应的记录才写入临时配置，再供 CLI 恢复。
 
-这也是通用 Harness 原则：外部持久化返回的任何路径都属于不可信输入，即使数据最初由自己写入，也必须同时按 POSIX 与 Windows 的路径语义检查。
+任何由外部持久化系统返回的路径都应当按不可信输入处理，即使数据最初是自己写进去的，也要同时用 POSIX 和 Windows 的路径规则检查。这个检查不能省。
 
 ## Store 实现至少要满足的约束
 
@@ -142,12 +142,12 @@ if any(p in (".", "..") for p in re.split(r"[\\/]", subpath)):
 5. 自己实现外部保留、删除、加密和访问控制。
 6. Resume 前验证 project key、Session ID 和 subpath。
 
-SDK 提供了 Store conformance 测试入口，因此自定义 Redis、PostgreSQL 或对象存储 Adapter 时，应先跑契约测试，再做真实并发和故障注入。
+SDK 提供了 Store conformance 测试入口。你自己为 Redis、PostgreSQL 或对象存储编写 Adapter 时，应先跑契约测试，再用真实并发和故障注入来检验实现。
 
 ## Session 恢复不是质量证明
 
-恢复成功只说明历史被加载并进入新的运行，它无法保证旧任务目标仍适用、工作区没有漂移、工具权限相同、模型版本相同或最终答案正确。因此 Artifact 还应记录恢复来源、父 Session、分叉 ID、工作区基线和新的独立 Eval。
+恢复成功只能说明运行时加载了旧历史，并开始了一次新的运行。它不能保证旧任务目标依然适用，也不能保证工作区、工具权限和模型版本都没有变化，更不能证明最终答案正确。因此 Artifact（产物）还要记下恢复来源、父 Session、分叉 ID、工作区基线，并接受新的独立 Eval。
 
-Session 与 Store 解决了历史怎样延续，却没有说明一次运行还能怎样扩展能力与角色。接下来分别辨认 MCP Server、Agent Definition 和 Skill 进入运行的路径。
+Session 和 Store 解释了历史怎样延续，却还没说明一次运行怎样加入新的能力和角色。下一篇会分别看 MCP Server、Agent Definition（智能体定义）和 Skill 各自怎样进入运行。
 
 下一篇：[MCP、Agents 与 Skills：三种扩展机制怎样进入运行](08-mcp-agents-skills.md)。

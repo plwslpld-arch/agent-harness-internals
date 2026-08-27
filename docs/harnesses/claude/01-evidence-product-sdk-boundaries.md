@@ -2,9 +2,9 @@
 
 [返回 Claude 课程地图](README.md)
 
-课程地图已经把追踪路线停在公开 SDK 与 CLI 的交界处——现在先把这条边界拆成可以逐句核对的证据规则。
+课程地图已经追到了公开 SDK 与 CLI 交接的地方，这一篇先把边界说清楚，看每类证据到底能支持哪些结论。
 
-学习 Claude Agent Harness 的第一个难点不在代码本身，而在于「别把不同对象写成一个东西」。日常交流里，人们常把 Claude 模型、Claude Code、Agent SDK 和自己的 Python 应用统称为 Claude，而一旦沿用这种简称去分析源码，不同对象之间的证据就会被混在一起，错误结论也会跟着出现。
+学习 Claude Agent Harness（智能体框架）时，第一道难关并不在代码，而是别把几个不同的对象写成同一件事。日常交流里，人们常把 Claude 模型、Claude Code、Agent SDK 和自己的 Python 应用都叫作 Claude，但你若带着这种简称去读源码，就很容易引错证据，最后把结论也写错。
 
 ## 四个对象分别是谁
 
@@ -20,23 +20,23 @@
 - **Claude Agent SDK**让应用启动或连接 CLI，发送消息，接收类型化事件，并处理公开控制协议。
 - **你的应用**决定怎样配置 SDK、实现权限回调和 Hooks、保存产物以及独立评测结果。
 
-所以，「Python SDK 中有一个 `Query` 类」只能证明 Python SDK 的协议路由设计，并不能证明 Claude Code 内部也有同名类。同样，即使官方文档说 SDK 提供 Agent Loop，这项公开契约也不会自动变成闭源循环的源码调用图。
+因此，「Python SDK 里有一个 `Query` 类」只能证明 Python SDK 怎样路由协议，不能证明 Claude Code 内部也有同名类。同理，即使官方文档说 SDK 提供 Agent Loop（智能体循环），你也不能拿这项公开契约去补画闭源循环的源码调用图。
 
 ## 两套 SDK 的证据并不对称
 
-Python Agent SDK 锁定在提交 `542fefb3b94be87760b2513fff889b91bb5b6672`。该仓库包含 `query.py`、`client.py`、内部 Transport、消息解析、控制协议和测试，足以沿实际 Python 调用链阅读。
+Python Agent SDK 锁定在提交 `542fefb3b94be87760b2513fff889b91bb5b6672`。这个仓库里有 `query.py`、`client.py`、内部 Transport（传输层）、消息解析、控制协议和测试，我们可以沿着 Python 真正走过的调用链一站站读下去。
 
 - [Python 公开入口](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/query.py#L11-L26)
 - [Python 内部 Client](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/_internal/client.py#L73-L98)
 - [Python 控制协议](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/_internal/query.py#L469-L580)
 
-TypeScript Agent SDK 锁定在提交 `48275071e804139579fabada9bb8d90cfe02b062`。当前锁定仓库公开了 README、CHANGELOG、许可证和 Session Store 示例，却没有可供本课程追踪的 SDK 主体运行时源码。因此课程可以讲它公开承诺的 API 和可见示例，但不会假装已经读过其内部实现：[查看锁定 README](https://github.com/anthropics/claude-agent-sdk-typescript/blob/48275071e804139579fabada9bb8d90cfe02b062/README.md#L1-L24)。
+TypeScript Agent SDK 锁定在提交 `48275071e804139579fabada9bb8d90cfe02b062`。当前锁定的仓库只公开了 README、CHANGELOG、许可证和 Session Store（会话存储）示例，我们看不到 SDK 主体运行时的源码，也就无法沿着它的内部实现继续追踪。这门课可以讲它公开承诺的 API 和看得见的示例，但不会装作已经读过其内部实现：[查看锁定 README](https://github.com/anthropics/claude-agent-sdk-typescript/blob/48275071e804139579fabada9bb8d90cfe02b062/README.md#L1-L24)。
 
-「没有看到源码」是有范围的结论：它只描述这个锁定 Git 树，不外推 npm 分发包、其他仓库、私有实现或未来版本。
+「没有看到源码」有明确的范围：这句话只针对当前锁定的 Git 树，不能外推到 npm 分发包、其他仓库、私有实现或未来版本。
 
 ## 怎样判断一句话能不能写进源码课程
 
-先问一句话的主语，再根据证据类型选择对应材料。
+先看这句话说的到底是谁，再根据对象去找能够直接支持它的证据。
 
 | 句子想说明什么 | 首选证据 | 合理写法 |
 | --- | --- | --- |
@@ -50,7 +50,7 @@ TypeScript Agent SDK 锁定在提交 `48275071e804139579fabada9bb8d90cfe02b062`�
 
 > Python 与 TypeScript SDK 内部都由同一个 Query 控制器驱动 Claude Code。
 
-这句话一次跨过了三个证据能力并不相同的对象：锁定的 Python 源码只能证明 Python 入口委托给内部 Client，TypeScript 锁定树又没有主体实现，而 Claude Code 内部依然属于产品边界。把这些限制都写进句子后，表达可以改成下面这样。
+这句话一口气跨过了三个对象，可我们能从这三处拿到的证据并不对等：锁定的 Python 源码只能证明 Python 入口把工作交给了内部 Client，TypeScript 锁定树里又没有主体实现，Claude Code 的内部运作则仍在产品边界之内。把这些限制一起写清楚，句子才能改成下面这样。
 
 > 两套 SDK 都公开了查询表面，但只有 Python 锁定源码可以核对其 Client、Transport 与控制协议链路。当前 TypeScript 锁定树无法证明内部实现与 Python 同构，因此也不能据此推断 Claude Code 内部对象图。
 
@@ -71,20 +71,20 @@ async for message in client.process_query(
 
 源码：[查看完整入口](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/query.py#L117-L126)
 
-这段代码可以支持三个结论：缺省 Options 在入口创建，入口实例化 `InternalClient`，然后消息从 `process_query()` 异步产出。但这几行代码没有展示后面的模型循环和工具执行，所以它无法支持「这里已经实现了模型循环」「每条工具调用都由这个函数执行」或「CLI 内部也使用 `InternalClient`」。
+这段代码能支持三个结论：入口会在没有 Options 时补上默认值，然后实例化 `InternalClient`，并从 `process_query()` 异步取出消息。但这几行还没有走到后面的模型循环和工具执行，因此你不能据此断定「这里已经实现了模型循环」「每条工具调用都由这个函数执行」或「CLI 内部也使用 `InternalClient`」。
 
-源码导读的价值不在于给每行代码配一段赞美——而在于知道这几行改变了什么、下一步该去哪、哪些问题到这里仍没有答案。
+读源码的价值，在于弄清这几行改变了哪些状态、下一步应该去哪里，以及哪些问题到了这里仍然没有答案。
 
 ## 官方文档与源码冲突时怎么办
 
-在线文档描述当前公开契约，锁定源码描述某个历史提交。两者不一致时，不要强行选一个覆盖另一个：
+在线文档说的是当前对外公开的契约，锁定源码记录的则是某个历史提交。两者对不上时，别急着拿其中一个覆盖另一个，而要把版本和证据来源一起交代清楚：
 
 1. 写明文档页面和访问日期；
 2. 写明源码提交；
 3. 判断差异是版本漂移、语言 SDK 差异，还是理解错误；
 4. 在没有同版本证据前并列描述。
 
-许可证也要按仓库分别处理，因为 Python 仓库的 MIT 许可不会自动扩展到 TypeScript 仓库或 Claude Code 产品。即使几份材料里的技术接口看起来相似，它们的授权范围仍然可能完全不同。
+许可证也得逐个仓库处理，因为 Python 仓库里的 MIT 许可不会自动覆盖 TypeScript 仓库或 Claude Code 产品。几份材料的技术接口即使看起来相似，授权范围也仍然可能完全不同。
 
 ## 本课程之后怎样标注边界
 
@@ -94,6 +94,6 @@ async for message in client.process_query(
 - **机制解释**：用课程自己的图或伪代码帮助理解，并明确它是抽象，不伪装成上游类图。
 - **产品边界**：到公开 SDK 无法继续进入的地方停止，不用熟悉的设计模式填空。
 
-边界划清以后，下一步只沿 Python 锁定源码前进：从公开入口进入 `InternalClient`，再看 Transport 与控制协议怎样接上 CLI。
+边界清楚了，下一篇就只沿着锁定的 Python 源码往里走：从公开入口进入 `InternalClient`，再看 Transport 和控制协议怎样接上 CLI。
 
 下一篇开始走真实主链：[Python 入口、Transport 与双向控制](02-python-entry-transport-control.md)。
