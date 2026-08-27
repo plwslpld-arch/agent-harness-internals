@@ -2,13 +2,13 @@
 
 [返回学习入口](../../00-start-here.md)
 
-OpenCode 以服务化 Session 为核心，其中 Project 和 Config 负责选择运行上下文，Provider 建立模型接口，Session Prompt 驱动主循环，Processor 消费模型流和工具结果，最后再由 Server 与 Protocol 把同一核心暴露给多个客户端。
+OpenCode 围绕服务化 Session 组织运行过程：Project 和 Config 先选定这次运行要用的环境，Provider（模型提供商）接好模型接口，Session Prompt 再驱动主循环，让 Processor（处理器）接住模型流和工具结果，最后由 Server 与 Protocol 把这套核心能力交给多个客户端使用。
 
 ![OpenCode 系统地图](../../assets/diagrams/opencode/system-architecture.svg)
 
 ## 这条课程适合谁
 
-如果你想理解一个 Agent 核心怎样作为服务被 TUI、Desktop、Web 和协议客户端共享，可以选择 OpenCode，因为它在最小 Loop 之外加入了 Project、Server 和持久化边界，正好适合已经完成基础导读的读者。
+如果你已经读完基础导读，想看 TUI（终端用户界面）、Desktop、Web 和协议客户端怎样共用一个 Agent 核心，OpenCode 很适合作为下一站。它没有停在最小 Loop 上，还把 Project、Server 和持久化边界摆到了同一条运行链里。
 
 ## 锁定来源
 
@@ -22,7 +22,7 @@ OpenCode 以服务化 Session 为核心，其中 Project 和 Config 负责选择
 
 ## 先看一项任务
 
-客户端在某个 Project 中创建或选择 Session 之后，Prompt 主链会先组合消息、Agent 配置和工具，再向 Provider 发起模型请求。随后由 Processor 处理流式事件和工具状态，而权限询问通过 Session 事件到达客户端，得到的结果会继续写回 Session。
+客户端先在某个 Project 里创建或选中 Session，Prompt 主链随后把消息、Agent 配置和工具组到一起，再向 Provider 发起模型请求。模型开始流式返回后，Processor 会逐项处理事件和工具状态，权限询问则跟着 Session 事件送到客户端，用户给出的结果还会写回原来的 Session。
 
 ```text
 TUI / Desktop / Web / ACP
@@ -36,7 +36,7 @@ TUI / Desktop / Web / ACP
 
 ![OpenCode 端到端任务流程](../../assets/diagrams/opencode/end-to-end-task.svg)
 
-图中客户端只负责展示询问和结果，真正的 Session 状态仍由服务核心维护——接入多个客户端并不等于复制多份 Agent Loop。
+图里的客户端只负责展示询问和结果，服务核心才真正维护 Session 状态。即使同时接入多个客户端，也不会因此复制出多套 Agent Loop（智能体循环）。
 
 ## 仓库地图
 
@@ -50,7 +50,7 @@ TUI / Desktop / Web / ACP
 | `packages/server` 与 `packages/protocol` | 多客户端怎样共享服务核心 |
 | TUI、Desktop、Web、ACP | 同一事件在不同表面怎样呈现 |
 
-Permission 规则和用户询问虽然能够控制产品行为，却不会自动构成操作系统 Sandbox，真正的隔离仍取决于宿主或另行配置的执行环境。
+Permission（权限）规则可以决定产品是否放行某个动作，用户询问也能在执行前把流程停下来，但这两层都不会自动变成操作系统 Sandbox，进程到底被隔离到什么程度，仍要看宿主和另行配置的执行环境。这两层不能混。
 
 ## 三层读法
 
@@ -70,9 +70,9 @@ Permission 规则和用户询问虽然能够控制产品行为，却不会自动
 
 ## 用贯穿任务复盘
 
-从客户端选择 Server/Directory 开始，依次说明 Project/Config/Provider 怎样建立实例，Session Prompt 怎样驱动 LLM 与 Processor，Permission Question 怎样到达客户端，Message/Part 怎样持久化，Compaction/Revert 如何改变有效历史，以及多种产品表面如何从同一 Server 读取事实。
+复盘时从客户端选择 Server/Directory 开始，沿着一次真实运行往下讲：Project、Config 和 Provider 怎样把实例建起来，Session Prompt 怎样驱动 LLM 与 Processor，Permission Question 怎样送到客户端，Message 和 Part 怎样落盘，Compaction（上下文压缩）与 Revert 又怎样改写模型下一轮真正能看到的历史。最后再看各种产品表面怎样从同一个 Server 读取事实。
 
-最后还要分别判断 Share 同步、OpenTelemetry Span、Session Idle 和独立测试各自能证明什么，因为它们虽然都可以关联同一 Session，却不能互相替代。
+读到最后，你还要逐个判断 Share 同步、OpenTelemetry Span、Session Idle 和独立测试到底各自能证明什么。它们都能关联到同一个 Session，但这几类证据不能互相替代。
 
 ## 完成课程后应该能回答
 

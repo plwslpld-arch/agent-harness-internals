@@ -2,7 +2,11 @@
 
 [返回 OpenCode 课程地图](README.md)
 
-OpenCode 的扩展入口看起来都在为 Agent 增加能力，但它们接入系统的位置并不相同。Agent 定义模型、Prompt 与 Permission，Task Tool 负责创建子 Session，而 Skill 提供经过权限过滤的指令资源。再往外看，Plugin 可以贡献 Tools、Auth、Provider 和 Hooks，MCP 暴露远端 Tools、Prompts 与 Resources，LSP 则专门回答代码语义问题。
+OpenCode 有好几条路可以给 Agent 增加能力，但每条路接入系统的位置都不一样。Agent 定义会选定模型、Prompt 和 Permission（权限），Task Tool 则负责创建子 Session，让父 Agent 能把一段工作交出去。
+
+Skill（技能）经过权限过滤后才把指令资源交给 Agent，Plugin 却能直接向进程注册 Tools、Auth、Provider 和 Hooks。
+
+再往系统外面看，MCP 暴露远端的 Tools、Prompts 与 Resources，LSP（语言服务器协议）只管回答代码语义问题。它们不能混着理解。
 
 ## 子 Agent：继承拒绝边界，不复制父权限全集
 
@@ -26,7 +30,7 @@ return [
 - **返回**：Child Session Ruleset。
 - **下一站**：Session Create 与子 Prompt Loop。
 
-父端已经允许的能力不该自动全部下放，因为子 Agent 换了 Persona 之后，仍然必须受父 Session 设下的禁止边界约束。Deny 必须随行。
+父 Session 已经放行的能力不会自动全部交给子 Agent，因为子 Agent 换了 Persona（角色设定）以后，仍得遵守父 Session 设下的禁止边界。Deny 必须跟过去。
 
 ### 第 2 站：Task Tool 在创建前检查深度和 Agent
 
@@ -46,11 +50,11 @@ const childPermission = deriveSubagentSessionPermission(...)
 - **返回**：子任务结果投影与 Child Session ID。
 - **下一站**：父 Prompt Loop 把结果作为 Tool Result 继续。
 
-子 Session 拥有自己的 Messages、Compaction 和副作用，而父端拿到的结果只是这段执行过程的投影，所以调试时必须保留 Child Session ID，才能回到真正发生工作的那条历史。
+子 Session 会保存自己的 Messages，也会独立触发 Compaction 并产生副作用，父端最后拿到的只是这段运行投回来的结果。调试时一定要留下 Child Session ID，你才能找到真正执行过工作的那条历史。
 
 ### 子 Agent 为什么不能只是一次嵌套函数调用
 
-子任务一旦进入多轮模型调用，就可能继续执行工具、触发压缩，也可能在中途被单独取消或失败，因此一次普通的嵌套函数调用装不下这些状态变化。独立 Session 为子任务保留完整历史和恢复边界，而父 Session 只接收投影后的 Tool Result，不必把内部对话全部塞进自己的 Context。隔离不是免费的——跨 Session 的权限、成本与 Trace 关联都必须显式处理。
+子任务一旦跑进多轮模型调用，就可能继续执行工具、触发压缩，也可能中途单独取消或失败，因此普通的嵌套函数调用根本装不下这些状态。独立 Session 会替子任务留住完整历史，也给它划出可以恢复的边界，父 Session 只收最终投回来的 Tool Result，不用把内部对话全塞进自己的 Context。这样做也有代价，跨 Session 的权限和成本要单独处理，Trace 也得明确关联起来。
 
 ## Skill：发现后还要按 Agent Permission 过滤
 
@@ -70,7 +74,7 @@ return list.filter((skill) =>
 
 ## Plugin 是高信任进程代码
 
-Plugin 能注册 Tool、Provider、Auth 和 Hook，而且它直接以 OpenCode 进程权限运行，所以风险远高于普通 Prompt 文件。在启用一个 Plugin 之前，需要分别审计签名、来源、版本与安装脚本，而当 Hook 会改写模型输入或 Tool Result 时，还应保留改写前后的值，给后续解释留下证据。
+Plugin 可以注册 Tool、Provider、Auth 和 Hook，还直接拿着 OpenCode 进程的权限运行，风险自然比普通 Prompt 文件高得多。启用之前，你得逐项检查它的签名、来源、版本和安装脚本，这道检查不能省。如果 Hook 还会改写模型输入或 Tool Result，就要把改写前后的值都留下，免得出问题时找不到证据。
 
 ## MCP：连接存在不等于服务提供每种能力
 
@@ -92,11 +96,11 @@ return paginate((cursor) => client.listResources(...))
 
 ## LSP：按文件和项目根选择语言服务器
 
-LSP 提供 Diagnostics、Definition、References 和 Symbols，但只有 Binary 存在、Root 探测成功且文件语言匹配时，这些查询才真的可用。仓库里出现 `package.json`，并不等于 TypeScript Server 已经启动。
+LSP 可以查询 Diagnostics、Definition、References 和 Symbols，但它得先找到 Binary，正确识别 Root，还要确认文件语言匹配，查询才真的跑得起来。仓库里有 `package.json`，不代表 TypeScript Server 已经启动。
 
 ## 回到运费任务
 
-父 Agent 可以把「检查相关测试覆盖」委托给子 Agent，但父端禁止编辑测试的 Deny 必须继续生效。在执行过程中，Skill 可以告诉子 Agent 项目测试命令，LSP 可以定位 `shippingFee` 引用，而 MCP 可以提供外部资源。Plugin 则是最需要审计的进程内代码。这些机制扩展的是不同层，不能统称为「插件」。
+父 Agent 可以把「检查相关测试覆盖」交给子 Agent，不过父端用 Deny 禁止编辑测试后，这条限制必须在子 Session 里继续生效。任务跑起来以后，Skill 可以告诉子 Agent 该用哪条测试命令，LSP 可以帮它找到 `shippingFee` 的引用，MCP 则能提供外部资源。Plugin 直接进入进程，最该仔细审计。它们改动的层次不同，不能全叫「插件」。
 
 ## 练习：一项能力为什么目录可见却不能使用
 
@@ -105,7 +109,7 @@ LSP 提供 Diagnostics、Definition、References 和 Symbols，但只有 Binary 
 <details>
 <summary>查看核对要点</summary>
 
-可以依次检查 Agent 对 `skill` 的 Permission、MCP Server 声明的 Capabilities 与分页结果，以及 LSP Binary、Root 和文件语言是否匹配。因为发现、授权、服务能力和运行依赖是四道不同门槛，所以通过前一道并不能证明后一道也已就绪。
+你可以依次检查 Agent 对 `skill` 的 Permission、MCP Server 声明的 Capabilities 和分页结果，再确认 LSP Binary、Root 与文件语言能不能对上。发现、授权、服务能力和运行依赖各管一道门，前一道已经通过，后一道仍可能卡住。
 
 </details>
 

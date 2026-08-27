@@ -2,7 +2,11 @@
 
 [返回 OpenCode 课程地图](README.md)
 
-OpenCode 数据库会保存 Session、Message 和 Part 的完整记录，但 Prompt Loop 读取的是经过 Compaction 过滤、重排后的有效历史，而 Provider 最终接收的又是转换后的 Model Messages。Revert 处理的范围不同，它会同时操作工作树里的 Snapshot/Patch 和 Session 消息后缀。
+OpenCode 会把 Session、Message 和 Part 的完整记录存进数据库，但 Prompt Loop（提示词循环）不会原样读取它们，而是先让 Compaction（上下文压缩）筛选并重排历史，再取其中仍然有效的部分。
+
+Provider（模型提供商）拿到的内容还要再转换一次，已经成了适配具体 API 的 Model Messages。Revert（还原）走的是另一条路，它既要改工作树，也要清理 Session 里位于还原点之后的消息。
+
+工作树能倒回去，是因为文件工具事先留下了 Snapshot（快照）和 Patch（补丁）。Session 这边则要删掉消息后缀，让下一轮从新的尾部继续。你读这一篇时要一直分清这两条线。
 
 ```text
 数据库 Session / Message / Part
@@ -31,11 +35,11 @@ return [
 - **返回**：供 Context 转换的有效历史。
 - **下一站**：Message Converter 生成 Provider Model Messages。
 
-经过语义重排以后，数组最后一项已经不能可靠代表最新 Session 状态，所以需要查找「最新消息」时，应该使用源码提供的时间或 ID 规则，而不能直接取投影数组的尾元素。尾部不等于最新。
+Compaction 按语义重排数组以后，最后一项就未必对应 Session 的最新状态。你要找「最新消息」，应当使用源码规定的时间或 ID 规则，不能顺手拿走投影数组的尾元素。尾部不等于最新。
 
 ### 三种历史视图分别服务什么
 
-数据库记录负责审计与恢复，Compaction 投影负责控制模型窗口，而 Provider Messages 负责适配具体 API，因此三种视图的顺序、字段和粒度都可能不同。调试模型行为时要保存第三种实际输入，解释 Session 如何演化时则要回到第一种完整记录，因为只截取 UI 展示，通常不足以回答其中任何一个问题。视图不能混用。
+数据库留下完整记录，供你审计和恢复。Compaction 从这些记录里挑出模型还能看到的历史，用来控制窗口，Provider Messages 再把有效历史改成具体 API 接受的格式。三层数据各自做一件事，顺序、字段和粒度自然可能不同。调试模型为什么这样回答时，要保存真正送给 Provider 的第三层输入。如果要解释 Session 怎样一步步变成现在这样，就得回到数据库里的第一层记录，因为只看 UI 截图，通常哪一个问题都答不完整。三种视图不能混。
 
 ## 第 2 站：保留尾部按 Token 预算倒推
 
@@ -54,7 +58,7 @@ if (total + size <= budget) {
 - **返回**：Compaction 切分点。
 - **下一站**：模型摘要旧前缀，写 Summary Message/Part。
 
-按 Turn 切分能够避免把 Tool Call 和 Result 拆开，但 Token 估算仍可能与 Provider 的实际口径不同，所以预算必须留出安全余量。
+OpenCode 按 Turn 切分历史，能让同一轮里的 Tool Call 和 Result 留在一起，避免模型只看见调用却找不到结果。不过 Token 只是本地估算，未必和 Provider 最终采用的口径一致，所以预算里必须留出余量。
 
 ## 第 3 站：Revert 同时恢复文件和 Session 控制状态
 
@@ -76,15 +80,15 @@ yield* sessions.setRevert({
 - **返回**：恢复后的 Session 状态。
 - **下一站**：UI 重新同步；后续 Prompt 从新尾部继续。
 
-Revert 应该等到 Session 不再 Busy 后再执行，否则模型流仍可能在恢复过程中继续写文件。它也不是通用事务，因为 Git Ignore 文件、项目外路径和网络副作用都可能保持不变——恢复有明确边界。
+执行 Revert 前，要先等 Session 结束 Busy 状态，否则你一边恢复文件，仍在运行的模型流可能一边继续写入。它也算不上通用事务，因为 Git Ignore 文件、项目外路径和网络副作用都可能原封不动地留在那里。恢复有明确边界。
 
 ## 如何核对压缩没有把任务带偏
 
-核对压缩结果时，需要保存压缩前的完整 Messages/Parts、摘要输入、Summary、保留 Tail 以及压缩后的 Model Messages，再用确定性问题检查目标、未完成步骤、文件路径和最近 Tool Error 能否恢复。请求不再溢出，只能说明窗口问题暂时消失，不能证明任务语义仍然完整。
+核对压缩有没有带偏任务时，你要保存压缩前的完整 Messages/Parts，也要留下摘要输入、Summary、保留的 Tail 和压缩后的 Model Messages，然后用答案确定的问题逐项追问：目标是什么，哪些步骤还没做，文件在哪，最近一次 Tool Error 又是什么。请求不再溢出，只能说明窗口暂时够用，不能证明任务语义还完整。
 
 ## 回到运费任务
 
-长会话压缩后，Summary 应该保留「金额 100 的目标测试仍未运行」，而近期 Tail 则保留最近的编辑结果。如果摘要误写成「测试已通过」，下一轮就可能在真正验证之前过早结束。Revert 到编辑前消息时，文件 Patch 与 Session 后缀必须一起回退，否则模型历史会说「尚未编辑」，工作树却已经变化。
+压缩这段长会话时，Summary 要记住「金额 100 的目标测试仍未运行」，近期 Tail 则要留下刚才编辑文件的结果。如果摘要错写成「测试已通过」，下一轮就可能没做真实验证便提前结束。等你 Revert 到编辑前的消息时，既要用文件 Patch 倒回工作树，也要删掉 Session 后缀，否则模型读到的历史还说「尚未编辑」，文件却早已变了。
 
 ## 练习：发现历史与工作树分裂
 
@@ -93,7 +97,7 @@ Revert 后 Session 已删掉编辑结果，但 `git diff` 仍显示修改。应�
 <details>
 <summary>查看核对要点</summary>
 
-文件系统和 `git diff` 才是当前工作树的真值，Session 只是 Harness 留下的记录。如果两者发生分裂，就应记录 Revert 部分失败，停止继续采样并修复工作树与 Session 的一致性，不能让模型依据已经回退的历史继续修改一个尚未回退的环境。
+当前工作树究竟是什么样，要以文件系统和 `git diff` 为准，Session 只是 Harness 留下的记录。如果两边对不上，就要把这次 Revert 记为部分失败，停下后续采样，并把工作树与 Session 修到一致。不能让模型拿着已经回退的历史，继续修改还没退回去的环境。
 
 </details>
 
