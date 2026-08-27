@@ -2,9 +2,9 @@
 
 [返回 Claude 课程地图](README.md)
 
-证据边界已经把 Python SDK、Claude Code 与不可核对的产品内部机制分开——现在只沿锁定源码进入 `query()`，从公开入口起步，看应用究竟怎样接到 CLI。
+上一篇已经把 Python SDK、Claude Code 和产品内部那些无法核对的机制分开了，现在只沿着锁定源码进入 `query()`，看你的应用从公开入口出发后怎样接上 CLI。
 
-第一次使用 Claude Agent SDK 时，最容易把 `query()` 理解成「发一个 HTTP 请求」，但真实链路更像一个受控的子进程协议——SDK 默认启动 Claude Code CLI，通过标准输入写消息，再从标准输出读取 NDJSON。这条链路还不只是单向输出，因为运行期间 CLI 可能反向请求 Python 执行权限回调、Hook 或进程内 MCP 工具。
+第一次使用 Claude Agent SDK 时，你很容易把 `query()` 当成「发一个 HTTP 请求」，可真实链路走的是一套受控的子进程协议：SDK 默认启动 Claude Code CLI，往标准输入写消息，再从标准输出读取 NDJSON。整条链路还是双向的，因为 CLI 在运行期间可能回过头来，要求 Python 执行权限回调、Hook 或进程内 MCP 工具。
 
 ## 先选择两种入口
 
@@ -20,7 +20,7 @@ async with ClaudeSDKClient() as client:
         ...
 ```
 
-`query()` 是单向消费表面，调用方给出 Prompt 或输入流后，只需继续迭代输出。`ClaudeSDKClient` 则会保存连接，使调用方可以继续发送消息、调用 `interrupt()`、修改权限模式并接收下一轮响应。两种入口虽然会复用内部组件，但调用方要承担的生命周期责任并不相同，边界就在这里。
+`query()` 只让调用方单向消费消息，你给出 Prompt 或输入流后，继续迭代输出就可以了。`ClaudeSDKClient` 会把连接保留下来，你因此能继续发消息、调用 `interrupt()`、修改权限模式，然后接收下一轮响应。两个入口虽然复用了内部组件，但调用方分别要管住哪一段生命周期，这件事完全不同。
 
 ```text
 公开入口
@@ -50,11 +50,11 @@ async def query(
 - **返回**：一个逐条产出类型化 `Message` 的异步迭代器。
 - **下一站**：`InternalClient.process_query()` 选择 Transport、创建 Query 并协调清理。
 
-源码注释把它称为 one-shot 或 unidirectional，并明确需要追问和 Interrupt 时应选择 `ClaudeSDKClient`。这不是性能提示，而是 API 所有权提示：一次性入口替调用方管理连接，长连接入口把更多控制权交给调用方。
+源码注释把它称为 one-shot 或 unidirectional，还明确说明，需要追问或 Interrupt 时应该选 `ClaudeSDKClient`。这里提醒的是谁来控制 API：一次性入口替调用方管连接，长连接入口则把更多控制权交还给调用方。
 
 ## Transport 不只是「发字符串」
 
-默认 `SubprocessCLITransport` 有四项责任：找到 CLI、构造参数和环境、拥有标准流，以及关闭子进程。自定义 Transport 可以替换默认字节通道，但无论底层使用什么传输方式，`connect/read/write/close` 契约都仍要履行。
+默认的 `SubprocessCLITransport` 要做四件事：找到 CLI，组好参数和环境，接管标准流，最后关掉子进程。你可以用自定义 Transport（传输层）替换默认字节通道，但底层无论怎样传输，都必须完成 `connect/read/write/close` 这组契约。
 
 ### 第 2 站：InternalClient 先配置，再连接 Transport
 
@@ -80,7 +80,7 @@ await chosen_transport.connect()
 - **返回**：连接成功的 `chosen_transport` 被继续交给 Query。
 - **下一站**：Transport 的 `connect()` 查找 CLI、组装命令并打开进程标准流。
 
-权限回调配置发生在连接之前，因为它会影响 CLI 如何把权限请求路由回 SDK，而 Session 恢复也可能在这里材料化临时配置。因此，「创建 Transport 前后」构成了一条重要的生命周期边界，后面的运行顺序在这里就已经定下。
+在连接建立之前，SDK 先配好权限回调，因为这份配置会决定 CLI 怎样把权限请求送回 SDK，恢复 Session 时也可能在此生成临时配置。所以，从创建 Transport 到真正连接的这一段就是生命周期边界，后面按什么顺序跑，在这里已经定下来了。
 
 ### 第 3 站：默认 Transport 在 `connect()` 才启动进程
 
@@ -107,7 +107,7 @@ self._process = await anyio.open_process(
 - **返回**：`connect()` 没有业务消息返回；成功后对象具备读写能力。
 - **下一站**：Client 用该 Transport 创建 Query，启动后台读取任务并发送 initialize。
 
-这里还做了两件容易忽视的事：SDK 会过滤继承环境中的 `CLAUDECODE`，避免子进程误认自己嵌套在另一个 Claude Code 中，而调用方启用 stderr 回调后，Transport 还会另外启动读取任务。因为这些行为都依赖具体运行环境，所以复现实验应记录实际 CLI 版本、工作目录与关键 Options，不能只记录 Python 包版本。这些上下文不能省。
+这里还做了两件容易漏看的事：SDK 会从继承的环境里过滤 `CLAUDECODE`，免得子进程误以为自己正嵌在另一个 Claude Code 里，而调用方一旦启用 stderr 回调，Transport 还会多启动一个读取任务。这些行为都取决于实际运行环境，因此复现实验时，你要记下 CLI 版本、工作目录和关键 Options，只记 Python 包版本远远不够。这些上下文不能省。
 
 ## 为什么协议必须双向
 
@@ -116,7 +116,7 @@ self._process = await anyio.open_process(
 - SDK 发起：`initialize`、`interrupt`、动态修改权限模式等；
 - CLI 发起：`can_use_tool`、`hook_callback`、SDK 内 MCP 消息等。
 
-如果应用只把 stdout 当成 Assistant 文本流，它就会在权限或 Hook 场景中卡住，因为 CLI 正在等待 Python 回写控制响应，而 Python 根本没有处理这类帧。双向处理不能省。
+如果应用只把 stdout 当成 Assistant 文本流，遇到权限或 Hook 就会卡住，因为 CLI 正等着 Python 写回控制响应，Python 却根本没有处理这类帧。这里必须双向处理。
 
 ### 第 4 站：Client 先启动读取，再初始化
 
@@ -140,7 +140,7 @@ await query.initialize()
 - **返回**：初始化结果保存到 Query，运行具备收发普通消息和控制帧的能力。
 - **下一站**：Prompt 被写入 Transport，读循环按帧类型分流。
 
-这两步的顺序不能随意交换，因为如果先发送 initialize 再启动读取任务，SDK 等待响应时就可能没有消费者处理 stdout。源码把读循环放在前面，正是为了先解开这个相互等待的关系。
+这两步不能换顺序。如果 SDK 先发 initialize，再启动读取任务，它等响应时就可能还没有消费者去处理 stdout。源码把读循环放在 initialize 前面，正是为了避开这种僵局。这样双方就不会互相干等。
 
 ### 第 5 站：读循环按请求 ID 配对控制响应
 
@@ -163,15 +163,15 @@ elif msg_type == "control_request":
 - **返回**：读循环持续运行，直到 Transport 结束或发生错误。
 - **下一站**：等待者继续 initialize 或 Interrupt；反向请求进入权限、Hook 或 MCP 分支。
 
-请求 ID 是并发控制的基础，因此不能用「最后发出的请求」来猜响应归属，也不能让某个回调阻塞唯一读取任务，否则其他控制帧就无法继续前进。这类配对必须准确。
+并发控制要靠请求 ID 把响应对回原请求，你不能用「最后发出的请求」去猜它属于谁，也不能让某个回调卡住唯一的读取任务，否则其他控制帧都走不下去。配对必须准确。
 
 ## 关闭为什么比启动复杂
 
-结束一轮响应、关闭输入、关闭消息迭代器和终止 CLI 进程并非同一件事。默认 Transport 的 `close()` 会屏蔽 AnyIO 取消，先停止 stderr 读取和输入写入，然后等待子进程优雅退出，只有等待超时才会升级终止。源码特别保留了一段等待，因为过早发送终止信号可能打断 Session 文件刷新。
+一轮响应结束、输入关闭、消息迭代器退出和 CLI 进程终止，这四件事不在同一时刻发生。默认 Transport 的 `close()` 会先屏蔽 AnyIO 取消，停止 stderr 读取和输入写入，再等子进程自行退出，只有等到超时才升级终止手段。源码特意留出这段等待时间，因为太早发终止信号，可能会打断 Session 文件刷新。
 
 源码：[查看 Transport 关闭策略](https://github.com/anthropics/claude-agent-sdk-python/blob/542fefb3b94be87760b2513fff889b91bb5b6672/src/claude_agent_sdk/_internal/transport/subprocess_cli.py#L942-L1008)
 
-这意味着调用方取消任务时仍应让 SDK 执行清理，不能直接丢弃 Client 对象。对于长连接，更稳妥的做法是使用 `async with ClaudeSDKClient()`，让正常结束和异常退出都进入同一条关闭路径。
+所以调用方即使取消了任务，也要给 SDK 留出清理资源的机会，不能把 Client 对象一丢了事。清理不能省。对长连接来说，用 `async with ClaudeSDKClient()` 会更稳妥，因为正常结束和异常退出都会走同一条关闭路径。
 
 ## 一次完整运行应该记录什么
 
@@ -184,8 +184,8 @@ elif msg_type == "control_request":
 - 普通消息序列、最终 Result、异常；
 - 关闭原因以及子进程是否回收。
 
-这些信息能证明 SDK 协议和资源生命周期是否完整，但不能单独证明 Agent 已正确完成用户任务，因为正确性仍需要对最终文件、测试和约束做独立评测。
+靠这些信息，你可以判断 SDK 是否跑完了协议，也可以检查资源是否经历了完整的生命周期，但这还不能证明 Agent 已经正确完成用户任务。你仍然得独立检查最终文件、测试结果和任务约束。
 
-协议面理清以后，数据面仍待展开，因此接下来要辨认其中的类型化消息、增量事件与 Result，避免把协议结束误写成任务正确。
+协议怎样收发已经理清，但数据里到底有什么还没展开，所以下一篇要分辨类型化消息、增量事件和 Result，免得把协议正常结束误写成任务已经做对。
 
 下一篇继续处理数据面：[消息流、Result 与生命周期边界](03-messages-stream-lifecycle.md)。
