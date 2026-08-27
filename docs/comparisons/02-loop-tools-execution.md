@@ -2,7 +2,7 @@
 
 [上一篇：运行时、配置与模型输入](01-runtime-config-model-input.md) · [返回课程总目录](../README.md) · [下一篇：权限、状态与恢复](03-permissions-state-recovery.md)
 
-模型输出 Tool Call 只是一个结构化意图。Harness 还要解析调用、找到实现、检查策略、执行副作用、保存结果，并把观察送回下一轮。本篇用同一个运费修复任务，比较六套实现把这条闭环放在哪里，以及并发、失败和停止条件为什么不能简化成一个 `while`。
+模型输出 Tool Call 时，只是表达了一个结构化意图，后面还需要 Harness 解析调用、找到实现、检查策略、执行副作用、保存结果，再把新的观察送回下一轮。本篇沿用同一个运费修复任务，看看六套实现把这条闭环放在哪里，以及为什么并发、失败和停止条件无法缩成一个 `while`。
 
 ![六套 Harness 的模型工具闭环](../../assets/diagrams/comparisons/02-loop-tools-execution.svg)
 
@@ -18,7 +18,7 @@
   → Harness 决定再次采样、压缩、取消或结束
 ```
 
-运费任务至少经历读取、编辑和测试三个动作。任何一步失败都应成为下一轮可解释观察，而不是只在终端打印一行错误。模型最终说「完成」也不能替代目标测试结果。
+运费任务至少会经历读取、编辑和测试三个动作，而其中任何一步失败，都应该变成下一轮能够解释的观察，不能只往终端扔一行错误。即使模型最后说了「完成」，这句话也不能替代目标测试的实际结果。
 
 ## 同一问题在六套实现中的落点
 
@@ -31,11 +31,11 @@
 | pi | `agent-loop.ts` 的双层循环 | Agent Core 执行工具批次并追加 Tool Results | Steering 与 Follow-up 在不同时间点插入；截断 Tool Call 不执行 | [Agent Loop、双队列与工具批次](../harnesses/pi/02-agent-loop-tools.md) |
 | OpenCode | Session Prompt Loop | Processor 归约流事件与 Tool Parts | `continue/compact/stop` 控制 Session，不是任务评分 | [Session Prompt、LLM 与 Processor](../harnesses/opencode/02-session-llm-processor.md) |
 
-表中「谁控制下一轮」指公开源码里创建下一次模型请求的控制点，不是某个类名必须叫 Agent。Claude 一行刻意保留边界：SDK 的异步流不等于能够看到 CLI 内部完整 Loop。
+表中的「谁控制下一轮」，指的是公开源码里创建下一次模型请求的控制点——也就是下一轮的发起位置——它并不要求某个类名必须叫 Agent。Claude 这一行特意保留了证据边界，因为 SDK 暴露异步流，不等于我们就能看到 CLI 内部的完整 Loop。
 
 ## 一次工具调用至少有五种结果
 
-把 Tool Result 只设计成成功或失败，会丢掉恢复所需的信息。更实用的分类是：
+如果 Tool Result 只有成功和失败两种值，恢复时需要的信息就会被丢掉，因此更实用的做法是把结果细分为：
 
 | 结果 | 副作用是否发生 | 下一步通常是什么 |
 | --- | --- | --- |
@@ -45,7 +45,7 @@
 | 执行错误 | 可能未发生，也可能部分发生 | 依据工具语义检查环境，再决定重试 |
 | 状态未知 | 无法确认 | 先观察环境，禁止盲目重放 |
 
-未知工具名和参数校验失败通常还没产生副作用；Shell 超时则可能已经启动子进程；网络请求断开时服务端可能已处理。Harness 必须让工具实现表达这些差异，Session 才能安全恢复。
+未知工具名或参数校验失败时，副作用通常还没有发生，但 Shell 超时时子进程可能已经启动，网络请求断开时服务端也可能已经处理完请求。Harness 必须让工具实现能够表达这些差异，Session 才有条件安全恢复。
 
 ## 并发比较要同时记录两种顺序
 
@@ -57,13 +57,13 @@
 历史提交：仍按 A、B 对齐各自 Call ID
 ```
 
-Codex 明确通过测试核对并发完成和确定性历史的区别；pi 对整个 Tool Batch 计算终止条件；Gemini CLI 的 Scheduler 管理多个调用状态；其他实现即使选择串行，也仍需保证 Tool Result 与 Call ID 对应。
+Codex 用测试明确核对了并发完成与确定性历史的区别，pi 会针对整个 Tool Batch 计算终止条件，而 Gemini CLI 的 Scheduler 负责管理多个调用状态。其他实现即使选择串行执行，也仍然需要保证 Tool Result 与 Call ID 对应。
 
-若历史按网络到达顺序随意写入，模型可能把 B 的结果配给 A，重放也会产生不稳定 Context。确定性提交不要求所有工具串行，只要求因果关系可重建。
+如果历史只按网络到达顺序随意写入，模型就可能把 B 的结果配给 A，后续重放也会产生不稳定的 Context。确定性提交无须强迫所有工具串行运行，只要让因果关系能够重建就够了。
 
 ## Stop Reason 为什么不能直接结束任务
 
-Provider 的 `stop`、`toolUse`、`length` 或 `error` 只描述一次模型响应。pi 在 `length` 截断时拒绝执行可能不完整的 Tool Call；OpenCode 即使看到 Finish Reason，只要 Parts 中仍有 Tool Call 就继续；DeepSeek Harness、Codex 和 Gemini CLI 也要结合工具状态与队列决定下一轮。
+Provider 的 `stop`、`toolUse`、`length` 或 `error` 只描述当前这次模型响应。pi 遇到 `length` 截断时，会拒绝执行可能不完整的 Tool Call，而 OpenCode 即使已经收到 Finish Reason，只要 Parts 中还有 Tool Call 就会继续。DeepSeek Harness、Codex 和 Gemini CLI 也都要结合工具状态与队列，才能决定是否发起下一轮。
 
 任务级结束还需要判断：
 
@@ -73,11 +73,11 @@ Provider 的 `stop`、`toolUse`、`length` 或 `error` 只描述一次模型响�
 - 是否被取消、预算耗尽或协议错误阻断；
 - 是否已经产生足以回答用户的环境证据。
 
-最后一项通常需要 Eval 或应用规则，而不是只看模型 Stop Reason。
+最后一项通常还要交给 Eval 或应用规则判断，单看模型的 Stop Reason 并不足以判定任务结果。
 
 ## Hook、Extension 和 Processor 可以改变什么
 
-不同项目提供多个介入点：调用前阻断、调用后改写结果、Context Transform、事件订阅和子任务委托。比较时要回答它处在副作用之前还是之后。
+不同项目会暴露调用前阻断、调用后改写结果、Context Transform、事件订阅和子任务委托等多个介入点，所以比较时一定要问清它发生在副作用之前还是之后。
 
 - 调用前 Hook 可以阻止动作发生；
 - 调用后 Hook 只能改变模型看见的结果，不能假装撤销副作用；
@@ -85,11 +85,11 @@ Provider 的 `stop`、`toolUse`、`length` 或 `error` 只描述一次模型响�
 - Event Subscriber 观察事实，不应反向改写核心状态；
 - 子 Agent 拥有另一条 Loop，需要保留父子身份。
 
-把所有扩展统称为 Middleware 会掩盖安全边界。
+如果把所有扩展都统称为 Middleware，这些不同的安全边界就会被藏起来。
 
 ## 回到运费任务：六套实现共享的事实链
 
-无论具体函数名是什么，一次可核对修复都应保留：
+具体函数名可以不同，但一次能够复核的修复仍然应该保留下面这条事实链：
 
 ```text
 用户目标
@@ -100,11 +100,11 @@ Provider 的 `stop`、`toolUse`、`length` 或 `error` 只描述一次模型响�
 → 独立结果判定
 ```
 
-DeepSeek Harness、Codex、Gemini CLI、pi 和 OpenCode 可以从公开核心源码追踪到不同深度；Claude 只能从公开 SDK 消息和控制契约观察边界外显事实。缺少某一层时，应写「当前来源不可核对」，不能拿另一套 Harness 的常见实现补空白。
+对 DeepSeek Harness、Codex、Gemini CLI、pi 和 OpenCode，我们可以沿公开核心源码追踪到不同深度，但 Claude 这条线只能通过公开 SDK 消息和控制契约观察边界外显的事实。一旦某一层缺少证据，就应该明写「当前来源不可核对」，不能拿另一套 Harness 里的常见实现来填补空白。
 
 ## 一次可复核的本地实验
 
-不调用模型也能验证 Loop 语义。实现一个脚本化 Model Stub，依次返回 `read`、`edit`、`bash test` 和最终文本；再让第二组输入在编辑后产生测试失败。至少断言：
+即使不调用模型，也可以验证 Loop 语义。可以先实现一个脚本化 Model Stub，让它依次返回 `read`、`edit`、`bash test` 和最终文本，再让第二组输入在编辑之后产生测试失败。实验至少要断言：
 
 1. Tool Result 与原 Call ID 对齐；
 2. 失败结果进入下一轮，而不是让 Loop 崩溃；
@@ -112,16 +112,16 @@ DeepSeek Harness、Codex、Gemini CLI、pi 和 OpenCode 可以从公开核心源
 4. 并发完成顺序变化时，历史仍可重放；
 5. 模型自述「完成」不会覆盖测试失败。
 
-这个实验验证的是通用机制，不证明任何上游项目在所有配置下都采用相同实现。
+这个实验只能验证通用机制，它无法证明任何上游项目在所有配置下都采用了相同实现。
 
 ## 练习：沿两套源码解释同一个失败
 
-假设测试工具返回退出码 1。选择两条课程，指出结果在哪里被转换成 Tool Result、写入何种 Session/Message 对象、由谁决定再次请求模型。最后说明若用户此时取消，取消信号怎样与普通工具失败区分。
+假设测试工具返回退出码 1，请选择两条课程，指出结果在哪里被转换成 Tool Result，又会写入何种 Session/Message 对象，并找到决定再次请求模型的控制点。如果用户在这时取消，还要说明取消信号怎样与普通工具失败区分。
 
 <details>
 <summary>查看核对标准</summary>
 
-答案必须给出两条课程内的真实文件或源码站点，并说明状态变化。仅写「Agent 会重试」不合格，因为工具失败不一定可重试，用户取消更不应被重试成成功。
+答案必须给出两条课程内的真实文件或源码站点，并且把状态变化解释清楚。只写「Agent 会重试」不合格，因为工具失败未必可以重试，用户取消更不应该被反复尝试成一次成功。
 
 </details>
 
